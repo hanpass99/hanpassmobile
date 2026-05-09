@@ -174,6 +174,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          country_id: string | null
           created_at: string
           department: string | null
           display_name: string
@@ -182,6 +183,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          country_id?: string | null
           created_at?: string
           department?: string | null
           display_name: string
@@ -190,6 +192,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          country_id?: string | null
           created_at?: string
           department?: string | null
           display_name?: string
@@ -262,6 +265,10 @@ export type Database = {
         Args: { _active: boolean; _user_id: string }
         Returns: undefined
       }
+      admin_set_profile_country: {
+        Args: { _country_id: string; _user_id: string }
+        Returns: undefined
+      }
       admin_set_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -269,6 +276,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      current_user_country: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
