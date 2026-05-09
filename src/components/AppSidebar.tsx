@@ -2,7 +2,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Users,
-  PhoneCall,
   UserCog,
   Globe2,
   Radio,
@@ -29,7 +28,6 @@ import {
 const mainItems = [
   { title: "대시보드", url: "/", icon: LayoutDashboard },
   { title: "고객 관리", url: "/customers", icon: Users },
-  { title: "콜 관리", url: "/calls", icon: PhoneCall },
 ];
 
 const analyticsItems = [

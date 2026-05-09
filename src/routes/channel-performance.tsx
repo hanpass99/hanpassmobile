@@ -33,7 +33,7 @@ function ChannelPerf() {
         const ids = new Set(subset.map((x) => x.id));
         const cl = (lg.data ?? []).filter((l) => ids.has(l.customer_id));
         const total = subset.length;
-        const pending = subset.filter((x) => x.status === "new" || x.status === "contacted").length;
+        const pending = subset.filter((x) => x.status === "new" || x.status === "in_progress").length;
         const totalCalls = cl.length;
         const success = cl.filter((l) => l.result === "interested" || l.result === "activated").length;
         const activated = cl.filter((l) => l.is_activation).length;
