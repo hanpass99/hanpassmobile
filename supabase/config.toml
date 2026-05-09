@@ -1,1 +1,4 @@
 project_id = "ousucdggqkoupfxdkuxw"
+
+[functions.admin-create-staff]
+verify_jwt = true
