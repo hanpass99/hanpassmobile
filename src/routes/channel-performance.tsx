@@ -4,28 +4,57 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { CHANNELS, CUSTOMERS, computeStats } from "@/lib/mock-data";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/channel-performance")({
   head: () => ({ meta: [{ title: "채널별 성과 — Hanpass OB CRM" }] }),
   component: ChannelPerf,
 });
 
+type Row = {
+  id: string; name: string; total: number; pending: number;
+  totalCalls: number; success: number; activated: number; successRate: number; activationRate: number;
+};
+
 function ChannelPerf() {
-  const rows = CHANNELS.map((ch) => {
-    const subset = CUSTOMERS.filter((c) => c.channel === ch);
-    const cs = computeStats(subset);
-    const pending = subset.filter((c) => c.status === "미처리" || c.status === "처리중").length;
-    return { name: ch, total: subset.length, pending, ...cs };
-  });
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [ch, cu, lg] = await Promise.all([
+        supabase.from("channels").select("id, name").eq("is_active", true),
+        supabase.from("customers").select("id, channel_id, status"),
+        supabase.from("call_logs").select("customer_id, result, is_activation"),
+      ]);
+      const out: Row[] = (ch.data ?? []).map((c) => {
+        const subset = (cu.data ?? []).filter((x) => x.channel_id === c.id);
+        const ids = new Set(subset.map((x) => x.id));
+        const cl = (lg.data ?? []).filter((l) => ids.has(l.customer_id));
+        const total = subset.length;
+        const pending = subset.filter((x) => x.status === "new" || x.status === "contacted").length;
+        const totalCalls = cl.length;
+        const success = cl.filter((l) => l.result === "interested" || l.result === "activated").length;
+        const activated = cl.filter((l) => l.is_activation).length;
+        return {
+          id: c.id, name: c.name, total, pending, totalCalls, success, activated,
+          successRate: totalCalls ? (success / totalCalls) * 100 : 0,
+          activationRate: totalCalls ? (activated / totalCalls) * 100 : 0,
+        };
+      });
+      setRows(out);
+      setLoading(false);
+    })();
+  }, []);
 
   return (
     <div className="space-y-5">
-      <PageHeader title="채널별 성과" description="유입 채널별 콜 효율 분석" />
+      <PageHeader title="채널별 성과" description={loading ? "로드 중..." : "유입 채널별 콜 효율 분석"} />
 
       <div className="grid gap-4 md:grid-cols-2">
         {rows.map((r) => (
-          <Card key={r.name}>
+          <Card key={r.id}>
             <CardHeader>
               <CardTitle className="text-base">{r.name}</CardTitle>
               <CardDescription>총 고객 {r.total}명 · 미처리 {r.pending}명</CardDescription>
@@ -66,7 +95,7 @@ function ChannelPerf() {
             </TableHeader>
             <TableBody>
               {rows.map((r) => (
-                <TableRow key={r.name}>
+                <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.name}</TableCell>
                   <TableCell className="text-right">{r.total}</TableCell>
                   <TableCell className="text-right">{r.totalCalls}</TableCell>
