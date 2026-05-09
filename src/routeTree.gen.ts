@@ -11,11 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StaffPerformanceRouteImport } from './routes/staff-performance'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as CountryPerformanceRouteImport } from './routes/country-performance'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
-import { Route as CallsRouteImport } from './routes/calls'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -27,6 +27,11 @@ const StaffPerformanceRoute = StaffPerformanceRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsRoute = ReportsRouteImport.update({
@@ -49,11 +54,6 @@ const ChannelPerformanceRoute = ChannelPerformanceRouteImport.update({
   path: '/channel-performance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CallsRoute = CallsRouteImport.update({
-  id: '/calls',
-  path: '/calls',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -68,22 +68,22 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/calls': typeof CallsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/staff-performance': typeof StaffPerformanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/calls': typeof CallsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/staff-performance': typeof StaffPerformanceRoute
 }
@@ -91,11 +91,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/calls': typeof CallsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/staff-performance': typeof StaffPerformanceRoute
 }
@@ -104,33 +104,33 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/calls'
     | '/channel-performance'
     | '/country-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/staff-performance'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/calls'
     | '/channel-performance'
     | '/country-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/staff-performance'
   id:
     | '__root__'
     | '/'
     | '/auth'
-    | '/calls'
     | '/channel-performance'
     | '/country-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/staff-performance'
   fileRoutesById: FileRoutesById
@@ -138,11 +138,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
-  CallsRoute: typeof CallsRoute
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CountryPerformanceRoute: typeof CountryPerformanceRoute
   CustomersRoute: typeof CustomersRoute
   ReportsRoute: typeof ReportsRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   StaffPerformanceRoute: typeof StaffPerformanceRoute
 }
@@ -161,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports': {
@@ -191,13 +198,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChannelPerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/calls': {
-      id: '/calls'
-      path: '/calls'
-      fullPath: '/calls'
-      preLoaderRoute: typeof CallsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -218,24 +218,14 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
-  CallsRoute: CallsRoute,
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CountryPerformanceRoute: CountryPerformanceRoute,
   CustomersRoute: CustomersRoute,
   ReportsRoute: ReportsRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   StaffPerformanceRoute: StaffPerformanceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

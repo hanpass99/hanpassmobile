@@ -97,7 +97,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function AuthGate() {
   const { session, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isAuthRoute = pathname === "/auth";
+  const isPublicRoute = pathname === "/auth" || pathname === "/reset-password";
 
   if (loading) {
     return (
@@ -107,7 +107,7 @@ function AuthGate() {
     );
   }
 
-  if (isAuthRoute) return <Outlet />;
+  if (isPublicRoute) return <Outlet />;
   if (!session) return <Navigate to="/auth" />;
 
   return (

@@ -109,6 +109,38 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_notes: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          customer_id: string
+          id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          customer_id: string
+          id?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           assigned_to: string | null
@@ -121,6 +153,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string
+          pool: Database["public"]["Enums"]["customer_pool"]
           signup_date: string
           status: Database["public"]["Enums"]["customer_status"]
           updated_at: string
@@ -136,6 +169,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone: string
+          pool?: Database["public"]["Enums"]["customer_pool"]
           signup_date?: string
           status?: Database["public"]["Enums"]["customer_status"]
           updated_at?: string
@@ -151,6 +185,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string
+          pool?: Database["public"]["Enums"]["customer_pool"]
           signup_date?: string
           status?: Database["public"]["Enums"]["customer_status"]
           updated_at?: string
@@ -295,13 +330,22 @@ export type Database = {
         | "interested"
         | "activated"
         | "failed"
+      customer_pool:
+        | "existing"
+        | "new_signup"
+        | "prepaid"
+        | "activation_request"
       customer_status:
         | "new"
-        | "contacted"
         | "in_progress"
+        | "no_answer"
+        | "not_interested"
+        | "callback"
         | "activated"
-        | "failed"
-        | "do_not_call"
+        | "stay_expired"
+        | "delinquent"
+        | "line_exceeded"
+        | "minor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -439,13 +483,23 @@ export const Constants = {
         "activated",
         "failed",
       ],
+      customer_pool: [
+        "existing",
+        "new_signup",
+        "prepaid",
+        "activation_request",
+      ],
       customer_status: [
         "new",
-        "contacted",
         "in_progress",
+        "no_answer",
+        "not_interested",
+        "callback",
         "activated",
-        "failed",
-        "do_not_call",
+        "stay_expired",
+        "delinquent",
+        "line_exceeded",
+        "minor",
       ],
     },
   },
