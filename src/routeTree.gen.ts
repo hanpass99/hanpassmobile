@@ -9,8 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StaffPerformanceRouteImport } from './routes/staff-performance'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as CountryPerformanceRouteImport } from './routes/country-performance'
+import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
+import { Route as CallsRouteImport } from './routes/calls'
 import { Route as IndexRouteImport } from './routes/index'
 
+const StaffPerformanceRoute = StaffPerformanceRouteImport.update({
+  id: '/staff-performance',
+  path: '/staff-performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomersRoute = CustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CountryPerformanceRoute = CountryPerformanceRouteImport.update({
+  id: '/country-performance',
+  path: '/country-performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChannelPerformanceRoute = ChannelPerformanceRouteImport.update({
+  id: '/channel-performance',
+  path: '/channel-performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallsRoute = CallsRouteImport.update({
+  id: '/calls',
+  path: '/calls',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +61,130 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calls': typeof CallsRoute
+  '/channel-performance': typeof ChannelPerformanceRoute
+  '/country-performance': typeof CountryPerformanceRoute
+  '/customers': typeof CustomersRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/staff-performance': typeof StaffPerformanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calls': typeof CallsRoute
+  '/channel-performance': typeof ChannelPerformanceRoute
+  '/country-performance': typeof CountryPerformanceRoute
+  '/customers': typeof CustomersRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/staff-performance': typeof StaffPerformanceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calls': typeof CallsRoute
+  '/channel-performance': typeof ChannelPerformanceRoute
+  '/country-performance': typeof CountryPerformanceRoute
+  '/customers': typeof CustomersRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/staff-performance': typeof StaffPerformanceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/calls'
+    | '/channel-performance'
+    | '/country-performance'
+    | '/customers'
+    | '/reports'
+    | '/settings'
+    | '/staff-performance'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/calls'
+    | '/channel-performance'
+    | '/country-performance'
+    | '/customers'
+    | '/reports'
+    | '/settings'
+    | '/staff-performance'
+  id:
+    | '__root__'
+    | '/'
+    | '/calls'
+    | '/channel-performance'
+    | '/country-performance'
+    | '/customers'
+    | '/reports'
+    | '/settings'
+    | '/staff-performance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CallsRoute: typeof CallsRoute
+  ChannelPerformanceRoute: typeof ChannelPerformanceRoute
+  CountryPerformanceRoute: typeof CountryPerformanceRoute
+  CustomersRoute: typeof CustomersRoute
+  ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
+  StaffPerformanceRoute: typeof StaffPerformanceRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/staff-performance': {
+      id: '/staff-performance'
+      path: '/staff-performance'
+      fullPath: '/staff-performance'
+      preLoaderRoute: typeof StaffPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customers': {
+      id: '/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof CustomersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/country-performance': {
+      id: '/country-performance'
+      path: '/country-performance'
+      fullPath: '/country-performance'
+      preLoaderRoute: typeof CountryPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/channel-performance': {
+      id: '/channel-performance'
+      path: '/channel-performance'
+      fullPath: '/channel-performance'
+      preLoaderRoute: typeof ChannelPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calls': {
+      id: '/calls'
+      path: '/calls'
+      fullPath: '/calls'
+      preLoaderRoute: typeof CallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +197,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CallsRoute: CallsRoute,
+  ChannelPerformanceRoute: ChannelPerformanceRoute,
+  CountryPerformanceRoute: CountryPerformanceRoute,
+  CustomersRoute: CustomersRoute,
+  ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
+  StaffPerformanceRoute: StaffPerformanceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
