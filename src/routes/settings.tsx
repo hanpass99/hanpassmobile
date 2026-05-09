@@ -9,7 +9,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, RefreshCw, UserX, UserCheck } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { Plus, RefreshCw, UserX, UserCheck, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,12 +23,14 @@ export const Route = createFileRoute("/settings")({
   component: Settings,
 });
 
+type Country = { id: string; code: string; name_ko: string };
 type Row = {
   id: string;
   display_name: string;
   department: string | null;
   is_active: boolean;
   role: "admin" | "staff";
+  country_id: string | null;
   call_target: number;
   activation_target: number;
 };
@@ -37,18 +42,21 @@ const M = now.getMonth() + 1;
 function Settings() {
   const { isAdmin, user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
   const [bulkCall, setBulkCall] = useState(200);
   const [bulkAct, setBulkAct] = useState(120);
+  const [showCreate, setShowCreate] = useState(false);
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: targets }] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active"),
+    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }] = await Promise.all([
+      supabase.from("profiles").select("id, display_name, department, is_active, country_id"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
+      supabase.from("countries").select("id, code, name_ko").order("code"),
     ]);
-    const merged: Row[] = (profiles ?? []).map((p) => {
+    const merged: Row[] = (profiles ?? []).map((p: any) => {
       const r = roles?.find((x) => x.user_id === p.id);
       const t = targets?.find((x) => x.user_id === p.id);
       return {
@@ -57,11 +65,13 @@ function Settings() {
         department: p.department,
         is_active: p.is_active,
         role: (r?.role as "admin" | "staff") ?? "staff",
+        country_id: p.country_id ?? null,
         call_target: t?.call_target ?? 0,
         activation_target: t?.activation_target ?? 0,
       };
     });
     setRows(merged);
+    setCountries(co ?? []);
     setLoading(false);
   };
 
@@ -87,6 +97,16 @@ function Settings() {
     const { error } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: role });
     if (error) { toast.error(`실패: ${error.message}`); return; }
     toast.success("역할 변경됨");
+    load();
+  };
+
+  const setCountry = async (r: Row, country_id: string | null) => {
+    const { error } = await supabase.rpc("admin_set_profile_country", {
+      _user_id: r.id,
+      _country_id: country_id,
+    });
+    if (error) { toast.error(`실패: ${error.message}`); return; }
+    toast.success("담당 국가 변경됨");
     load();
   };
 
@@ -118,12 +138,19 @@ function Settings() {
           <div>
             <CardTitle>직원 계정 관리</CardTitle>
             <CardDescription>
-              {Y}년 {M}월 기준. 신규 직원은 <code>/auth</code> 회원가입 후 자동으로 표시됩니다.
+              {Y}년 {M}월 기준. 직원은 본인 담당 국가의 고객만 조회할 수 있습니다.
             </CardDescription>
           </div>
-          <Button size="sm" variant="outline" onClick={load} disabled={loading}>
-            <RefreshCw className="mr-2 h-4 w-4" /> 새로고침
-          </Button>
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Button size="sm" onClick={() => setShowCreate(true)}>
+                <UserPlus className="mr-2 h-4 w-4" /> 직원 추가
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={load} disabled={loading}>
+              <RefreshCw className="mr-2 h-4 w-4" /> 새로고침
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <Table>
@@ -132,9 +159,10 @@ function Settings() {
                 <TableHead>이름</TableHead>
                 <TableHead>부서</TableHead>
                 <TableHead>역할</TableHead>
+                <TableHead>담당 국가</TableHead>
                 <TableHead>상태</TableHead>
-                <TableHead className="w-32">콜 목표</TableHead>
-                <TableHead className="w-32">개통 목표</TableHead>
+                <TableHead className="w-28">콜 목표</TableHead>
+                <TableHead className="w-28">개통 목표</TableHead>
                 <TableHead className="text-right">액션</TableHead>
               </TableRow>
             </TableHeader>
@@ -149,7 +177,7 @@ function Settings() {
                   <TableCell>
                     {isAdmin && r.id !== user?.id ? (
                       <Select value={r.role} onValueChange={(v) => setRole(r, v as "admin" | "staff")}>
-                        <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">관리자</SelectItem>
                           <SelectItem value="staff">직원</SelectItem>
@@ -159,6 +187,26 @@ function Settings() {
                       <Badge variant={r.role === "admin" ? "default" : "secondary"}>
                         {r.role === "admin" ? "관리자" : "직원"}
                       </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isAdmin ? (
+                      <Select
+                        value={r.country_id ?? "__all__"}
+                        onValueChange={(v) => setCountry(r, v === "__all__" ? null : v)}
+                      >
+                        <SelectTrigger className="h-8 w-32"><SelectValue placeholder="전체" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__all__">전체 (제한 없음)</SelectItem>
+                          {countries.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        {countries.find((c) => c.id === r.country_id)?.name_ko ?? "전체"}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -174,7 +222,7 @@ function Settings() {
                       onChange={(e) =>
                         setRows((p) => p.map((x) => (x.id === r.id ? { ...x, call_target: Number(e.target.value) } : x)))
                       }
-                      className="h-8 w-24"
+                      className="h-8 w-20"
                     />
                   </TableCell>
                   <TableCell>
@@ -185,7 +233,7 @@ function Settings() {
                       onChange={(e) =>
                         setRows((p) => p.map((x) => (x.id === r.id ? { ...x, activation_target: Number(e.target.value) } : x)))
                       }
-                      className="h-8 w-24"
+                      className="h-8 w-20"
                     />
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
@@ -195,11 +243,11 @@ function Settings() {
                         {r.id !== user?.id && (
                           r.is_active ? (
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setActive(r, false)}>
-                              <UserX className="mr-1 h-3.5 w-3.5" /> 비활성화
+                              <UserX className="mr-1 h-3.5 w-3.5" /> 비활성
                             </Button>
                           ) : (
                             <Button size="sm" variant="ghost" onClick={() => setActive(r, true)}>
-                              <UserCheck className="mr-1 h-3.5 w-3.5" /> 활성화
+                              <UserCheck className="mr-1 h-3.5 w-3.5" /> 활성
                             </Button>
                           )
                         )}
@@ -209,7 +257,7 @@ function Settings() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">직원이 없습니다.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">직원이 없습니다.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -239,6 +287,111 @@ function Settings() {
           </CardContent>
         </Card>
       )}
+
+      <CreateStaffDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={load}
+        countries={countries}
+      />
     </div>
+  );
+}
+
+function CreateStaffDialog({
+  open, onClose, onCreated, countries,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreated: () => void;
+  countries: Country[];
+}) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [department, setDepartment] = useState("");
+  const [countryId, setCountryId] = useState<string>("__all__");
+  const [role, setRole] = useState<"admin" | "staff">("staff");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setEmail(""); setPassword(""); setDisplayName(""); setDepartment("");
+      setCountryId("__all__"); setRole("staff");
+    }
+  }, [open]);
+
+  const submit = async () => {
+    if (!email || !password || !displayName) return toast.error("이메일, 비밀번호, 이름은 필수입니다");
+    if (password.length < 6) return toast.error("비밀번호는 최소 6자 이상이어야 합니다");
+    setSaving(true);
+    const { data, error } = await supabase.functions.invoke("admin-create-staff", {
+      body: {
+        email, password,
+        display_name: displayName,
+        department: department || undefined,
+        country_id: countryId === "__all__" ? undefined : countryId,
+        role,
+      },
+    });
+    setSaving(false);
+    if (error || (data as any)?.error) {
+      return toast.error(`생성 실패: ${(data as any)?.error ?? error?.message}`);
+    }
+    toast.success(`${displayName} 계정이 생성되었습니다`);
+    onCreated();
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader><DialogTitle>직원 계정 추가</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3 py-2">
+          <div className="col-span-2 space-y-2">
+            <Label>이메일 *</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="col-span-2 space-y-2">
+            <Label>비밀번호 * (최소 6자)</Label>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>이름 *</Label>
+            <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>부서</Label>
+            <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>역할</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="staff">직원</SelectItem>
+                <SelectItem value="admin">관리자</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>담당 국가</Label>
+            <Select value={countryId} onValueChange={setCountryId}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">전체 (제한 없음)</SelectItem>
+                {countries.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? "생성 중..." : "계정 생성"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
