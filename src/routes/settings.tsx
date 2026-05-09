@@ -103,7 +103,7 @@ function Settings() {
   const setCountry = async (r: Row, country_id: string | null) => {
     const { error } = await supabase.rpc("admin_set_profile_country", {
       _user_id: r.id,
-      _country_id: country_id,
+      _country_id: country_id as any,
     });
     if (error) { toast.error(`실패: ${error.message}`); return; }
     toast.success("담당 국가 변경됨");
