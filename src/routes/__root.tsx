@@ -4,6 +4,8 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
+  Navigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,6 +14,7 @@ import appCss from "../styles.css?url";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
 function NotFoundComponent() {
   return (
@@ -83,29 +86,51 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+function AuthGate() {
+  const { session, loading } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAuthRoute = pathname === "/auth";
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        불러오는 중...
+      </div>
+    );
+  }
+
+  if (isAuthRoute) return <Outlet />;
+  if (!session) return <Navigate to="/auth" />;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
-          <AppSidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur">
-              <SidebarTrigger />
-              <div className="flex-1" />
-              <span className="hidden text-xs text-muted-foreground sm:inline">
-                Hanpass Mobile · OB Call Management
-              </span>
-            </header>
-            <main className="min-w-0 flex-1 p-4 md:p-6">
-              <Outlet />
-            </main>
-          </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur">
+            <SidebarTrigger />
+            <div className="flex-1" />
+            <span className="hidden text-xs text-muted-foreground sm:inline">
+              Hanpass Mobile · OB Call Management
+            </span>
+          </header>
+          <main className="min-w-0 flex-1 p-4 md:p-6">
+            <Outlet />
+          </main>
         </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AuthGate />
         <Toaster richColors position="top-right" />
-      </SidebarProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

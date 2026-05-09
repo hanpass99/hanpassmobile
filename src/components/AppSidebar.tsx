@@ -9,7 +9,10 @@ import {
   FileBarChart,
   Settings,
   Phone,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -92,15 +95,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="flex items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary">
-            김M
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-medium">김민수 매니저</span>
-            <span className="text-[10px] text-muted-foreground">Admin</span>
-          </div>
-        </div>
+        <SidebarUserFooter />
       </SidebarFooter>
     </Sidebar>
   );
