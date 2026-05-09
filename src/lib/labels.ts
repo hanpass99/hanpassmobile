@@ -21,32 +21,46 @@ export const CALL_RESULT_LABEL: Record<CallResult, string> = {
   failed: "실패",
 };
 
+// 새 10종 상태값 (사용자 요청 순서)
 export const CUSTOMER_STATUSES = [
   "new",
-  "contacted",
   "in_progress",
+  "no_answer",
+  "not_interested",
+  "callback",
   "activated",
-  "failed",
-  "do_not_call",
+  "stay_expired",
+  "delinquent",
+  "line_exceeded",
+  "minor",
 ] as const;
 export type CustomerStatus = (typeof CUSTOMER_STATUSES)[number];
 
 export const STATUS_LABEL: Record<CustomerStatus, string> = {
   new: "미처리",
-  contacted: "처리중",
-  in_progress: "개통 처리 중",
+  in_progress: "진행중",
+  no_answer: "부재",
+  not_interested: "관심 없음",
+  callback: "재연락 요청",
   activated: "개통 완료",
-  failed: "실패",
-  do_not_call: "거부",
+  stay_expired: "체류 기간 만료",
+  delinquent: "체납자",
+  line_exceeded: "회선 초과",
+  minor: "미성년자",
 };
 
+// 상태별 색상 (semantic tokens 기반)
 export const STATUS_CLASS: Record<CustomerStatus, string> = {
-  new: "bg-muted text-muted-foreground",
-  contacted: "bg-info/15 text-info",
-  in_progress: "bg-primary-soft text-primary",
-  activated: "bg-success/15 text-success",
-  failed: "bg-destructive/15 text-destructive",
-  do_not_call: "bg-muted text-muted-foreground",
+  new: "bg-muted text-muted-foreground border-transparent",
+  in_progress: "bg-info/15 text-info border-transparent",
+  no_answer: "bg-warning/15 text-warning-foreground border-transparent",
+  not_interested: "bg-muted text-muted-foreground border-transparent",
+  callback: "bg-primary-soft text-primary border-transparent",
+  activated: "bg-success/15 text-success border-transparent",
+  stay_expired: "bg-destructive/10 text-destructive border-transparent",
+  delinquent: "bg-destructive/15 text-destructive border-transparent",
+  line_exceeded: "bg-destructive/15 text-destructive border-transparent",
+  minor: "bg-secondary text-secondary-foreground border-transparent",
 };
 
 // 콜 결과 → 자동 상태 추천
@@ -54,10 +68,33 @@ export function statusForResult(r: CallResult): CustomerStatus {
   switch (r) {
     case "activated": return "activated";
     case "interested": return "in_progress";
-    case "callback": return "contacted";
-    case "not_interested": return "do_not_call";
+    case "callback": return "callback";
+    case "not_interested": return "not_interested";
     case "failed":
-    case "wrong_number": return "failed";
-    case "no_answer": return "new";
+    case "wrong_number": return "no_answer";
+    case "no_answer": return "no_answer";
   }
 }
+
+// === Pool (고객 풀) ===
+export const POOLS = [
+  "existing",
+  "new_signup",
+  "prepaid",
+  "activation_request",
+] as const;
+export type CustomerPool = (typeof POOLS)[number];
+
+export const POOL_LABEL: Record<CustomerPool, string> = {
+  existing: "한패스 모바일 기존 고객",
+  new_signup: "한패스 신규 가입자",
+  prepaid: "선불 충전자",
+  activation_request: "개통 신청자",
+};
+
+export const POOL_SHORT: Record<CustomerPool, string> = {
+  existing: "기존 고객",
+  new_signup: "신규 가입자",
+  prepaid: "선불 충전자",
+  activation_request: "개통 신청자",
+};

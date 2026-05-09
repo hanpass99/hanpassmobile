@@ -15,7 +15,6 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as CountryPerformanceRouteImport } from './routes/country-performance'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
-import { Route as CallsRouteImport } from './routes/calls'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -49,11 +48,6 @@ const ChannelPerformanceRoute = ChannelPerformanceRouteImport.update({
   path: '/channel-performance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CallsRoute = CallsRouteImport.update({
-  id: '/calls',
-  path: '/calls',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -68,7 +62,6 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/calls': typeof CallsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
@@ -79,7 +72,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/calls': typeof CallsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
@@ -91,7 +83,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/calls': typeof CallsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
@@ -104,7 +95,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/calls'
     | '/channel-performance'
     | '/country-performance'
     | '/customers'
@@ -115,7 +105,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/calls'
     | '/channel-performance'
     | '/country-performance'
     | '/customers'
@@ -126,7 +115,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
-    | '/calls'
     | '/channel-performance'
     | '/country-performance'
     | '/customers'
@@ -138,7 +126,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
-  CallsRoute: typeof CallsRoute
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CountryPerformanceRoute: typeof CountryPerformanceRoute
   CustomersRoute: typeof CustomersRoute
@@ -191,13 +178,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChannelPerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/calls': {
-      id: '/calls'
-      path: '/calls'
-      fullPath: '/calls'
-      preLoaderRoute: typeof CallsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -218,7 +198,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
-  CallsRoute: CallsRoute,
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CountryPerformanceRoute: CountryPerformanceRoute,
   CustomersRoute: CustomersRoute,
@@ -229,3 +208,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
