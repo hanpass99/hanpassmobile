@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StaffPerformanceRouteImport } from './routes/staff-performance'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as CountryPerformanceRouteImport } from './routes/country-performance'
@@ -26,6 +27,11 @@ const StaffPerformanceRoute = StaffPerformanceRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsRoute = ReportsRouteImport.update({
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/staff-performance': typeof StaffPerformanceRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/staff-performance': typeof StaffPerformanceRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/staff-performance': typeof StaffPerformanceRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/country-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/staff-performance'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/country-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/staff-performance'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/country-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/staff-performance'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   CountryPerformanceRoute: typeof CountryPerformanceRoute
   CustomersRoute: typeof CustomersRoute
   ReportsRoute: typeof ReportsRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   StaffPerformanceRoute: typeof StaffPerformanceRoute
 }
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports': {
@@ -202,9 +222,20 @@ const rootRouteChildren: RootRouteChildren = {
   CountryPerformanceRoute: CountryPerformanceRoute,
   CustomersRoute: CustomersRoute,
   ReportsRoute: ReportsRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   StaffPerformanceRoute: StaffPerformanceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
