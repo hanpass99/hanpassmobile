@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Search, UserCheck, Plus, Phone, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import * as XLSX from "xlsx";
+import { Search, UserCheck, Plus, Phone, RefreshCw, Upload } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -96,6 +97,62 @@ function CustomersPage() {
     load();
   };
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+
+  const onUpload = async (file: File) => {
+    setImporting(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+
+      const norm = (v: any) => String(v ?? "").trim();
+      const findKey = (row: Record<string, any>, ...keys: string[]) => {
+        const lower = Object.keys(row).reduce<Record<string, string>>((acc, k) => {
+          acc[k.toLowerCase().trim()] = k; return acc;
+        }, {});
+        for (const k of keys) { if (lower[k.toLowerCase()]) return row[lower[k.toLowerCase()]]; }
+        return "";
+      };
+
+      const countryByCode = new Map(countries.map((c) => [c.code.toUpperCase(), c.id]));
+      const countryByName = new Map(countries.map((c) => [c.name_ko, c.id]));
+      const channelByName = new Map(channels.map((c) => [c.name, c.id]));
+
+      const payload = json
+        .map((row) => {
+          const name = norm(findKey(row, "name", "이름", "고객명"));
+          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처"));
+          if (!name || !phone) return null;
+          const email = norm(findKey(row, "email", "이메일")) || null;
+          const cc = norm(findKey(row, "country", "국가", "국가코드"));
+          const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
+          const chName = norm(findKey(row, "channel", "채널"));
+          const channel_id = channelByName.get(chName) ?? null;
+          const notes = norm(findKey(row, "notes", "메모", "비고")) || null;
+          return { name, phone, email, country_id, channel_id, notes };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null);
+
+      if (!payload.length) {
+        toast.error("유효한 데이터가 없습니다. (필수 컬럼: 이름, 전화번호)");
+        return;
+      }
+
+      const { error } = await supabase.from("customers").insert(payload);
+      if (error) { toast.error(`업로드 실패: ${error.message}`); return; }
+      toast.success(`${payload.length}명의 고객이 추가되었습니다`);
+      load();
+    } catch (e: any) {
+      toast.error(`엑셀 파싱 실패: ${e.message}`);
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -107,9 +164,21 @@ function CustomersPage() {
               <RefreshCw className="mr-2 h-4 w-4" /> 새로고침
             </Button>
             {isAdmin && (
-              <Button size="sm" onClick={() => setShowAdd(true)}>
-                <Plus className="mr-2 h-4 w-4" /> 고객 추가
-              </Button>
+              <>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
+                />
+                <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
+                  <Upload className="mr-2 h-4 w-4" /> {importing ? "업로드 중..." : "엑셀 업로드"}
+                </Button>
+                <Button size="sm" onClick={() => setShowAdd(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> 고객 추가
+                </Button>
+              </>
             )}
           </>
         }
