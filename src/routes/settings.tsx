@@ -141,7 +141,39 @@ function Settings() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="설정" description="직원 계정 및 월 목표 관리" />
+      <PageHeader title="설정" description="내 계정 · 직원 계정 · 월 목표 관리" />
+
+      {/* 내 계정 정보 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>내 계정 정보</CardTitle>
+          <CardDescription>현재 로그인한 사용자 정보</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-lg border border-border/60 p-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Mail className="h-3.5 w-3.5" /> 이메일 (아이디)
+              </div>
+              <div className="mt-1 truncate text-sm font-semibold">{user?.email ?? "-"}</div>
+            </div>
+            <div className="rounded-lg border border-border/60 p-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <UserCheck className="h-3.5 w-3.5" /> 권한
+              </div>
+              <div className="mt-1 text-sm font-semibold">{isAdmin ? "관리자" : "직원"}</div>
+            </div>
+            <div className="rounded-lg border border-border/60 p-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" /> 최근 접속 시간
+              </div>
+              <div className="mt-1 text-sm font-semibold">
+                {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString("ko-KR") : "-"}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {!isAdmin && (
         <Card className="border-destructive/50">
