@@ -332,6 +332,19 @@ function CustomersPage() {
 
   // === 풀별 컬럼 렌더러 ===
   const renderTable = (p: CustomerPool) => {
+    const CheckHead = isAdmin ? (
+      <TableHead className="w-10">
+        <Checkbox checked={allChecked} onCheckedChange={toggleAll} aria-label="select all" />
+      </TableHead>
+    ) : null;
+    const CheckCell = ({ c }: { c: CustomerRow }) =>
+      isAdmin ? (
+        <TableCell className="w-10">
+          <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="select row" />
+        </TableCell>
+      ) : null;
+    const extraCols = isAdmin ? 1 : 0;
+
     const renderActions = (c: CustomerRow) => (
       <TableCell className="text-right whitespace-nowrap">
         <Button size="sm" variant="ghost" onClick={() => setMemoTarget(c)}>
