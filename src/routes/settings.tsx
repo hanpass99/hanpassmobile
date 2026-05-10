@@ -33,6 +33,8 @@ type Row = {
   country_id: string | null;
   call_target: number;
   activation_target: number;
+  email: string | null;
+  last_sign_in_at: string | null;
 };
 
 const now = new Date();
@@ -68,15 +70,21 @@ function Settings() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }] = await Promise.all([
+    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, activityRes] = await Promise.all([
       supabase.from("profiles").select("id, display_name, department, is_active, country_id"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
       supabase.from("countries").select("id, code, name_ko").order("code"),
+      isAdmin
+        ? supabase.functions.invoke("admin-list-staff-activity")
+        : Promise.resolve({ data: { users: [] }, error: null } as any),
     ]);
+    const activityList: { id: string; email: string | null; last_sign_in_at: string | null }[] =
+      (activityRes as any)?.data?.users ?? [];
     const merged: Row[] = (profiles ?? []).map((p: any) => {
       const r = roles?.find((x) => x.user_id === p.id);
       const t = targets?.find((x) => x.user_id === p.id);
+      const a = activityList.find((x) => x.id === p.id);
       return {
         id: p.id,
         display_name: p.display_name,
@@ -86,6 +94,8 @@ function Settings() {
         country_id: p.country_id ?? null,
         call_target: t?.call_target ?? 0,
         activation_target: t?.activation_target ?? 0,
+        email: a?.email ?? null,
+        last_sign_in_at: a?.last_sign_in_at ?? null,
       };
     });
     setRows(merged);
@@ -93,7 +103,7 @@ function Settings() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [isAdmin]);
 
   const saveTarget = async (r: Row) => {
     const { error } = await supabase.from("targets").upsert(
@@ -207,6 +217,8 @@ function Settings() {
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead>이름</TableHead>
+                <TableHead>이메일</TableHead>
+                <TableHead>최근 접속</TableHead>
                 <TableHead>부서</TableHead>
                 <TableHead>역할</TableHead>
                 <TableHead>담당 국가</TableHead>
@@ -222,6 +234,14 @@ function Settings() {
                   <TableCell className="font-medium">
                     {r.display_name}
                     {r.id === user?.id && <span className="ml-2 text-xs text-muted-foreground">(나)</span>}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{r.email ?? "-"}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">
+                    {r.last_sign_in_at ? (
+                      <span className="text-foreground">{new Date(r.last_sign_in_at).toLocaleString("ko-KR")}</span>
+                    ) : (
+                      <span className="text-muted-foreground">미접속</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.department ?? "-"}</TableCell>
                   <TableCell>
@@ -312,7 +332,7 @@ function Settings() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">직원이 없습니다.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-8">직원이 없습니다.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

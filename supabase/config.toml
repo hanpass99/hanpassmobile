@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.admin-reset-staff-password]
 verify_jwt = true
+
+[functions.admin-list-staff-activity]
+verify_jwt = true
