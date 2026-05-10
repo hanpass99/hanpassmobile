@@ -135,6 +135,11 @@ function CustomersPage() {
         if (staffF === "__none__") { if (r.assigned_to) return false; }
         else if (r.assigned_to !== staffF) return false;
       }
+      if (dateFrom || dateTo) {
+        const t = new Date(r.imported_at).getTime();
+        if (dateFrom && t < new Date(dateFrom.setHours(0, 0, 0, 0)).getTime()) return false;
+        if (dateTo && t > new Date(new Date(dateTo).setHours(23, 59, 59, 999)).getTime()) return false;
+      }
       return true;
     });
 
