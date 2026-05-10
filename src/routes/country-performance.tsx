@@ -5,9 +5,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { CUSTOMER_STATUSES, STATUS_LABEL, type CustomerStatus } from "@/lib/labels";
+import { CUSTOMER_STATUSES, type CustomerStatus } from "@/lib/labels";
 
 export const Route = createFileRoute("/country-performance")({
   head: () => ({ meta: [{ title: "국가별 성과 — Hanpass OB CRM" }] }),
@@ -20,6 +21,7 @@ type Row = { code: string; name: string; total: number; counts: Counts };
 const emptyCounts = (): Counts => Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
 function CountryPerf() {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,16 +49,16 @@ function CountryPerf() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="국가별 성과" description={loading ? "로드 중..." : "국가별 고객 상태 통계"} />
+      <PageHeader title={t("countryPerf.title")} description={loading ? t("common.loading") : t("countryPerf.subtitle")} />
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead>국가</TableHead>
-                <TableHead className="text-right">전체 콜수</TableHead>
+                <TableHead>{t("countryPerf.country")}</TableHead>
+                <TableHead className="text-right">{t("dashboard.totalCalls")}</TableHead>
                 {CUSTOMER_STATUSES.map((s) => (
-                  <TableHead key={s} className="text-right whitespace-nowrap">{STATUS_LABEL[s]}</TableHead>
+                  <TableHead key={s} className="text-right whitespace-nowrap">{t(`status.${s}`)}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>

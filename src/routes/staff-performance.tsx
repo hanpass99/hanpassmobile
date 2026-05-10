@@ -9,11 +9,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { CalendarIcon, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { CUSTOMER_STATUSES, STATUS_LABEL, type CustomerStatus } from "@/lib/labels";
+import { CUSTOMER_STATUSES, type CustomerStatus } from "@/lib/labels";
 
 export const Route = createFileRoute("/staff-performance")({
   head: () => ({ meta: [{ title: "직원 성과 — Hanpass OB CRM" }] }),
@@ -21,21 +22,23 @@ export const Route = createFileRoute("/staff-performance")({
 });
 
 type Counts = Record<CustomerStatus, number>;
+type TierKey = "diamond" | "platinum" | "gold" | "silver" | "bronze" | "rookie";
+type Tier = { key: TierKey; cls: string };
 type Row = { id: string; name: string; total: number; counts: Counts; tier: Tier };
 
-type Tier = { label: string; cls: string };
 function tierFor(activated: number): Tier {
-  if (activated >= 50) return { label: "다이아", cls: "bg-info/15 text-info" };
-  if (activated >= 30) return { label: "플래티넘", cls: "bg-primary-soft text-primary" };
-  if (activated >= 15) return { label: "골드", cls: "bg-warning/20 text-warning-foreground" };
-  if (activated >= 5)  return { label: "실버", cls: "bg-muted text-foreground" };
-  if (activated >= 1)  return { label: "브론즈", cls: "bg-destructive/10 text-destructive" };
-  return { label: "신입", cls: "bg-muted text-muted-foreground" };
+  if (activated >= 50) return { key: "diamond", cls: "bg-info/15 text-info" };
+  if (activated >= 30) return { key: "platinum", cls: "bg-primary-soft text-primary" };
+  if (activated >= 15) return { key: "gold", cls: "bg-warning/20 text-warning-foreground" };
+  if (activated >= 5)  return { key: "silver", cls: "bg-muted text-foreground" };
+  if (activated >= 1)  return { key: "bronze", cls: "bg-destructive/10 text-destructive" };
+  return { key: "rookie", cls: "bg-muted text-muted-foreground" };
 }
 
 const emptyCounts = (): Counts => Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
 function StaffPerf() {
+  const { t } = useTranslation();
   const today = new Date();
   const start = new Date(today.getFullYear(), today.getMonth(), 1);
   const [from, setFrom] = useState<Date>(start);
@@ -73,20 +76,20 @@ function StaffPerf() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="직원 랭킹" description={loading ? "로드 중..." : "관리자 제외 · 고객 상태 기준 실적"} />
+      <PageHeader title={t("staffPerf.title")} description={loading ? t("common.loading") : t("staffPerf.subtitle")} />
 
       <Card>
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
           <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">시작일</div>
+            <div className="text-xs font-medium text-muted-foreground">{t("common.startDate")}</div>
             <DatePick value={from} onChange={setFrom} />
           </div>
           <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">종료일</div>
+            <div className="text-xs font-medium text-muted-foreground">{t("common.endDate")}</div>
             <DatePick value={to} onChange={setTo} />
           </div>
           <Button variant="outline" size="sm" onClick={() => { setFrom(start); setTo(today); }}>
-            이번 달
+            {t("common.thisMonth")}
           </Button>
         </CardContent>
       </Card>
@@ -96,12 +99,12 @@ function StaffPerf() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="w-12">순위</TableHead>
-                <TableHead>직원</TableHead>
-                <TableHead>등급</TableHead>
-                <TableHead className="text-right">전체 콜수</TableHead>
+                <TableHead className="w-12">{t("staffPerf.rank")}</TableHead>
+                <TableHead>{t("staffPerf.staff")}</TableHead>
+                <TableHead>{t("staffPerf.tier")}</TableHead>
+                <TableHead className="text-right">{t("dashboard.totalCalls")}</TableHead>
                 {CUSTOMER_STATUSES.map((s) => (
-                  <TableHead key={s} className="text-right whitespace-nowrap">{STATUS_LABEL[s]}</TableHead>
+                  <TableHead key={s} className="text-right whitespace-nowrap">{t(`status.${s}`)}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>
@@ -124,7 +127,7 @@ function StaffPerf() {
                   </TableCell>
                   <TableCell className="font-semibold whitespace-nowrap">{u.name}</TableCell>
                   <TableCell>
-                    <Badge className={cn("border-transparent", u.tier.cls)}>{u.tier.label}</Badge>
+                    <Badge className={cn("border-transparent", u.tier.cls)}>{t(`staffPerf.${u.tier.key}`)}</Badge>
                   </TableCell>
                   <TableCell className="text-right font-bold">{u.total}</TableCell>
                   {CUSTOMER_STATUSES.map((s) => (
@@ -136,7 +139,7 @@ function StaffPerf() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={4 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">직원이 없습니다.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -145,14 +148,14 @@ function StaffPerf() {
 
       <Card>
         <CardContent className="p-4">
-          <div className="text-sm font-semibold mb-2">개통 완료 등급 기준</div>
+          <div className="text-sm font-semibold mb-2">{t("staffPerf.tierTitle")}</div>
           <div className="flex flex-wrap gap-2 text-xs">
-            <Badge className="bg-info/15 text-info border-transparent">다이아 50+</Badge>
-            <Badge className="bg-primary-soft text-primary border-transparent">플래티넘 30+</Badge>
-            <Badge className="bg-warning/20 text-warning-foreground border-transparent">골드 15+</Badge>
-            <Badge className="bg-muted text-foreground border-transparent">실버 5+</Badge>
-            <Badge className="bg-destructive/10 text-destructive border-transparent">브론즈 1+</Badge>
-            <Badge className="bg-muted text-muted-foreground border-transparent">신입 0</Badge>
+            <Badge className="bg-info/15 text-info border-transparent">{t("staffPerf.diamond")} 50+</Badge>
+            <Badge className="bg-primary-soft text-primary border-transparent">{t("staffPerf.platinum")} 30+</Badge>
+            <Badge className="bg-warning/20 text-warning-foreground border-transparent">{t("staffPerf.gold")} 15+</Badge>
+            <Badge className="bg-muted text-foreground border-transparent">{t("staffPerf.silver")} 5+</Badge>
+            <Badge className="bg-destructive/10 text-destructive border-transparent">{t("staffPerf.bronze")} 1+</Badge>
+            <Badge className="bg-muted text-muted-foreground border-transparent">{t("staffPerf.rookie")} 0</Badge>
           </div>
         </CardContent>
       </Card>
