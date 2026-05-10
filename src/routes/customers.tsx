@@ -194,7 +194,33 @@ function CustomersPage() {
     load();
   };
 
-  // === 엑셀 / CSV 업로드 ===
+  const bulkDelete = async () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    const { error } = await supabase.from("customers").delete().in("id", ids);
+    setBulkOpen(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${ids.length}명 삭제됨`);
+    setSelected(new Set());
+    load();
+  };
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  };
+  const toggleAll = () => {
+    setSelected((prev) => {
+      const all = filtered.map((r) => r.id);
+      const allChecked = all.every((id) => prev.has(id));
+      if (allChecked) return new Set();
+      return new Set(all);
+    });
+  };
+  const allChecked = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
 
