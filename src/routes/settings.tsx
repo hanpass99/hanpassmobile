@@ -291,6 +291,11 @@ function Settings() {
                       <>
                         <Button size="sm" variant="ghost" onClick={() => saveTarget(r)}>저장</Button>
                         {r.id !== user?.id && (
+                          <Button size="sm" variant="ghost" onClick={() => setResetTarget(r)}>
+                            <KeyRound className="mr-1 h-3.5 w-3.5" /> 초기화
+                          </Button>
+                        )}
+                        {r.id !== user?.id && (
                           r.is_active ? (
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setActive(r, false)}>
                               <UserX className="mr-1 h-3.5 w-3.5" /> 비활성
