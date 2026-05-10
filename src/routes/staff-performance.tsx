@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,17 +13,27 @@ import { format } from "date-fns";
 import { CalendarIcon, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { CUSTOMER_STATUSES, STATUS_LABEL, type CustomerStatus } from "@/lib/labels";
 
 export const Route = createFileRoute("/staff-performance")({
   head: () => ({ meta: [{ title: "직원 성과 — Hanpass OB CRM" }] }),
   component: StaffPerf,
 });
 
-type Row = {
-  id: string; name: string;
-  totalCalls: number; success: number; failed: number; missed: number; recall: number; activated: number;
-  successRate: number; activationRate: number; target: number; achievement: number;
-};
+type Counts = Record<CustomerStatus, number>;
+type Row = { id: string; name: string; total: number; counts: Counts; tier: Tier };
+
+type Tier = { label: string; cls: string };
+function tierFor(activated: number): Tier {
+  if (activated >= 50) return { label: "다이아", cls: "bg-info/15 text-info" };
+  if (activated >= 30) return { label: "플래티넘", cls: "bg-primary-soft text-primary" };
+  if (activated >= 15) return { label: "골드", cls: "bg-warning/20 text-warning-foreground" };
+  if (activated >= 5)  return { label: "실버", cls: "bg-muted text-foreground" };
+  if (activated >= 1)  return { label: "브론즈", cls: "bg-destructive/10 text-destructive" };
+  return { label: "신입", cls: "bg-muted text-muted-foreground" };
+}
+
+const emptyCounts = (): Counts => Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
 function StaffPerf() {
   const today = new Date();
@@ -36,34 +46,26 @@ function StaffPerf() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const Y = from.getFullYear(); const M = from.getMonth() + 1;
       const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
       const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
-      const [sf, lg, tg, rl] = await Promise.all([
+      const [sf, cu, rl] = await Promise.all([
         supabase.from("profiles").select("id, display_name").eq("is_active", true),
-        supabase.from("call_logs").select("staff_id, result, is_activation").gte("call_date", fromIso).lte("call_date", toIso),
-        supabase.from("targets").select("user_id, activation_target").eq("year", Y).eq("month", M),
+        supabase.from("customers").select("assigned_to, status, updated_at").gte("updated_at", fromIso).lte("updated_at", toIso),
         supabase.from("user_roles").select("user_id, role").eq("role", "staff"),
       ]);
       const staffIds = new Set((rl.data ?? []).map((r: any) => r.user_id));
       const staffOnly = (sf.data ?? []).filter((p) => staffIds.has(p.id));
       const out: Row[] = staffOnly.map((u) => {
-        const ul = (lg.data ?? []).filter((l) => l.staff_id === u.id);
-        const totalCalls = ul.length;
-        const success = ul.filter((l) => l.result === "interested" || l.result === "activated").length;
-        const failed = ul.filter((l) => l.result === "failed" || l.result === "wrong_number").length;
-        const missed = ul.filter((l) => l.result === "no_answer").length;
-        const recall = ul.filter((l) => l.result === "callback").length;
-        const activated = ul.filter((l) => l.is_activation).length;
-        const target = (tg.data ?? []).find((t) => t.user_id === u.id)?.activation_target ?? 0;
-        return {
-          id: u.id, name: u.display_name,
-          totalCalls, success, failed, missed, recall, activated,
-          successRate: totalCalls ? (success / totalCalls) * 100 : 0,
-          activationRate: totalCalls ? (activated / totalCalls) * 100 : 0,
-          target, achievement: target ? (activated / target) * 100 : 0,
-        };
-      }).sort((a, b) => b.activated - a.activated || b.totalCalls - a.totalCalls);
+        const counts = emptyCounts();
+        let total = 0;
+        for (const c of cu.data ?? []) {
+          if (c.assigned_to !== u.id) continue;
+          const s = c.status as CustomerStatus;
+          if (counts[s] !== undefined) counts[s]++;
+          total++;
+        }
+        return { id: u.id, name: u.display_name, total, counts, tier: tierFor(counts.activated) };
+      }).sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
       setRows(out);
       setLoading(false);
     })();
@@ -71,7 +73,7 @@ function StaffPerf() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="직원 랭킹" description={loading ? "로드 중..." : "관리자 제외, 선택 기간 콜·개통 실적"} />
+      <PageHeader title="직원 랭킹" description={loading ? "로드 중..." : "관리자 제외 · 고객 상태 기준 실적"} />
 
       <Card>
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
@@ -96,14 +98,11 @@ function StaffPerf() {
               <TableRow className="bg-muted/40">
                 <TableHead className="w-12">순위</TableHead>
                 <TableHead>직원</TableHead>
-                <TableHead className="text-right">전체 콜</TableHead>
-                <TableHead className="text-right">개통 완료</TableHead>
-                <TableHead className="text-right">성공</TableHead>
-                <TableHead className="text-right">부재</TableHead>
-                <TableHead className="text-right">재연락</TableHead>
-                <TableHead className="text-right">성공률</TableHead>
-                <TableHead className="text-right">개통률</TableHead>
-                <TableHead className="min-w-[180px]">월 목표 달성</TableHead>
+                <TableHead>등급</TableHead>
+                <TableHead className="text-right">전체 콜수</TableHead>
+                {CUSTOMER_STATUSES.map((s) => (
+                  <TableHead key={s} className="text-right whitespace-nowrap">{STATUS_LABEL[s]}</TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -123,29 +122,38 @@ function StaffPerf() {
                       <span className="text-sm text-muted-foreground">{i + 1}</span>
                     )}
                   </TableCell>
-                  <TableCell className="font-semibold">{u.name}</TableCell>
-                  <TableCell className="text-right font-medium">{u.totalCalls}</TableCell>
-                  <TableCell className="text-right font-bold text-primary">{u.activated}</TableCell>
-                  <TableCell className="text-right text-success">{u.success}</TableCell>
-                  <TableCell className="text-right">{u.missed}</TableCell>
-                  <TableCell className="text-right">{u.recall}</TableCell>
-                  <TableCell className="text-right">{u.successRate.toFixed(1)}%</TableCell>
-                  <TableCell className="text-right">{u.activationRate.toFixed(1)}%</TableCell>
+                  <TableCell className="font-semibold whitespace-nowrap">{u.name}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={Math.min(100, u.achievement)} className="h-2 flex-1" />
-                      <span className="w-20 text-right text-xs font-medium">
-                        {u.activated}/{u.target || "—"} {u.target ? `(${u.achievement.toFixed(0)}%)` : ""}
-                      </span>
-                    </div>
+                    <Badge className={cn("border-transparent", u.tier.cls)}>{u.tier.label}</Badge>
                   </TableCell>
+                  <TableCell className="text-right font-bold">{u.total}</TableCell>
+                  {CUSTOMER_STATUSES.map((s) => (
+                    <TableCell key={s} className={cn(
+                      "text-right",
+                      s === "activated" && "font-bold text-primary",
+                    )}>{u.counts[s]}</TableCell>
+                  ))}
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={10} className="text-center py-8 text-sm text-muted-foreground">직원이 없습니다.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">직원이 없습니다.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="text-sm font-semibold mb-2">개통 완료 등급 기준</div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <Badge className="bg-info/15 text-info border-transparent">다이아 50+</Badge>
+            <Badge className="bg-primary-soft text-primary border-transparent">플래티넘 30+</Badge>
+            <Badge className="bg-warning/20 text-warning-foreground border-transparent">골드 15+</Badge>
+            <Badge className="bg-muted text-foreground border-transparent">실버 5+</Badge>
+            <Badge className="bg-destructive/10 text-destructive border-transparent">브론즈 1+</Badge>
+            <Badge className="bg-muted text-muted-foreground border-transparent">신입 0</Badge>
+          </div>
         </CardContent>
       </Card>
     </div>
