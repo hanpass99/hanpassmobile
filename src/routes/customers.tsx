@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
-  StickyNote, Trash2,
+  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,6 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
@@ -51,7 +50,16 @@ type CustomerRow = {
   signup_date: string;
   imported_at: string;
   notes: string | null;
+  activation_date: string | null;
+  carrier_plan: string | null;
+  charge_phone: string | null;
+  charge_amount: number | null;
+  charge_date: string | null;
+  application_date: string | null;
+  requested_plan: string | null;
 };
+
+type SortDir = "asc" | "desc" | null;
 
 function CustomersPage() {
   const { isAdmin } = useAuth();
@@ -62,12 +70,13 @@ function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<CustomerPool>("existing");
 
-  // 필터 (Pool별 공통)
   const [search, setSearch] = useState("");
   const [country, setCountry] = useState("all");
   const [statusF, setStatusF] = useState<"all" | CustomerStatus>("all");
+  const [staffF, setStaffF] = useState("all");
+  const [sortKey, setSortKey] = useState<string>("imported_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  // 메모/삭제 다이얼로그
   const [memoTarget, setMemoTarget] = useState<CustomerRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -90,18 +99,73 @@ function CustomersPage() {
 
   useEffect(() => { load(); }, []);
 
+  const staffById = useMemo(() => {
+    const m = new Map<string, string>();
+    staff.forEach((s) => m.set(s.id, s.display_name));
+    return m;
+  }, [staff]);
+  const countryById = useMemo(() => {
+    const m = new Map<string, Country>();
+    countries.forEach((c) => m.set(c.id, c));
+    return m;
+  }, [countries]);
+
   const poolRows = useMemo(() => rows.filter((r) => r.pool === tab), [rows, tab]);
 
-  const filtered = useMemo(() => poolRows.filter((r) => {
-    if (search && !`${r.name} ${r.phone} ${r.email ?? ""}`.toLowerCase().includes(search.toLowerCase())) return false;
-    if (country !== "all" && r.country_id !== country) return false;
-    if (statusF !== "all" && r.status !== statusF) return false;
-    return true;
-  }), [poolRows, search, country, statusF]);
+  const filtered = useMemo(() => {
+    const out = poolRows.filter((r) => {
+      if (search) {
+        const q = search.toLowerCase();
+        const staffName = (r.assigned_to && staffById.get(r.assigned_to)) || "";
+        const hay = `${r.name} ${r.phone} ${r.email ?? ""} ${r.charge_phone ?? ""} ${staffName}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (country !== "all" && r.country_id !== country) return false;
+      if (statusF !== "all" && r.status !== statusF) return false;
+      if (staffF !== "all") {
+        if (staffF === "__none__") { if (r.assigned_to) return false; }
+        else if (r.assigned_to !== staffF) return false;
+      }
+      return true;
+    });
 
-  // 원클릭 상태 변경 (트리거가 자동 담당자 지정)
+    if (sortKey && sortDir) {
+      const dir = sortDir === "asc" ? 1 : -1;
+      out.sort((a: any, b: any) => {
+        let av = a[sortKey]; let bv = b[sortKey];
+        if (sortKey === "country") { av = countryById.get(a.country_id ?? "")?.code ?? ""; bv = countryById.get(b.country_id ?? "")?.code ?? ""; }
+        if (sortKey === "assigned") { av = staffById.get(a.assigned_to ?? "") ?? ""; bv = staffById.get(b.assigned_to ?? "") ?? ""; }
+        if (sortKey === "status") { av = STATUS_LABEL[a.status as CustomerStatus]; bv = STATUS_LABEL[b.status as CustomerStatus]; }
+        av = av ?? ""; bv = bv ?? "";
+        if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+        return String(av).localeCompare(String(bv)) * dir;
+      });
+    }
+    return out;
+  }, [poolRows, search, country, statusF, staffF, sortKey, sortDir, staffById, countryById]);
+
+  const toggleSort = (key: string) => {
+    if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
+    if (sortDir === "asc") setSortDir("desc");
+    else if (sortDir === "desc") { setSortKey(""); setSortDir(null); }
+    else setSortDir("asc");
+  };
+
+  const SortHead = ({ k, children, className = "" }: { k: string; children: React.ReactNode; className?: string }) => {
+    const Icon = sortKey === k ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
+    return (
+      <TableHead className={className}>
+        <button type="button" onClick={() => toggleSort(k)} className="inline-flex items-center gap-1 font-medium hover:text-foreground">
+          {children} <Icon className="h-3 w-3 opacity-50" />
+        </button>
+      </TableHead>
+    );
+  };
+
   const changeStatus = async (id: string, status: CustomerStatus) => {
-    const { error } = await supabase.from("customers").update({ status }).eq("id", id);
+    const patch: Record<string, unknown> = { status };
+    if (status === "activated") patch.activation_date = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("customers").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(`상태 변경: ${STATUS_LABEL[status]}`);
     load();
@@ -138,7 +202,6 @@ function CustomersPage() {
       };
       const countryByCode = new Map(countries.map((c) => [c.code.toUpperCase(), c.id]));
       const countryByName = new Map(countries.map((c) => [c.name_ko, c.id]));
-      const channelByName = new Map(channels.map((c) => [c.name, c.id]));
 
       const seenPhones = new Set<string>();
       const existingPhones = new Set(rows.filter((r) => r.pool === tab).map((r) => r.phone));
@@ -147,18 +210,27 @@ function CustomersPage() {
       const payload = json
         .map((row) => {
           const name = norm(findKey(row, "name", "이름", "고객명"));
-          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처"));
+          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호"));
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
           if (existingPhones.has(phone)) { dupInDb++; return null; }
           seenPhones.add(phone);
-          const email = norm(findKey(row, "email", "이메일")) || null;
-          const cc = norm(findKey(row, "country", "국가", "국가코드"));
+          const cc = norm(findKey(row, "country", "국가", "국적"));
           const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
-          const chName = norm(findKey(row, "channel", "채널"));
-          const channel_id = channelByName.get(chName) ?? null;
           const notes = norm(findKey(row, "notes", "메모", "비고")) || null;
-          return { name, phone, email, country_id, channel_id, notes, pool: tab };
+          const carrier_plan = norm(findKey(row, "요금제", "plan", "carrier_plan")) || null;
+          const activation_date = norm(findKey(row, "개통일", "activation_date")) || null;
+          const charge_amount_raw = norm(findKey(row, "충전요금", "charge_amount", "충전금액"));
+          const charge_amount = charge_amount_raw ? Number(charge_amount_raw.replace(/[^\d.]/g, "")) || null : null;
+          const charge_date = norm(findKey(row, "충전일", "charge_date")) || null;
+          const application_date = norm(findKey(row, "신청일", "application_date")) || null;
+          const requested_plan = norm(findKey(row, "신청요금제", "requested_plan")) || null;
+          return {
+            name, phone, country_id, notes, pool: tab,
+            carrier_plan, activation_date, charge_amount, charge_date,
+            charge_phone: tab === "prepaid" ? phone : null,
+            application_date, requested_plan,
+          };
         })
         .filter((x): x is NonNullable<typeof x> => x !== null);
 
@@ -182,16 +254,227 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
-    const ws = XLSX.utils.json_to_sheet([
-      { 이름: "홍길동", 전화번호: "010-1234-5678", 이메일: "test@example.com", 국가: "KR", 채널: POOL_LABEL[tab], 메모: "" },
-      { 이름: "김철수", 전화번호: "010-2222-3333", 이메일: "", 국가: "VN", 채널: "", 메모: "" },
-    ]);
+    let sample: Record<string, unknown>[] = [];
+    if (tab === "existing") {
+      sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
+    } else if (tab === "new_signup") {
+      sample = [{ 고객명: "Nguyen", 전화번호: "010-1111-2222", 국적: "VN", 가입일: "2026-05-01", 메모: "" }];
+    } else if (tab === "prepaid") {
+      sample = [{ 고객명: "Kumar", 충전번호: "010-3333-4444", 충전요금: 30000, 충전일: "2026-05-05", 국적: "IN", 메모: "" }];
+    } else {
+      sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
+    }
+    const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Customers");
     XLSX.writeFile(wb, `샘플_${POOL_SHORT[tab]}.xlsx`);
   };
 
   const poolCount = (p: CustomerPool) => rows.filter((r) => r.pool === p).length;
+
+  // 담당자별 상태 통계 (현재 Pool, 현재 필터 적용 후)
+  const staffStats = useMemo(() => {
+    const map = new Map<string, { name: string; total: number; activated: number; in_progress: number; }>();
+    filtered.forEach((r) => {
+      const id = r.assigned_to ?? "__none__";
+      const name = id === "__none__" ? "미배정" : (staffById.get(id) ?? "—");
+      const cur = map.get(id) ?? { name, total: 0, activated: 0, in_progress: 0 };
+      cur.total += 1;
+      if (r.status === "activated") cur.activated += 1;
+      if (r.status === "in_progress") cur.in_progress += 1;
+      map.set(id, cur);
+    });
+    return Array.from(map.entries()).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.total - a.total);
+  }, [filtered, staffById]);
+
+  const fmtDate = (s: string | null | undefined) =>
+    s ? new Date(s).toLocaleDateString("ko-KR") : "-";
+
+  // === 풀별 컬럼 렌더러 ===
+  const renderTable = (p: CustomerPool) => {
+    const renderActions = (c: CustomerRow) => (
+      <TableCell className="text-right whitespace-nowrap">
+        <Button size="sm" variant="ghost" onClick={() => setMemoTarget(c)}>
+          <StickyNote className="mr-1 h-3.5 w-3.5" /> 메모
+        </Button>
+        {isAdmin && (
+          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteId(c.id)}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </TableCell>
+    );
+
+    const StatusCell = ({ c }: { c: CustomerRow }) => (
+      <TableCell>
+        <Select value={c.status} onValueChange={(v) => changeStatus(c.id, v as CustomerStatus)}>
+          <SelectTrigger className={`h-8 w-[140px] border-0 ${STATUS_CLASS[c.status]} font-medium`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CUSTOMER_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+    );
+
+    const Assigned = ({ c }: { c: CustomerRow }) => (
+      <TableCell className="text-xs">
+        {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">미배정</span>}
+      </TableCell>
+    );
+
+    if (p === "existing") {
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              <SortHead k="name">고객명</SortHead>
+              <SortHead k="phone">전화번호</SortHead>
+              <SortHead k="activation_date">개통일</SortHead>
+              <SortHead k="carrier_plan">요금제</SortHead>
+              <SortHead k="country">국적</SortHead>
+              <SortHead k="assigned">담당자</SortHead>
+              <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              <SortHead k="imported_at">데이터 등록일</SortHead>
+              <TableHead>메모</TableHead>
+              <TableHead className="text-right">액션</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((c) => (
+              <TableRow key={c.id} className="hover:bg-muted/30">
+                <TableCell className="font-medium">{c.name}</TableCell>
+                <TableCell className="font-mono text-xs">{c.phone}</TableCell>
+                <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
+                <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
+                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                <Assigned c={c} />
+                <StatusCell c={c} />
+                <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
+                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                {renderActions(c)}
+              </TableRow>
+            ))}
+            {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+          </TableBody>
+        </Table>
+      );
+    }
+
+    if (p === "new_signup") {
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              <SortHead k="name">고객명</SortHead>
+              <SortHead k="phone">전화번호</SortHead>
+              <SortHead k="country">국적</SortHead>
+              <SortHead k="signup_date">가입일</SortHead>
+              <SortHead k="assigned">담당자</SortHead>
+              <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              <SortHead k="imported_at">데이터 등록일</SortHead>
+              <TableHead>메모</TableHead>
+              <TableHead className="text-right">액션</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((c) => (
+              <TableRow key={c.id} className="hover:bg-muted/30">
+                <TableCell className="font-medium">{c.name}</TableCell>
+                <TableCell className="font-mono text-xs">{c.phone}</TableCell>
+                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                <TableCell className="text-xs">{fmtDate(c.signup_date)}</TableCell>
+                <Assigned c={c} />
+                <StatusCell c={c} />
+                <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
+                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                {renderActions(c)}
+              </TableRow>
+            ))}
+            {filtered.length === 0 && <EmptyRow cols={9} loading={loading} pool={p} />}
+          </TableBody>
+        </Table>
+      );
+    }
+
+    if (p === "prepaid") {
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              <SortHead k="name">고객명</SortHead>
+              <SortHead k="phone">충전번호</SortHead>
+              <SortHead k="charge_amount">충전 요금</SortHead>
+              <SortHead k="charge_date">충전일</SortHead>
+              <SortHead k="country">국적</SortHead>
+              <SortHead k="assigned">담당자</SortHead>
+              <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              <SortHead k="imported_at">데이터 등록일</SortHead>
+              <TableHead>메모</TableHead>
+              <TableHead className="text-right">액션</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((c) => (
+              <TableRow key={c.id} className="hover:bg-muted/30">
+                <TableCell className="font-medium">{c.name}</TableCell>
+                <TableCell className="font-mono text-xs">{c.charge_phone ?? c.phone}</TableCell>
+                <TableCell className="text-xs">{c.charge_amount ? `₩${c.charge_amount.toLocaleString()}` : "-"}</TableCell>
+                <TableCell className="text-xs">{fmtDate(c.charge_date)}</TableCell>
+                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                <Assigned c={c} />
+                <StatusCell c={c} />
+                <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
+                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                {renderActions(c)}
+              </TableRow>
+            ))}
+            {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+          </TableBody>
+        </Table>
+      );
+    }
+
+    // activation_request
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/40">
+            <SortHead k="name">고객명</SortHead>
+            <SortHead k="phone">전화번호</SortHead>
+            <SortHead k="country">국적</SortHead>
+            <SortHead k="application_date">신청일</SortHead>
+            <SortHead k="requested_plan">신청 요금제</SortHead>
+            <SortHead k="assigned">담당자</SortHead>
+            <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+            <SortHead k="imported_at">데이터 등록일</SortHead>
+            <TableHead>메모</TableHead>
+            <TableHead className="text-right">액션</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filtered.map((c) => (
+            <TableRow key={c.id} className="hover:bg-muted/30">
+              <TableCell className="font-medium">{c.name}</TableCell>
+              <TableCell className="font-mono text-xs">{c.phone}</TableCell>
+              <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+              <TableCell className="text-xs">{fmtDate(c.application_date)}</TableCell>
+              <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
+              <Assigned c={c} />
+              <StatusCell c={c} />
+              <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
+              <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+              {renderActions(c)}
+            </TableRow>
+          ))}
+          {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+        </TableBody>
+      </Table>
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -242,11 +525,11 @@ function CustomersPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
                   <div className="relative md:col-span-2">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="이름 / 전화번호 / 이메일"
+                      placeholder="이름 / 전화 / 이메일 / 담당자명"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       className="pl-9"
@@ -266,71 +549,39 @@ function CustomersPage() {
                       {CUSTOMER_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  <Select value={staffF} onValueChange={setStaffF}>
+                    <SelectTrigger><SelectValue placeholder="담당자" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 담당자</SelectItem>
+                      <SelectItem value="__none__">미배정</SelectItem>
+                      {staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
 
+                {staffStats.length > 0 && (staffF === "all") && (
+                  <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                    <div className="mb-2 text-xs font-semibold text-muted-foreground">담당자별 현황 (현재 필터 기준)</div>
+                    <div className="flex flex-wrap gap-2">
+                      {staffStats.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setStaffF(s.id)}
+                          className="rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs hover:bg-muted"
+                        >
+                          <span className="font-medium">{s.name}</span>
+                          <span className="ml-2 text-muted-foreground">총 {s.total}</span>
+                          <span className="ml-1.5 text-success">개통 {s.activated}</span>
+                          <span className="ml-1.5 text-info">진행 {s.in_progress}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="overflow-x-auto rounded-lg border border-border/60">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/40">
-                        <TableHead>고객명</TableHead>
-                        <TableHead>전화번호</TableHead>
-                        <TableHead>국가</TableHead>
-                        <TableHead>담당자</TableHead>
-                        <TableHead className="min-w-[160px]">상태 (원클릭 변경)</TableHead>
-                        <TableHead>등록</TableHead>
-                        <TableHead className="text-right">액션</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtered.map((c) => {
-                        const co = countries.find((x) => x.id === c.country_id);
-                        const sf = staff.find((x) => x.id === c.assigned_to);
-                        return (
-                          <TableRow key={c.id} className="hover:bg-muted/30">
-                            <TableCell className="font-medium">{c.name}</TableCell>
-                            <TableCell className="font-mono text-xs">{c.phone}</TableCell>
-                            <TableCell className="text-xs">{co?.code ?? "-"}</TableCell>
-                            <TableCell className="text-xs">
-                              {sf?.display_name ?? <span className="text-muted-foreground">미배정</span>}
-                            </TableCell>
-                            <TableCell>
-                              <Select value={c.status} onValueChange={(v) => changeStatus(c.id, v as CustomerStatus)}>
-                                <SelectTrigger className={`h-8 w-[150px] border-0 ${STATUS_CLASS[c.status]} font-medium`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {CUSTOMER_STATUSES.map((s) => (
-                                    <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {new Date(c.imported_at).toLocaleDateString("ko-KR")}
-                            </TableCell>
-                            <TableCell className="text-right whitespace-nowrap">
-                              <Button size="sm" variant="ghost" onClick={() => setMemoTarget(c)}>
-                                <StickyNote className="mr-1 h-3.5 w-3.5" /> 메모
-                              </Button>
-                              {isAdmin && (
-                                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteId(c.id)}>
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      {filtered.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
-                            <FileSpreadsheet className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                            {loading ? "로드 중..." : `${POOL_LABEL[p]} Pool에 고객이 없습니다.`}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  {renderTable(p)}
                 </div>
               </CardContent>
             </Card>
@@ -338,10 +589,7 @@ function CustomersPage() {
         ))}
       </Tabs>
 
-      <MemoDialog
-        customer={memoTarget}
-        onClose={() => setMemoTarget(null)}
-      />
+      <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} />
       <AddCustomerDialog
         open={showAdd}
         onClose={() => setShowAdd(false)}
@@ -366,7 +614,18 @@ function CustomersPage() {
   );
 }
 
-// === 메모 다이얼로그 (히스토리 + 새 메모) ===
+function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; pool: CustomerPool }) {
+  return (
+    <TableRow>
+      <TableCell colSpan={cols} className="py-12 text-center text-sm text-muted-foreground">
+        <FileSpreadsheet className="mx-auto mb-2 h-8 w-8 opacity-50" />
+        {loading ? "로드 중..." : `${POOL_LABEL[pool]} Pool에 고객이 없습니다.`}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// === 메모 다이얼로그 ===
 type Note = { id: string; content: string; created_at: string; author_id: string };
 
 function MemoDialog({ customer, onClose }: { customer: CustomerRow | null; onClose: () => void }) {
