@@ -156,7 +156,7 @@ function CustomersPage() {
       });
     }
     return out;
-  }, [poolRows, search, country, statusF, staffF, sortKey, sortDir, staffById, countryById]);
+  }, [poolRows, search, country, statusF, staffF, sortKey, sortDir, staffById, countryById, dateFrom, dateTo]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
