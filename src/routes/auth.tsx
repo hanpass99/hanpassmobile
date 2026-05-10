@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
-import { Mail, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Mail, Lock, ArrowLeft, ShieldCheck, Languages } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -12,14 +13,10 @@ import logo from "@/assets/hanpass-logo.png";
 
 export const Route = createFileRoute("/auth")({ component: AuthPage });
 
-const loginSchema = z.object({
-  email: z.string().trim().email({ message: "올바른 이메일을 입력하세요" }).max(255),
-  password: z.string().min(6, { message: "6자 이상" }).max(100),
-});
-
 type Mode = "login" | "forgot";
 
 function AuthPage() {
+  const { t, i18n: i18nInst } = useTranslation();
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -27,6 +24,17 @@ function AuthPage() {
 
   if (loading) return null;
   if (session) return <Navigate to="/" />;
+
+  const loginSchema = z.object({
+    email: z.string().trim().email({ message: t("auth.invalidEmail") }).max(255),
+    password: z.string().min(6, { message: t("auth.pwdMin") }).max(100),
+  });
+
+  const switchLang = () => {
+    const next = i18nInst.language === "ko" ? "en" : "ko";
+    i18nInst.changeLanguage(next);
+    localStorage.setItem("lang", next);
+  };
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,8 +44,8 @@ function AuthPage() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setBusy(false);
-    if (error) return toast.error("로그인 실패: " + error.message);
-    toast.success("환영합니다");
+    if (error) return toast.error(t("auth.loginFailed", { msg: error.message }));
+    toast.success(t("auth.welcome"));
     navigate({ to: "/" });
   };
 
@@ -45,14 +53,14 @@ function AuthPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email") ?? "").trim();
-    if (!email) return toast.error("이메일을 입력하세요");
+    if (!email) return toast.error(t("auth.enterEmail"));
     setBusy(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("재설정 링크를 이메일로 발송했습니다");
+    toast.success(t("auth.linkSent"));
     setMode("login");
   };
 
@@ -76,42 +84,47 @@ function AuthPage() {
 
           <div className="relative space-y-5">
             <h1 className="text-3xl font-bold leading-tight tracking-tight">
-              아웃바운드 콜 운영의<br />새로운 표준
+              {t("auth.brandTagline")}
             </h1>
             <p className="text-sm leading-relaxed opacity-90">
-              고객 데이터 관리부터 실적 분석까지,<br />
-              한 곳에서 효율적으로 운영하세요.
+              {t("auth.brandSub")}
             </p>
             <div className="flex items-center gap-2 text-xs opacity-75">
               <ShieldCheck className="h-4 w-4" />
-              관리자 승인 계정만 접속 가능
+              {t("auth.adminOnly")}
             </div>
           </div>
 
-          <div className="relative text-xs opacity-60">© 2026 Hanpass Mobile. All rights reserved.</div>
+          <div className="relative text-xs opacity-60">{t("auth.rights")}</div>
         </div>
 
         {/* Right form panel */}
         <div className="p-8 md:p-12">
-          <div className="md:hidden mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-white p-1.5 shadow-sm border border-border/60">
-              <img src={logo} alt="Hanpass Mobile" className="h-full w-full object-contain" />
+          <div className="flex items-center justify-between mb-6 md:mb-4">
+            <div className="md:hidden flex items-center gap-3">
+              <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-white p-1.5 shadow-sm border border-border/60">
+                <img src={logo} alt="Hanpass Mobile" className="h-full w-full object-contain" />
+              </div>
+              <div>
+                <div className="font-bold">Hanpass Mobile</div>
+                <div className="text-[10px] text-muted-foreground">OB Call CRM</div>
+              </div>
             </div>
-            <div>
-              <div className="font-bold">Hanpass Mobile</div>
-              <div className="text-[10px] text-muted-foreground">OB Call CRM</div>
-            </div>
+            <Button variant="ghost" size="sm" onClick={switchLang} className="ml-auto h-8 gap-1.5 text-xs" title={t("common.language")}>
+              <Languages className="h-3.5 w-3.5" />
+              {i18nInst.language === "ko" ? "한국어" : "English"}
+            </Button>
           </div>
 
           {mode === "login" ? (
             <>
               <div className="mb-7">
-                <h2 className="text-2xl font-bold tracking-tight">관리자 로그인</h2>
-                <p className="mt-1.5 text-sm text-muted-foreground">계정 정보를 입력해 주세요</p>
+                <h2 className="text-2xl font-bold tracking-tight">{t("auth.loginTitle")}</h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">{t("auth.loginSub")}</p>
               </div>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email" className="text-xs font-semibold">이메일</Label>
+                  <Label htmlFor="login-email" className="text-xs font-semibold">{t("auth.email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input id="login-email" name="email" type="email" autoComplete="email" required className="h-11 pl-9" placeholder="you@example.com" />
@@ -119,9 +132,9 @@ function AuthPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password" className="text-xs font-semibold">비밀번호</Label>
+                    <Label htmlFor="login-password" className="text-xs font-semibold">{t("auth.password")}</Label>
                     <button type="button" onClick={() => setMode("forgot")} className="text-xs font-medium text-primary hover:underline">
-                      비밀번호 찾기
+                      {t("auth.forgot")}
                     </button>
                   </div>
                   <div className="relative">
@@ -130,34 +143,34 @@ function AuthPage() {
                   </div>
                 </div>
                 <Button type="submit" className="w-full h-11 text-sm font-semibold mt-2" disabled={busy}>
-                  {busy ? "처리 중..." : "로그인"}
+                  {busy ? t("common.processing") : t("auth.login")}
                 </Button>
                 <p className="text-center text-xs text-muted-foreground/80 pt-3 border-t border-border/40">
-                  계정 발급은 관리자에게 요청해 주세요.
+                  {t("auth.accountNote")}
                 </p>
               </form>
             </>
           ) : (
             <>
               <button onClick={() => setMode("login")} className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="h-3.5 w-3.5" /> 로그인으로
+                <ArrowLeft className="h-3.5 w-3.5" /> {t("auth.backToLogin")}
               </button>
               <div className="mb-7">
-                <h2 className="text-2xl font-bold tracking-tight">비밀번호 찾기</h2>
+                <h2 className="text-2xl font-bold tracking-tight">{t("auth.forgotTitle")}</h2>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  가입한 이메일로 재설정 링크를 보내드립니다.
+                  {t("auth.forgotSub")}
                 </p>
               </div>
               <form onSubmit={handleForgot} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="forgot-email" className="text-xs font-semibold">이메일</Label>
+                  <Label htmlFor="forgot-email" className="text-xs font-semibold">{t("auth.email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input id="forgot-email" name="email" type="email" required className="h-11 pl-9" placeholder="you@example.com" />
                   </div>
                 </div>
                 <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={busy}>
-                  {busy ? "발송 중..." : "재설정 링크 받기"}
+                  {busy ? t("auth.sending") : t("auth.sendLink")}
                 </Button>
               </form>
             </>
