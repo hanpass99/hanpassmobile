@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  PhoneCall, PhoneIncoming, PhoneOff, RotateCw, CheckCircle2, TrendingUp, Target, Award, CalendarIcon, Globe2,
+  PhoneCall, CheckCircle2, TrendingUp, Target, Award, CalendarIcon, Globe2,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend,
@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import type { CallResult, CustomerStatus } from "@/lib/labels";
+import { CUSTOMER_STATUSES, STATUS_LABEL, STATUS_CLASS, type CustomerStatus, type CallResult } from "@/lib/labels";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "대시보드 — Hanpass Mobile OB Call CRM" }] }),
@@ -28,7 +28,10 @@ export const Route = createFileRoute("/")({
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"];
 
 type CallLog = { call_date: string; result: CallResult; is_activation: boolean; staff_id: string; customer_id: string };
-type Customer = { id: string; status: CustomerStatus; country_id: string | null; channel_id: string | null; assigned_to: string | null };
+type Customer = {
+  id: string; status: CustomerStatus; country_id: string | null; channel_id: string | null;
+  assigned_to: string | null; updated_at: string; created_at: string; imported_at: string;
+};
 
 function Dashboard() {
   const today = new Date();
@@ -54,7 +57,7 @@ function Dashboard() {
       const Y = from.getFullYear(); const M = from.getMonth() + 1;
       const [l, c, co, ch, sf, t, ur] = await Promise.all([
         supabase.from("call_logs").select("call_date, result, is_activation, staff_id, customer_id").gte("call_date", fromIso).lte("call_date", toIso),
-        supabase.from("customers").select("id, status, country_id, channel_id, assigned_to"),
+        supabase.from("customers").select("id, status, country_id, channel_id, assigned_to, updated_at, created_at, imported_at").limit(5000),
         supabase.from("countries").select("id, code").eq("is_active", true),
         supabase.from("channels").select("id, name").eq("is_active", true),
         supabase.from("profiles").select("id, display_name").eq("is_active", true),
@@ -72,30 +75,43 @@ function Dashboard() {
     })();
   }, [from, to]);
 
-  // 국가 필터 적용
+  // 국가 필터 적용 — 고객은 country로, 콜로그는 customer 매핑으로
   const customerById = useMemo(() => {
     const m = new Map<string, Customer>();
     customers.forEach((c) => m.set(c.id, c));
     return m;
   }, [customers]);
 
+  const fCustomers = useMemo(() => {
+    return customers.filter((c) => countryF === "all" || c.country_id === countryF);
+  }, [customers, countryF]);
+
   const fLogs = useMemo(() => {
     if (countryF === "all") return logs;
     return logs.filter((l) => customerById.get(l.customer_id)?.country_id === countryF);
   }, [logs, countryF, customerById]);
 
+  // 상태별 카운트 (고객 기준)
+  const statusCounts = useMemo(() => {
+    const m: Record<CustomerStatus, number> = {
+      new: 0, in_progress: 0, no_answer: 0, not_interested: 0, callback: 0,
+      activated: 0, stay_expired: 0, delinquent: 0, line_exceeded: 0, minor: 0,
+    };
+    fCustomers.forEach((c) => { m[c.status] = (m[c.status] ?? 0) + 1; });
+    return m;
+  }, [fCustomers]);
+
+  const totalCustomers = fCustomers.length;
   const totalCalls = fLogs.length;
-  const success = fLogs.filter((l) => l.result === "interested" || l.result === "activated").length;
-  const failed = fLogs.filter((l) => l.result === "failed" || l.result === "wrong_number").length;
-  const missed = fLogs.filter((l) => l.result === "no_answer").length;
-  const recall = fLogs.filter((l) => l.result === "callback").length;
-  const activated = fLogs.filter((l) => l.is_activation).length;
-  const successRate = totalCalls ? (success / totalCalls) * 100 : 0;
-  const activationRate = totalCalls ? (activated / totalCalls) * 100 : 0;
+  const activated = statusCounts.activated;
+  // 성공 = 개통완료 + 진행중 + 재연락요청
+  const success = statusCounts.activated + statusCounts.in_progress + statusCounts.callback;
+  const successRate = totalCustomers ? (success / totalCustomers) * 100 : 0;
+  const activationRate = totalCustomers ? (activated / totalCustomers) * 100 : 0;
   const monthlyTargetTotal = targets.reduce((a, b) => a + (b.activation_target || 0), 0);
   const achievement = monthlyTargetTotal ? (activated / monthlyTargetTotal) * 100 : 0;
 
-  // 일별 추이
+  // 일별 추이 (콜수 + 개통)
   const dailyData = useMemo(() => {
     const days: { date: string; key: string }[] = [];
     const cur = new Date(from);
@@ -108,36 +124,37 @@ function Dashboard() {
       return {
         date: d.date,
         콜수: day.length,
-        성공: day.filter((l) => l.result === "interested" || l.result === "activated").length,
         개통: day.filter((l) => l.is_activation).length,
       };
     });
   }, [fLogs, from, to]);
 
-  // 채널별
   const channelData = channels.map((ch) => {
-    const ids = new Set(customers.filter((c) => c.channel_id === ch.id && (countryF === "all" || c.country_id === countryF)).map((c) => c.id));
-    const cl = fLogs.filter((l) => ids.has(l.customer_id));
-    return { name: ch.name.replace("한패스 ", ""), 콜수: cl.length, 개통: cl.filter((l) => l.is_activation).length };
+    const list = fCustomers.filter((c) => c.channel_id === ch.id);
+    return {
+      name: ch.name.replace("한패스 ", ""),
+      고객수: list.length,
+      개통: list.filter((c) => c.status === "activated").length,
+    };
   });
 
-  // 국가별 개통
-  const countryData = countries.map((co) => {
-    const ids = new Set(customers.filter((c) => c.country_id === co.id).map((c) => c.id));
-    return { name: co.code, value: logs.filter((l) => ids.has(l.customer_id) && l.is_activation).length };
-  }).sort((a, b) => b.value - a.value).slice(0, 8);
+  const countryData = countries.map((co) => ({
+    name: co.code,
+    value: customers.filter((c) => c.country_id === co.id && c.status === "activated").length,
+  })).sort((a, b) => b.value - a.value).slice(0, 8);
 
   // 직원 랭킹 — 관리자 제외
   const ranking = staff
     .filter((u) => staffIds.has(u.id))
     .map((u) => {
       const userLogs = fLogs.filter((l) => l.staff_id === u.id);
+      const userCustomers = fCustomers.filter((c) => c.assigned_to === u.id);
       const t = targets.find((x) => x.user_id === u.id);
+      const userActivated = userCustomers.filter((c) => c.status === "activated").length;
       return {
         id: u.id, name: u.display_name,
         totalCalls: userLogs.length,
-        activated: userLogs.filter((l) => l.is_activation).length,
-        successRate: userLogs.length ? (userLogs.filter((l) => l.result === "interested" || l.result === "activated").length / userLogs.length) * 100 : 0,
+        activated: userActivated,
         target: t?.activation_target ?? 0,
       };
     })
@@ -145,9 +162,8 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="대시보드" description={loading ? "로드 중..." : "OB 콜 운영 현황"} />
+      <PageHeader title="대시보드" description={loading ? "로드 중..." : "OB 콜 운영 현황 (고객 상태 기준)"} />
 
-      {/* 필터 */}
       <Card>
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
           <div className="space-y-1.5">
@@ -179,19 +195,35 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="전체 콜수" value={totalCalls.toLocaleString()} icon={PhoneCall} tone="primary" />
-        <StatCard label="성공 콜" value={success} icon={PhoneIncoming} tone="success" />
-        <StatCard label="실패 콜" value={failed} icon={PhoneOff} tone="destructive" />
-        <StatCard label="부재중" value={missed} icon={PhoneOff} tone="warning" />
-        <StatCard label="재연락 필요" value={recall} icon={RotateCw} tone="info" />
-        <StatCard label="개통 완료" value={activated} icon={CheckCircle2} tone="success" />
+      {/* 핵심 지표 */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+        <StatCard label="전체 콜수" value={totalCalls.toLocaleString()} icon={PhoneCall} tone="primary" hint="선택 기간 콜로그" />
+        <StatCard label="총 고객" value={totalCustomers.toLocaleString()} icon={CheckCircle2} tone="info" hint="국가 필터 반영" />
+        <StatCard label="개통 완료" value={activated} icon={Award} tone="success" />
+        <StatCard label="월 목표 달성률" value={achievement.toFixed(1)} suffix="%" icon={Target} tone="info" hint={`${activated} / ${monthlyTargetTotal || "—"}`} />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <StatCard label="콜 성공률" value={successRate.toFixed(1)} suffix="%" icon={TrendingUp} tone="primary" hint="성공 / 전체 콜" />
-        <StatCard label="개통 성공률" value={activationRate.toFixed(1)} suffix="%" icon={Award} tone="success" hint="개통 / 전체 콜" />
-        <StatCard label="월 목표 달성률" value={achievement.toFixed(1)} suffix="%" icon={Target} tone="info" hint={`${activated} / ${monthlyTargetTotal}`} />
+      {/* 상태별 카운트 (10종) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>고객 상태별 통계</CardTitle>
+          <CardDescription>모든 통계는 동일한 상태값 기준으로 계산됩니다</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+            {CUSTOMER_STATUSES.map((s) => (
+              <div key={s} className={`rounded-lg border border-border/60 p-3 ${STATUS_CLASS[s]}`}>
+                <div className="text-xs font-medium opacity-80">{STATUS_LABEL[s]}</div>
+                <div className="mt-1 text-2xl font-bold">{statusCounts[s].toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <StatCard label="콜 성공률" value={successRate.toFixed(1)} suffix="%" icon={TrendingUp} tone="primary" hint="(개통+진행중+재연락) / 총 고객" />
+        <StatCard label="개통 성공률" value={activationRate.toFixed(1)} suffix="%" icon={Award} tone="success" hint="개통완료 / 총 고객" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -203,15 +235,14 @@ function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" fontSize={12} /><YAxis fontSize={12} /><Tooltip /><Legend />
                 <Line type="monotone" dataKey="콜수" stroke="#3b82f6" strokeWidth={2} />
-                <Line type="monotone" dataKey="성공" stroke="#10b981" strokeWidth={2} />
-                <Line type="monotone" dataKey="개통" stroke="#f59e0b" strokeWidth={2} />
+                <Line type="monotone" dataKey="개통" stroke="#10b981" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>국가별 개통 분포</CardTitle><CardDescription>상위 8개국 (전체 기간)</CardDescription></CardHeader>
+          <CardHeader><CardTitle>국가별 개통 분포</CardTitle><CardDescription>상위 8개국</CardDescription></CardHeader>
           <CardContent className="h-[280px]">
             {countryData.every((c) => c.value === 0) ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">데이터 없음</div>
@@ -230,7 +261,7 @@ function Dashboard() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>채널별 성과</CardTitle><CardDescription>선택 기간 콜수 vs 개통</CardDescription></CardHeader>
+        <CardHeader><CardTitle>채널별 성과</CardTitle><CardDescription>고객수 vs 개통완료</CardDescription></CardHeader>
         <CardContent className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={channelData} layout="vertical" margin={{ left: 30 }}>
@@ -238,7 +269,7 @@ function Dashboard() {
               <XAxis type="number" fontSize={11} />
               <YAxis type="category" dataKey="name" fontSize={11} width={140} />
               <Tooltip /><Legend />
-              <Bar dataKey="콜수" fill="#3b82f6" radius={[0, 6, 6, 0]} />
+              <Bar dataKey="고객수" fill="#3b82f6" radius={[0, 6, 6, 0]} />
               <Bar dataKey="개통" fill="#10b981" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -246,7 +277,7 @@ function Dashboard() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>직원 랭킹</CardTitle><CardDescription>관리자 제외 · 선택 기간 기준</CardDescription></CardHeader>
+        <CardHeader><CardTitle>직원 랭킹</CardTitle><CardDescription>관리자 제외 · 개통완료 / 콜수 기준</CardDescription></CardHeader>
         <CardContent>
           <div className="space-y-3">
             {ranking.map((u, i) => {
@@ -268,7 +299,6 @@ function Dashboard() {
                   </div>
                   <div className="hidden gap-6 text-xs sm:flex">
                     <div><div className="text-muted-foreground">콜수</div><div className="font-semibold">{u.totalCalls}</div></div>
-                    <div><div className="text-muted-foreground">성공률</div><div className="font-semibold">{u.successRate.toFixed(0)}%</div></div>
                   </div>
                 </div>
               );
