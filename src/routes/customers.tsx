@@ -620,6 +620,23 @@ function CustomersPage() {
                   </Select>
                 </div>
 
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">데이터 등록일</span>
+                  <DateRangePicker label="시작" value={dateFrom} onChange={setDateFrom} />
+                  <span className="text-xs text-muted-foreground">~</span>
+                  <DateRangePicker label="종료" value={dateTo} onChange={setDateTo} />
+                  {(dateFrom || dateTo) && (
+                    <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                      초기화
+                    </Button>
+                  )}
+                  {isAdmin && selected.size > 0 && tab === p && (
+                    <Button variant="destructive" size="sm" className="ml-auto" onClick={() => setBulkOpen(true)}>
+                      <Trash2 className="mr-2 h-4 w-4" /> 선택 {selected.size}명 삭제
+                    </Button>
+                  )}
+                </div>
+
                 {staffStats.length > 0 && (staffF === "all") && (
                   <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
                     <div className="mb-2 text-xs font-semibold text-muted-foreground">담당자별 현황 (현재 필터 기준)</div>
