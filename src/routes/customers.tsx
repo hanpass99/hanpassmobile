@@ -3,8 +3,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
-  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
+  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon,
 } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -80,6 +85,10 @@ function CustomersPage() {
   const [memoTarget, setMemoTarget] = useState<CustomerRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -126,6 +135,11 @@ function CustomersPage() {
         if (staffF === "__none__") { if (r.assigned_to) return false; }
         else if (r.assigned_to !== staffF) return false;
       }
+      if (dateFrom || dateTo) {
+        const t = new Date(r.imported_at).getTime();
+        if (dateFrom && t < new Date(dateFrom.setHours(0, 0, 0, 0)).getTime()) return false;
+        if (dateTo && t > new Date(new Date(dateTo).setHours(23, 59, 59, 999)).getTime()) return false;
+      }
       return true;
     });
 
@@ -142,7 +156,7 @@ function CustomersPage() {
       });
     }
     return out;
-  }, [poolRows, search, country, statusF, staffF, sortKey, sortDir, staffById, countryById]);
+  }, [poolRows, search, country, statusF, staffF, sortKey, sortDir, staffById, countryById, dateFrom, dateTo]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
@@ -180,7 +194,33 @@ function CustomersPage() {
     load();
   };
 
-  // === 엑셀 / CSV 업로드 ===
+  const bulkDelete = async () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    const { error } = await supabase.from("customers").delete().in("id", ids);
+    setBulkOpen(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${ids.length}명 삭제됨`);
+    setSelected(new Set());
+    load();
+  };
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  };
+  const toggleAll = () => {
+    setSelected((prev) => {
+      const all = filtered.map((r) => r.id);
+      const allChecked = all.every((id) => prev.has(id));
+      if (allChecked) return new Set();
+      return new Set(all);
+    });
+  };
+  const allChecked = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
 
@@ -292,6 +332,19 @@ function CustomersPage() {
 
   // === 풀별 컬럼 렌더러 ===
   const renderTable = (p: CustomerPool) => {
+    const CheckHead = isAdmin ? (
+      <TableHead className="w-10">
+        <Checkbox checked={allChecked} onCheckedChange={toggleAll} aria-label="select all" />
+      </TableHead>
+    ) : null;
+    const CheckCell = ({ c }: { c: CustomerRow }) =>
+      isAdmin ? (
+        <TableCell className="w-10">
+          <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="select row" />
+        </TableCell>
+      ) : null;
+    const extraCols = isAdmin ? 1 : 0;
+
     const renderActions = (c: CustomerRow) => (
       <TableCell className="text-right whitespace-nowrap">
         <Button size="sm" variant="ghost" onClick={() => setMemoTarget(c)}>
@@ -331,6 +384,7 @@ function CustomersPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              {CheckHead}
               <SortHead k="name">고객명</SortHead>
               <SortHead k="phone">전화번호</SortHead>
               <SortHead k="activation_date">개통일</SortHead>
@@ -346,6 +400,7 @@ function CustomersPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
+                <CheckCell c={c} />
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="font-mono text-xs">{c.phone}</TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
@@ -358,7 +413,7 @@ function CustomersPage() {
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -369,6 +424,7 @@ function CustomersPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              {CheckHead}
               <SortHead k="name">고객명</SortHead>
               <SortHead k="phone">전화번호</SortHead>
               <SortHead k="country">국적</SortHead>
@@ -383,6 +439,7 @@ function CustomersPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
+                <CheckCell c={c} />
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="font-mono text-xs">{c.phone}</TableCell>
                 <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
@@ -394,7 +451,7 @@ function CustomersPage() {
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={9} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={9 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -405,6 +462,7 @@ function CustomersPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              {CheckHead}
               <SortHead k="name">고객명</SortHead>
               <SortHead k="phone">충전번호</SortHead>
               <SortHead k="charge_amount">충전 요금</SortHead>
@@ -420,6 +478,7 @@ function CustomersPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
+                <CheckCell c={c} />
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="font-mono text-xs">{c.charge_phone ?? c.phone}</TableCell>
                 <TableCell className="text-xs">{c.charge_amount ? `₩${c.charge_amount.toLocaleString()}` : "-"}</TableCell>
@@ -432,7 +491,7 @@ function CustomersPage() {
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -443,6 +502,7 @@ function CustomersPage() {
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
+            {CheckHead}
             <SortHead k="name">고객명</SortHead>
             <SortHead k="phone">전화번호</SortHead>
             <SortHead k="country">국적</SortHead>
@@ -458,6 +518,7 @@ function CustomersPage() {
         <TableBody>
           {filtered.map((c) => (
             <TableRow key={c.id} className="hover:bg-muted/30">
+              <CheckCell c={c} />
               <TableCell className="font-medium">{c.name}</TableCell>
               <TableCell className="font-mono text-xs">{c.phone}</TableCell>
               <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
@@ -470,7 +531,7 @@ function CustomersPage() {
               {renderActions(c)}
             </TableRow>
           ))}
-          {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+          {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
         </TableBody>
       </Table>
     );
@@ -559,6 +620,23 @@ function CustomersPage() {
                   </Select>
                 </div>
 
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">데이터 등록일</span>
+                  <DateRangePicker label="시작" value={dateFrom} onChange={setDateFrom} />
+                  <span className="text-xs text-muted-foreground">~</span>
+                  <DateRangePicker label="종료" value={dateTo} onChange={setDateTo} />
+                  {(dateFrom || dateTo) && (
+                    <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                      초기화
+                    </Button>
+                  )}
+                  {isAdmin && selected.size > 0 && tab === p && (
+                    <Button variant="destructive" size="sm" className="ml-auto" onClick={() => setBulkOpen(true)}>
+                      <Trash2 className="mr-2 h-4 w-4" /> 선택 {selected.size}명 삭제
+                    </Button>
+                  )}
+                </div>
+
                 {staffStats.length > 0 && (staffF === "all") && (
                   <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
                     <div className="mb-2 text-xs font-semibold text-muted-foreground">담당자별 현황 (현재 필터 기준)</div>
@@ -610,7 +688,35 @@ function CustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>일괄 삭제</DialogTitle>
+            <DialogDescription>선택한 {selected.size}명의 고객 데이터를 영구히 삭제합니다. 계속하시겠습니까?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>취소</Button>
+            <Button variant="destructive" onClick={bulkDelete}>{selected.size}명 삭제</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function DateRangePicker({ label, value, onChange }: { label: string; value?: Date; onChange: (d?: Date) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className={cn("w-[140px] justify-start text-left font-normal", !value && "text-muted-foreground")}>
+          <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+          {value ? format(value, "yyyy.MM.dd") : <span>{label}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar mode="single" selected={value} onSelect={(d) => onChange(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
+      </PopoverContent>
+    </Popover>
   );
 }
 

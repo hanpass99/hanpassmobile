@@ -1,96 +1,43 @@
-## OB 콜 관리 시스템 — 대규모 개편 계획
+## OB 콜 시스템 추가 개선 계획
 
-요청하신 변경사항이 많아 단계별로 진행하겠습니다. 아래 계획을 검토 후 승인해 주세요.
+### 1. 담당자 자동 지정 (직원 포함)
+- `customers` 업데이트 트리거 추가: status가 변경될 때 `assigned_to = auth.uid()` 자동 설정
+- 마이그레이션으로 트리거 함수 생성
 
----
+### 2. 다국어(i18n) 지원
+- `react-i18next` + `i18next` 설치
+- `src/i18n/` 폴더에 `ko.json`, `en.json` 리소스 작성 (사이드바, 헤더, 주요 라벨)
+- AppSidebar / 주요 페이지 헤더에 `useTranslation` 적용
+- 사이드바 하단 또는 헤더에 언어 토글 버튼 (localStorage 저장)
 
-### 1단계: 데이터베이스 구조 변경 (마이그레이션)
+### 3. 고객 관리 — 등록일(데이터 등록일) 날짜 범위 필터
+- `src/routes/customers.tsx`에 시작일/종료일 Date Picker 2개 추가
+- `imported_at` 기준 필터링 (클라이언트 사이드)
 
-**고객 상태(customer_status) enum 재정의** — 새 10개 값으로 교체
-- `new`(미처리), `in_progress`(진행중), `no_answer`(부재), `not_interested`(관심없음), `callback`(재연락요청), `activated`(개통완료), `stay_expired`(체류만료), `delinquent`(체납자), `line_exceeded`(회선초과), `minor`(미성년자)
+### 4. 대시보드 통계 변경 (`src/routes/index.tsx`)
+- "월 목표 달성률", "총 고객 수" 카드 제거
+- "개통 완료율 = 개통 완료 ÷ 총 콜수 × 100" 카드 추가 (% 표시)
 
-**고객 풀(Pool) 분류 추가**
-- `customers` 테이블에 `pool` 컬럼 추가 (enum: `existing`, `new_signup`, `prepaid`, `activation_request`)
+### 5. 관리자 고객 일괄 삭제
+- 고객 테이블에 체크박스 컬럼 추가 (관리자만)
+- 전체선택 헤더 체크박스
+- "선택 삭제" 버튼 + AlertDialog 확인
+- 선택된 id 배열로 `.delete().in('id', ids)`
 
-**채널 데이터 교체**
-- 기존 채널 비활성화 → 새 4개 채널 시드: 한패스 모바일 기존 고객 / 한패스 신규 가입자 / 선불 충전자 / 개통 신청자
+### 6. 다크/라이트 테마 토글
+- `src/styles.css`의 `.dark` 토큰 활용 (이미 정의되어 있다면 활용, 없으면 추가)
+- `ThemeProvider` 훅 작성 → `<html>`에 `dark` 클래스 토글, localStorage 저장
+- 사이드바/설정에 토글 스위치
 
-**국가 추가**
-- `CIS` 추가
+### 7. 직원 콜 목표 알림 (50콜/일, 10콜 단위)
+- `src/hooks/use-call-goal.tsx`: 직원 로그인 시 오늘 `call_logs` 카운트 구독 (realtime)
+- 10/20/30/40콜 도달 시 toast 알림 ("오늘 최소 50개 이상 콜 진행해야 합니다.")
+- 50콜 달성 시 알림 종료, sessionStorage로 중복 방지
+- 관리자 staff-performance 페이지에 "오늘 콜수" / "목표 달성" 컬럼 추가
 
-**메모 히스토리 테이블 신규**
-- `customer_notes` (customer_id, author_id, content, created_at) + RLS
+### 기술 노트
+- 마이그레이션: `auto_assign_on_status_change` 트리거 함수 + customers BEFORE UPDATE 트리거
+- realtime: `call_logs` 테이블 publication 추가
+- 테마 토큰은 styles.css `:root` / `.dark` 양쪽 정의 확인 후 보강
 
-**RLS 보강**
-- 직원이 상태 변경 시 자동 담당자 지정은 트리거로 처리 (`assigned_to`가 NULL이면 본인으로 세팅)
-
----
-
-### 2단계: 메뉴 구조 개편
-
-- **"콜 관리" 메뉴 완전 제거** (`src/routes/calls.tsx` 삭제, 사이드바에서 제거)
-- **"고객 관리"를 4개 Pool 탭으로 재구성** (탭별 엑셀 업로드, 필터, 검색)
-- 사이드바 메뉴 정리
-
----
-
-### 3단계: 로그인 페이지 개선 (`src/routes/auth.tsx`)
-
-- 한패스 모바일 로고 추가 (이미지 생성)
-- "아이디 찾기" / "비밀번호 찾기" 링크 + 비밀번호 재설정 플로우 (`/reset-password` 페이지 신설)
-- 카드형 깔끔한 디자인, 좌측 브랜드 패널 + 우측 폼 레이아웃
-
----
-
-### 4단계: 대시보드 개편 (`src/routes/index.tsx`)
-
-- 날짜 범위 필터 (DatePicker)
-- 국가별 필터 (Select)
-- 필터 변경 시 모든 통계/차트 실시간 재계산
-
----
-
-### 5단계: 직원 랭킹 (`src/routes/staff-performance.tsx`)
-
-- 관리자 계정 제외 (`user_roles.role = 'staff'`만)
-- 전체 콜 수 / 개통 완료 수 기준 정렬
-- 날짜 필터 추가
-
----
-
-### 6단계: 고객 관리 페이지 전면 재작성 (`src/routes/customers.tsx`)
-
-- 4개 Pool 탭 UI
-- Pool별 엑셀(.xlsx/.csv) 업로드 + **중복 자동 제거** (전화번호 기준) + **샘플 다운로드**
-- 업로드 성공/실패 결과 토스트 + 업로드 일시 자동 기록(`imported_at`)
-- Pool 내부 필터 (상태/국가/채널/검색)
-- **원클릭 상태 변경** 드롭다운 → 변경 시 본인 자동 담당 + 콜 로그 자동 생성
-- **메모 작성 + 히스토리** 다이얼로그
-
----
-
-### 7단계: 채널/상태 라벨 및 색상 (`src/lib/labels.ts`)
-
-- 새 상태 10종 라벨 + 고유 색상 클래스
-- 새 채널 라벨
-
----
-
-### 8단계: 반응형 / UI 다듬기
-
-- 모바일 사이드바 시트, 테이블 가로 스크롤
-- 카드/통계/필터 영역 모바일 레이아웃 점검
-
----
-
-### 권한 정책 (변경 없이 강화)
-- Admin: 전체 Pool 관리, 모든 직원 실적, 수정/삭제
-- Staff: 본인 담당 고객 + 본인 국가 데이터만, 상태/메모만 변경, 본인 실적만
-
----
-
-### 진행 방식
-
-규모가 커서 **승인 후 1~2단계씩 묶어 순차 진행**합니다. 마이그레이션은 한 번에 적용 후 코드 변경을 진행합니다.
-
-**"승인"** 또는 수정 의견 남겨주시면 1단계 마이그레이션부터 시작하겠습니다.
+승인 시 위 순서대로 구현합니다.

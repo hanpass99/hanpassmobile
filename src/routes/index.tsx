@@ -196,11 +196,17 @@ function Dashboard() {
       </Card>
 
       {/* 핵심 지표 */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <StatCard label="전체 콜수" value={totalCalls.toLocaleString()} icon={PhoneCall} tone="primary" hint="선택 기간 콜로그" />
-        <StatCard label="총 고객" value={totalCustomers.toLocaleString()} icon={CheckCircle2} tone="info" hint="국가 필터 반영" />
         <StatCard label="개통 완료" value={activated} icon={Award} tone="success" />
-        <StatCard label="월 목표 달성률" value={achievement.toFixed(1)} suffix="%" icon={Target} tone="info" hint={`${activated} / ${monthlyTargetTotal || "—"}`} />
+        <StatCard
+          label="개통 완료율"
+          value={(totalCalls ? (activated / totalCalls) * 100 : 0).toFixed(1)}
+          suffix="%"
+          icon={Target}
+          tone="info"
+          hint={`개통 ${activated} / 총 콜 ${totalCalls}`}
+        />
       </div>
 
       {/* 상태별 카운트 (10종) */}

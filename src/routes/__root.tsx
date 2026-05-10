@@ -15,6 +15,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { ThemeProvider } from "@/hooks/use-theme";
+import { useCallGoal } from "@/hooks/use-call-goal";
+import "@/i18n";
 
 function NotFoundComponent() {
   return (
@@ -110,6 +113,11 @@ function AuthGate() {
   if (isPublicRoute) return <Outlet />;
   if (!session) return <Navigate to="/auth" />;
 
+  return <AuthedShell />;
+}
+
+function AuthedShell() {
+  useCallGoal();
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
@@ -135,10 +143,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AuthGate />
-        <Toaster richColors position="top-right" />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AuthGate />
+          <Toaster richColors position="top-right" />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
