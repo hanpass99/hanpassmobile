@@ -373,7 +373,7 @@ const en = {
   },
   channelPerf: {
     title: "Channel performance", subtitle: "Customer status by acquisition channel",
-    channel: "Channel", noChannel: "No channels yet.",
+    channel: "Channel", noChannel: "No channels yet.", unassigned: "Direct (no channel)",
   },
   reports: {
     title: "Reports",
