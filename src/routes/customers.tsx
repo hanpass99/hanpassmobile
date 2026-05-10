@@ -3,8 +3,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
-  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
+  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon,
 } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -80,6 +85,10 @@ function CustomersPage() {
   const [memoTarget, setMemoTarget] = useState<CustomerRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
