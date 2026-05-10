@@ -131,14 +131,25 @@ function Dashboard() {
     });
   }, [fLogs, from, to, t]);
 
-  const channelData = channels.map((ch) => {
-    const list = fCustomers.filter((c) => c.channel_id === ch.id);
-    return {
-      name: ch.name.replace("한패스 ", ""),
-      [t("dashboard.customers")]: list.length,
-      [t("dashboard.activations")]: list.filter((c) => c.status === "activated").length,
-    };
-  });
+  const channelData = (() => {
+    const arr = channels.map((ch) => {
+      const list = fCustomers.filter((c) => c.channel_id === ch.id);
+      return {
+        name: ch.name.replace("한패스 ", ""),
+        [t("dashboard.customers")]: list.length,
+        [t("dashboard.activations")]: list.filter((c) => c.status === "activated").length,
+      };
+    });
+    const noCh = fCustomers.filter((c) => !c.channel_id);
+    if (noCh.length) {
+      arr.push({
+        name: t("channelPerf.unassigned"),
+        [t("dashboard.customers")]: noCh.length,
+        [t("dashboard.activations")]: noCh.filter((c) => c.status === "activated").length,
+      });
+    }
+    return arr;
+  })();
 
   const countryData = countries.map((co) => ({
     name: co.code,

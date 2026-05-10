@@ -138,7 +138,7 @@ const ko = {
   },
   channelPerf: {
     title: "채널별 성과", subtitle: "유입 채널별 고객 상태 통계",
-    channel: "채널명", noChannel: "채널이 없습니다.",
+    channel: "채널명", noChannel: "채널이 없습니다.", unassigned: "직접 등록 (채널 미지정)",
   },
   reports: {
     title: "리포트",
@@ -373,7 +373,7 @@ const en = {
   },
   channelPerf: {
     title: "Channel performance", subtitle: "Customer status by acquisition channel",
-    channel: "Channel", noChannel: "No channels yet.",
+    channel: "Channel", noChannel: "No channels yet.", unassigned: "Direct (no channel)",
   },
   reports: {
     title: "Reports",
