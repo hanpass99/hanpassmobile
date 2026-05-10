@@ -384,6 +384,7 @@ function CustomersPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              {CheckHead}
               <SortHead k="name">고객명</SortHead>
               <SortHead k="phone">전화번호</SortHead>
               <SortHead k="activation_date">개통일</SortHead>
@@ -399,6 +400,7 @@ function CustomersPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
+                <CheckCell c={c} />
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="font-mono text-xs">{c.phone}</TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
@@ -411,7 +413,7 @@ function CustomersPage() {
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -422,6 +424,7 @@ function CustomersPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              {CheckHead}
               <SortHead k="name">고객명</SortHead>
               <SortHead k="phone">전화번호</SortHead>
               <SortHead k="country">국적</SortHead>
@@ -436,6 +439,7 @@ function CustomersPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
+                <CheckCell c={c} />
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="font-mono text-xs">{c.phone}</TableCell>
                 <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
@@ -447,7 +451,7 @@ function CustomersPage() {
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={9} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={9 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -458,6 +462,7 @@ function CustomersPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              {CheckHead}
               <SortHead k="name">고객명</SortHead>
               <SortHead k="phone">충전번호</SortHead>
               <SortHead k="charge_amount">충전 요금</SortHead>
@@ -473,6 +478,7 @@ function CustomersPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
+                <CheckCell c={c} />
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="font-mono text-xs">{c.charge_phone ?? c.phone}</TableCell>
                 <TableCell className="text-xs">{c.charge_amount ? `₩${c.charge_amount.toLocaleString()}` : "-"}</TableCell>
@@ -485,7 +491,7 @@ function CustomersPage() {
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -496,6 +502,7 @@ function CustomersPage() {
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
+            {CheckHead}
             <SortHead k="name">고객명</SortHead>
             <SortHead k="phone">전화번호</SortHead>
             <SortHead k="country">국적</SortHead>
@@ -511,6 +518,7 @@ function CustomersPage() {
         <TableBody>
           {filtered.map((c) => (
             <TableRow key={c.id} className="hover:bg-muted/30">
+              <CheckCell c={c} />
               <TableCell className="font-medium">{c.name}</TableCell>
               <TableCell className="font-mono text-xs">{c.phone}</TableCell>
               <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
@@ -523,7 +531,7 @@ function CustomersPage() {
               {renderActions(c)}
             </TableRow>
           ))}
-          {filtered.length === 0 && <EmptyRow cols={10} loading={loading} pool={p} />}
+          {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
         </TableBody>
       </Table>
     );
