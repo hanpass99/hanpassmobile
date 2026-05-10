@@ -41,7 +41,20 @@ function ChannelPerf() {
           total++;
         }
         return { id: c.id, name: c.name, total, counts };
-      }).sort((a, b) => b.counts.activated - a.counts.activated);
+      });
+      // Bucket customers without a channel (e.g. activation_request uploads) so they are not lost
+      const noChCounts = emptyCounts();
+      let noChTotal = 0;
+      for (const x of cu.data ?? []) {
+        if (x.channel_id) continue;
+        const s = x.status as CustomerStatus;
+        if (noChCounts[s] !== undefined) noChCounts[s]++;
+        noChTotal++;
+      }
+      if (noChTotal > 0) {
+        out.push({ id: "__none__", name: t("channelPerf.unassigned"), total: noChTotal, counts: noChCounts });
+      }
+      out.sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
       setRows(out);
       setLoading(false);
     })();
