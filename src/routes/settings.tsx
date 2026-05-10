@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -42,6 +43,7 @@ const Y = now.getFullYear();
 const M = now.getMonth() + 1;
 
 function Settings() {
+  const { t } = useTranslation();
   const { isAdmin, user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -61,11 +63,11 @@ function Settings() {
     });
     setResetting(false);
     if (error || (data as any)?.error) {
-      return toast.error(`초기화 실패: ${(data as any)?.error ?? error?.message}`);
+      return toast.error(t("settings.resetFailed", { msg: (data as any)?.error ?? error?.message }));
     }
     setResetResult({ name: resetTarget.display_name, tempPassword: (data as any).temp_password });
     setResetTarget(null);
-    toast.success("임시 비밀번호 발급됨");
+    toast.success(t("settings.tempPwdIssued"));
   };
 
   const load = async () => {
@@ -83,7 +85,7 @@ function Settings() {
       (activityRes as any)?.data?.users ?? [];
     const merged: Row[] = (profiles ?? []).map((p: any) => {
       const r = roles?.find((x) => x.user_id === p.id);
-      const t = targets?.find((x) => x.user_id === p.id);
+      const tg = targets?.find((x) => x.user_id === p.id);
       const a = activityList.find((x) => x.id === p.id);
       return {
         id: p.id,
@@ -92,8 +94,8 @@ function Settings() {
         is_active: p.is_active,
         role: (r?.role as "admin" | "staff") ?? "staff",
         country_id: p.country_id ?? null,
-        call_target: t?.call_target ?? 0,
-        activation_target: t?.activation_target ?? 0,
+        call_target: tg?.call_target ?? 0,
+        activation_target: tg?.activation_target ?? 0,
         email: a?.email ?? null,
         last_sign_in_at: a?.last_sign_in_at ?? null,
       };
@@ -110,21 +112,21 @@ function Settings() {
       { user_id: r.id, year: Y, month: M, call_target: r.call_target, activation_target: r.activation_target },
       { onConflict: "user_id,year,month" }
     );
-    if (error) { toast.error(`목표 저장 실패: ${error.message}`); return; }
-    toast.success(`${r.display_name} 목표 저장됨`);
+    if (error) { toast.error(t("settings.targetSaveFailed", { msg: error.message })); return; }
+    toast.success(t("settings.targetSaved", { name: r.display_name }));
   };
 
   const setActive = async (r: Row, active: boolean) => {
     const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: active });
-    if (error) { toast.error(`실패: ${error.message}`); return; }
-    toast.success(active ? "활성화됨" : "비활성화됨");
+    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
+    toast.success(active ? t("settings.activated") : t("settings.deactivated"));
     load();
   };
 
   const setRole = async (r: Row, role: "admin" | "staff") => {
     const { error } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: role });
-    if (error) { toast.error(`실패: ${error.message}`); return; }
-    toast.success("역할 변경됨");
+    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
+    toast.success(t("settings.roleChanged"));
     load();
   };
 
@@ -133,8 +135,8 @@ function Settings() {
       _user_id: r.id,
       _country_id: country_id as any,
     });
-    if (error) { toast.error(`실패: ${error.message}`); return; }
-    toast.success("담당 국가 변경됨");
+    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
+    toast.success(t("settings.countryChanged"));
     load();
   };
 
@@ -142,43 +144,43 @@ function Settings() {
     const payload = rows
       .filter((r) => r.is_active && r.role === "staff")
       .map((r) => ({ user_id: r.id, year: Y, month: M, call_target: bulkCall, activation_target: bulkAct }));
-    if (!payload.length) return toast.info("적용할 직원이 없습니다");
+    if (!payload.length) return toast.info(t("settings.noStaffToApply"));
     const { error } = await supabase.from("targets").upsert(payload, { onConflict: "user_id,year,month" });
-    if (error) return toast.error(`실패: ${error.message}`);
-    toast.success(`${payload.length}명에게 일괄 적용됨`);
+    if (error) return toast.error(t("settings.actionFailed", { msg: error.message }));
+    toast.success(t("settings.bulkApplyDone", { n: payload.length }));
     load();
   };
 
   return (
     <div className="space-y-5">
-      <PageHeader title="설정" description="내 계정 · 직원 계정 · 월 목표 관리" />
+      <PageHeader title={t("settings.title")} description={t("settings.subtitle")} />
 
       {/* 내 계정 정보 */}
       <Card>
         <CardHeader>
-          <CardTitle>내 계정 정보</CardTitle>
-          <CardDescription>현재 로그인한 사용자 정보</CardDescription>
+          <CardTitle>{t("settings.myAccount")}</CardTitle>
+          <CardDescription>{t("settings.myAccountDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-lg border border-border/60 p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Mail className="h-3.5 w-3.5" /> 이메일 (아이디)
+                <Mail className="h-3.5 w-3.5" /> {t("settings.emailId")}
               </div>
               <div className="mt-1 truncate text-sm font-semibold">{user?.email ?? "-"}</div>
             </div>
             <div className="rounded-lg border border-border/60 p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <UserCheck className="h-3.5 w-3.5" /> 권한
+                <UserCheck className="h-3.5 w-3.5" /> {t("settings.permission")}
               </div>
-              <div className="mt-1 text-sm font-semibold">{isAdmin ? "관리자" : "직원"}</div>
+              <div className="mt-1 text-sm font-semibold">{isAdmin ? t("common.admin") : t("common.staff")}</div>
             </div>
             <div className="rounded-lg border border-border/60 p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" /> 최근 접속 시간
+                <Clock className="h-3.5 w-3.5" /> {t("settings.lastLogin")}
               </div>
               <div className="mt-1 text-sm font-semibold">
-                {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString("ko-KR") : "-"}
+                {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : "-"}
               </div>
             </div>
           </div>
@@ -188,7 +190,7 @@ function Settings() {
       {!isAdmin && (
         <Card className="border-destructive/50">
           <CardContent className="py-4 text-sm text-muted-foreground">
-            관리자만 직원과 목표를 수정할 수 있습니다. 현재 보기 전용 모드입니다.
+            {t("settings.readOnly")}
           </CardContent>
         </Card>
       )}
@@ -196,19 +198,19 @@ function Settings() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>직원 계정 관리</CardTitle>
+            <CardTitle>{t("settings.staffMgmt")}</CardTitle>
             <CardDescription>
-              {Y}년 {M}월 기준. 직원은 본인 담당 국가의 고객만 조회할 수 있습니다.
+              {t("settings.staffMgmtDesc", { y: Y, m: M })}
             </CardDescription>
           </div>
           <div className="flex gap-2">
             {isAdmin && (
               <Button size="sm" onClick={() => setShowCreate(true)}>
-                <UserPlus className="mr-2 h-4 w-4" /> 직원 추가
+                <UserPlus className="mr-2 h-4 w-4" /> {t("settings.addStaff")}
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={load} disabled={loading}>
-              <RefreshCw className="mr-2 h-4 w-4" /> 새로고침
+              <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
             </Button>
           </div>
         </CardHeader>
@@ -216,16 +218,16 @@ function Settings() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead>이름</TableHead>
-                <TableHead>이메일</TableHead>
-                <TableHead>최근 접속</TableHead>
-                <TableHead>부서</TableHead>
-                <TableHead>역할</TableHead>
-                <TableHead>담당 국가</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead className="w-28">콜 목표</TableHead>
-                <TableHead className="w-28">개통 목표</TableHead>
-                <TableHead className="text-right">액션</TableHead>
+                <TableHead>{t("settings.name")}</TableHead>
+                <TableHead>{t("settings.email")}</TableHead>
+                <TableHead>{t("settings.lastAccess")}</TableHead>
+                <TableHead>{t("settings.department")}</TableHead>
+                <TableHead>{t("settings.role")}</TableHead>
+                <TableHead>{t("settings.assignedCountry")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead className="w-28">{t("settings.callTarget")}</TableHead>
+                <TableHead className="w-28">{t("settings.activationTarget")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -233,14 +235,14 @@ function Settings() {
                 <TableRow key={r.id} className={r.is_active ? "" : "opacity-50"}>
                   <TableCell className="font-medium">
                     {r.display_name}
-                    {r.id === user?.id && <span className="ml-2 text-xs text-muted-foreground">(나)</span>}
+                    {r.id === user?.id && <span className="ml-2 text-xs text-muted-foreground">{t("settings.me")}</span>}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.email ?? "-"}</TableCell>
                   <TableCell className="text-xs whitespace-nowrap">
                     {r.last_sign_in_at ? (
-                      <span className="text-foreground">{new Date(r.last_sign_in_at).toLocaleString("ko-KR")}</span>
+                      <span className="text-foreground">{new Date(r.last_sign_in_at).toLocaleString()}</span>
                     ) : (
-                      <span className="text-muted-foreground">미접속</span>
+                      <span className="text-muted-foreground">{t("settings.notSignedIn")}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.department ?? "-"}</TableCell>
@@ -249,13 +251,13 @@ function Settings() {
                       <Select value={r.role} onValueChange={(v) => setRole(r, v as "admin" | "staff")}>
                         <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">관리자</SelectItem>
-                          <SelectItem value="staff">직원</SelectItem>
+                          <SelectItem value="admin">{t("common.admin")}</SelectItem>
+                          <SelectItem value="staff">{t("common.staff")}</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
                       <Badge variant={r.role === "admin" ? "default" : "secondary"}>
-                        {r.role === "admin" ? "관리자" : "직원"}
+                        {r.role === "admin" ? t("common.admin") : t("common.staff")}
                       </Badge>
                     )}
                   </TableCell>
@@ -265,9 +267,9 @@ function Settings() {
                         value={r.country_id ?? "__all__"}
                         onValueChange={(v) => setCountry(r, v === "__all__" ? null : v)}
                       >
-                        <SelectTrigger className="h-8 w-32"><SelectValue placeholder="전체" /></SelectTrigger>
+                        <SelectTrigger className="h-8 w-32"><SelectValue placeholder={t("common.all")} /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="__all__">전체 (제한 없음)</SelectItem>
+                          <SelectItem value="__all__">{t("settings.allCountriesNoLimit")}</SelectItem>
                           {countries.map((c) => (
                             <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>
                           ))}
@@ -275,13 +277,13 @@ function Settings() {
                       </Select>
                     ) : (
                       <span className="text-xs text-muted-foreground">
-                        {countries.find((c) => c.id === r.country_id)?.name_ko ?? "전체"}
+                        {countries.find((c) => c.id === r.country_id)?.name_ko ?? t("common.all")}
                       </span>
                     )}
                   </TableCell>
                   <TableCell>
                     <Badge variant={r.is_active ? "default" : "outline"}>
-                      {r.is_active ? "활성" : "비활성"}
+                      {r.is_active ? t("common.active") : t("common.inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -309,20 +311,20 @@ function Settings() {
                   <TableCell className="text-right whitespace-nowrap">
                     {isAdmin && (
                       <>
-                        <Button size="sm" variant="ghost" onClick={() => saveTarget(r)}>저장</Button>
+                        <Button size="sm" variant="ghost" onClick={() => saveTarget(r)}>{t("common.save")}</Button>
                         {r.id !== user?.id && (
                           <Button size="sm" variant="ghost" onClick={() => setResetTarget(r)}>
-                            <KeyRound className="mr-1 h-3.5 w-3.5" /> 초기화
+                            <KeyRound className="mr-1 h-3.5 w-3.5" /> {t("settings.resetPwd")}
                           </Button>
                         )}
                         {r.id !== user?.id && (
                           r.is_active ? (
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setActive(r, false)}>
-                              <UserX className="mr-1 h-3.5 w-3.5" /> 비활성
+                              <UserX className="mr-1 h-3.5 w-3.5" /> {t("settings.deactivate")}
                             </Button>
                           ) : (
                             <Button size="sm" variant="ghost" onClick={() => setActive(r, true)}>
-                              <UserCheck className="mr-1 h-3.5 w-3.5" /> 활성
+                              <UserCheck className="mr-1 h-3.5 w-3.5" /> {t("settings.activate")}
                             </Button>
                           )
                         )}
@@ -332,7 +334,7 @@ function Settings() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-8">직원이 없습니다.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -342,21 +344,21 @@ function Settings() {
       {isAdmin && (
         <Card>
           <CardHeader>
-            <CardTitle>월간 목표 일괄 설정</CardTitle>
-            <CardDescription>{Y}년 {M}월 — 활성 직원 전체에 동일 목표 적용</CardDescription>
+            <CardTitle>{t("settings.bulkTargetTitle")}</CardTitle>
+            <CardDescription>{t("settings.bulkTargetDesc", { y: Y, m: M })}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap items-end gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="bcall">콜 목표 (건)</Label>
+                <Label htmlFor="bcall">{t("settings.callTargetCount")}</Label>
                 <Input id="bcall" type="number" value={bulkCall} onChange={(e) => setBulkCall(Number(e.target.value))} className="w-32" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="bact">개통 목표 (건)</Label>
+                <Label htmlFor="bact">{t("settings.activationTargetCount")}</Label>
                 <Input id="bact" type="number" value={bulkAct} onChange={(e) => setBulkAct(Number(e.target.value))} className="w-32" />
               </div>
               <Button onClick={bulkApply}>
-                <Plus className="mr-2 h-4 w-4" /> 일괄 적용
+                <Plus className="mr-2 h-4 w-4" /> {t("settings.bulkApply")}
               </Button>
             </div>
           </CardContent>
@@ -374,16 +376,15 @@ function Settings() {
       <Dialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>비밀번호 초기화</DialogTitle>
+            <DialogTitle>{t("settings.resetPwdTitle")}</DialogTitle>
           </DialogHeader>
           <p className="py-2 text-sm text-muted-foreground">
-            <strong className="text-foreground">{resetTarget?.display_name}</strong> 직원의 비밀번호가 임시 비밀번호로 변경됩니다.
-            기존 비밀번호는 즉시 무효화됩니다.
+            {t("settings.resetPwdConfirm", { name: resetTarget?.display_name ?? "" })}
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setResetTarget(null)} disabled={resetting}>취소</Button>
+            <Button variant="outline" onClick={() => setResetTarget(null)} disabled={resetting}>{t("common.cancel")}</Button>
             <Button onClick={resetPassword} disabled={resetting}>
-              {resetting ? "처리 중..." : "임시 비밀번호 발급"}
+              {resetting ? t("common.processing") : t("settings.issueTempPwd")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -393,11 +394,11 @@ function Settings() {
       <Dialog open={!!resetResult} onOpenChange={(o) => !o && setResetResult(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>임시 비밀번호 발급 완료</DialogTitle>
+            <DialogTitle>{t("settings.tempPwdIssuedTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <p className="text-sm">
-              <strong>{resetResult?.name}</strong> 직원에게 아래 임시 비밀번호를 안전하게 전달해 주세요.
+              {t("settings.tempPwdMsg", { name: resetResult?.name ?? "" })}
             </p>
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 p-3">
               <code className="flex-1 font-mono text-base font-bold tracking-wider">
@@ -405,17 +406,17 @@ function Settings() {
               </code>
               <Button size="sm" variant="outline" onClick={() => {
                 navigator.clipboard.writeText(resetResult?.tempPassword ?? "");
-                toast.success("복사됨");
+                toast.success(t("settings.copied"));
               }}>
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              이 화면을 닫으면 다시 확인할 수 없습니다. 직원이 로그인 후 즉시 비밀번호를 변경하도록 안내해 주세요.
+              {t("settings.tempPwdWarn")}
             </p>
           </div>
           <DialogFooter>
-            <Button onClick={() => setResetResult(null)}>확인</Button>
+            <Button onClick={() => setResetResult(null)}>{t("common.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -431,6 +432,7 @@ function CreateStaffDialog({
   onCreated: () => void;
   countries: Country[];
 }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -447,8 +449,8 @@ function CreateStaffDialog({
   }, [open]);
 
   const submit = async () => {
-    if (!email || !password || !displayName) return toast.error("이메일, 비밀번호, 이름은 필수입니다");
-    if (password.length < 6) return toast.error("비밀번호는 최소 6자 이상이어야 합니다");
+    if (!email || !password || !displayName) return toast.error(t("settings.createRequired"));
+    if (password.length < 6) return toast.error(t("settings.pwdLenError"));
     setSaving(true);
     const { data, error } = await supabase.functions.invoke("admin-create-staff", {
       body: {
@@ -461,9 +463,9 @@ function CreateStaffDialog({
     });
     setSaving(false);
     if (error || (data as any)?.error) {
-      return toast.error(`생성 실패: ${(data as any)?.error ?? error?.message}`);
+      return toast.error(t("settings.createFailed", { msg: (data as any)?.error ?? error?.message }));
     }
-    toast.success(`${displayName} 계정이 생성되었습니다`);
+    toast.success(t("settings.createDone", { name: displayName }));
     onCreated();
     onClose();
   };
@@ -471,40 +473,40 @@ function CreateStaffDialog({
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>직원 계정 추가</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("settings.createTitle")}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3 py-2">
           <div className="col-span-2 space-y-2">
-            <Label>이메일 *</Label>
+            <Label>{t("settings.emailStar")}</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="col-span-2 space-y-2">
-            <Label>비밀번호 * (최소 6자)</Label>
+            <Label>{t("settings.pwdMin6")}</Label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>이름 *</Label>
+            <Label>{t("settings.nameStar")}</Label>
             <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>부서</Label>
+            <Label>{t("settings.department")}</Label>
             <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>역할</Label>
+            <Label>{t("settings.role")}</Label>
             <Select value={role} onValueChange={(v) => setRole(v as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="staff">직원</SelectItem>
-                <SelectItem value="admin">관리자</SelectItem>
+                <SelectItem value="staff">{t("common.staff")}</SelectItem>
+                <SelectItem value="admin">{t("common.admin")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>담당 국가</Label>
+            <Label>{t("settings.assignedCountry")}</Label>
             <Select value={countryId} onValueChange={setCountryId}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">전체 (제한 없음)</SelectItem>
+                <SelectItem value="__all__">{t("settings.allCountriesNoLimit")}</SelectItem>
                 {countries.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>
                 ))}
@@ -513,8 +515,8 @@ function CreateStaffDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
-          <Button onClick={submit} disabled={saving}>{saving ? "생성 중..." : "계정 생성"}</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>{t("common.cancel")}</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? t("settings.creating") : t("settings.createBtn")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

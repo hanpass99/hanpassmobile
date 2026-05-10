@@ -2,10 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Users, Globe2, Radio, PhoneCall } from "lucide-react";
+import { Download, Users, PhoneCall } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CALL_RESULT_LABEL, STATUS_LABEL, type CallResult, type CustomerStatus } from "@/lib/labels";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/reports")({
   head: () => ({ meta: [{ title: "리포트 — Hanpass OB CRM" }] }),
@@ -27,6 +29,7 @@ function downloadCSV(filename: string, rows: (string | number | null | undefined
 }
 
 async function exportCalls() {
+  const t = i18n.t.bind(i18n);
   const { data, error } = await supabase
     .from("call_logs")
     .select("call_date, result, duration_sec, is_activation, notes, customer:customers(name, phone), staff:profiles!call_logs_staff_id_fkey(display_name)")
@@ -46,10 +49,11 @@ async function exportCalls() {
     ]);
   }
   downloadCSV(`콜로그_${new Date().toISOString().slice(0, 10)}.csv`, rows);
-  toast.success(`${rows.length - 1}건 내보내기 완료`);
+  toast.success(t("reports.exportDone", { n: rows.length - 1 }));
 }
 
 async function exportCustomers() {
+  const t = i18n.t.bind(i18n);
   const { data, error } = await supabase
     .from("customers")
     .select("name, phone, email, status, signup_date, country:countries(code, name_ko), channel:channels(name), staff:profiles!customers_assigned_to_fkey(display_name)");
@@ -66,10 +70,11 @@ async function exportCustomers() {
     ]);
   }
   downloadCSV(`고객명단_${new Date().toISOString().slice(0, 10)}.csv`, rows);
-  toast.success(`${rows.length - 1}건 내보내기 완료`);
+  toast.success(t("reports.exportDone", { n: rows.length - 1 }));
 }
 
 async function exportStaffMonthly() {
+  const t = i18n.t.bind(i18n);
   const now = new Date();
   const Y = now.getFullYear(); const M = now.getMonth() + 1;
   const monthStart = new Date(Y, M - 1, 1).toISOString();
@@ -83,24 +88,24 @@ async function exportStaffMonthly() {
     const ul = (lg.data ?? []).filter((l) => l.staff_id === u.id);
     const success = ul.filter((l) => l.result === "interested" || l.result === "activated").length;
     const activated = ul.filter((l) => l.is_activation).length;
-    const t = (tg.data ?? []).find((x) => x.user_id === u.id);
-    const target = t?.activation_target ?? 0;
-    rows.push([u.display_name, ul.length, success, activated, t?.call_target ?? 0, target, target ? Math.round((activated / target) * 100) : 0]);
+    const tgt = (tg.data ?? []).find((x) => x.user_id === u.id);
+    const target = tgt?.activation_target ?? 0;
+    rows.push([u.display_name, ul.length, success, activated, tgt?.call_target ?? 0, target, target ? Math.round((activated / target) * 100) : 0]);
   }
   downloadCSV(`직원성과_${Y}-${String(M).padStart(2,"0")}.csv`, rows);
-  toast.success("내보내기 완료");
+  toast.success(t("reports.exportDone", { n: rows.length - 1 }));
 }
 
-const reports = [
-  { key: "calls", title: "콜 로그 전체", desc: "모든 콜 기록", icon: PhoneCall, fn: exportCalls },
-  { key: "customers", title: "고객 명단", desc: "전체 고객 정보", icon: Users, fn: exportCustomers },
-  { key: "staff", title: "직원 월간 성과", desc: "이번 달 직원 실적", icon: Users, fn: exportStaffMonthly },
-];
-
 function Reports() {
+  const { t } = useTranslation();
+  const reports = [
+    { key: "calls", title: t("reports.callLogs"), desc: t("reports.callLogsDesc"), icon: PhoneCall, fn: exportCalls },
+    { key: "customers", title: t("reports.customerList"), desc: t("reports.customerListDesc"), icon: Users, fn: exportCustomers },
+    { key: "staff", title: t("reports.staffMonthly"), desc: t("reports.staffMonthlyDesc"), icon: Users, fn: exportStaffMonthly },
+  ];
   return (
     <div className="space-y-5">
-      <PageHeader title="리포트" description="원하는 리포트를 CSV로 내보내세요 (Excel에서 바로 열림)" />
+      <PageHeader title={t("reports.title")} description={t("reports.subtitle")} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {reports.map((r) => (
           <Card key={r.key} className="transition hover:shadow-card-hover">
@@ -115,7 +120,7 @@ function Reports() {
             </CardHeader>
             <CardContent>
               <Button size="sm" className="w-full" onClick={() => r.fn().catch((e) => toast.error(String(e)))}>
-                <Download className="mr-2 h-4 w-4" /> CSV 다운로드
+                <Download className="mr-2 h-4 w-4" /> {t("reports.download")}
               </Button>
             </CardContent>
           </Card>
@@ -124,7 +129,7 @@ function Reports() {
 
       <Card>
         <CardContent className="py-6 text-center text-sm text-muted-foreground">
-          국가별 / 채널별 상세 분석은 좌측 메뉴의 <strong>국가별 성과</strong>, <strong>채널별 성과</strong> 페이지를 참고하세요.
+          {t("reports.hint")}
         </CardContent>
       </Card>
     </div>

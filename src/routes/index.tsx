@@ -15,10 +15,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { CUSTOMER_STATUSES, STATUS_LABEL, STATUS_CLASS, type CustomerStatus, type CallResult } from "@/lib/labels";
+import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus, type CallResult } from "@/lib/labels";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "대시보드 — Hanpass Mobile OB Call CRM" }] }),
@@ -34,6 +35,7 @@ type Customer = {
 };
 
 function Dashboard() {
+  const { t } = useTranslation();
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
   const [from, setFrom] = useState<Date>(monthStart);
@@ -55,7 +57,7 @@ function Dashboard() {
       const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
       const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
       const Y = from.getFullYear(); const M = from.getMonth() + 1;
-      const [l, c, co, ch, sf, t, ur] = await Promise.all([
+      const [l, c, co, ch, sf, tg, ur] = await Promise.all([
         supabase.from("call_logs").select("call_date, result, is_activation, staff_id, customer_id").gte("call_date", fromIso).lte("call_date", toIso),
         supabase.from("customers").select("id, status, country_id, channel_id, assigned_to, updated_at, created_at, imported_at").limit(5000),
         supabase.from("countries").select("id, code").eq("is_active", true),
@@ -70,7 +72,7 @@ function Dashboard() {
       setChannels(ch.data ?? []);
       setStaff(sf.data ?? []);
       setStaffIds(new Set((ur.data ?? []).map((r: any) => r.user_id)));
-      setTargets(t.data ?? []);
+      setTargets(tg.data ?? []);
       setLoading(false);
     })();
   }, [from, to]);
@@ -123,18 +125,18 @@ function Dashboard() {
       const day = fLogs.filter((l) => l.call_date.slice(0, 10) === d.key);
       return {
         date: d.date,
-        콜수: day.length,
-        개통: day.filter((l) => l.is_activation).length,
+        [t("dashboard.calls")]: day.length,
+        [t("dashboard.activations")]: day.filter((l) => l.is_activation).length,
       };
     });
-  }, [fLogs, from, to]);
+  }, [fLogs, from, to, t]);
 
   const channelData = channels.map((ch) => {
     const list = fCustomers.filter((c) => c.channel_id === ch.id);
     return {
       name: ch.name.replace("한패스 ", ""),
-      고객수: list.length,
-      개통: list.filter((c) => c.status === "activated").length,
+      [t("dashboard.customers")]: list.length,
+      [t("dashboard.activations")]: list.filter((c) => c.status === "activated").length,
     };
   });
 
@@ -149,47 +151,47 @@ function Dashboard() {
     .map((u) => {
       const userLogs = fLogs.filter((l) => l.staff_id === u.id);
       const userCustomers = fCustomers.filter((c) => c.assigned_to === u.id);
-      const t = targets.find((x) => x.user_id === u.id);
+      const tg = targets.find((x) => x.user_id === u.id);
       const userActivated = userCustomers.filter((c) => c.status === "activated").length;
       return {
         id: u.id, name: u.display_name,
         totalCalls: userLogs.length,
         activated: userActivated,
-        target: t?.activation_target ?? 0,
+        target: tg?.activation_target ?? 0,
       };
     })
     .sort((a, b) => b.activated - a.activated || b.totalCalls - a.totalCalls);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="대시보드" description={loading ? "로드 중..." : "OB 콜 운영 현황 (고객 상태 기준)"} />
+      <PageHeader title={t("dashboard.title")} description={loading ? t("common.loading") : t("dashboard.subtitle")} />
 
       <Card>
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
           <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">시작일</div>
+            <div className="text-xs font-medium text-muted-foreground">{t("common.startDate")}</div>
             <DatePick value={from} onChange={setFrom} />
           </div>
           <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">종료일</div>
+            <div className="text-xs font-medium text-muted-foreground">{t("common.endDate")}</div>
             <DatePick value={to} onChange={setTo} />
           </div>
           <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">국가</div>
+            <div className="text-xs font-medium text-muted-foreground">{t("dashboard.countryFilter")}</div>
             <Select value={countryF} onValueChange={setCountryF}>
               <SelectTrigger className="w-[180px]">
                 <Globe2 className="mr-2 h-4 w-4" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 국가</SelectItem>
+                <SelectItem value="all">{t("dashboard.allCountries")}</SelectItem>
                 {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="ml-auto flex gap-2">
             <Button variant="outline" size="sm" onClick={() => { setFrom(monthStart); setTo(today); setCountryF("all"); }}>
-              초기화
+              {t("common.reset")}
             </Button>
           </div>
         </CardContent>
@@ -197,29 +199,29 @@ function Dashboard() {
 
       {/* 핵심 지표 */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <StatCard label="전체 콜수" value={totalCalls.toLocaleString()} icon={PhoneCall} tone="primary" hint="선택 기간 콜로그" />
-        <StatCard label="개통 완료" value={activated} icon={Award} tone="success" />
+        <StatCard label={t("dashboard.totalCalls")} value={totalCalls.toLocaleString()} icon={PhoneCall} tone="primary" hint={t("dashboard.selectedPeriod")} />
+        <StatCard label={t("dashboard.activated")} value={activated} icon={Award} tone="success" />
         <StatCard
-          label="개통 완료율"
+          label={t("dashboard.activationRate")}
           value={(totalCalls ? (activated / totalCalls) * 100 : 0).toFixed(1)}
           suffix="%"
           icon={Target}
           tone="info"
-          hint={`개통 ${activated} / 총 콜 ${totalCalls}`}
+          hint={t("dashboard.activationRateHint", { a: activated, t: totalCalls })}
         />
       </div>
 
       {/* 상태별 카운트 (10종) */}
       <Card>
         <CardHeader>
-          <CardTitle>고객 상태별 통계</CardTitle>
-          <CardDescription>모든 통계는 동일한 상태값 기준으로 계산됩니다</CardDescription>
+          <CardTitle>{t("dashboard.statusByCustomer")}</CardTitle>
+          <CardDescription>{t("dashboard.statusDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
             {CUSTOMER_STATUSES.map((s) => (
               <div key={s} className={`rounded-lg border border-border/60 p-3 ${STATUS_CLASS[s]}`}>
-                <div className="text-xs font-medium opacity-80">{STATUS_LABEL[s]}</div>
+                <div className="text-xs font-medium opacity-80">{t(`status.${s}`)}</div>
                 <div className="mt-1 text-2xl font-bold">{statusCounts[s].toLocaleString()}</div>
               </div>
             ))}
@@ -228,30 +230,30 @@ function Dashboard() {
       </Card>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <StatCard label="콜 성공률" value={successRate.toFixed(1)} suffix="%" icon={TrendingUp} tone="primary" hint="(개통+진행중+재연락) / 총 고객" />
-        <StatCard label="개통 성공률" value={activationRate.toFixed(1)} suffix="%" icon={Award} tone="success" hint="개통완료 / 총 고객" />
+        <StatCard label={t("dashboard.callSuccessRate")} value={successRate.toFixed(1)} suffix="%" icon={TrendingUp} tone="primary" hint={t("dashboard.callSuccessHint")} />
+        <StatCard label={t("dashboard.activationSuccessRate")} value={activationRate.toFixed(1)} suffix="%" icon={Award} tone="success" hint={t("dashboard.activationSuccessHint")} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>일별 콜 추이</CardTitle><CardDescription>{format(from, "yyyy.MM.dd")} ~ {format(to, "yyyy.MM.dd")}</CardDescription></CardHeader>
+          <CardHeader><CardTitle>{t("dashboard.dailyTrend")}</CardTitle><CardDescription>{format(from, "yyyy.MM.dd")} ~ {format(to, "yyyy.MM.dd")}</CardDescription></CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" fontSize={12} /><YAxis fontSize={12} /><Tooltip /><Legend />
-                <Line type="monotone" dataKey="콜수" stroke="#3b82f6" strokeWidth={2} />
-                <Line type="monotone" dataKey="개통" stroke="#10b981" strokeWidth={2} />
+                <Line type="monotone" dataKey={t("dashboard.calls")} stroke="#3b82f6" strokeWidth={2} />
+                <Line type="monotone" dataKey={t("dashboard.activations")} stroke="#10b981" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>국가별 개통 분포</CardTitle><CardDescription>상위 8개국</CardDescription></CardHeader>
+          <CardHeader><CardTitle>{t("dashboard.countryDist")}</CardTitle><CardDescription>{t("dashboard.countryDistDesc")}</CardDescription></CardHeader>
           <CardContent className="h-[280px]">
             {countryData.every((c) => c.value === 0) ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">데이터 없음</div>
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t("common.empty")}</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -267,7 +269,7 @@ function Dashboard() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>채널별 성과</CardTitle><CardDescription>고객수 vs 개통완료</CardDescription></CardHeader>
+        <CardHeader><CardTitle>{t("dashboard.channelPerf")}</CardTitle><CardDescription>{t("dashboard.channelPerfDesc")}</CardDescription></CardHeader>
         <CardContent className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={channelData} layout="vertical" margin={{ left: 30 }}>
@@ -275,15 +277,15 @@ function Dashboard() {
               <XAxis type="number" fontSize={11} />
               <YAxis type="category" dataKey="name" fontSize={11} width={140} />
               <Tooltip /><Legend />
-              <Bar dataKey="고객수" fill="#3b82f6" radius={[0, 6, 6, 0]} />
-              <Bar dataKey="개통" fill="#10b981" radius={[0, 6, 6, 0]} />
+              <Bar dataKey={t("dashboard.customers")} fill="#3b82f6" radius={[0, 6, 6, 0]} />
+              <Bar dataKey={t("dashboard.activations")} fill="#10b981" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>직원 랭킹</CardTitle><CardDescription>관리자 제외 · 개통완료 / 콜수 기준</CardDescription></CardHeader>
+        <CardHeader><CardTitle>{t("dashboard.staffRanking")}</CardTitle><CardDescription>{t("dashboard.staffRankingDesc")}</CardDescription></CardHeader>
         <CardContent>
           <div className="space-y-3">
             {ranking.map((u, i) => {
@@ -299,17 +301,17 @@ function Dashboard() {
                   <div className="min-w-[120px] flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-semibold">{u.name}</span>
-                      <span className="text-xs text-muted-foreground">개통 {u.activated} / {u.target || "—"} {u.target ? `(${pct.toFixed(0)}%)` : ""}</span>
+                      <span className="text-xs text-muted-foreground">{t("dashboard.activations")} {u.activated} / {u.target || "—"} {u.target ? `(${pct.toFixed(0)}%)` : ""}</span>
                     </div>
                     <Progress value={Math.min(100, pct)} className="mt-2 h-2" />
                   </div>
                   <div className="hidden gap-6 text-xs sm:flex">
-                    <div><div className="text-muted-foreground">콜수</div><div className="font-semibold">{u.totalCalls}</div></div>
+                    <div><div className="text-muted-foreground">{t("dashboard.calls")}</div><div className="font-semibold">{u.totalCalls}</div></div>
                   </div>
                 </div>
               );
             })}
-            {!ranking.length && <div className="text-center text-sm text-muted-foreground py-6">직원이 없습니다.</div>}
+            {!ranking.length && <div className="text-center text-sm text-muted-foreground py-6">{t("dashboard.noStaff")}</div>}
           </div>
         </CardContent>
       </Card>

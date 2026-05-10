@@ -27,12 +27,24 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import i18n from "@/i18n";
 import {
-  CUSTOMER_STATUSES, STATUS_LABEL, STATUS_CLASS, type CustomerStatus,
-  POOLS, POOL_LABEL, POOL_SHORT, type CustomerPool,
+  CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus,
+  POOLS, type CustomerPool,
 } from "@/lib/labels";
+
+const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
+  get: (_t, p: string) => i18n.t(`status.${p}`),
+});
+const POOL_LABEL = new Proxy({} as Record<CustomerPool, string>, {
+  get: (_t, p: string) => i18n.t(`pool.${p}`),
+});
+const POOL_SHORT = new Proxy({} as Record<CustomerPool, string>, {
+  get: (_t, p: string) => i18n.t(`pool.short.${p}`),
+});
 
 export const Route = createFileRoute("/customers")({
   head: () => ({ meta: [{ title: "고객 관리 — Hanpass OB CRM" }] }),
@@ -67,6 +79,7 @@ type CustomerRow = {
 type SortDir = "asc" | "desc" | null;
 
 function CustomersPage() {
+  const { t } = useTranslation();
   const { isAdmin } = useAuth();
   const [rows, setRows] = useState<CustomerRow[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -181,7 +194,7 @@ function CustomersPage() {
     if (status === "activated") patch.activation_date = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("customers").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success(`상태 변경: ${STATUS_LABEL[status]}`);
+    toast.success(t("status.changed",{label:STATUS_LABEL[status]}));
     load();
   };
 
@@ -190,7 +203,7 @@ function CustomersPage() {
     const { error } = await supabase.from("customers").delete().eq("id", deleteId);
     setDeleteId(null);
     if (error) return toast.error(error.message);
-    toast.success("삭제됨");
+    toast.success(t("common.deleted"));
     load();
   };
 
@@ -200,7 +213,7 @@ function CustomersPage() {
     const { error } = await supabase.from("customers").delete().in("id", ids);
     setBulkOpen(false);
     if (error) return toast.error(error.message);
-    toast.success(`${ids.length}명 삭제됨`);
+    toast.success(t("customers.bulkDeleteConfirm",{count:ids.length}));
     setSelected(new Set());
     load();
   };
@@ -375,7 +388,7 @@ function CustomersPage() {
 
     const Assigned = ({ c }: { c: CustomerRow }) => (
       <TableCell className="text-xs">
-        {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">미배정</span>}
+        {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">{t("common.unassigned")}</span>}
       </TableCell>
     );
 
@@ -392,7 +405,7 @@ function CustomersPage() {
               <SortHead k="country">국적</SortHead>
               <SortHead k="assigned">담당자</SortHead>
               <SortHead k="status" className="min-w-[140px]">상태</SortHead>
-              <SortHead k="imported_at">데이터 등록일</SortHead>
+              <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
             </TableRow>
@@ -431,7 +444,7 @@ function CustomersPage() {
               <SortHead k="signup_date">가입일</SortHead>
               <SortHead k="assigned">담당자</SortHead>
               <SortHead k="status" className="min-w-[140px]">상태</SortHead>
-              <SortHead k="imported_at">데이터 등록일</SortHead>
+              <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
             </TableRow>
@@ -470,7 +483,7 @@ function CustomersPage() {
               <SortHead k="country">국적</SortHead>
               <SortHead k="assigned">담당자</SortHead>
               <SortHead k="status" className="min-w-[140px]">상태</SortHead>
-              <SortHead k="imported_at">데이터 등록일</SortHead>
+              <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
             </TableRow>
@@ -510,7 +523,7 @@ function CustomersPage() {
             <SortHead k="requested_plan">신청 요금제</SortHead>
             <SortHead k="assigned">담당자</SortHead>
             <SortHead k="status" className="min-w-[140px]">상태</SortHead>
-            <SortHead k="imported_at">데이터 등록일</SortHead>
+            <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
             <TableHead>메모</TableHead>
             <TableHead className="text-right">액션</TableHead>
           </TableRow>
@@ -541,10 +554,10 @@ function CustomersPage() {
     <div className="space-y-5">
       <PageHeader
         title="고객 관리"
-        description={`총 ${rows.length.toLocaleString()}명${loading ? " · 로드 중..." : ""}`}
+        description={`${t("customers.totalDesc",{count:rows.length.toLocaleString()})}${loading?" · "+t("common.loading"):""}`}
         actions={
           <Button variant="outline" size="sm" onClick={load}>
-            <RefreshCw className="mr-2 h-4 w-4" /> 새로고침
+            <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
           </Button>
         }
       />
@@ -574,13 +587,13 @@ function CustomersPage() {
                         onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
                       />
                       <Button variant="outline" size="sm" onClick={downloadSample}>
-                        <Download className="mr-2 h-4 w-4" /> 샘플
+                        <Download className="mr-2 h-4 w-4" /> {t("customers.sample")}
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
-                        <Upload className="mr-2 h-4 w-4" /> {importing ? "업로드 중..." : "엑셀/CSV 업로드"}
+                        <Upload className="mr-2 h-4 w-4" /> {importing ? t("customers.uploading") : t("customers.excelUpload")}
                       </Button>
                       <Button size="sm" onClick={() => setShowAdd(true)}>
-                        <Plus className="mr-2 h-4 w-4" /> 고객 추가
+                        <Plus className="mr-2 h-4 w-4" /> {t("customers.addCustomer")}
                       </Button>
                     </div>
                   )}
@@ -590,56 +603,56 @@ function CustomersPage() {
                   <div className="relative md:col-span-2">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="이름 / 전화 / 이메일 / 담당자명"
+                      placeholder={t("customers.searchPlaceholder")}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       className="pl-9"
                     />
                   </div>
                   <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger><SelectValue placeholder="국가" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("common.country")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체 국가</SelectItem>
+                      <SelectItem value="all">{t("dashboard.allCountries")}</SelectItem>
                       {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={statusF} onValueChange={(v) => setStatusF(v as typeof statusF)}>
-                    <SelectTrigger><SelectValue placeholder="상태" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("common.status")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체 상태</SelectItem>
+                      <SelectItem value="all">{t("status.allStatus")}</SelectItem>
                       {CUSTOMER_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={staffF} onValueChange={setStaffF}>
-                    <SelectTrigger><SelectValue placeholder="담당자" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("customers.assigned")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체 담당자</SelectItem>
-                      <SelectItem value="__none__">미배정</SelectItem>
+                      <SelectItem value="all">{t("customers.allAssigned")}</SelectItem>
+                      <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
                       {staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">데이터 등록일</span>
+                  <span className="text-xs font-medium text-muted-foreground">{t("common.registeredDate")}</span>
                   <DateRangePicker label="시작" value={dateFrom} onChange={setDateFrom} />
                   <span className="text-xs text-muted-foreground">~</span>
                   <DateRangePicker label="종료" value={dateTo} onChange={setDateTo} />
                   {(dateFrom || dateTo) && (
                     <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
-                      초기화
+                      {t("common.reset")}
                     </Button>
                   )}
                   {isAdmin && selected.size > 0 && tab === p && (
                     <Button variant="destructive" size="sm" className="ml-auto" onClick={() => setBulkOpen(true)}>
-                      <Trash2 className="mr-2 h-4 w-4" /> 선택 {selected.size}명 삭제
+                      <Trash2 className="mr-2 h-4 w-4" /> {t("customers.bulkDeleteBtn",{count:selected.size})}
                     </Button>
                   )}
                 </div>
 
                 {staffStats.length > 0 && (staffF === "all") && (
                   <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-                    <div className="mb-2 text-xs font-semibold text-muted-foreground">담당자별 현황 (현재 필터 기준)</div>
+                    <div className="mb-2 text-xs font-semibold text-muted-foreground">{t("customers.staffStats")}</div>
                     <div className="flex flex-wrap gap-2">
                       {staffStats.map((s) => (
                         <button
