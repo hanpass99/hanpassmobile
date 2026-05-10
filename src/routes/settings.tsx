@@ -235,6 +235,14 @@ function Settings() {
                     {r.display_name}
                     {r.id === user?.id && <span className="ml-2 text-xs text-muted-foreground">(나)</span>}
                   </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{r.email ?? "-"}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">
+                    {r.last_sign_in_at ? (
+                      <span className="text-foreground">{new Date(r.last_sign_in_at).toLocaleString("ko-KR")}</span>
+                    ) : (
+                      <span className="text-muted-foreground">미접속</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.department ?? "-"}</TableCell>
                   <TableCell>
                     {isAdmin && r.id !== user?.id ? (
