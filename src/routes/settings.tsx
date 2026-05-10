@@ -349,6 +349,56 @@ function Settings() {
         onCreated={load}
         countries={countries}
       />
+
+      {/* 비밀번호 초기화 확인 */}
+      <Dialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>비밀번호 초기화</DialogTitle>
+          </DialogHeader>
+          <p className="py-2 text-sm text-muted-foreground">
+            <strong className="text-foreground">{resetTarget?.display_name}</strong> 직원의 비밀번호가 임시 비밀번호로 변경됩니다.
+            기존 비밀번호는 즉시 무효화됩니다.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetTarget(null)} disabled={resetting}>취소</Button>
+            <Button onClick={resetPassword} disabled={resetting}>
+              {resetting ? "처리 중..." : "임시 비밀번호 발급"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 임시 비밀번호 결과 */}
+      <Dialog open={!!resetResult} onOpenChange={(o) => !o && setResetResult(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>임시 비밀번호 발급 완료</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm">
+              <strong>{resetResult?.name}</strong> 직원에게 아래 임시 비밀번호를 안전하게 전달해 주세요.
+            </p>
+            <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 p-3">
+              <code className="flex-1 font-mono text-base font-bold tracking-wider">
+                {resetResult?.tempPassword}
+              </code>
+              <Button size="sm" variant="outline" onClick={() => {
+                navigator.clipboard.writeText(resetResult?.tempPassword ?? "");
+                toast.success("복사됨");
+              }}>
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              이 화면을 닫으면 다시 확인할 수 없습니다. 직원이 로그인 후 즉시 비밀번호를 변경하도록 안내해 주세요.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setResetResult(null)}>확인</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
