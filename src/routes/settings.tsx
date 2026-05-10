@@ -70,15 +70,21 @@ function Settings() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }] = await Promise.all([
+    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, activityRes] = await Promise.all([
       supabase.from("profiles").select("id, display_name, department, is_active, country_id"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
       supabase.from("countries").select("id, code, name_ko").order("code"),
+      isAdmin
+        ? supabase.functions.invoke("admin-list-staff-activity")
+        : Promise.resolve({ data: { users: [] }, error: null } as any),
     ]);
+    const activityList: { id: string; email: string | null; last_sign_in_at: string | null }[] =
+      (activityRes as any)?.data?.users ?? [];
     const merged: Row[] = (profiles ?? []).map((p: any) => {
       const r = roles?.find((x) => x.user_id === p.id);
       const t = targets?.find((x) => x.user_id === p.id);
+      const a = activityList.find((x) => x.id === p.id);
       return {
         id: p.id,
         display_name: p.display_name,
@@ -88,6 +94,8 @@ function Settings() {
         country_id: p.country_id ?? null,
         call_target: t?.call_target ?? 0,
         activation_target: t?.activation_target ?? 0,
+        email: a?.email ?? null,
+        last_sign_in_at: a?.last_sign_in_at ?? null,
       };
     });
     setRows(merged);
@@ -95,7 +103,7 @@ function Settings() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [isAdmin]);
 
   const saveTarget = async (r: Row) => {
     const { error } = await supabase.from("targets").upsert(
