@@ -47,6 +47,24 @@ function Settings() {
   const [bulkCall, setBulkCall] = useState(200);
   const [bulkAct, setBulkAct] = useState(120);
   const [showCreate, setShowCreate] = useState(false);
+  const [resetTarget, setResetTarget] = useState<Row | null>(null);
+  const [resetResult, setResetResult] = useState<{ name: string; tempPassword: string } | null>(null);
+  const [resetting, setResetting] = useState(false);
+
+  const resetPassword = async () => {
+    if (!resetTarget) return;
+    setResetting(true);
+    const { data, error } = await supabase.functions.invoke("admin-reset-staff-password", {
+      body: { user_id: resetTarget.id },
+    });
+    setResetting(false);
+    if (error || (data as any)?.error) {
+      return toast.error(`초기화 실패: ${(data as any)?.error ?? error?.message}`);
+    }
+    setResetResult({ name: resetTarget.display_name, tempPassword: (data as any).temp_password });
+    setResetTarget(null);
+    toast.success("임시 비밀번호 발급됨");
+  };
 
   const load = async () => {
     setLoading(true);
