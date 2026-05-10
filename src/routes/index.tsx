@@ -57,7 +57,7 @@ function Dashboard() {
       const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
       const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
       const Y = from.getFullYear(); const M = from.getMonth() + 1;
-      const [l, c, co, ch, sf, t, ur] = await Promise.all([
+      const [l, c, co, ch, sf, tg, ur] = await Promise.all([
         supabase.from("call_logs").select("call_date, result, is_activation, staff_id, customer_id").gte("call_date", fromIso).lte("call_date", toIso),
         supabase.from("customers").select("id, status, country_id, channel_id, assigned_to, updated_at, created_at, imported_at").limit(5000),
         supabase.from("countries").select("id, code").eq("is_active", true),
@@ -72,7 +72,7 @@ function Dashboard() {
       setChannels(ch.data ?? []);
       setStaff(sf.data ?? []);
       setStaffIds(new Set((ur.data ?? []).map((r: any) => r.user_id)));
-      setTargets(t.data ?? []);
+      setTargets(tg.data ?? []);
       setLoading(false);
     })();
   }, [from, to]);
