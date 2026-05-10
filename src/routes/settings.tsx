@@ -33,6 +33,8 @@ type Row = {
   country_id: string | null;
   call_target: number;
   activation_target: number;
+  email: string | null;
+  last_sign_in_at: string | null;
 };
 
 const now = new Date();
