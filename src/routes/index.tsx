@@ -140,14 +140,6 @@ function Dashboard() {
         [t("dashboard.activations")]: list.filter((c) => c.status === "activated").length,
       };
     });
-    const noCh = fCustomers.filter((c) => !c.channel_id);
-    if (noCh.length) {
-      arr.push({
-        name: t("channelPerf.unassigned"),
-        [t("dashboard.customers")]: noCh.length,
-        [t("dashboard.activations")]: noCh.filter((c) => c.status === "activated").length,
-      });
-    }
     return arr;
   })();
 
