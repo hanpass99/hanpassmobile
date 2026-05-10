@@ -27,11 +27,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  CUSTOMER_STATUSES, STATUS_LABEL, STATUS_CLASS, type CustomerStatus,
-  POOLS, POOL_LABEL, POOL_SHORT, type CustomerPool,
+  CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus,
+  POOLS, type CustomerPool,
 } from "@/lib/labels";
 
 export const Route = createFileRoute("/customers")({
