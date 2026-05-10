@@ -217,6 +217,8 @@ function Settings() {
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead>이름</TableHead>
+                <TableHead>이메일</TableHead>
+                <TableHead>최근 접속</TableHead>
                 <TableHead>부서</TableHead>
                 <TableHead>역할</TableHead>
                 <TableHead>담당 국가</TableHead>
