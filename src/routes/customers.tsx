@@ -30,10 +30,21 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import i18n from "@/i18n";
 import {
   CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus,
   POOLS, type CustomerPool,
 } from "@/lib/labels";
+
+const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
+  get: (_t, p: string) => i18n.t(`status.${p}`),
+});
+const POOL_LABEL = new Proxy({} as Record<CustomerPool, string>, {
+  get: (_t, p: string) => i18n.t(`pool.${p}`),
+});
+const POOL_SHORT = new Proxy({} as Record<CustomerPool, string>, {
+  get: (_t, p: string) => i18n.t(`pool.short.${p}`),
+});
 
 export const Route = createFileRoute("/customers")({
   head: () => ({ meta: [{ title: "고객 관리 — Hanpass OB CRM" }] }),
