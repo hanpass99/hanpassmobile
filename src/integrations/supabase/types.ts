@@ -143,8 +143,14 @@ export type Database = {
       }
       customers: {
         Row: {
+          activation_date: string | null
+          application_date: string | null
           assigned_to: string | null
+          carrier_plan: string | null
           channel_id: string | null
+          charge_amount: number | null
+          charge_date: string | null
+          charge_phone: string | null
           country_id: string | null
           created_at: string
           email: string | null
@@ -154,13 +160,20 @@ export type Database = {
           notes: string | null
           phone: string
           pool: Database["public"]["Enums"]["customer_pool"]
+          requested_plan: string | null
           signup_date: string
           status: Database["public"]["Enums"]["customer_status"]
           updated_at: string
         }
         Insert: {
+          activation_date?: string | null
+          application_date?: string | null
           assigned_to?: string | null
+          carrier_plan?: string | null
           channel_id?: string | null
+          charge_amount?: number | null
+          charge_date?: string | null
+          charge_phone?: string | null
           country_id?: string | null
           created_at?: string
           email?: string | null
@@ -170,13 +183,20 @@ export type Database = {
           notes?: string | null
           phone: string
           pool?: Database["public"]["Enums"]["customer_pool"]
+          requested_plan?: string | null
           signup_date?: string
           status?: Database["public"]["Enums"]["customer_status"]
           updated_at?: string
         }
         Update: {
+          activation_date?: string | null
+          application_date?: string | null
           assigned_to?: string | null
+          carrier_plan?: string | null
           channel_id?: string | null
+          charge_amount?: number | null
+          charge_date?: string | null
+          charge_phone?: string | null
           country_id?: string | null
           created_at?: string
           email?: string | null
@@ -186,6 +206,7 @@ export type Database = {
           notes?: string | null
           phone?: string
           pool?: Database["public"]["Enums"]["customer_pool"]
+          requested_plan?: string | null
           signup_date?: string
           status?: Database["public"]["Enums"]["customer_status"]
           updated_at?: string
