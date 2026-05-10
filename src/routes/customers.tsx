@@ -163,7 +163,7 @@ function CustomersPage() {
   };
 
   const changeStatus = async (id: string, status: CustomerStatus) => {
-    const patch: Record<string, unknown> = { status };
+    const patch: { status: CustomerStatus; activation_date?: string } = { status };
     if (status === "activated") patch.activation_date = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("customers").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
