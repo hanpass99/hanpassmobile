@@ -332,7 +332,7 @@ function Settings() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">직원이 없습니다.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-8">직원이 없습니다.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
