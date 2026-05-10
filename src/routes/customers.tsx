@@ -79,7 +79,7 @@ type CustomerRow = {
 type SortDir = "asc" | "desc" | null;
 
 function CustomersPage() {
-  useTranslation(); // re-render on language change
+  const { t } = useTranslation();
   const { isAdmin } = useAuth();
   const [rows, setRows] = useState<CustomerRow[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
