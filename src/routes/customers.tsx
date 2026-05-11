@@ -53,7 +53,7 @@ export const Route = createFileRoute("/customers")({
 
 type Country = { id: string; code: string; name_ko: string };
 type Channel = { id: string; name: string };
-type Profile = { id: string; display_name: string };
+type Profile = { id: string; display_name: string; country_id: string | null };
 type CustomerRow = {
   id: string;
   name: string;
@@ -90,6 +90,7 @@ function CustomersPage() {
 
   const [search, setSearch] = useState("");
   const [country, setCountry] = useState("all");
+  const [assignedCountry, setAssignedCountry] = useState("all");
   const [statusF, setStatusF] = useState<"all" | CustomerStatus>("all");
   const [staffF, setStaffF] = useState("all");
   const [sortKey, setSortKey] = useState<string>("imported_at");
@@ -109,7 +110,7 @@ function CustomersPage() {
       supabase.from("customers").select("*").order("imported_at", { ascending: false }).limit(2000),
       supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
       supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-      supabase.from("profiles").select("id, display_name").eq("is_active", true),
+      supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true),
     ]);
     if (c.error) toast.error(`고객 로드 실패: ${c.error.message}`);
     setRows((c.data ?? []) as CustomerRow[]);
@@ -124,6 +125,11 @@ function CustomersPage() {
   const staffById = useMemo(() => {
     const m = new Map<string, string>();
     staff.forEach((s) => m.set(s.id, s.display_name));
+    return m;
+  }, [staff]);
+  const staffCountryById = useMemo(() => {
+    const m = new Map<string, string | null>();
+    staff.forEach((s) => m.set(s.id, s.country_id));
     return m;
   }, [staff]);
   const countryById = useMemo(() => {
@@ -143,6 +149,11 @@ function CustomersPage() {
         if (!hay.includes(q)) return false;
       }
       if (country !== "all" && r.country_id !== country) return false;
+      if (assignedCountry !== "all") {
+        const sc = r.assigned_to ? staffCountryById.get(r.assigned_to) ?? null : null;
+        if (assignedCountry === "__none__") { if (sc) return false; }
+        else if (sc !== assignedCountry) return false;
+      }
       if (statusF !== "all" && r.status !== statusF) return false;
       if (staffF !== "all") {
         if (staffF === "__none__") { if (r.assigned_to) return false; }
@@ -161,6 +172,10 @@ function CustomersPage() {
       out.sort((a: any, b: any) => {
         let av = a[sortKey]; let bv = b[sortKey];
         if (sortKey === "country") { av = countryById.get(a.country_id ?? "")?.code ?? ""; bv = countryById.get(b.country_id ?? "")?.code ?? ""; }
+        if (sortKey === "assigned_country") {
+          av = countryById.get(staffCountryById.get(a.assigned_to ?? "") ?? "")?.code ?? "";
+          bv = countryById.get(staffCountryById.get(b.assigned_to ?? "") ?? "")?.code ?? "";
+        }
         if (sortKey === "assigned") { av = staffById.get(a.assigned_to ?? "") ?? ""; bv = staffById.get(b.assigned_to ?? "") ?? ""; }
         if (sortKey === "status") { av = STATUS_LABEL[a.status as CustomerStatus]; bv = STATUS_LABEL[b.status as CustomerStatus]; }
         av = av ?? ""; bv = bv ?? "";
@@ -169,7 +184,7 @@ function CustomersPage() {
       });
     }
     return out;
-  }, [poolRows, search, country, statusF, staffF, sortKey, sortDir, staffById, countryById, dateFrom, dateTo]);
+  }, [poolRows, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, staffById, staffCountryById, countryById, dateFrom, dateTo]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
@@ -476,35 +491,40 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-muted/40">
               {CheckHead}
-              <SortHead k="name">고객명</SortHead>
-              <SortHead k="phone">충전번호</SortHead>
-              <SortHead k="charge_amount">충전 요금</SortHead>
-              <SortHead k="charge_date">충전일</SortHead>
-              <SortHead k="country">국적</SortHead>
-              <SortHead k="assigned">담당자</SortHead>
-              <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              <SortHead k="name">{t("customers.col.name")}</SortHead>
+              <SortHead k="phone">{t("customers.col.chargePhone")}</SortHead>
+              <SortHead k="charge_amount">{t("customers.col.chargeAmount")}</SortHead>
+              <SortHead k="charge_date">{t("customers.col.chargeDate")}</SortHead>
+              <SortHead k="assigned_country">{t("customers.col.assignedCountry")}</SortHead>
+              <SortHead k="country">{t("customers.col.customerCountry")}</SortHead>
+              <SortHead k="assigned">{t("customers.col.assigned")}</SortHead>
+              <SortHead k="status" className="min-w-[140px]">{t("customers.col.status")}</SortHead>
               <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
-              <TableHead>메모</TableHead>
-              <TableHead className="text-right">액션</TableHead>
+              <TableHead>{t("customers.col.memo")}</TableHead>
+              <TableHead className="text-right">{t("customers.col.action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((c) => (
-              <TableRow key={c.id} className="hover:bg-muted/30">
-                <CheckCell c={c} />
-                <TableCell className="font-medium">{c.name}</TableCell>
-                <TableCell className="font-mono text-xs">{c.charge_phone ?? c.phone}</TableCell>
-                <TableCell className="text-xs">{c.charge_amount ? `₩${c.charge_amount.toLocaleString()}` : "-"}</TableCell>
-                <TableCell className="text-xs">{fmtDate(c.charge_date)}</TableCell>
-                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
-                <Assigned c={c} />
-                <StatusCell c={c} />
-                <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
-                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
-                {renderActions(c)}
-              </TableRow>
-            ))}
-            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
+            {filtered.map((c) => {
+              const sc = c.assigned_to ? staffCountryById.get(c.assigned_to) ?? null : null;
+              return (
+                <TableRow key={c.id} className="hover:bg-muted/30">
+                  <CheckCell c={c} />
+                  <TableCell className="font-medium whitespace-nowrap">{c.name}</TableCell>
+                  <TableCell className="font-mono text-xs whitespace-nowrap">{c.charge_phone ?? c.phone}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{c.charge_amount ? `₩${c.charge_amount.toLocaleString()}` : "-"}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{fmtDate(c.charge_date)}</TableCell>
+                  <TableCell className="text-xs">{sc ? (countryById.get(sc)?.code ?? "-") : <span className="text-muted-foreground">-</span>}</TableCell>
+                  <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                  <Assigned c={c} />
+                  <StatusCell c={c} />
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(c.imported_at)}</TableCell>
+                  <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                  {renderActions(c)}
+                </TableRow>
+              );
+            })}
+            {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -599,7 +619,7 @@ function CustomersPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
                   <div className="relative md:col-span-2">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -610,9 +630,17 @@ function CustomersPage() {
                     />
                   </div>
                   <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger><SelectValue placeholder={t("common.country")} /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("customers.col.customerCountry")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">{t("dashboard.allCountries")}</SelectItem>
+                      <SelectItem value="all">{t("customers.col.customerCountry")} · {t("dashboard.allCountries")}</SelectItem>
+                      {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={assignedCountry} onValueChange={setAssignedCountry}>
+                    <SelectTrigger><SelectValue placeholder={t("customers.col.assignedCountry")} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("customers.col.assignedCountry")} · {t("dashboard.allCountries")}</SelectItem>
+                      <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
                       {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
                     </SelectContent>
                   </Select>
