@@ -261,11 +261,12 @@ function CustomersPage() {
       const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
 
       const norm = (v: any) => String(v ?? "").trim();
+      const normKey = (s: string) => s.toLowerCase().replace(/\s+/g, "").trim();
       const findKey = (row: Record<string, any>, ...keys: string[]) => {
-        const lower = Object.keys(row).reduce<Record<string, string>>((acc, k) => {
-          acc[k.toLowerCase().trim()] = k; return acc;
+        const map = Object.keys(row).reduce<Record<string, string>>((acc, k) => {
+          acc[normKey(k)] = k; return acc;
         }, {});
-        for (const k of keys) { if (lower[k.toLowerCase()]) return row[lower[k.toLowerCase()]]; }
+        for (const k of keys) { const hit = map[normKey(k)]; if (hit) return row[hit]; }
         return "";
       };
       const countryByCode = new Map(countries.map((c) => [c.code.toUpperCase(), c.id]));
@@ -277,21 +278,21 @@ function CustomersPage() {
 
       const payload = json
         .map((row) => {
-          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호"));
-          let name = norm(findKey(row, "name", "이름", "고객명"));
+          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"));
+          let name = norm(findKey(row, "name", "이름", "고객명", "성명"));
           if (!name && tab === "prepaid") name = phone;
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
           if (existingPhones.has(phone)) { dupInDb++; return null; }
           seenPhones.add(phone);
-          const cc = norm(findKey(row, "country", "국가", "국적"));
+          const cc = norm(findKey(row, "country", "국가", "국적", "고객국적", "고객 국적", "nationality"));
           const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
-          const notes = norm(findKey(row, "notes", "메모", "비고")) || null;
+          const notes = norm(findKey(row, "notes", "메모", "비고", "note")) || null;
           const carrier_plan = norm(findKey(row, "요금제", "plan", "carrier_plan")) || null;
           const activation_date = norm(findKey(row, "개통일", "activation_date")) || null;
-          const charge_amount_raw = norm(findKey(row, "충전요금", "charge_amount", "충전금액"));
+          const charge_amount_raw = norm(findKey(row, "충전요금", "충전 요금", "charge_amount", "충전금액", "금액", "amount"));
           const charge_amount = charge_amount_raw ? Number(charge_amount_raw.replace(/[^\d.]/g, "")) || null : null;
-          const charge_date = norm(findKey(row, "충전일", "charge_date")) || null;
+          const charge_date = norm(findKey(row, "충전일", "충전 일", "charge_date", "충전날짜"));
           const application_date = norm(findKey(row, "신청일", "application_date")) || null;
           const requested_plan = norm(findKey(row, "신청요금제", "requested_plan")) || null;
           return {
@@ -304,7 +305,8 @@ function CustomersPage() {
         .filter((x): x is NonNullable<typeof x> => x !== null);
 
       if (!payload.length) {
-        toast.error(`업로드할 데이터가 없습니다. (중복 ${dupInFile + dupInDb}건, 누락 ${invalid}건)`);
+        const headers = json[0] ? Object.keys(json[0]).join(", ") : "(빈 파일)";
+        toast.error(`업로드할 데이터가 없습니다. (중복 ${dupInFile + dupInDb}건, 누락 ${invalid}건) — 인식된 컬럼: ${headers}`);
         return;
       }
 
