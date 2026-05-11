@@ -305,7 +305,8 @@ function CustomersPage() {
         .filter((x): x is NonNullable<typeof x> => x !== null);
 
       if (!payload.length) {
-        toast.error(`업로드할 데이터가 없습니다. (중복 ${dupInFile + dupInDb}건, 누락 ${invalid}건)`);
+        const headers = json[0] ? Object.keys(json[0]).join(", ") : "(빈 파일)";
+        toast.error(`업로드할 데이터가 없습니다. (중복 ${dupInFile + dupInDb}건, 누락 ${invalid}건) — 인식된 컬럼: ${headers}`);
         return;
       }
 
