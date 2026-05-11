@@ -109,7 +109,7 @@ function CustomersPage() {
       supabase.from("customers").select("*").order("imported_at", { ascending: false }).limit(2000),
       supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
       supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-      supabase.from("profiles").select("id, display_name").eq("is_active", true),
+      supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true),
     ]);
     if (c.error) toast.error(`고객 로드 실패: ${c.error.message}`);
     setRows((c.data ?? []) as CustomerRow[]);
