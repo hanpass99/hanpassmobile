@@ -113,6 +113,11 @@ const ko = {
     uploadFailed: "업로드 실패: {{msg}}",
     parseFailed: "엑셀 파싱 실패: {{msg}}",
     loadFailed: "고객 로드 실패: {{msg}}",
+    col: {
+      name: "고객명", chargePhone: "충전번호", chargeAmount: "충전 요금", chargeDate: "충전일",
+      assignedCountry: "담당 국가", customerCountry: "고객 국적",
+      assigned: "담당자", status: "상태", memo: "메모", action: "액션",
+    },
   },
   memo: {
     title: "메모",
