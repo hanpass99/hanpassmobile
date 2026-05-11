@@ -619,7 +619,7 @@ function CustomersPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
                   <div className="relative md:col-span-2">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -630,9 +630,17 @@ function CustomersPage() {
                     />
                   </div>
                   <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger><SelectValue placeholder={t("common.country")} /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("customers.col.customerCountry")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">{t("dashboard.allCountries")}</SelectItem>
+                      <SelectItem value="all">{t("customers.col.customerCountry")} · {t("dashboard.allCountries")}</SelectItem>
+                      {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={assignedCountry} onValueChange={setAssignedCountry}>
+                    <SelectTrigger><SelectValue placeholder={t("customers.col.assignedCountry")} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("customers.col.assignedCountry")} · {t("dashboard.allCountries")}</SelectItem>
+                      <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
                       {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
                     </SelectContent>
                   </Select>
