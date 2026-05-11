@@ -223,11 +223,25 @@ function CustomersPage() {
   };
 
   const bulkDelete = async () => {
-    const ids = Array.from(selected);
-    if (!ids.length) return;
-    const { error } = await supabase.from("customers").delete().in("id", ids);
+    // Only delete IDs visible in current filtered list to avoid stale selections across tabs
+    const visibleIds = new Set(filtered.map((r) => r.id));
+    const ids = Array.from(selected).filter((id) => visibleIds.has(id));
+    if (!ids.length) {
+      setBulkOpen(false);
+      setSelected(new Set());
+      return;
+    }
+    // Chunk to avoid PostgREST URL length limit (Bad Request on large .in() lists)
+    const chunkSize = 100;
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { error } = await supabase.from("customers").delete().in("id", chunk);
+      if (error) {
+        setBulkOpen(false);
+        return toast.error(error.message);
+      }
+    }
     setBulkOpen(false);
-    if (error) return toast.error(error.message);
     toast.success(t("customers.bulkDeleteConfirm",{count:ids.length}));
     setSelected(new Set());
     load();
@@ -583,7 +597,7 @@ function CustomersPage() {
         }
       />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as CustomerPool)}>
+      <Tabs value={tab} onValueChange={(v) => { setTab(v as CustomerPool); setSelected(new Set()); }}>
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
           {POOLS.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm">
