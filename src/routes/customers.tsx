@@ -127,6 +127,11 @@ function CustomersPage() {
     staff.forEach((s) => m.set(s.id, s.display_name));
     return m;
   }, [staff]);
+  const staffCountryById = useMemo(() => {
+    const m = new Map<string, string | null>();
+    staff.forEach((s) => m.set(s.id, s.country_id));
+    return m;
+  }, [staff]);
   const countryById = useMemo(() => {
     const m = new Map<string, Country>();
     countries.forEach((c) => m.set(c.id, c));
