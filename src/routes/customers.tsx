@@ -149,6 +149,11 @@ function CustomersPage() {
         if (!hay.includes(q)) return false;
       }
       if (country !== "all" && r.country_id !== country) return false;
+      if (assignedCountry !== "all") {
+        const sc = r.assigned_to ? staffCountryById.get(r.assigned_to) ?? null : null;
+        if (assignedCountry === "__none__") { if (sc) return false; }
+        else if (sc !== assignedCountry) return false;
+      }
       if (statusF !== "all" && r.status !== statusF) return false;
       if (staffF !== "all") {
         if (staffF === "__none__") { if (r.assigned_to) return false; }
