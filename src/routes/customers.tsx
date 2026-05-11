@@ -328,7 +328,7 @@ function CustomersPage() {
     } else if (tab === "new_signup") {
       sample = [{ 고객명: "Nguyen", 전화번호: "010-1111-2222", 국적: "VN", 가입일: "2026-05-01", 메모: "" }];
     } else if (tab === "prepaid") {
-      sample = [{ 고객명: "Kumar", 충전번호: "010-3333-4444", 충전요금: 30000, 충전일: "2026-05-05", 국적: "IN", 메모: "" }];
+      sample = [{ 국적: "IN", 충전번호: "010-3333-4444", 충전요금: 30000, 충전일: "2026-05-05", 메모: "" }];
     } else {
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
     }
@@ -491,12 +491,11 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-muted/40">
               {CheckHead}
-              <SortHead k="name">{t("customers.col.name")}</SortHead>
+              <SortHead k="country">{t("customers.col.customerCountry")}</SortHead>
               <SortHead k="phone">{t("customers.col.chargePhone")}</SortHead>
               <SortHead k="charge_amount">{t("customers.col.chargeAmount")}</SortHead>
               <SortHead k="charge_date">{t("customers.col.chargeDate")}</SortHead>
               <SortHead k="assigned_country">{t("customers.col.assignedCountry")}</SortHead>
-              <SortHead k="country">{t("customers.col.customerCountry")}</SortHead>
               <SortHead k="assigned">{t("customers.col.assigned")}</SortHead>
               <SortHead k="status" className="min-w-[140px]">{t("customers.col.status")}</SortHead>
               <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
@@ -510,12 +509,11 @@ function CustomersPage() {
               return (
                 <TableRow key={c.id} className="hover:bg-muted/30">
                   <CheckCell c={c} />
-                  <TableCell className="font-medium whitespace-nowrap">{c.name}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
                   <TableCell className="font-mono text-xs whitespace-nowrap">{c.charge_phone ?? c.phone}</TableCell>
                   <TableCell className="text-xs whitespace-nowrap">{c.charge_amount ? `₩${c.charge_amount.toLocaleString()}` : "-"}</TableCell>
                   <TableCell className="text-xs whitespace-nowrap">{fmtDate(c.charge_date)}</TableCell>
-                  <TableCell className="text-xs">{sc ? (countryById.get(sc)?.code ?? "-") : <span className="text-muted-foreground">-</span>}</TableCell>
-                  <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{sc ? (countryById.get(sc)?.code ?? "-") : <span className="text-muted-foreground">-</span>}</TableCell>
                   <Assigned c={c} />
                   <StatusCell c={c} />
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(c.imported_at)}</TableCell>
@@ -524,7 +522,7 @@ function CustomersPage() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
