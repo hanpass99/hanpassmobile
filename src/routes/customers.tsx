@@ -53,7 +53,7 @@ export const Route = createFileRoute("/customers")({
 
 type Country = { id: string; code: string; name_ko: string };
 type Channel = { id: string; name: string };
-type Profile = { id: string; display_name: string };
+type Profile = { id: string; display_name: string; country_id: string | null };
 type CustomerRow = {
   id: string;
   name: string;
