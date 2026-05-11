@@ -172,6 +172,10 @@ function CustomersPage() {
       out.sort((a: any, b: any) => {
         let av = a[sortKey]; let bv = b[sortKey];
         if (sortKey === "country") { av = countryById.get(a.country_id ?? "")?.code ?? ""; bv = countryById.get(b.country_id ?? "")?.code ?? ""; }
+        if (sortKey === "assigned_country") {
+          av = countryById.get(staffCountryById.get(a.assigned_to ?? "") ?? "")?.code ?? "";
+          bv = countryById.get(staffCountryById.get(b.assigned_to ?? "") ?? "")?.code ?? "";
+        }
         if (sortKey === "assigned") { av = staffById.get(a.assigned_to ?? "") ?? ""; bv = staffById.get(b.assigned_to ?? "") ?? ""; }
         if (sortKey === "status") { av = STATUS_LABEL[a.status as CustomerStatus]; bv = STATUS_LABEL[b.status as CustomerStatus]; }
         av = av ?? ""; bv = bv ?? "";
@@ -180,7 +184,7 @@ function CustomersPage() {
       });
     }
     return out;
-  }, [poolRows, search, country, statusF, staffF, sortKey, sortDir, staffById, countryById, dateFrom, dateTo]);
+  }, [poolRows, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, staffById, staffCountryById, countryById, dateFrom, dateTo]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
