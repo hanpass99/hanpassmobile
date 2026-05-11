@@ -90,6 +90,7 @@ function CustomersPage() {
 
   const [search, setSearch] = useState("");
   const [country, setCountry] = useState("all");
+  const [assignedCountry, setAssignedCountry] = useState("all");
   const [statusF, setStatusF] = useState<"all" | CustomerStatus>("all");
   const [staffF, setStaffF] = useState("all");
   const [sortKey, setSortKey] = useState<string>("imported_at");
