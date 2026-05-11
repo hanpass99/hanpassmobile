@@ -597,7 +597,7 @@ function CustomersPage() {
         }
       />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as CustomerPool)}>
+      <Tabs value={tab} onValueChange={(v) => { setTab(v as CustomerPool); setSelected(new Set()); }}>
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
           {POOLS.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm">
