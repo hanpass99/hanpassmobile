@@ -353,6 +353,11 @@ const en = {
     uploadFailed: "Upload failed: {{msg}}",
     parseFailed: "Excel parsing failed: {{msg}}",
     loadFailed: "Failed to load customers: {{msg}}",
+    col: {
+      name: "Customer", chargePhone: "Top-up number", chargeAmount: "Top-up amount", chargeDate: "Top-up date",
+      assignedCountry: "Assigned country", customerCountry: "Customer nationality",
+      assigned: "Assignee", status: "Status", memo: "Memo", action: "Action",
+    },
   },
   memo: {
     title: "Memo",
