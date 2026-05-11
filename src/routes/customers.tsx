@@ -261,11 +261,12 @@ function CustomersPage() {
       const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
 
       const norm = (v: any) => String(v ?? "").trim();
+      const normKey = (s: string) => s.toLowerCase().replace(/\s+/g, "").trim();
       const findKey = (row: Record<string, any>, ...keys: string[]) => {
-        const lower = Object.keys(row).reduce<Record<string, string>>((acc, k) => {
-          acc[k.toLowerCase().trim()] = k; return acc;
+        const map = Object.keys(row).reduce<Record<string, string>>((acc, k) => {
+          acc[normKey(k)] = k; return acc;
         }, {});
-        for (const k of keys) { if (lower[k.toLowerCase()]) return row[lower[k.toLowerCase()]]; }
+        for (const k of keys) { const hit = map[normKey(k)]; if (hit) return row[hit]; }
         return "";
       };
       const countryByCode = new Map(countries.map((c) => [c.code.toUpperCase(), c.id]));
