@@ -278,21 +278,21 @@ function CustomersPage() {
 
       const payload = json
         .map((row) => {
-          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호"));
-          let name = norm(findKey(row, "name", "이름", "고객명"));
+          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"));
+          let name = norm(findKey(row, "name", "이름", "고객명", "성명"));
           if (!name && tab === "prepaid") name = phone;
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
           if (existingPhones.has(phone)) { dupInDb++; return null; }
           seenPhones.add(phone);
-          const cc = norm(findKey(row, "country", "국가", "국적"));
+          const cc = norm(findKey(row, "country", "국가", "국적", "고객국적", "고객 국적", "nationality"));
           const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
-          const notes = norm(findKey(row, "notes", "메모", "비고")) || null;
+          const notes = norm(findKey(row, "notes", "메모", "비고", "note")) || null;
           const carrier_plan = norm(findKey(row, "요금제", "plan", "carrier_plan")) || null;
           const activation_date = norm(findKey(row, "개통일", "activation_date")) || null;
-          const charge_amount_raw = norm(findKey(row, "충전요금", "charge_amount", "충전금액"));
+          const charge_amount_raw = norm(findKey(row, "충전요금", "충전 요금", "charge_amount", "충전금액", "금액", "amount"));
           const charge_amount = charge_amount_raw ? Number(charge_amount_raw.replace(/[^\d.]/g, "")) || null : null;
-          const charge_date = norm(findKey(row, "충전일", "charge_date")) || null;
+          const charge_date = norm(findKey(row, "충전일", "충전 일", "charge_date", "충전날짜"));
           const application_date = norm(findKey(row, "신청일", "application_date")) || null;
           const requested_plan = norm(findKey(row, "신청요금제", "requested_plan")) || null;
           return {
