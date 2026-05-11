@@ -277,8 +277,9 @@ function CustomersPage() {
 
       const payload = json
         .map((row) => {
-          const name = norm(findKey(row, "name", "이름", "고객명"));
           const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호"));
+          let name = norm(findKey(row, "name", "이름", "고객명"));
+          if (!name && tab === "prepaid") name = phone;
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
           if (existingPhones.has(phone)) { dupInDb++; return null; }
