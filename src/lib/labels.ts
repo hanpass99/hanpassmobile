@@ -79,22 +79,16 @@ export function statusForResult(r: CallResult): CustomerStatus {
 // === Pool (고객 풀) ===
 export const POOLS = [
   "existing",
-  "new_signup",
-  "prepaid",
   "activation_request",
 ] as const;
 export type CustomerPool = (typeof POOLS)[number];
 
 export const POOL_LABEL: Record<CustomerPool, string> = {
   existing: "한패스 모바일 기존 고객",
-  new_signup: "한패스 신규 가입자",
-  prepaid: "선불 충전자",
   activation_request: "개통 신청자",
 };
 
 export const POOL_SHORT: Record<CustomerPool, string> = {
   existing: "기존 고객",
-  new_signup: "신규 가입자",
-  prepaid: "선불 충전자",
   activation_request: "개통 신청자",
 };
