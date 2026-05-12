@@ -101,14 +101,18 @@ function SidebarPrefs() {
 }
 
 function SidebarUserFooter() {
-  const { user, displayName, isAdmin, signOut } = useAuth();
+  const { user, displayName, isAdmin, signOut, avatarUrl } = useAuth();
   const { t } = useTranslation();
   if (!user) return null;
   const initial = (displayName || user.email || "U").trim().charAt(0).toUpperCase();
   return (
     <div className="flex items-center gap-2 px-2 py-2">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-        {initial}
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-semibold text-primary">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={displayName || ""} className="h-full w-full object-cover" />
+        ) : (
+          initial
+        )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
         <span className="truncate text-xs font-medium">{displayName || user.email}</span>

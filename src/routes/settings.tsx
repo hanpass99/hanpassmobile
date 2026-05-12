@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Clock } from "lucide-react";
+import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Clock, Camera, Trash2 } from "lucide-react";
+import { MultiCountrySelect } from "@/components/MultiCountrySelect";
+import { resizeImage } from "@/lib/image-resize";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -31,7 +33,8 @@ type Row = {
   department: string | null;
   is_active: boolean;
   role: "admin" | "staff";
-  country_id: string | null;
+  country_ids: string[];
+  avatar_url: string | null;
   call_target: number;
   activation_target: number;
   email: string | null;
@@ -72,17 +75,24 @@ function Settings() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, activityRes] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active, country_id"),
+    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, { data: pcs }, activityRes] = await Promise.all([
+      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
       supabase.from("countries").select("id, code, name_ko").order("code"),
+      supabase.from("profile_countries").select("user_id, country_id"),
       isAdmin
         ? supabase.functions.invoke("admin-list-staff-activity")
         : Promise.resolve({ data: { users: [] }, error: null } as any),
     ]);
     const activityList: { id: string; email: string | null; last_sign_in_at: string | null }[] =
       (activityRes as any)?.data?.users ?? [];
+    const pcMap = new Map<string, string[]>();
+    (pcs ?? []).forEach((p: any) => {
+      const arr = pcMap.get(p.user_id) ?? [];
+      arr.push(p.country_id);
+      pcMap.set(p.user_id, arr);
+    });
     const merged: Row[] = (profiles ?? []).map((p: any) => {
       const r = roles?.find((x) => x.user_id === p.id);
       const tg = targets?.find((x) => x.user_id === p.id);
@@ -93,7 +103,8 @@ function Settings() {
         department: p.department,
         is_active: p.is_active,
         role: (r?.role as "admin" | "staff") ?? "staff",
-        country_id: p.country_id ?? null,
+        country_ids: pcMap.get(p.id) ?? [],
+        avatar_url: p.avatar_url ?? null,
         call_target: tg?.call_target ?? 0,
         activation_target: tg?.activation_target ?? 0,
         email: a?.email ?? null,
@@ -130,10 +141,10 @@ function Settings() {
     load();
   };
 
-  const setCountry = async (r: Row, country_id: string | null) => {
-    const { error } = await supabase.rpc("admin_set_profile_country", {
+  const setCountries2 = async (r: Row, country_ids: string[]) => {
+    const { error } = await supabase.rpc("admin_set_profile_countries", {
       _user_id: r.id,
-      _country_id: country_id as any,
+      _country_ids: country_ids as any,
     });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.countryChanged"));
@@ -161,7 +172,8 @@ function Settings() {
           <CardTitle>{t("settings.myAccount")}</CardTitle>
           <CardDescription>{t("settings.myAccountDesc")}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <ProfilePhotoSection />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-lg border border-border/60 p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -263,22 +275,23 @@ function Settings() {
                   </TableCell>
                   <TableCell>
                     {isAdmin ? (
-                      <Select
-                        value={r.country_id ?? "__all__"}
-                        onValueChange={(v) => setCountry(r, v === "__all__" ? null : v)}
-                      >
-                        <SelectTrigger className="h-8 w-32"><SelectValue placeholder={t("common.all")} /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__all__">{t("settings.allCountriesNoLimit")}</SelectItem>
-                          {countries.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <MultiCountrySelect
+                        options={countries}
+                        value={r.country_ids}
+                        onChange={(next) => setCountries2(r, next)}
+                      />
                     ) : (
-                      <span className="text-xs text-muted-foreground">
-                        {countries.find((c) => c.id === r.country_id)?.name_ko ?? t("common.all")}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {r.country_ids.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">{t("common.all")}</span>
+                        ) : (
+                          r.country_ids.map((id) => (
+                            <Badge key={id} variant="secondary" className="text-[10px]">
+                              {countries.find((c) => c.id === id)?.code ?? "?"}
+                            </Badge>
+                          ))
+                        )}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell>
@@ -424,6 +437,73 @@ function Settings() {
   );
 }
 
+function ProfilePhotoSection() {
+  const { t } = useTranslation();
+  const { user, displayName, avatarUrl, refresh } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const initial = (displayName || user?.email || "U").trim().charAt(0).toUpperCase();
+
+  const onPick = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("settings.photoSizeLimit"));
+    setBusy(true);
+    try {
+      const blob = await resizeImage(file, 512, 0.85);
+      const path = `${user.id}/avatar-${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from("avatars").upload(path, blob, {
+        contentType: "image/jpeg", upsert: true,
+      });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const { error: upErr } = await supabase.from("profiles")
+        .update({ avatar_url: pub.publicUrl }).eq("id", user.id);
+      if (upErr) throw upErr;
+      toast.success(t("settings.photoUpdated"));
+      await refresh();
+    } catch (e: any) {
+      toast.error(t("settings.photoFailed", { msg: e.message }));
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  const remove = async () => {
+    if (!user) return;
+    setBusy(true);
+    await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+    await refresh();
+    setBusy(false);
+  };
+
+  return (
+    <div className="flex items-center gap-4 rounded-lg border border-border/60 p-3">
+      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xl font-bold text-primary">
+        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initial}
+      </div>
+      <div className="flex-1">
+        <div className="text-sm font-semibold">{displayName || user?.email}</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <input
+            ref={inputRef} type="file" accept="image/*" className="hidden"
+            onChange={(e) => e.target.files?.[0] && onPick(e.target.files[0])}
+          />
+          <Button size="sm" variant="outline" onClick={() => inputRef.current?.click()} disabled={busy}>
+            <Camera className="mr-1.5 h-3.5 w-3.5" />
+            {busy ? t("settings.uploading") : t("settings.uploadPhoto")}
+          </Button>
+          {avatarUrl && (
+            <Button size="sm" variant="ghost" className="text-destructive" onClick={remove} disabled={busy}>
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" /> {t("settings.removePhoto")}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CreateStaffDialog({
   open, onClose, onCreated, countries,
 }: {
@@ -437,14 +517,14 @@ function CreateStaffDialog({
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [department, setDepartment] = useState("");
-  const [countryId, setCountryId] = useState<string>("__all__");
+  const [countryIds, setCountryIds] = useState<string[]>([]);
   const [role, setRole] = useState<"admin" | "staff">("staff");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setEmail(""); setPassword(""); setDisplayName(""); setDepartment("");
-      setCountryId("__all__"); setRole("staff");
+      setCountryIds([]); setRole("staff");
     }
   }, [open]);
 
@@ -457,7 +537,7 @@ function CreateStaffDialog({
         email, password,
         display_name: displayName,
         department: department || undefined,
-        country_id: countryId === "__all__" ? undefined : countryId,
+        country_ids: countryIds,
         role,
       },
     });
@@ -515,17 +595,13 @@ function CreateStaffDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+          <div className="col-span-2 space-y-2">
             <Label>{t("settings.assignedCountry")}</Label>
-            <Select value={countryId} onValueChange={setCountryId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">{t("settings.allCountriesNoLimit")}</SelectItem>
-                {countries.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiCountrySelect
+              options={countries}
+              value={countryIds}
+              onChange={setCountryIds}
+            />
           </div>
         </div>
         <DialogFooter>

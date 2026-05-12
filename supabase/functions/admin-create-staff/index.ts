@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     });
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData.user) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const { data: roleData } = await userClient
       .from("user_roles")
@@ -30,23 +30,23 @@ Deno.serve(async (req) => {
       .eq("role", "admin")
       .maybeSingle();
     if (!roleData) {
-      return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const body = await req.json();
-    const { email, password, display_name, department, country_id, role } = body as {
+    const { email, password, display_name, department, country_ids, role } = body as {
       email: string;
       password: string;
       display_name: string;
       department?: string;
-      country_id?: string;
+      country_ids?: string[];
       role?: "admin" | "staff";
     };
 
     if (!email || !password || !display_name) {
       return new Response(JSON.stringify({ error: "email, password, display_name required" }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -60,16 +60,23 @@ Deno.serve(async (req) => {
     if (createErr || !created.user) {
       return new Response(JSON.stringify({ error: createErr?.message ?? "create failed" }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const newId = created.user.id;
-    // The handle_new_user trigger inserts profile + default role. Patch country & role.
-    if (country_id) {
-      await admin.from("profiles").update({ country_id, department: department ?? null }).eq("id", newId);
-    } else if (department) {
+    const cids = Array.isArray(country_ids) ? country_ids.filter(Boolean) : [];
+    if (department) {
       await admin.from("profiles").update({ department }).eq("id", newId);
+    }
+    if (cids.length > 0) {
+      await admin
+        .from("profiles")
+        .update({ country_id: cids[0] })
+        .eq("id", newId);
+      await admin.from("profile_countries").insert(
+        cids.map((country_id) => ({ user_id: newId, country_id })),
+      );
     }
     if (role && role !== "staff") {
       await admin.from("user_roles").delete().eq("user_id", newId);
@@ -80,6 +87,6 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

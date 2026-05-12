@@ -228,8 +228,27 @@ export type Database = {
           },
         ]
       }
+      profile_countries: {
+        Row: {
+          country_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          country_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          country_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
           country_id: string | null
           created_at: string
           department: string | null
@@ -239,6 +258,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           country_id?: string | null
           created_at?: string
           department?: string | null
@@ -248,6 +268,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           country_id?: string | null
           created_at?: string
           department?: string | null
@@ -321,6 +342,10 @@ export type Database = {
         Args: { _active: boolean; _user_id: string }
         Returns: undefined
       }
+      admin_set_profile_countries: {
+        Args: { _country_ids: string[]; _user_id: string }
+        Returns: undefined
+      }
       admin_set_profile_country: {
         Args: { _country_id: string; _user_id: string }
         Returns: undefined
@@ -332,6 +357,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
       has_role: {
         Args: {

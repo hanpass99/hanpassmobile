@@ -8,6 +8,7 @@ type AuthCtx = {
   loading: boolean;
   isAdmin: boolean;
   displayName: string;
+  avatarUrl: string | null;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -19,14 +20,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const loadProfile = async (uid: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
-      supabase.from("profiles").select("display_name").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("display_name, avatar_url").eq("id", uid).maybeSingle(),
     ]);
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
     setDisplayName(profile?.display_name ?? "");
+    setAvatarUrl((profile as any)?.avatar_url ?? null);
   };
 
   useEffect(() => {
@@ -37,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setIsAdmin(false);
         setDisplayName("");
+        setAvatarUrl(null);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
@@ -55,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isAdmin,
         displayName,
+        avatarUrl,
         signOut: async () => {
           await supabase.auth.signOut();
         },
