@@ -103,6 +103,11 @@ function CustomersPage() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
+  const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
+
+  // 필터/정렬/탭 변경 시 고정 해제
+  useEffect(() => { setPinnedOrder(null); }, [search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo, tab]);
 
   const load = async () => {
     setLoading(true);
@@ -213,8 +218,12 @@ function CustomersPage() {
         return String(av).localeCompare(String(bv)) * dir;
       });
     }
+    if (pinnedOrder) {
+      const idx = new Map(pinnedOrder.map((id, i) => [id, i] as const));
+      out.sort((a, b) => (idx.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (idx.get(b.id) ?? Number.MAX_SAFE_INTEGER));
+    }
     return out;
-  }, [poolRows, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, staffById, staffCountryById, countryById, dateFrom, dateTo]);
+  }, [poolRows, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, staffById, staffCountryById, countryById, dateFrom, dateTo, pinnedOrder]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
@@ -237,6 +246,8 @@ function CustomersPage() {
   const changeStatus = async (id: string, status: CustomerStatus) => {
     const patch: { status: CustomerStatus; activation_date?: string } = { status };
     if (status === "activated") patch.activation_date = new Date().toISOString().slice(0, 10);
+    // 현재 표시 순서 고정 → 상태 변경 후에도 행이 이동하지 않음
+    setPinnedOrder(filtered.map((r) => r.id));
     // 낙관적 업데이트: 자동 재정렬 없이 현재 위치 유지
     setRows((prev) =>
       prev.map((r) =>
