@@ -122,6 +122,36 @@ function CustomersPage() {
 
   useEffect(() => { load(); }, []);
 
+  // 실시간 동기화: customers 변경 시 다른 사용자 화면도 자동 반영 (현재 정렬/위치 유지)
+  useEffect(() => {
+    const ch = supabase
+      .channel("customers-rt")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customers" },
+        (payload) => {
+          setRows((prev) => {
+            if (payload.eventType === "INSERT") {
+              const n = payload.new as CustomerRow;
+              if (prev.some((r) => r.id === n.id)) return prev;
+              return [n, ...prev];
+            }
+            if (payload.eventType === "UPDATE") {
+              const n = payload.new as CustomerRow;
+              return prev.map((r) => (r.id === n.id ? { ...r, ...n } : r));
+            }
+            if (payload.eventType === "DELETE") {
+              const o = payload.old as { id: string };
+              return prev.filter((r) => r.id !== o.id);
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   const staffById = useMemo(() => {
     const m = new Map<string, string>();
     staff.forEach((s) => m.set(s.id, s.display_name));
@@ -207,10 +237,26 @@ function CustomersPage() {
   const changeStatus = async (id: string, status: CustomerStatus) => {
     const patch: { status: CustomerStatus; activation_date?: string } = { status };
     if (status === "activated") patch.activation_date = new Date().toISOString().slice(0, 10);
+    // 낙관적 업데이트: 자동 재정렬 없이 현재 위치 유지
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              status,
+              ...(status === "activated" ? { activation_date: patch.activation_date! } : {}),
+              ...(status === "new" ? { assigned_to: null } : {}),
+            }
+          : r
+      )
+    );
     const { error } = await supabase.from("customers").update(patch).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success(t("status.changed",{label:STATUS_LABEL[status]}));
-    load();
+    if (error) {
+      toast.error(error.message);
+      load();
+      return;
+    }
+    toast.success(t("status.changed", { label: STATUS_LABEL[status] }));
   };
 
   const deleteCustomer = async () => {
