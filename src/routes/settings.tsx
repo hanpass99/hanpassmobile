@@ -462,8 +462,22 @@ function CreateStaffDialog({
       },
     });
     setSaving(false);
-    if (error || (data as any)?.error) {
-      return toast.error(t("settings.createFailed", { msg: (data as any)?.error ?? error?.message }));
+    let errMsg: string | undefined = (data as any)?.error;
+    if (error) {
+      // supabase-js 는 non-2xx 시 본문을 숨기므로 직접 파싱
+      try {
+        const ctx: any = (error as any).context;
+        if (ctx?.json) {
+          const body = await ctx.json();
+          errMsg = body?.error ?? body?.message ?? errMsg;
+        } else if (ctx?.text) {
+          errMsg = (await ctx.text()) || errMsg;
+        }
+      } catch {}
+      errMsg = errMsg ?? error.message;
+    }
+    if (errMsg) {
+      return toast.error(t("settings.createFailed", { msg: errMsg }));
     }
     toast.success(t("settings.createDone", { name: displayName }));
     onCreated();
