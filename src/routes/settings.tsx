@@ -449,14 +449,14 @@ function CreateStaffDialog({
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [department, setDepartment] = useState("");
-  const [countryId, setCountryId] = useState<string>("__all__");
+  const [countryIds, setCountryIds] = useState<string[]>([]);
   const [role, setRole] = useState<"admin" | "staff">("staff");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setEmail(""); setPassword(""); setDisplayName(""); setDepartment("");
-      setCountryId("__all__"); setRole("staff");
+      setCountryIds([]); setRole("staff");
     }
   }, [open]);
 
@@ -469,7 +469,7 @@ function CreateStaffDialog({
         email, password,
         display_name: displayName,
         department: department || undefined,
-        country_id: countryId === "__all__" ? undefined : countryId,
+        country_ids: countryIds,
         role,
       },
     });
@@ -527,17 +527,13 @@ function CreateStaffDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+          <div className="col-span-2 space-y-2">
             <Label>{t("settings.assignedCountry")}</Label>
-            <Select value={countryId} onValueChange={setCountryId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">{t("settings.allCountriesNoLimit")}</SelectItem>
-                {countries.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiCountrySelect
+              options={countries}
+              value={countryIds}
+              onChange={setCountryIds}
+            />
           </div>
         </div>
         <DialogFooter>
