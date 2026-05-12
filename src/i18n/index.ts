@@ -311,12 +311,10 @@ const en = {
   },
   pool: {
     existing: "Hanpass Mobile existing customers",
-    new_signup: "Hanpass new signups",
-    prepaid: "Prepaid top-up users",
     activation_request: "Activation requests",
     short: {
-      existing: "Existing", new_signup: "New signup",
-      prepaid: "Prepaid", activation_request: "Activation",
+      existing: "Existing",
+      activation_request: "Activation",
     },
     emptyPool: "No customers in {{name}} pool.",
   },
