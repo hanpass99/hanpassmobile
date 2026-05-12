@@ -294,7 +294,6 @@ function CustomersPage() {
         .map((row) => {
           const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"));
           let name = norm(findKey(row, "name", "이름", "고객명", "성명"));
-          if (!name && tab === "prepaid") name = phone;
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
           if (existingPhones.has(phone)) { dupInDb++; return null; }
@@ -304,15 +303,11 @@ function CustomersPage() {
           const notes = norm(findKey(row, "notes", "메모", "비고", "note")) || null;
           const carrier_plan = norm(findKey(row, "요금제", "plan", "carrier_plan")) || null;
           const activation_date = norm(findKey(row, "개통일", "activation_date")) || null;
-          const charge_amount_raw = norm(findKey(row, "충전요금", "충전 요금", "charge_amount", "충전금액", "금액", "amount"));
-          const charge_amount = charge_amount_raw ? Number(charge_amount_raw.replace(/[^\d.]/g, "")) || null : null;
-          const charge_date = norm(findKey(row, "충전일", "충전 일", "charge_date", "충전날짜"));
           const application_date = norm(findKey(row, "신청일", "application_date")) || null;
           const requested_plan = norm(findKey(row, "신청요금제", "requested_plan")) || null;
           return {
             name, phone, country_id, notes, pool: tab,
-            carrier_plan, activation_date, charge_amount, charge_date,
-            charge_phone: tab === "prepaid" ? phone : null,
+            carrier_plan, activation_date,
             application_date, requested_plan,
           };
         })
@@ -342,10 +337,6 @@ function CustomersPage() {
     let sample: Record<string, unknown>[] = [];
     if (tab === "existing") {
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
-    } else if (tab === "new_signup") {
-      sample = [{ 고객명: "Nguyen", 전화번호: "010-1111-2222", 국적: "VN", 가입일: "2026-05-01", 메모: "" }];
-    } else if (tab === "prepaid") {
-      sample = [{ 국적: "IN", 충전번호: "010-3333-4444", 충전요금: 30000, 충전일: "2026-05-05", 메모: "" }];
     } else {
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
     }
@@ -464,88 +455,6 @@ function CustomersPage() {
       );
     }
 
-    if (p === "new_signup") {
-      return (
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              {CheckHead}
-              <SortHead k="name">고객명</SortHead>
-              <SortHead k="phone">전화번호</SortHead>
-              <SortHead k="country">국적</SortHead>
-              <SortHead k="signup_date">가입일</SortHead>
-              <SortHead k="assigned">담당자</SortHead>
-              <SortHead k="status" className="min-w-[140px]">상태</SortHead>
-              <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
-              <TableHead>메모</TableHead>
-              <TableHead className="text-right">액션</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((c) => (
-              <TableRow key={c.id} className="hover:bg-muted/30">
-                <CheckCell c={c} />
-                <TableCell className="font-medium">{c.name}</TableCell>
-                <TableCell className="font-mono text-xs">{c.phone}</TableCell>
-                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
-                <TableCell className="text-xs">{fmtDate(c.signup_date)}</TableCell>
-                <Assigned c={c} />
-                <StatusCell c={c} />
-                <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
-                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
-                {renderActions(c)}
-              </TableRow>
-            ))}
-            {filtered.length === 0 && <EmptyRow cols={9 + extraCols} loading={loading} pool={p} />}
-          </TableBody>
-        </Table>
-      );
-    }
-
-    if (p === "prepaid") {
-      return (
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              {CheckHead}
-              <SortHead k="country">{t("customers.col.customerCountry")}</SortHead>
-              <SortHead k="phone">{t("customers.col.chargePhone")}</SortHead>
-              <SortHead k="charge_amount">{t("customers.col.chargeAmount")}</SortHead>
-              <SortHead k="charge_date">{t("customers.col.chargeDate")}</SortHead>
-              <SortHead k="assigned_country">{t("customers.col.assignedCountry")}</SortHead>
-              <SortHead k="assigned">{t("customers.col.assigned")}</SortHead>
-              <SortHead k="status" className="min-w-[140px]">{t("customers.col.status")}</SortHead>
-              <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
-              <TableHead>{t("customers.col.memo")}</TableHead>
-              <TableHead className="text-right">{t("customers.col.action")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((c) => {
-              const sc = c.assigned_to ? staffCountryById.get(c.assigned_to) ?? null : null;
-              return (
-                <TableRow key={c.id} className="hover:bg-muted/30">
-                  <CheckCell c={c} />
-                  <TableCell className="text-xs whitespace-nowrap">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
-                  <TableCell className="font-mono text-xs whitespace-nowrap">{c.charge_phone ?? c.phone}</TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">{c.charge_amount ? `₩${c.charge_amount.toLocaleString()}` : "-"}</TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">{fmtDate(c.charge_date)}</TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">{sc ? (countryById.get(sc)?.code ?? "-") : <span className="text-muted-foreground">-</span>}</TableCell>
-                  <Assigned c={c} />
-                  <StatusCell c={c} />
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(c.imported_at)}</TableCell>
-                  <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
-                  {renderActions(c)}
-                </TableRow>
-              );
-            })}
-            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
-          </TableBody>
-        </Table>
-      );
-    }
-
-    // activation_request
     return (
       <Table>
         <TableHeader>
@@ -598,7 +507,7 @@ function CustomersPage() {
       />
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as CustomerPool); setSelected(new Set()); }}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           {POOLS.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
