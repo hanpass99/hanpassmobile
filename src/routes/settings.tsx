@@ -274,22 +274,23 @@ function Settings() {
                   </TableCell>
                   <TableCell>
                     {isAdmin ? (
-                      <Select
-                        value={r.country_id ?? "__all__"}
-                        onValueChange={(v) => setCountry(r, v === "__all__" ? null : v)}
-                      >
-                        <SelectTrigger className="h-8 w-32"><SelectValue placeholder={t("common.all")} /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__all__">{t("settings.allCountriesNoLimit")}</SelectItem>
-                          {countries.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <MultiCountrySelect
+                        options={countries}
+                        value={r.country_ids}
+                        onChange={(next) => setCountries2(r, next)}
+                      />
                     ) : (
-                      <span className="text-xs text-muted-foreground">
-                        {countries.find((c) => c.id === r.country_id)?.name_ko ?? t("common.all")}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {r.country_ids.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">{t("common.all")}</span>
+                        ) : (
+                          r.country_ids.map((id) => (
+                            <Badge key={id} variant="secondary" className="text-[10px]">
+                              {countries.find((c) => c.id === id)?.code ?? "?"}
+                            </Badge>
+                          ))
+                        )}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell>
