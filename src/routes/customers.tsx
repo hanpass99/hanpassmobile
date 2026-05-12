@@ -218,8 +218,12 @@ function CustomersPage() {
         return String(av).localeCompare(String(bv)) * dir;
       });
     }
+    if (pinnedOrder) {
+      const idx = new Map(pinnedOrder.map((id, i) => [id, i] as const));
+      out.sort((a, b) => (idx.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (idx.get(b.id) ?? Number.MAX_SAFE_INTEGER));
+    }
     return out;
-  }, [poolRows, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, staffById, staffCountryById, countryById, dateFrom, dateTo]);
+  }, [poolRows, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, staffById, staffCountryById, countryById, dateFrom, dateTo, pinnedOrder]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
