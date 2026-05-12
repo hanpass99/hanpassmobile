@@ -445,6 +445,13 @@ const en = {
     creating: "Creating...",
     createBtn: "Create account",
     select: "Select",
+    profilePhoto: "Profile photo",
+    uploadPhoto: "Upload photo",
+    uploading: "Uploading...",
+    photoUpdated: "Profile photo updated",
+    photoFailed: "Photo upload failed: {{msg}}",
+    photoSizeLimit: "Image must be 5MB or smaller",
+    removePhoto: "Remove photo",
   },
   auth: {
     loginTitle: "Admin sign-in",
