@@ -33,7 +33,8 @@ type Row = {
   department: string | null;
   is_active: boolean;
   role: "admin" | "staff";
-  country_id: string | null;
+  country_ids: string[];
+  avatar_url: string | null;
   call_target: number;
   activation_target: number;
   email: string | null;
@@ -74,17 +75,24 @@ function Settings() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, activityRes] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active, country_id"),
+    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, { data: pcs }, activityRes] = await Promise.all([
+      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
       supabase.from("countries").select("id, code, name_ko").order("code"),
+      supabase.from("profile_countries").select("user_id, country_id"),
       isAdmin
         ? supabase.functions.invoke("admin-list-staff-activity")
         : Promise.resolve({ data: { users: [] }, error: null } as any),
     ]);
     const activityList: { id: string; email: string | null; last_sign_in_at: string | null }[] =
       (activityRes as any)?.data?.users ?? [];
+    const pcMap = new Map<string, string[]>();
+    (pcs ?? []).forEach((p: any) => {
+      const arr = pcMap.get(p.user_id) ?? [];
+      arr.push(p.country_id);
+      pcMap.set(p.user_id, arr);
+    });
     const merged: Row[] = (profiles ?? []).map((p: any) => {
       const r = roles?.find((x) => x.user_id === p.id);
       const tg = targets?.find((x) => x.user_id === p.id);
@@ -95,7 +103,8 @@ function Settings() {
         department: p.department,
         is_active: p.is_active,
         role: (r?.role as "admin" | "staff") ?? "staff",
-        country_id: p.country_id ?? null,
+        country_ids: pcMap.get(p.id) ?? [],
+        avatar_url: p.avatar_url ?? null,
         call_target: tg?.call_target ?? 0,
         activation_target: tg?.activation_target ?? 0,
         email: a?.email ?? null,
@@ -132,10 +141,10 @@ function Settings() {
     load();
   };
 
-  const setCountry = async (r: Row, country_id: string | null) => {
-    const { error } = await supabase.rpc("admin_set_profile_country", {
+  const setCountries2 = async (r: Row, country_ids: string[]) => {
+    const { error } = await supabase.rpc("admin_set_profile_countries", {
       _user_id: r.id,
-      _country_id: country_id as any,
+      _country_ids: country_ids as any,
     });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.countryChanged"));
