@@ -342,6 +342,10 @@ export type Database = {
         Args: { _active: boolean; _user_id: string }
         Returns: undefined
       }
+      admin_set_profile_countries: {
+        Args: { _country_ids: string[]; _user_id: string }
+        Returns: undefined
+      }
       admin_set_profile_country: {
         Args: { _country_id: string; _user_id: string }
         Returns: undefined
