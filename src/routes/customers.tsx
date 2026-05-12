@@ -246,6 +246,8 @@ function CustomersPage() {
   const changeStatus = async (id: string, status: CustomerStatus) => {
     const patch: { status: CustomerStatus; activation_date?: string } = { status };
     if (status === "activated") patch.activation_date = new Date().toISOString().slice(0, 10);
+    // 현재 표시 순서 고정 → 상태 변경 후에도 행이 이동하지 않음
+    setPinnedOrder(filtered.map((r) => r.id));
     // 낙관적 업데이트: 자동 재정렬 없이 현재 위치 유지
     setRows((prev) =>
       prev.map((r) =>
