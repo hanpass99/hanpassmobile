@@ -131,14 +131,14 @@ function Settings() {
     const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: active });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(active ? t("settings.activated") : t("settings.deactivated"));
-    load();
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: active } : x)));
   };
 
   const setRole = async (r: Row, role: "admin" | "staff") => {
     const { error } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: role });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.roleChanged"));
-    load();
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, role } : x)));
   };
 
   const setCountries2 = async (r: Row, country_ids: string[]) => {
@@ -148,7 +148,7 @@ function Settings() {
     });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.countryChanged"));
-    load();
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, country_ids } : x)));
   };
 
   const bulkApply = async () => {
