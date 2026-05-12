@@ -103,6 +103,11 @@ function CustomersPage() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
+  const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
+
+  // 필터/정렬/탭 변경 시 고정 해제
+  useEffect(() => { setPinnedOrder(null); }, [search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo, tab]);
 
   const load = async () => {
     setLoading(true);
