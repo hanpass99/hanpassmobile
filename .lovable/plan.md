@@ -1,43 +1,73 @@
-## OB 콜 시스템 추가 개선 계획
+# 추가 기능 개선 계획
 
-### 1. 담당자 자동 지정 (직원 포함)
-- `customers` 업데이트 트리거 추가: status가 변경될 때 `assigned_to = auth.uid()` 자동 설정
-- 마이그레이션으로 트리거 함수 생성
+요청량이 많아 작업을 단계별로 나누어 진행합니다. 각 단계는 독립적으로 검증 가능합니다.
 
-### 2. 다국어(i18n) 지원
-- `react-i18next` + `i18next` 설치
-- `src/i18n/` 폴더에 `ko.json`, `en.json` 리소스 작성 (사이드바, 헤더, 주요 라벨)
-- AppSidebar / 주요 페이지 헤더에 `useTranslation` 적용
-- 사이드바 하단 또는 헤더에 언어 토글 버튼 (localStorage 저장)
+## 1단계: 데이터베이스 스키마 변경
 
-### 3. 고객 관리 — 등록일(데이터 등록일) 날짜 범위 필터
-- `src/routes/customers.tsx`에 시작일/종료일 Date Picker 2개 추가
-- `imported_at` 기준 필터링 (클라이언트 사이드)
+**직원 다중 담당 국가**
+- `profiles.country_id` (단일) → 별도 `profile_countries` 테이블 (user_id, country_id) 다대다 관계
+- 기존 `current_user_country()` 함수 → `current_user_countries()` 배열 반환으로 변경
+- RLS 정책 (customers, customer_notes, call_logs) → `country_id = ANY(current_user_countries())` 로 수정
+- 기존 데이터 마이그레이션: `profiles.country_id` 값을 새 테이블로 복사 (컬럼은 호환성 위해 일단 유지)
 
-### 4. 대시보드 통계 변경 (`src/routes/index.tsx`)
-- "월 목표 달성률", "총 고객 수" 카드 제거
-- "개통 완료율 = 개통 완료 ÷ 총 콜수 × 100" 카드 추가 (% 표시)
+**국가 추가**
+- EG (이집트), JO (요르단) `countries` 테이블에 INSERT
 
-### 5. 관리자 고객 일괄 삭제
-- 고객 테이블에 체크박스 컬럼 추가 (관리자만)
-- 전체선택 헤더 체크박스
-- "선택 삭제" 버튼 + AlertDialog 확인
-- 선택된 id 배열로 `.delete().in('id', ids)`
+**프로필 사진 저장**
+- Storage 버킷 `avatars` 생성 (public)
+- `profiles.avatar_url` 컬럼 추가
+- RLS: 본인만 자기 폴더에 업로드/수정, 누구나 조회
 
-### 6. 다크/라이트 테마 토글
-- `src/styles.css`의 `.dark` 토큰 활용 (이미 정의되어 있다면 활용, 없으면 추가)
-- `ThemeProvider` 훅 작성 → `<html>`에 `dark` 클래스 토글, localStorage 저장
-- 사이드바/설정에 토글 스위치
+**미처리 상태 시 담당자 초기화 트리거**
+- `customers` BEFORE UPDATE 트리거: `NEW.status = 'new'` 이면 `NEW.assigned_to = NULL`
+- 기존 `auto_assign_on_status_change` 트리거 수정 (new로 바뀔 땐 할당 안 함)
 
-### 7. 직원 콜 목표 알림 (50콜/일, 10콜 단위)
-- `src/hooks/use-call-goal.tsx`: 직원 로그인 시 오늘 `call_logs` 카운트 구독 (realtime)
-- 10/20/30/40콜 도달 시 toast 알림 ("오늘 최소 50개 이상 콜 진행해야 합니다.")
-- 50콜 달성 시 알림 종료, sessionStorage로 중복 방지
-- 관리자 staff-performance 페이지에 "오늘 콜수" / "목표 달성" 컬럼 추가
+**Realtime 활성화**
+- `ALTER PUBLICATION supabase_realtime ADD TABLE customers, customer_notes, call_logs`
+- `REPLICA IDENTITY FULL` 설정
 
-### 기술 노트
-- 마이그레이션: `auto_assign_on_status_change` 트리거 함수 + customers BEFORE UPDATE 트리거
-- realtime: `call_logs` 테이블 publication 추가
-- 테마 토큰은 styles.css `:root` / `.dark` 양쪽 정의 확인 후 보강
+## 2단계: 직원 설정 UI (settings.tsx)
 
-승인 시 위 순서대로 구현합니다.
+- 단일 국가 Select → 다중 선택 (체크박스 리스트 또는 multi-select Popover)
+- 저장 시 `profile_countries` 테이블 갱신 (전체 삭제 후 재삽입)
+- 직원 목록에서 담당 국가들 뱃지로 표시
+
+## 3단계: 고객 관리 (customers.tsx)
+
+**자동 정렬 제거 + 위치 유지**
+- 상태 변경 시 로컬 state만 업데이트, 재정렬 안 함
+- 서버 응답 후에도 기존 정렬 순서 유지 (id 기준 stable order)
+
+**Realtime 구독**
+- `supabase.channel('customers').on('postgres_changes', ...)` 로 변경 자동 반영
+- 다른 사용자가 수정 시 해당 행만 업데이트, 스크롤/포커스 위치 유지
+
+**미처리 변경 시 담당자 미배정 표시**
+- DB 트리거가 처리, UI는 응답 그대로 반영
+
+**국가 필터에 EG, JO 자동 노출** (countries 테이블에서 동적으로 가져오므로 자동)
+
+## 4단계: 성과 페이지 Realtime + 날짜 필터
+
+- `country-performance.tsx`, `channel-performance.tsx` 에 시작일/종료일 DateRangePicker 추가
+- 필터 변경 시 쿼리 재실행
+- Realtime 구독으로 customers/call_logs 변경 시 통계 자동 갱신
+- `staff-performance.tsx`, `index.tsx` (대시보드) 에도 Realtime 구독 추가
+
+## 5단계: 프로필 사진 업로드
+
+- settings.tsx 본인 프로필 섹션에 사진 업로드 (input file, accept image/*)
+- 클라이언트에서 canvas 리사이즈 (최대 512x512, JPEG quality 0.85)
+- Storage 업로드 → public URL을 `profiles.avatar_url` 에 저장
+- 기존 `Avatar` 컴포넌트 활용 (`AvatarImage src={avatar_url}` + `AvatarFallback` 이름 이니셜)
+- 표시 위치: 사이드바, 직원 목록, 직원별 성과, 고객 담당자 표시 영역
+
+## 기술 노트
+
+- Realtime: postgres_changes 이벤트 핸들러 내에서 setState 시 기존 배열 순서 보존
+- 다중 국가 RLS: `country_id IN (SELECT country_id FROM profile_countries WHERE user_id = auth.uid())` 형태의 SECURITY DEFINER 함수 사용
+- 트리거 순서: `auto_assign_on_status_change` 가 먼저, 그 다음 미처리 초기화 로직 (또는 한 트리거에 통합)
+
+## 진행 방식
+
+승인 후 1단계(DB 마이그레이션)부터 순서대로 진행합니다. 각 단계 완료 후 다음 단계로 이어갑니다.
