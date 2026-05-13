@@ -51,9 +51,12 @@ function StaffPerf() {
       setLoading(true);
       const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
       const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
-      const { data, error } = await supabase.rpc("stats_by_staff", {
-        _date_from: fromIso, _date_to: toIso,
-      });
+      const [{ data, error }, { data: profiles }] = await Promise.all([
+        supabase.rpc("stats_by_staff", { _date_from: fromIso, _date_to: toIso }),
+        supabase.from("profiles").select("id, sort_order"),
+      ]);
+      const orderMap = new Map<string, number>();
+      (profiles ?? []).forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
       if (!error) {
         const out: Row[] = (data ?? []).map((r: any) => {
           const counts = emptyCounts();
@@ -64,7 +67,7 @@ function StaffPerf() {
             total: Number(r.total ?? 0), counts,
             tier: tierFor(counts.activated),
           };
-        }).sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
+        }).sort((a, b) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
         setRows(out);
       }
       setLoading(false);

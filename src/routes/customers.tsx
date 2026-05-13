@@ -144,7 +144,7 @@ function CustomersPage() {
     const [co, ch, sf] = await Promise.all([
       supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
       supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-      supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true),
+      supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true).order("sort_order").order("display_name"),
     ]);
     setCountries(co.data ?? []);
     setChannels(ch.data ?? []);

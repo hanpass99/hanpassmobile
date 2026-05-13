@@ -255,6 +255,7 @@ export type Database = {
           display_name: string
           id: string
           is_active: boolean
+          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -265,6 +266,7 @@ export type Database = {
           display_name: string
           id: string
           is_active?: boolean
+          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -275,6 +277,7 @@ export type Database = {
           display_name?: string
           id?: string
           is_active?: boolean
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []
@@ -432,6 +435,14 @@ export type Database = {
       }
       admin_set_profile_country: {
         Args: { _country_id: string; _user_id: string }
+        Returns: undefined
+      }
+      admin_set_profile_sort_order: {
+        Args: { _sort_order: number; _user_id: string }
+        Returns: undefined
+      }
+      admin_set_profile_sort_orders: {
+        Args: { _user_ids: string[] }
         Returns: undefined
       }
       admin_set_user_role: {
@@ -613,6 +624,8 @@ export type Database = {
         | "delinquent"
         | "line_exceeded"
         | "minor"
+        | "wrong_application"
+        | "seasonal_worker"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -767,6 +780,8 @@ export const Constants = {
         "delinquent",
         "line_exceeded",
         "minor",
+        "wrong_application",
+        "seasonal_worker",
       ],
     },
   },

@@ -45,6 +45,7 @@ type DashboardData = {
 const emptyStatus = (): StatusCounts => ({
   new: 0, in_progress: 0, no_answer: 0, not_interested: 0, callback: 0,
   activated: 0, stay_expired: 0, delinquent: 0, line_exceeded: 0, minor: 0,
+  wrong_application: 0, seasonal_worker: 0,
 });
 
 const emptyDashboard = (): DashboardData => ({

@@ -79,7 +79,7 @@ async function exportStaffMonthly() {
   const Y = now.getFullYear(); const M = now.getMonth() + 1;
   const monthStart = new Date(Y, M - 1, 1).toISOString();
   const [sf, lg, tg] = await Promise.all([
-    supabase.from("profiles").select("id, display_name").eq("is_active", true),
+    supabase.from("profiles").select("id, display_name").eq("is_active", true).order("sort_order").order("display_name"),
     supabase.from("call_logs").select("staff_id, result, is_activation").gte("call_date", monthStart),
     supabase.from("targets").select("user_id, activation_target, call_target").eq("year", Y).eq("month", M),
   ]);

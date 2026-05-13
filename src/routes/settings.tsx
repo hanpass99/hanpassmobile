@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Clock, Camera, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Clock, Camera, Trash2, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
 import { MultiCountrySelect } from "@/components/MultiCountrySelect";
 import { resizeImage } from "@/lib/image-resize";
 import { useEffect, useRef, useState } from "react";
@@ -39,6 +39,7 @@ type Row = {
   activation_target: number;
   email: string | null;
   last_sign_in_at: string | null;
+  sort_order: number;
 };
 
 const now = new Date();
@@ -57,6 +58,9 @@ function Settings() {
   const [resetTarget, setResetTarget] = useState<Row | null>(null);
   const [resetResult, setResetResult] = useState<{ name: string; tempPassword: string } | null>(null);
   const [resetting, setResetting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const resetPassword = async () => {
     if (!resetTarget) return;
@@ -76,7 +80,7 @@ function Settings() {
   const load = async () => {
     setLoading(true);
     const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, { data: pcs }, activityRes] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url"),
+      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url, sort_order").order("sort_order").order("display_name"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
       supabase.from("countries").select("id, code, name_ko").order("code"),
@@ -109,8 +113,10 @@ function Settings() {
         activation_target: tg?.activation_target ?? 0,
         email: a?.email ?? null,
         last_sign_in_at: a?.last_sign_in_at ?? null,
+        sort_order: p.sort_order ?? 1000,
       };
     });
+    merged.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
     setRows(merged);
     setCountries(co ?? []);
     setLoading(false);
@@ -149,6 +155,41 @@ function Settings() {
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.countryChanged"));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, country_ids } : x)));
+  };
+
+  const moveRow = async (idx: number, dir: -1 | 1) => {
+    const next = [...rows];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    const reordered = next.map((r, i) => ({ ...r, sort_order: (i + 1) * 10 }));
+    setRows(reordered);
+    const { error } = await supabase.rpc("admin_set_profile_sort_orders", {
+      _user_ids: reordered.map((r) => r.id) as any,
+    });
+    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); load(); return; }
+  };
+
+  const deleteStaff = async () => {
+    if (!deleteTarget) return;
+    if (deleteConfirmText !== deleteTarget.display_name) {
+      toast.error(t("settings.deleteNameMismatch"));
+      return;
+    }
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("admin-delete-staff", {
+      body: { user_id: deleteTarget.id },
+    });
+    setDeleting(false);
+    const errMsg = (data as any)?.error ?? error?.message;
+    if (errMsg) {
+      toast.error(t("settings.deleteFailed", { msg: errMsg }));
+      return;
+    }
+    toast.success(t("settings.deleteDone", { name: deleteTarget.display_name }));
+    setDeleteTarget(null);
+    setDeleteConfirmText("");
+    load();
   };
 
   const bulkApply = async () => {
@@ -230,6 +271,7 @@ function Settings() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                {isAdmin && <TableHead className="w-20">{t("settings.order")}</TableHead>}
                 <TableHead>{t("settings.name")}</TableHead>
                 <TableHead>{t("settings.email")}</TableHead>
                 <TableHead>{t("settings.lastAccess")}</TableHead>
@@ -243,8 +285,20 @@ function Settings() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r) => (
+              {rows.map((r, idx) => (
                 <TableRow key={r.id} className={r.is_active ? "" : "opacity-50"}>
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveRow(idx, -1)} title={t("settings.moveUp")}>
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === rows.length - 1} onClick={() => moveRow(idx, 1)} title={t("settings.moveDown")}>
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">
                     {r.display_name}
                     {r.id === user?.id && <span className="ml-2 text-xs text-muted-foreground">{t("settings.me")}</span>}
@@ -341,13 +395,18 @@ function Settings() {
                             </Button>
                           )
                         )}
+                        {r.id !== user?.id && (
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { setDeleteTarget(r); setDeleteConfirmText(""); }}>
+                            <Trash2 className="mr-1 h-3.5 w-3.5" /> {t("settings.delete")}
+                          </Button>
+                        )}
                       </>
                     )}
                   </TableCell>
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isAdmin ? 11 : 10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -430,6 +489,46 @@ function Settings() {
           </div>
           <DialogFooter>
             <Button onClick={() => setResetResult(null)}>{t("common.confirm")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 직원 삭제 확인 (2차) */}
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setDeleteConfirmText(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> {t("settings.deleteTitle")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2 text-sm">
+            <p>{t("settings.deleteWarn", { name: deleteTarget?.display_name ?? "" })}</p>
+            <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+              <li>{t("settings.deleteKeepData")}</li>
+              <li>{t("settings.deleteUnassign")}</li>
+              <li>{t("settings.deleteIrreversible")}</li>
+            </ul>
+            <div className="space-y-1.5 pt-2">
+              <Label className="text-xs">{t("settings.deleteTypeName", { name: deleteTarget?.display_name ?? "" })}</Label>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={deleteTarget?.display_name ?? ""}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteTarget(null); setDeleteConfirmText(""); }} disabled={deleting}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteStaff}
+              disabled={deleting || deleteConfirmText !== (deleteTarget?.display_name ?? "")}
+            >
+              {deleting ? t("common.processing") : t("settings.deleteConfirm")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
