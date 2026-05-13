@@ -14,6 +14,8 @@ interface ReqBody {
 }
 
 const ALIGO_URL = "https://apis.aligo.in/send/";
+const PROXY_URL = Deno.env.get("PROXY_URL");
+const PROXY_SECRET = Deno.env.get("PROXY_SECRET");
 
 function normalizePhone(p: string): string {
   return (p || "").replace(/[^0-9]/g, "");
@@ -74,7 +76,10 @@ Deno.serve(async (req) => {
     if (isLms && body.title) form.append("title", body.title.slice(0, 44));
     form.append("testmode_yn", body.testmode ? "Y" : "N");
 
-    const res = await fetch(ALIGO_URL, { method: "POST", body: form });
+    const targetUrl = PROXY_URL ? `${PROXY_URL.replace(/\/$/, "")}/send` : ALIGO_URL;
+    const headers: Record<string, string> = {};
+    if (PROXY_URL && PROXY_SECRET) headers["x-proxy-secret"] = PROXY_SECRET;
+    const res = await fetch(targetUrl, { method: "POST", body: form, headers });
     const aligoData = await res.json().catch(() => ({}));
     const success = aligoData?.result_code === "1" || aligoData?.result_code === 1;
 
