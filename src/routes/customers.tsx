@@ -76,6 +76,20 @@ type CustomerRow = {
   requested_plan: string | null;
 };
 
+type ImportCustomer = {
+  name: string;
+  phone: string;
+  country_id: string | null;
+  notes: string | null;
+  pool: CustomerPool;
+  carrier_plan: string | null;
+  activation_date: string | null;
+  application_date: string | null;
+  requested_plan: string | null;
+  charge_date?: string;
+  signup_date?: string;
+};
+
 type SortDir = "asc" | "desc" | null;
 
 const PAGE_SIZE = 200;
