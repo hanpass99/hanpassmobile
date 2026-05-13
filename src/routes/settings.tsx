@@ -492,6 +492,46 @@ function Settings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 직원 삭제 확인 (2차) */}
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setDeleteConfirmText(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> {t("settings.deleteTitle")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2 text-sm">
+            <p>{t("settings.deleteWarn", { name: deleteTarget?.display_name ?? "" })}</p>
+            <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+              <li>{t("settings.deleteKeepData")}</li>
+              <li>{t("settings.deleteUnassign")}</li>
+              <li>{t("settings.deleteIrreversible")}</li>
+            </ul>
+            <div className="space-y-1.5 pt-2">
+              <Label className="text-xs">{t("settings.deleteTypeName", { name: deleteTarget?.display_name ?? "" })}</Label>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={deleteTarget?.display_name ?? ""}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteTarget(null); setDeleteConfirmText(""); }} disabled={deleting}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteStaff}
+              disabled={deleting || deleteConfirmText !== (deleteTarget?.display_name ?? "")}
+            >
+              {deleting ? t("common.processing") : t("settings.deleteConfirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
