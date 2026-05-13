@@ -424,13 +424,22 @@ function CustomersPage() {
 
       const norm = (v: any) => String(v ?? "").trim();
       const normKey = (s: string) => s.toLowerCase().replace(/\s+/g, "").trim();
-      const findKey = (row: Record<string, any>, ...keys: string[]) => {
-        const map = Object.keys(row).reduce<Record<string, string>>((acc, k) => {
-          acc[normKey(k)] = k; return acc;
-        }, {});
-        for (const k of keys) { const hit = map[normKey(k)]; if (hit) return row[hit]; }
-        return "";
+      const headerMap = new Map<string, string>();
+      Object.keys(json[0] ?? {}).forEach((k) => headerMap.set(normKey(k), k));
+      const pickHeader = (...keys: string[]) => keys.map((k) => headerMap.get(normKey(k))).find(Boolean);
+      const headers = {
+        phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"),
+        name: pickHeader("name", "이름", "고객명", "성명"),
+        country: pickHeader("country", "국가", "국적", "고객국적", "고객 국적", "nationality"),
+        notes: pickHeader("notes", "메모", "비고", "note"),
+        carrierPlan: pickHeader("요금제", "plan", "carrier_plan"),
+        activationDate: pickHeader("개통일", "activation_date"),
+        applicationDate: pickHeader("신청일", "application_date"),
+        chargeDate: pickHeader("충전일", "charge_date"),
+        signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일"),
+        requestedPlan: pickHeader("신청요금제", "requested_plan"),
       };
+      const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
       // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
       const pad = (n: number) => String(n).padStart(2, "0");
       const fmtYmd = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
@@ -477,22 +486,22 @@ function CustomersPage() {
       let dupInFile = 0, invalid = 0;
 
       // 1차: 파일 파싱 + 파일 내 중복 제거
-      const parsed = json
+      const parsed: ImportCustomer[] = json
         .map((row) => {
-          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"));
-          let name = norm(findKey(row, "name", "이름", "고객명", "성명"));
+          const phone = norm(valueOf(row, headers.phone));
+          const name = norm(valueOf(row, headers.name));
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
           seenPhones.add(phone);
-          const cc = norm(findKey(row, "country", "국가", "국적", "고객국적", "고객 국적", "nationality"));
+          const cc = norm(valueOf(row, headers.country));
           const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
-          const notes = norm(findKey(row, "notes", "메모", "비고", "note")) || null;
-          const carrier_plan = norm(findKey(row, "요금제", "plan", "carrier_plan")) || null;
-          const activation_date = toDateStr(findKey(row, "개통일", "activation_date"));
-          const application_date = toDateStr(findKey(row, "신청일", "application_date"));
-          const charge_date = toDateStr(findKey(row, "충전일", "charge_date"));
-          const signup_date = toDateStr(findKey(row, "가입일", "signup_date", "등록일", "데이터등록일"));
-          const requested_plan = norm(findKey(row, "신청요금제", "requested_plan")) || null;
+          const notes = norm(valueOf(row, headers.notes)) || null;
+          const carrier_plan = norm(valueOf(row, headers.carrierPlan)) || null;
+          const activation_date = toDateStr(valueOf(row, headers.activationDate));
+          const application_date = toDateStr(valueOf(row, headers.applicationDate));
+          const charge_date = toDateStr(valueOf(row, headers.chargeDate));
+          const signup_date = toDateStr(valueOf(row, headers.signupDate));
+          const requested_plan = norm(valueOf(row, headers.requestedPlan)) || null;
           return {
             name, phone, country_id, notes, pool: tab,
             carrier_plan, activation_date,
@@ -501,7 +510,7 @@ function CustomersPage() {
             ...(signup_date ? { signup_date } : {}),
           };
         })
-        .filter((x): x is NonNullable<typeof x> => x !== null);
+        .filter((x): x is ImportCustomer => x !== null);
 
       if (!parsed.length) {
         toast.error(`업로드할 데이터가 없습니다. (파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
