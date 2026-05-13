@@ -443,6 +443,13 @@ export type Database = {
       }
       current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
+      customer_pool_counts: {
+        Args: never
+        Returns: {
+          cnt: number
+          pool: string
+        }[]
+      }
       customers_existing_phones: {
         Args: {
           _phones: string[]
@@ -531,6 +538,16 @@ export type Database = {
           calls: number
           day: string
         }[]
+      }
+      stats_dashboard_summary: {
+        Args: {
+          _country_id?: string
+          _date_from: string
+          _date_to: string
+          _month: number
+          _year: number
+        }
+        Returns: Json
       }
       stats_staff_ranking: {
         Args: {
