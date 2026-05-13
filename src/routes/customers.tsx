@@ -371,6 +371,7 @@ function CustomersPage() {
 
   const onUpload = async (file: File) => {
     setImporting(true);
+    const toastId = toast.loading("엑셀 파싱 중...");
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
@@ -390,16 +391,15 @@ function CustomersPage() {
       const countryByName = new Map(countries.map((c) => [c.name_ko, c.id]));
 
       const seenPhones = new Set<string>();
-      const existingPhones = new Set(rows.filter((r) => r.pool === tab).map((r) => r.phone));
-      let dupInFile = 0, dupInDb = 0, invalid = 0;
+      let dupInFile = 0, invalid = 0;
 
-      const payload = json
+      // 1차: 파일 파싱 + 파일 내 중복 제거
+      const parsed = json
         .map((row) => {
           const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"));
           let name = norm(findKey(row, "name", "이름", "고객명", "성명"));
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
-          if (existingPhones.has(phone)) { dupInDb++; return null; }
           seenPhones.add(phone);
           const cc = norm(findKey(row, "country", "국가", "국적", "고객국적", "고객 국적", "nationality"));
           const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
@@ -416,20 +416,56 @@ function CustomersPage() {
         })
         .filter((x): x is NonNullable<typeof x> => x !== null);
 
-      if (!payload.length) {
-        const headers = json[0] ? Object.keys(json[0]).join(", ") : "(빈 파일)";
-        toast.error(`업로드할 데이터가 없습니다. (중복 ${dupInFile + dupInDb}건, 누락 ${invalid}건) — 인식된 컬럼: ${headers}`);
+      if (!parsed.length) {
+        toast.error(`업로드할 데이터가 없습니다. (파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
         return;
       }
 
-      const { error } = await supabase.from("customers").insert(payload);
-      if (error) { toast.error(`업로드 실패: ${error.message}`); return; }
+      // 2차: DB 측 전체 중복 체크 (chunk 1000개씩)
+      toast.loading("DB 중복 체크 중...", { id: toastId });
+      const dbDupSet = new Set<string>();
+      const phoneList = parsed.map((p) => p.phone);
+      const dupChunkSize = 1000;
+      for (let i = 0; i < phoneList.length; i += dupChunkSize) {
+        const chunk = phoneList.slice(i, i + dupChunkSize);
+        const { data: dupes, error: dupErr } = await supabase
+          .rpc("customers_existing_phones", { _pool: tab, _phones: chunk });
+        if (dupErr) {
+          toast.error(`중복 체크 실패: ${dupErr.message}`, { id: toastId });
+          return;
+        }
+        (dupes ?? []).forEach((d: { phone: string }) => dbDupSet.add(d.phone));
+      }
+      const finalPayload = parsed.filter((p) => !dbDupSet.has(p.phone));
+      const dupInDb = parsed.length - finalPayload.length;
+
+      if (!finalPayload.length) {
+        toast.error(`업로드할 데이터가 없습니다. (DB 중복 ${dupInDb}건, 파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
+        return;
+      }
+
+      // 3차: 청크 단위 INSERT (500건씩)
+      const insertChunkSize = 500;
+      let inserted = 0;
+      const totalToInsert = finalPayload.length;
+      for (let i = 0; i < totalToInsert; i += insertChunkSize) {
+        const chunk = finalPayload.slice(i, i + insertChunkSize);
+        const { error } = await supabase.from("customers").insert(chunk);
+        if (error) {
+          toast.error(`업로드 중단 (${inserted}/${totalToInsert} 완료): ${error.message}`, { id: toastId });
+          await refresh();
+          return;
+        }
+        inserted += chunk.length;
+        toast.loading(`업로드 중 ${inserted.toLocaleString()}/${totalToInsert.toLocaleString()}`, { id: toastId });
+      }
       toast.success(
-        `${payload.length}명 추가 / 중복제거 ${dupInFile + dupInDb}건${invalid ? ` / 누락 ${invalid}건` : ""}`
+        `${inserted.toLocaleString()}명 추가 / DB중복 ${dupInDb}건 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
+        { id: toastId }
       );
-      load();
+      await refresh();
     } catch (e: any) {
-      toast.error(`엑셀 파싱 실패: ${e.message}`);
+      toast.error(`엑셀 파싱 실패: ${e.message}`, { id: toastId });
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
