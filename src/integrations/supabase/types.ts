@@ -479,6 +479,96 @@ export type Database = {
           total_count: number
         }[]
       }
+      stats_by_channel: {
+        Args: { _date_from?: string; _date_to?: string }
+        Returns: {
+          channel_id: string
+          name: string
+          status_counts: Json
+          total: number
+        }[]
+      }
+      stats_by_country: {
+        Args: { _date_from?: string; _date_to?: string }
+        Returns: {
+          code: string
+          country_id: string
+          name_ko: string
+          status_counts: Json
+          total: number
+        }[]
+      }
+      stats_by_staff: {
+        Args: { _date_from?: string; _date_to?: string }
+        Returns: {
+          display_name: string
+          status_counts: Json
+          total: number
+          user_id: string
+        }[]
+      }
+      stats_channel_summary: {
+        Args: { _country_id?: string }
+        Returns: {
+          activations: number
+          channel_id: string
+          customers: number
+          name: string
+        }[]
+      }
+      stats_country_activated: {
+        Args: never
+        Returns: {
+          activated: number
+          code: string
+          country_id: string
+        }[]
+      }
+      stats_daily_calls: {
+        Args: { _country_id?: string; _date_from: string; _date_to: string }
+        Returns: {
+          activations: number
+          calls: number
+          day: string
+        }[]
+      }
+      stats_staff_ranking: {
+        Args: {
+          _country_id?: string
+          _date_from: string
+          _date_to: string
+          _month: number
+          _year: number
+        }
+        Returns: {
+          activated: number
+          activation_target: number
+          display_name: string
+          total_calls: number
+          user_id: string
+        }[]
+      }
+      stats_status_counts: {
+        Args: { _country_id?: string }
+        Returns: {
+          cnt: number
+          status: string
+        }[]
+      }
+      stats_totals: {
+        Args: {
+          _country_id?: string
+          _date_from: string
+          _date_to: string
+          _month: number
+          _year: number
+        }
+        Returns: {
+          monthly_target_total: number
+          total_calls: number
+          total_customers: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "staff"

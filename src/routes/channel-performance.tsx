@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,30 +22,35 @@ export const Route = createFileRoute("/channel-performance")({
 
 type Counts = Record<CustomerStatus, number>;
 type Row = { id: string; name: string; total: number; counts: Counts };
-type CustRow = { channel_id: string | null; status: CustomerStatus; imported_at: string };
 
 const emptyCounts = (): Counts => Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
 function ChannelPerf() {
   const { t } = useTranslation();
-  const [channels, setChannels] = useState<{ id: string; name: string }[]>([]);
-  const [customers, setCustomers] = useState<CustRow[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const load = async () => {
     setLoading(true);
-    const [ch, cu] = await Promise.all([
-      supabase.from("channels").select("id, name").eq("is_active", true),
-      supabase.from("customers").select("channel_id, status, imported_at"),
-    ]);
-    setChannels(ch.data ?? []);
-    setCustomers((cu.data ?? []) as CustRow[]);
+    const args: { _date_from?: string; _date_to?: string } = {};
+    if (dateFrom) args._date_from = new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString();
+    if (dateTo) args._date_to = new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString();
+    const { data, error } = await supabase.rpc("stats_by_channel", args);
+    if (!error) {
+      const out: Row[] = (data ?? []).map((r: any) => {
+        const counts = emptyCounts();
+        const sc = (r.status_counts ?? {}) as Record<string, number>;
+        for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
+        return { id: r.channel_id, name: r.name, total: Number(r.total ?? 0), counts };
+      }).sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
+      setRows(out);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [dateFrom, dateTo]);
 
   useEffect(() => {
     const c = supabase
@@ -54,30 +59,6 @@ function ChannelPerf() {
       .subscribe();
     return () => { supabase.removeChannel(c); };
   }, []);
-
-  const rows = useMemo<Row[]>(() => {
-    const fromTs = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).getTime() : null;
-    const toTs = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).getTime() : null;
-    const filtered = customers.filter((x) => {
-      const ts = new Date(x.imported_at).getTime();
-      if (fromTs && ts < fromTs) return false;
-      if (toTs && ts > toTs) return false;
-      return true;
-    });
-    const out: Row[] = channels.map((c) => {
-      const counts = emptyCounts();
-      let total = 0;
-      for (const x of filtered) {
-        if (x.channel_id !== c.id) continue;
-        const s = x.status as CustomerStatus;
-        if (counts[s] !== undefined) counts[s]++;
-        total++;
-      }
-      return { id: c.id, name: c.name, total, counts };
-    });
-    out.sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
-    return out;
-  }, [channels, customers, dateFrom, dateTo]);
 
   return (
     <div className="space-y-5">

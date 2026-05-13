@@ -51,25 +51,22 @@ function StaffPerf() {
       setLoading(true);
       const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
       const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
-      const [sf, cu, rl] = await Promise.all([
-        supabase.from("profiles").select("id, display_name").eq("is_active", true),
-        supabase.from("customers").select("assigned_to, status, updated_at").gte("updated_at", fromIso).lte("updated_at", toIso),
-        supabase.from("user_roles").select("user_id, role").eq("role", "staff"),
-      ]);
-      const staffIds = new Set((rl.data ?? []).map((r: any) => r.user_id));
-      const staffOnly = (sf.data ?? []).filter((p) => staffIds.has(p.id));
-      const out: Row[] = staffOnly.map((u) => {
-        const counts = emptyCounts();
-        let total = 0;
-        for (const c of cu.data ?? []) {
-          if (c.assigned_to !== u.id) continue;
-          const s = c.status as CustomerStatus;
-          if (counts[s] !== undefined) counts[s]++;
-          total++;
-        }
-        return { id: u.id, name: u.display_name, total, counts, tier: tierFor(counts.activated) };
-      }).sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
-      setRows(out);
+      const { data, error } = await supabase.rpc("stats_by_staff", {
+        _date_from: fromIso, _date_to: toIso,
+      });
+      if (!error) {
+        const out: Row[] = (data ?? []).map((r: any) => {
+          const counts = emptyCounts();
+          const sc = (r.status_counts ?? {}) as Record<string, number>;
+          for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
+          return {
+            id: r.user_id, name: r.display_name,
+            total: Number(r.total ?? 0), counts,
+            tier: tierFor(counts.activated),
+          };
+        }).sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
+        setRows(out);
+      }
       setLoading(false);
     })();
   }, [from, to]);
