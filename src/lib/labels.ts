@@ -33,6 +33,8 @@ export const CUSTOMER_STATUSES = [
   "delinquent",
   "line_exceeded",
   "minor",
+  "wrong_application",
+  "seasonal_worker",
 ] as const;
 export type CustomerStatus = (typeof CUSTOMER_STATUSES)[number];
 
@@ -47,6 +49,8 @@ export const STATUS_LABEL: Record<CustomerStatus, string> = {
   delinquent: "체납자",
   line_exceeded: "회선 초과",
   minor: "미성년자",
+  wrong_application: "오신청",
+  seasonal_worker: "계절 근로자",
 };
 
 // 상태별 색상 (semantic tokens 기반)
@@ -61,6 +65,8 @@ export const STATUS_CLASS: Record<CustomerStatus, string> = {
   delinquent: "bg-destructive/15 text-destructive border-transparent",
   line_exceeded: "bg-destructive/15 text-destructive border-transparent",
   minor: "bg-secondary text-secondary-foreground border-transparent",
+  wrong_application: "bg-warning/20 text-warning-foreground border-transparent",
+  seasonal_worker: "bg-info/15 text-info border-transparent",
 };
 
 // 콜 결과 → 자동 상태 추천
