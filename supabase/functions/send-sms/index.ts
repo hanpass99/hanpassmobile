@@ -30,6 +30,26 @@ function byteLength(s: string): number {
   return n;
 }
 
+async function fetchViaProxy(proxyUrl: string, proxySecret: string, fields: Record<string, string>) {
+  const url = `${proxyUrl.replace(/\/$/, "")}/send`;
+  const attempts = [
+    { headers: { "x-proxy-secret": proxySecret }, body: fields },
+    { headers: { authorization: `Bearer ${proxySecret}`, "x-proxy-secret": proxySecret }, body: fields },
+    { headers: { "x-proxy-secret": proxySecret }, body: { ...fields, proxy_secret: proxySecret, secret: proxySecret } },
+  ];
+
+  let lastResponse: Response | null = null;
+  for (const attempt of attempts) {
+    lastResponse = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...attempt.headers },
+      body: JSON.stringify(attempt.body),
+    });
+    if (lastResponse.status !== 401) return lastResponse;
+  }
+  return lastResponse!;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -83,19 +103,13 @@ Deno.serve(async (req) => {
     const proxyUrl = env("PROXY_URL");
     const proxySecret = env("PROXY_SECRET");
     if (proxyUrl) {
-      const headers: Record<string, string> = { "content-type": "application/json" };
-      if (proxySecret) headers["x-proxy-secret"] = proxySecret;
       console.log("send-sms proxy request", {
         proxy_host: new URL(proxyUrl).host,
         proxy_secret_configured: Boolean(proxySecret),
         msg_type: msgType,
         count: phones.length,
       });
-      res = await fetch(`${proxyUrl.replace(/\/$/, "")}/send`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(fields),
-      });
+      res = await fetchViaProxy(proxyUrl, proxySecret, fields);
     } else {
       const form = new FormData();
       for (const [k, v] of Object.entries(fields)) form.append(k, v);
