@@ -66,20 +66,31 @@ Deno.serve(async (req) => {
     const isLms = byteLength(body.message) > 90;
     const msgType = isLms ? "LMS" : "SMS";
 
-    const form = new FormData();
-    form.append("key", ALIGO_API_KEY);
-    form.append("user_id", ALIGO_USER_ID);
-    form.append("sender", ALIGO_SENDER);
-    form.append("receiver", phones.join(","));
-    form.append("msg", body.message);
-    form.append("msg_type", msgType);
-    if (isLms && body.title) form.append("title", body.title.slice(0, 44));
-    form.append("testmode_yn", body.testmode ? "Y" : "N");
+    const fields: Record<string, string> = {
+      key: ALIGO_API_KEY,
+      user_id: ALIGO_USER_ID,
+      sender: ALIGO_SENDER,
+      receiver: phones.join(","),
+      msg: body.message,
+      msg_type: msgType,
+      testmode_yn: body.testmode ? "Y" : "N",
+    };
+    if (isLms && body.title) fields.title = body.title.slice(0, 44);
 
-    const targetUrl = PROXY_URL ? `${PROXY_URL.replace(/\/$/, "")}/send` : ALIGO_URL;
-    const headers: Record<string, string> = {};
-    if (PROXY_URL && PROXY_SECRET) headers["x-proxy-secret"] = PROXY_SECRET;
-    const res = await fetch(targetUrl, { method: "POST", body: form, headers });
+    let res: Response;
+    if (PROXY_URL) {
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      if (PROXY_SECRET) headers["x-proxy-secret"] = PROXY_SECRET;
+      res = await fetch(`${PROXY_URL.replace(/\/$/, "")}/send`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(fields),
+      });
+    } else {
+      const form = new FormData();
+      for (const [k, v] of Object.entries(fields)) form.append(k, v);
+      res = await fetch(ALIGO_URL, { method: "POST", body: form });
+    }
     const aligoData = await res.json().catch(() => ({}));
     const success = aligoData?.result_code === "1" || aligoData?.result_code === 1;
 
