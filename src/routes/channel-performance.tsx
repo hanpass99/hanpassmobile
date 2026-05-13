@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,13 +31,17 @@ function ChannelPerf() {
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const latestLoadRef = useRef(0);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = async () => {
+    const requestId = ++latestLoadRef.current;
     setLoading(true);
     const args: { _date_from?: string; _date_to?: string } = {};
     if (dateFrom) args._date_from = new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString();
     if (dateTo) args._date_to = new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString();
     const { data, error } = await supabase.rpc("stats_by_channel", args);
+    if (requestId !== latestLoadRef.current) return;
     if (!error) {
       const out: Row[] = (data ?? []).map((r: any) => {
         const counts = emptyCounts();
@@ -55,9 +59,18 @@ function ChannelPerf() {
   useEffect(() => {
     const c = supabase
       .channel("channel-perf-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, () => {
+        if (refreshTimerRef.current) return;
+        refreshTimerRef.current = setTimeout(() => {
+          refreshTimerRef.current = null;
+          void load();
+        }, 1500);
+      })
       .subscribe();
-    return () => { supabase.removeChannel(c); };
+    return () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      supabase.removeChannel(c);
+    };
   }, []);
 
   return (
