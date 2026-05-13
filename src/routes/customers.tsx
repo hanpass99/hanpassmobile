@@ -201,7 +201,7 @@ function CustomersPage() {
 
   const load = refresh;
 
-  // 실시간 동기화: customers 변경 시 다른 사용자 화면도 자동 반영 (현재 정렬/위치 유지)
+  // 실시간 동기화: 화면에 보이는 행만 in-place 업데이트, 신규/삭제는 카운트 갱신
   useEffect(() => {
     const ch = supabase
       .channel("customers-rt")
@@ -209,26 +209,22 @@ function CustomersPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "customers" },
         (payload) => {
-          setRows((prev) => {
-            if (payload.eventType === "INSERT") {
-              const n = payload.new as CustomerRow;
-              if (prev.some((r) => r.id === n.id)) return prev;
-              return [n, ...prev];
-            }
-            if (payload.eventType === "UPDATE") {
-              const n = payload.new as CustomerRow;
-              return prev.map((r) => (r.id === n.id ? { ...r, ...n } : r));
-            }
-            if (payload.eventType === "DELETE") {
-              const o = payload.old as { id: string };
-              return prev.filter((r) => r.id !== o.id);
-            }
-            return prev;
-          });
+          if (payload.eventType === "UPDATE") {
+            const n = payload.new as CustomerRow;
+            setRows((prev) => prev.map((r) => (r.id === n.id ? { ...r, ...n } : r)));
+          } else if (payload.eventType === "DELETE") {
+            const o = payload.old as { id: string };
+            setRows((prev) => prev.filter((r) => r.id !== o.id));
+            setTotal((t) => Math.max(0, t - 1));
+          } else if (payload.eventType === "INSERT") {
+            // 새 행이 현재 필터에 매치되는지 모르므로 카운트만 즉시 갱신, 데이터는 다음 새로고침/페이지에서 반영
+            loadPoolCounts();
+          }
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const staffById = useMemo(() => {
@@ -247,48 +243,24 @@ function CustomersPage() {
     return m;
   }, [countries]);
 
-  const poolRows = useMemo(() => rows.filter((r) => r.pool === tab), [rows, tab]);
-
+  // 서버에서 이미 필터·정렬·페이지네이션 적용됨. 클라이언트는 표시만.
+  // 단, 서버가 지원하지 않는 정렬 키(country/assigned/assigned_country)는 현재 로드된 행 한정 폴백 정렬.
   const filtered = useMemo(() => {
-    const out = poolRows.filter((r) => {
-      if (search) {
-        const q = search.toLowerCase();
-        const staffName = (r.assigned_to && staffById.get(r.assigned_to)) || "";
-        const hay = `${r.name} ${r.phone} ${r.email ?? ""} ${r.charge_phone ?? ""} ${staffName}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      if (country !== "all" && r.country_id !== country) return false;
-      if (assignedCountry !== "all") {
-        const sc = r.assigned_to ? staffCountryById.get(r.assigned_to) ?? null : null;
-        if (assignedCountry === "__none__") { if (sc) return false; }
-        else if (sc !== assignedCountry) return false;
-      }
-      if (statusF !== "all" && r.status !== statusF) return false;
-      if (staffF !== "all") {
-        if (staffF === "__none__") { if (r.assigned_to) return false; }
-        else if (r.assigned_to !== staffF) return false;
-      }
-      if (dateFrom || dateTo) {
-        const t = new Date(r.imported_at).getTime();
-        if (dateFrom && t < new Date(dateFrom.setHours(0, 0, 0, 0)).getTime()) return false;
-        if (dateTo && t > new Date(new Date(dateTo).setHours(23, 59, 59, 999)).getTime()) return false;
-      }
-      return true;
-    });
-
-    if (sortKey && sortDir) {
+    const out = rows.slice();
+    if (sortKey && sortDir && !SERVER_SORT_KEYS.has(sortKey)) {
       const dir = sortDir === "asc" ? 1 : -1;
       out.sort((a: any, b: any) => {
-        let av = a[sortKey]; let bv = b[sortKey];
-        if (sortKey === "country") { av = countryById.get(a.country_id ?? "")?.code ?? ""; bv = countryById.get(b.country_id ?? "")?.code ?? ""; }
-        if (sortKey === "assigned_country") {
+        let av: any = ""; let bv: any = "";
+        if (sortKey === "country") {
+          av = countryById.get(a.country_id ?? "")?.code ?? "";
+          bv = countryById.get(b.country_id ?? "")?.code ?? "";
+        } else if (sortKey === "assigned_country") {
           av = countryById.get(staffCountryById.get(a.assigned_to ?? "") ?? "")?.code ?? "";
           bv = countryById.get(staffCountryById.get(b.assigned_to ?? "") ?? "")?.code ?? "";
+        } else if (sortKey === "assigned") {
+          av = staffById.get(a.assigned_to ?? "") ?? "";
+          bv = staffById.get(b.assigned_to ?? "") ?? "";
         }
-        if (sortKey === "assigned") { av = staffById.get(a.assigned_to ?? "") ?? ""; bv = staffById.get(b.assigned_to ?? "") ?? ""; }
-        if (sortKey === "status") { av = STATUS_LABEL[a.status as CustomerStatus]; bv = STATUS_LABEL[b.status as CustomerStatus]; }
-        av = av ?? ""; bv = bv ?? "";
-        if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
         return String(av).localeCompare(String(bv)) * dir;
       });
     }
@@ -297,7 +269,7 @@ function CustomersPage() {
       out.sort((a, b) => (idx.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (idx.get(b.id) ?? Number.MAX_SAFE_INTEGER));
     }
     return out;
-  }, [poolRows, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, staffById, staffCountryById, countryById, dateFrom, dateTo, pinnedOrder]);
+  }, [rows, sortKey, sortDir, staffById, staffCountryById, countryById, pinnedOrder]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
