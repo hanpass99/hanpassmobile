@@ -416,6 +416,7 @@ function CustomersPage() {
   const allChecked = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
 
   const onUpload = async (file: File) => {
+    importingRef.current = true;
     setImporting(true);
     const toastId = toast.loading("엑셀 파싱 중...");
     try {
@@ -569,6 +570,7 @@ function CustomersPage() {
     } catch (e: any) {
       toast.error(`엑셀 파싱 실패: ${e.message}`, { id: toastId });
     } finally {
+      importingRef.current = false;
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
     }
