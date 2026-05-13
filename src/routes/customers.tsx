@@ -78,6 +78,8 @@ type CustomerRow = {
 
 type SortDir = "asc" | "desc" | null;
 
+const PAGE_SIZE = 200;
+
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
@@ -86,7 +88,11 @@ function CustomersPage() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [staff, setStaff] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [tab, setTab] = useState<CustomerPool>("existing");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [poolCounts, setPoolCounts] = useState<Record<string, number>>({});
 
   const [search, setSearch] = useState("");
   const [country, setCountry] = useState("all");
@@ -106,26 +112,94 @@ function CustomersPage() {
   // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
   const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
 
-  // 필터/정렬/탭 변경 시 고정 해제
-  useEffect(() => { setPinnedOrder(null); }, [search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo, tab]);
+  // RPC가 지원하는 정렬 키 (그 외는 클라이언트 정렬 폴백)
+  const SERVER_SORT_KEYS = new Set([
+    "name", "phone", "status", "imported_at", "activation_date",
+    "application_date", "carrier_plan", "requested_plan",
+  ]);
 
-  const load = async () => {
-    setLoading(true);
-    const [c, co, ch, sf] = await Promise.all([
-      supabase.from("customers").select("*").order("imported_at", { ascending: false }).limit(2000),
+  // 룩업 데이터 (1회 로드)
+  const loadLookups = async () => {
+    const [co, ch, sf] = await Promise.all([
       supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
       supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
       supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true),
     ]);
-    if (c.error) toast.error(`고객 로드 실패: ${c.error.message}`);
-    setRows((c.data ?? []) as CustomerRow[]);
     setCountries(co.data ?? []);
     setChannels(ch.data ?? []);
     setStaff(sf.data ?? []);
-    setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  // Pool별 총 건수 (탭 뱃지용)
+  const loadPoolCounts = async () => {
+    const out: Record<string, number> = {};
+    for (const p of POOLS) {
+      const { count } = await supabase
+        .from("customers")
+        .select("id", { count: "exact", head: true })
+        .eq("pool", p);
+      out[p] = count ?? 0;
+    }
+    setPoolCounts(out);
+  };
+
+  // 서버사이드 검색 (페이지네이션)
+  const fetchPage = async (pageNum: number, reset: boolean) => {
+    if (reset) setLoading(true); else setLoadingMore(true);
+    const fromIso = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString() : null;
+    const toIso = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString() : null;
+    const sortKeyForRpc = SERVER_SORT_KEYS.has(sortKey) ? sortKey : "imported_at";
+    const sortDirForRpc = sortDir ?? "desc";
+    const { data, error } = await supabase.rpc("search_customers", {
+      _pool: tab,
+      _search: search.trim() || null,
+      _country_id: country === "all" ? null : country,
+      _assigned_to: staffF === "all" ? null : (staffF === "__none__" ? "unassigned" : staffF),
+      _assigned_country: assignedCountry === "all" ? null : (assignedCountry === "__none__" ? "none" : assignedCountry),
+      _status: statusF === "all" ? null : statusF,
+      _date_from: fromIso,
+      _date_to: toIso,
+      _sort_key: sortKeyForRpc,
+      _sort_dir: sortDirForRpc,
+      _page: pageNum,
+      _page_size: PAGE_SIZE,
+    });
+    if (error) {
+      toast.error(`고객 로드 실패: ${error.message}`);
+      setLoading(false); setLoadingMore(false);
+      return;
+    }
+    const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
+    const newRows = fetched.map((r) => r.data);
+    setTotal(fetched[0]?.total_count ?? 0);
+    setRows((prev) => reset ? newRows : [...prev, ...newRows]);
+    setLoading(false); setLoadingMore(false);
+  };
+
+  // 초기 로드
+  useEffect(() => { loadLookups(); loadPoolCounts(); }, []);
+
+  // 필터/정렬/탭 변경 시 1페이지 재조회 (디바운스)
+  useEffect(() => {
+    setPinnedOrder(null);
+    setPage(1);
+    const handle = setTimeout(() => { fetchPage(1, true); }, 250);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo]);
+
+  const loadMore = async () => {
+    const next = page + 1;
+    setPage(next);
+    await fetchPage(next, false);
+  };
+
+  const refresh = async () => {
+    setPage(1);
+    await Promise.all([fetchPage(1, true), loadPoolCounts()]);
+  };
+
+  const load = refresh;
 
   // 실시간 동기화: customers 변경 시 다른 사용자 화면도 자동 반영 (현재 정렬/위치 유지)
   useEffect(() => {
