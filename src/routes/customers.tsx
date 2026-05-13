@@ -374,9 +374,9 @@ function CustomersPage() {
     const toastId = toast.loading("엑셀 파싱 중...");
     try {
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
+      const wb = XLSX.read(buf, { type: "array", cellDates: true });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+      const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "", raw: true });
 
       const norm = (v: any) => String(v ?? "").trim();
       const normKey = (s: string) => s.toLowerCase().replace(/\s+/g, "").trim();
@@ -386,6 +386,45 @@ function CustomersPage() {
         }, {});
         for (const k of keys) { const hit = map[normKey(k)]; if (hit) return row[hit]; }
         return "";
+      };
+      // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const fmtYmd = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+      const serialToDate = (n: number): Date | null => {
+        if (!isFinite(n) || n <= 0 || n > 2958465) return null;
+        // Excel epoch: 1899-12-30 (1900 leap-year bug 보정 포함)
+        const ms = Math.round((n - 25569) * 86400 * 1000);
+        const d = new Date(ms);
+        return isNaN(d.getTime()) ? null : d;
+      };
+      const toDateStr = (v: any): string | null => {
+        if (v == null || v === "") return null;
+        if (v instanceof Date) return isNaN(v.getTime()) ? null : fmtYmd(v);
+        if (typeof v === "number") {
+          const d = serialToDate(v);
+          return d ? fmtYmd(d) : null;
+        }
+        const s = String(v).trim();
+        if (!s) return null;
+        // 순수 숫자 문자열 → serial
+        if (/^\d+(\.\d+)?$/.test(s)) {
+          const d = serialToDate(parseFloat(s));
+          if (d) return fmtYmd(d);
+        }
+        // ISO YYYY-MM-DD
+        let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+        if (m) {
+          const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+          if (!isNaN(d.getTime()) && d.getUTCMonth() === +m[2] - 1) return fmtYmd(d);
+        }
+        // DD/MM/YYYY or DD-MM-YYYY
+        m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+        if (m) {
+          let y = +m[3]; if (y < 100) y += 2000;
+          const d = new Date(Date.UTC(y, +m[2] - 1, +m[1]));
+          if (!isNaN(d.getTime()) && d.getUTCDate() === +m[1] && d.getUTCMonth() === +m[2] - 1) return fmtYmd(d);
+        }
+        return null;
       };
       const countryByCode = new Map(countries.map((c) => [c.code.toUpperCase(), c.id]));
       const countryByName = new Map(countries.map((c) => [c.name_ko, c.id]));
