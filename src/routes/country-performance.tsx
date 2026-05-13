@@ -71,7 +71,7 @@ function CountryPerf() {
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       supabase.removeChannel(c);
     };
-  }, []);
+  }, [dateFrom, dateTo]);
 
   return (
     <div className="space-y-5">
