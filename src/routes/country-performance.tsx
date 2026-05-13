@@ -22,30 +22,36 @@ export const Route = createFileRoute("/country-performance")({
 
 type Counts = Record<CustomerStatus, number>;
 type Row = { code: string; name: string; total: number; counts: Counts };
-type CustRow = { country_id: string | null; status: CustomerStatus; imported_at: string };
 
 const emptyCounts = (): Counts => Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
 function CountryPerf() {
   const { t } = useTranslation();
-  const [countries, setCountries] = useState<{ id: string; code: string; name_ko: string }[]>([]);
-  const [customers, setCustomers] = useState<CustRow[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const load = async () => {
     setLoading(true);
-    const [co, cu] = await Promise.all([
-      supabase.from("countries").select("id, code, name_ko").eq("is_active", true),
-      supabase.from("customers").select("country_id, status, imported_at"),
-    ]);
-    setCountries(co.data ?? []);
-    setCustomers((cu.data ?? []) as CustRow[]);
+    const fromIso = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString() : null;
+    const toIso = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString() : null;
+    const { data, error } = await supabase.rpc("stats_by_country", {
+      _date_from: fromIso, _date_to: toIso,
+    });
+    if (!error) {
+      const out: Row[] = (data ?? []).map((r: any) => {
+        const counts = emptyCounts();
+        const sc = (r.status_counts ?? {}) as Record<string, number>;
+        for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
+        return { code: r.code, name: r.name_ko, total: Number(r.total ?? 0), counts };
+      }).sort((a, b) => b.counts.activated - a.counts.activated);
+      setRows(out);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [dateFrom, dateTo]);
 
   useEffect(() => {
     const c = supabase
@@ -54,28 +60,6 @@ function CountryPerf() {
       .subscribe();
     return () => { supabase.removeChannel(c); };
   }, []);
-
-  const rows = useMemo<Row[]>(() => {
-    const fromTs = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).getTime() : null;
-    const toTs = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).getTime() : null;
-    const filtered = customers.filter((x) => {
-      const ts = new Date(x.imported_at).getTime();
-      if (fromTs && ts < fromTs) return false;
-      if (toTs && ts > toTs) return false;
-      return true;
-    });
-    return countries.map((c) => {
-      const counts = emptyCounts();
-      let total = 0;
-      for (const x of filtered) {
-        if (x.country_id !== c.id) continue;
-        const s = x.status as CustomerStatus;
-        if (counts[s] !== undefined) counts[s]++;
-        total++;
-      }
-      return { code: c.code, name: c.name_ko, total, counts };
-    }).sort((a, b) => b.counts.activated - a.counts.activated);
-  }, [countries, customers, dateFrom, dateTo]);
 
   return (
     <div className="space-y-5">
