@@ -113,6 +113,7 @@ function CustomersPage() {
   const [importing, setImporting] = useState(false);
   const importingRef = useRef(false);
   const poolCountRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestFetchRef = useRef(0);
   // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
   const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
 
@@ -163,6 +164,7 @@ function CustomersPage() {
 
   // 서버사이드 검색 (페이지네이션)
   const fetchPage = async (pageNum: number, reset: boolean) => {
+    const requestId = ++latestFetchRef.current;
     if (reset) setLoading(true); else setLoadingMore(true);
     const fromIso = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString() : null;
     const toIso = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString() : null;
@@ -183,14 +185,17 @@ function CustomersPage() {
       _page_size: PAGE_SIZE,
     });
     if (error) {
+      if (requestId !== latestFetchRef.current) return;
       toast.error(`고객 로드 실패: ${error.message}`);
       setLoading(false); setLoadingMore(false);
       return;
     }
+    if (requestId !== latestFetchRef.current) return;
     const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
     const newRows = fetched.map((r) => r.data);
     setTotal(fetched[0]?.total_count ?? 0);
     setRows(newRows);
+    setSelected(new Set());
     setLoading(false); setLoadingMore(false);
   };
 
