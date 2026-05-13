@@ -1,73 +1,70 @@
-# 추가 기능 개선 계획
+# 대용량(10k+) 최적화 + 국가 5개 추가
 
-요청량이 많아 작업을 단계별로 나누어 진행합니다. 각 단계는 독립적으로 검증 가능합니다.
+## 현재 상태 점검
 
-## 1단계: 데이터베이스 스키마 변경
+- `customers.tsx`는 `.limit(2000)` 으로 최대 2,000건만 로드. 모든 검색/필터/정렬이 **클라이언트** 메모리에서 동작.
+- 엑셀 업로드는 단일 `insert(payload)` — 10k건 시 PostgREST/Worker 타임아웃 위험. 중복 체크는 메모리 `Set` 비교라 실제 DB 전체와 비교 불가.
+- 통계/대시보드 페이지들도 `select("*")` 후 클라이언트 집계.
+- 국가 테이블에 이미 `IN`(인도), `PK`(파키스탄) 존재. 추가 필요: **미국(US), 가나(GH), 캐나다(CA)** 3개.
 
-**직원 다중 담당 국가**
-- `profiles.country_id` (단일) → 별도 `profile_countries` 테이블 (user_id, country_id) 다대다 관계
-- 기존 `current_user_country()` 함수 → `current_user_countries()` 배열 반환으로 변경
-- RLS 정책 (customers, customer_notes, call_logs) → `country_id = ANY(current_user_countries())` 로 수정
-- 기존 데이터 마이그레이션: `profiles.country_id` 값을 새 테이블로 복사 (컬럼은 호환성 위해 일단 유지)
+## 1단계 — DB 마이그레이션
 
 **국가 추가**
-- EG (이집트), JO (요르단) `countries` 테이블에 INSERT
+- `countries` 에 US/GH/CA INSERT (이미 있는 IN, PK는 스킵).
 
-**프로필 사진 저장**
-- Storage 버킷 `avatars` 생성 (public)
-- `profiles.avatar_url` 컬럼 추가
-- RLS: 본인만 자기 폴더에 업로드/수정, 누구나 조회
+**인덱스 (대용량 검색·필터·정렬 가속)**
+- `customers(pool, imported_at desc)` — 탭+기본정렬
+- `customers(country_id)`, `customers(assigned_to)`, `customers(status)`
+- `customers(phone)` UNIQUE 부분 인덱스(중복 방지) — 기존 중복 있을 수 있어 일반 인덱스로 시작
+- `customer_notes(customer_id)`, `call_logs(customer_id)`, `call_logs(staff_id, call_date)`, `sms_logs(staff_id, sent_at)`
 
-**미처리 상태 시 담당자 초기화 트리거**
-- `customers` BEFORE UPDATE 트리거: `NEW.status = 'new'` 이면 `NEW.assigned_to = NULL`
-- 기존 `auto_assign_on_status_change` 트리거 수정 (new로 바뀔 땐 할당 안 함)
+**서버사이드 검색 RPC (`search_customers`)**
+- 인자: pool, search, country_id, assigned_to(또는 'unassigned'), status, date_from/to, sort_key, sort_dir, page, page_size
+- RLS 우회 없이 SECURITY INVOKER로 작성 → 기존 정책 그대로 적용
+- 반환: rows + total_count
 
-**Realtime 활성화**
-- `ALTER PUBLICATION supabase_realtime ADD TABLE customers, customer_notes, call_logs`
-- `REPLICA IDENTITY FULL` 설정
+## 2단계 — `customers.tsx` 서버사이드 전환
 
-## 2단계: 직원 설정 UI (settings.tsx)
+- `.limit(2000)` 제거. 초기 로드는 RPC `search_customers` 로 **현재 탭/필터/정렬 + page=1, page_size=100** 만 가져옴.
+- 필터/검색/정렬/탭/날짜 변경 시 RPC 재호출 (디바운스 300ms).
+- 무한 스크롤(IntersectionObserver) 또는 "더 보기" 버튼으로 다음 페이지 append.
+- 총 건수 표시(`total_count`) 추가.
+- Realtime: 현재 표시 중인 행만 in-place 업데이트 유지(이미 구현됨).
+- 일괄 삭제: 이미 chunk 처리됨(100건). 유지.
 
-- 단일 국가 Select → 다중 선택 (체크박스 리스트 또는 multi-select Popover)
-- 저장 시 `profile_countries` 테이블 갱신 (전체 삭제 후 재삽입)
-- 직원 목록에서 담당 국가들 뱃지로 표시
+## 3단계 — 엑셀 대량 업로드 개선
 
-## 3단계: 고객 관리 (customers.tsx)
+- 파싱 후 **500건 단위 chunk** 로 `insert` (10k → 20회).
+- 진행률 토스트("업로드 중 X/N").
+- 중복 체크를 **DB 측에서**: 한 번에 phone 목록 RPC `existing_phones(pool, phones[])` 호출(또는 chunk 단위 `select phone in (...)`)로 정확한 중복 제거.
+- 실패한 chunk는 재시도 안내 + 부분 성공 통계.
 
-**자동 정렬 제거 + 위치 유지**
-- 상태 변경 시 로컬 state만 업데이트, 재정렬 안 함
-- 서버 응답 후에도 기존 정렬 순서 유지 (id 기준 stable order)
+## 4단계 — 통계 페이지 서버 집계
 
-**Realtime 구독**
-- `supabase.channel('customers').on('postgres_changes', ...)` 로 변경 자동 반영
-- 다른 사용자가 수정 시 해당 행만 업데이트, 스크롤/포커스 위치 유지
+`country-performance.tsx`, `channel-performance.tsx`, `staff-performance.tsx`, `index.tsx` (대시보드):
 
-**미처리 변경 시 담당자 미배정 표시**
-- DB 트리거가 처리, UI는 응답 그대로 반영
+- 클라 `select("*")` → DB 집계 RPC 로 변경:
+  - `stats_by_country(date_from, date_to)` → 국가별 신규/개통/콜수
+  - `stats_by_channel(date_from, date_to)`
+  - `stats_by_staff(date_from, date_to)`
+  - `stats_dashboard(date_from, date_to)` — 카드용 합계
+- 각 RPC는 SQL 단일 쿼리(`group by`)로 처리. RLS 정책 통과 데이터만 집계.
 
-**국가 필터에 EG, JO 자동 노출** (countries 테이블에서 동적으로 가져오므로 자동)
+## 5단계 — UI 반영 (국가 5개 자동 노출 + 검증)
 
-## 4단계: 성과 페이지 Realtime + 날짜 필터
-
-- `country-performance.tsx`, `channel-performance.tsx` 에 시작일/종료일 DateRangePicker 추가
-- 필터 변경 시 쿼리 재실행
-- Realtime 구독으로 customers/call_logs 변경 시 통계 자동 갱신
-- `staff-performance.tsx`, `index.tsx` (대시보드) 에도 Realtime 구독 추가
-
-## 5단계: 프로필 사진 업로드
-
-- settings.tsx 본인 프로필 섹션에 사진 업로드 (input file, accept image/*)
-- 클라이언트에서 canvas 리사이즈 (최대 512x512, JPEG quality 0.85)
-- Storage 업로드 → public URL을 `profiles.avatar_url` 에 저장
-- 기존 `Avatar` 컴포넌트 활용 (`AvatarImage src={avatar_url}` + `AvatarFallback` 이름 이니셜)
-- 표시 위치: 사이드바, 직원 목록, 직원별 성과, 고객 담당자 표시 영역
+- `countries` 테이블 기반 컴포넌트들은 자동 반영됨 (settings 다중 국가 선택, customers 필터/등록, MultiCountrySelect 등).
+- 엑셀 업로드 매핑(`countryByCode`)도 새 코드 자동 인식.
+- 국가별 성과 페이지에서 새 국가 표시 확인.
 
 ## 기술 노트
 
-- Realtime: postgres_changes 이벤트 핸들러 내에서 setState 시 기존 배열 순서 보존
-- 다중 국가 RLS: `country_id IN (SELECT country_id FROM profile_countries WHERE user_id = auth.uid())` 형태의 SECURITY DEFINER 함수 사용
-- 트리거 순서: `auto_assign_on_status_change` 가 먼저, 그 다음 미처리 초기화 로직 (또는 한 트리거에 통합)
+- RPC는 모두 `SECURITY INVOKER` + `set search_path = public` — 기존 RLS 그대로 적용.
+- 페이지 사이즈 100, 최대 무한 스크롤 누적 시에도 React가 가상화 없이 5,000행은 무리. 일정 누적 후 "필터를 좁혀주세요" 안내(또는 추후 react-virtual 도입 — 본 단계에서는 미포함).
+- `staff` / `countries` / `channels` 룩업은 여전히 일괄 로드(작은 테이블).
+- 마이그레이션은 1단계만 본 작업 범위. 2~5단계 코드 변경은 마이그레이션 승인 후 동일 메시지에서 이어서 진행.
 
-## 진행 방식
+## 비포함 (별도 요청 시)
 
-승인 후 1단계(DB 마이그레이션)부터 순서대로 진행합니다. 각 단계 완료 후 다음 단계로 이어갑니다.
+- React Virtualization (행 가상화)
+- 엑셀 업로드 백그라운드 작업 큐
+- 국가별 권한 분리 RPC 캐싱
