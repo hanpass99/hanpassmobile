@@ -142,7 +142,7 @@ function Dashboard() {
   const successRate = totalCustomers ? (success / totalCustomers) * 100 : 0;
   const activationRate = totalCustomers ? (activated / totalCustomers) * 100 : 0;
   const monthlyTargetTotal = totals.monthlyTargetTotal;
-  const achievement = monthlyTargetTotal ? (activated / monthlyTargetTotal) * 100 : 0;
+  void monthlyTargetTotal;
 
   return (
     <div className="space-y-6">
