@@ -271,6 +271,7 @@ function Settings() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                {isAdmin && <TableHead className="w-20">{t("settings.order")}</TableHead>}
                 <TableHead>{t("settings.name")}</TableHead>
                 <TableHead>{t("settings.email")}</TableHead>
                 <TableHead>{t("settings.lastAccess")}</TableHead>
@@ -284,8 +285,20 @@ function Settings() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r) => (
+              {rows.map((r, idx) => (
                 <TableRow key={r.id} className={r.is_active ? "" : "opacity-50"}>
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveRow(idx, -1)} title={t("settings.moveUp")}>
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === rows.length - 1} onClick={() => moveRow(idx, 1)} title={t("settings.moveDown")}>
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">
                     {r.display_name}
                     {r.id === user?.id && <span className="ml-2 text-xs text-muted-foreground">{t("settings.me")}</span>}
@@ -382,13 +395,18 @@ function Settings() {
                             </Button>
                           )
                         )}
+                        {r.id !== user?.id && (
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { setDeleteTarget(r); setDeleteConfirmText(""); }}>
+                            <Trash2 className="mr-1 h-3.5 w-3.5" /> {t("settings.delete")}
+                          </Button>
+                        )}
                       </>
                     )}
                   </TableCell>
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isAdmin ? 11 : 10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
