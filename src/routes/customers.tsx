@@ -637,7 +637,7 @@ function CustomersPage() {
     <div className="space-y-5">
       <PageHeader
         title="고객 관리"
-        description={`${t("customers.totalDesc",{count:rows.length.toLocaleString()})}${loading?" · "+t("common.loading"):""}`}
+        description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · 표시 ${rows.length.toLocaleString()}건${loading?" · "+t("common.loading"):""}`}
         actions={
           <Button variant="outline" size="sm" onClick={load}>
             <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
@@ -765,6 +765,13 @@ function CustomersPage() {
                 <div className="overflow-x-auto rounded-lg border border-border/60">
                   {renderTable(p)}
                 </div>
+                {rows.length < total && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
+                      {loadingMore ? "불러오는 중..." : `더 불러오기 (${rows.length.toLocaleString()} / ${total.toLocaleString()})`}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
