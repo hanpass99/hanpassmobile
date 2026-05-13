@@ -73,7 +73,6 @@ function SmsPage() {
       <PageHeader
         title="문자 발송"
         description="고객에게 SMS/LMS 발송 · 템플릿 관리 · 발송 내역"
-        icon={MessageSquare}
       />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
