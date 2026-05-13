@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, UserCog, Globe2, Radio, FileBarChart,
-  Settings, Phone, LogOut, Moon, Sun, Languages,
+  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,6 +21,7 @@ export function AppSidebar() {
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("nav.customers"), url: "/customers", icon: Users },
+    { title: "문자 발송", url: "/sms", icon: MessageSquare },
   ];
   const analyticsItems = [
     { title: t("nav.staff"), url: "/staff-performance", icon: UserCog },
