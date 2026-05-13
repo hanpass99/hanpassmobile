@@ -444,13 +444,17 @@ function CustomersPage() {
           const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
           const notes = norm(findKey(row, "notes", "메모", "비고", "note")) || null;
           const carrier_plan = norm(findKey(row, "요금제", "plan", "carrier_plan")) || null;
-          const activation_date = norm(findKey(row, "개통일", "activation_date")) || null;
-          const application_date = norm(findKey(row, "신청일", "application_date")) || null;
+          const activation_date = toDateStr(findKey(row, "개통일", "activation_date"));
+          const application_date = toDateStr(findKey(row, "신청일", "application_date"));
+          const charge_date = toDateStr(findKey(row, "충전일", "charge_date"));
+          const signup_date = toDateStr(findKey(row, "가입일", "signup_date", "등록일", "데이터등록일"));
           const requested_plan = norm(findKey(row, "신청요금제", "requested_plan")) || null;
           return {
             name, phone, country_id, notes, pool: tab,
             carrier_plan, activation_date,
             application_date, requested_plan,
+            ...(charge_date ? { charge_date } : {}),
+            ...(signup_date ? { signup_date } : {}),
           };
         })
         .filter((x): x is NonNullable<typeof x> => x !== null);
