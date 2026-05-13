@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Clock, Camera, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Clock, Camera, Trash2, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
 import { MultiCountrySelect } from "@/components/MultiCountrySelect";
 import { resizeImage } from "@/lib/image-resize";
 import { useEffect, useRef, useState } from "react";
@@ -39,6 +39,7 @@ type Row = {
   activation_target: number;
   email: string | null;
   last_sign_in_at: string | null;
+  sort_order: number;
 };
 
 const now = new Date();
@@ -57,6 +58,9 @@ function Settings() {
   const [resetTarget, setResetTarget] = useState<Row | null>(null);
   const [resetResult, setResetResult] = useState<{ name: string; tempPassword: string } | null>(null);
   const [resetting, setResetting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const resetPassword = async () => {
     if (!resetTarget) return;
@@ -76,7 +80,7 @@ function Settings() {
   const load = async () => {
     setLoading(true);
     const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, { data: pcs }, activityRes] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url"),
+      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url, sort_order").order("sort_order").order("display_name"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
       supabase.from("countries").select("id, code, name_ko").order("code"),
@@ -109,8 +113,10 @@ function Settings() {
         activation_target: tg?.activation_target ?? 0,
         email: a?.email ?? null,
         last_sign_in_at: a?.last_sign_in_at ?? null,
+        sort_order: p.sort_order ?? 1000,
       };
     });
+    merged.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
     setRows(merged);
     setCountries(co ?? []);
     setLoading(false);
