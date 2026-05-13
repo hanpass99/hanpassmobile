@@ -14,8 +14,10 @@ interface ReqBody {
 }
 
 const ALIGO_URL = "https://apis.aligo.in/send/";
-const PROXY_URL = Deno.env.get("PROXY_URL");
-const PROXY_SECRET = Deno.env.get("PROXY_SECRET");
+
+function env(name: string): string {
+  return (Deno.env.get(name) || "").trim();
+}
 
 function normalizePhone(p: string): string {
   return (p || "").replace(/[^0-9]/g, "");
@@ -26,6 +28,26 @@ function byteLength(s: string): number {
   let n = 0;
   for (const ch of s) n += ch.charCodeAt(0) > 127 ? 2 : 1;
   return n;
+}
+
+async function fetchViaProxy(proxyUrl: string, proxySecret: string, fields: Record<string, string>) {
+  const url = `${proxyUrl.replace(/\/$/, "")}/send`;
+  const attempts = [
+    { headers: { "x-proxy-secret": proxySecret }, body: fields },
+    { headers: { authorization: `Bearer ${proxySecret}`, "x-proxy-secret": proxySecret }, body: fields },
+    { headers: { "x-proxy-secret": proxySecret }, body: { ...fields, proxy_secret: proxySecret, secret: proxySecret } },
+  ];
+
+  let lastResponse: Response | null = null;
+  for (const attempt of attempts) {
+    lastResponse = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...attempt.headers },
+      body: JSON.stringify(attempt.body),
+    });
+    if (lastResponse.status !== 401) return lastResponse;
+  }
+  return lastResponse!;
 }
 
 Deno.serve(async (req) => {
@@ -53,9 +75,9 @@ Deno.serve(async (req) => {
       return json({ error: "한 번에 최대 1000명까지 발송 가능합니다" }, 400);
     }
 
-    const ALIGO_API_KEY = Deno.env.get("ALIGO_API_KEY");
-    const ALIGO_USER_ID = Deno.env.get("ALIGO_USER_ID");
-    const ALIGO_SENDER = Deno.env.get("ALIGO_SENDER");
+    const ALIGO_API_KEY = env("ALIGO_API_KEY");
+    const ALIGO_USER_ID = env("ALIGO_USER_ID");
+    const ALIGO_SENDER = env("ALIGO_SENDER");
     if (!ALIGO_API_KEY || !ALIGO_USER_ID || !ALIGO_SENDER) {
       return json({ error: "알리고 환경 변수가 설정되지 않았습니다" }, 500);
     }
@@ -78,14 +100,16 @@ Deno.serve(async (req) => {
     if (isLms && body.title) fields.title = body.title.slice(0, 44);
 
     let res: Response;
-    if (PROXY_URL) {
-      const headers: Record<string, string> = { "content-type": "application/json" };
-      if (PROXY_SECRET) headers["x-proxy-secret"] = PROXY_SECRET;
-      res = await fetch(`${PROXY_URL.replace(/\/$/, "")}/send`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(fields),
+    const proxyUrl = env("PROXY_URL");
+    const proxySecret = env("PROXY_SECRET");
+    if (proxyUrl) {
+      console.log("send-sms proxy request", {
+        proxy_host: new URL(proxyUrl).host,
+        proxy_secret_configured: Boolean(proxySecret),
+        msg_type: msgType,
+        count: phones.length,
       });
+      res = await fetchViaProxy(proxyUrl, proxySecret, fields);
     } else {
       const form = new FormData();
       for (const [k, v] of Object.entries(fields)) form.append(k, v);
