@@ -30,6 +30,14 @@ function byteLength(s: string): number {
   return n;
 }
 
+function aligoErrorMessage(aligoData: Record<string, unknown>): string {
+  const code = String(aligoData?.result_code ?? "");
+  if (code === "-101") {
+    return "Aligo IP 인증 오류입니다. Aligo API 설정의 허용 IP에 프록시 서버 고정 IPv4를 등록하세요.";
+  }
+  return String(aligoData?.message || `code ${aligoData?.result_code ?? "unknown"}`);
+}
+
 async function fetchViaProxy(proxyUrl: string, proxySecret: string, fields: Record<string, string>) {
   const url = `${proxyUrl.replace(/\/$/, "")}/send`;
   const attempts = [
@@ -117,6 +125,7 @@ Deno.serve(async (req) => {
     }
     const aligoData = await res.json().catch(() => ({}));
     const success = aligoData?.result_code === "1" || aligoData?.result_code === 1;
+    const providerMessage = success ? null : aligoErrorMessage(aligoData as Record<string, unknown>);
 
     // Insert logs (one row per receiver) using service role to bypass RLS but staff_id = user.id
     const admin = createClient(supaUrl, serviceKey);
@@ -133,16 +142,17 @@ Deno.serve(async (req) => {
         status: success ? "sent" : "failed",
         aligo_msg_id: aligoData?.msg_id ? String(aligoData.msg_id) : null,
         aligo_response: aligoData,
-        error_message: success ? null : aligoData?.message || `code ${aligoData?.result_code}`,
+        error_message: providerMessage,
       }));
     if (rows.length) await admin.from("sms_logs").insert(rows);
 
     return json({
       ok: success,
+      error: providerMessage,
       msg_type: msgType,
       count: phones.length,
       aligo: aligoData,
-    }, success ? 200 : 502);
+    }, 200);
   } catch (e) {
     console.error("send-sms error", e);
     return json({ error: (e as Error).message }, 500);
