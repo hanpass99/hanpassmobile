@@ -485,7 +485,7 @@ function CustomersPage() {
     XLSX.writeFile(wb, `샘플_${POOL_SHORT[tab]}.xlsx`);
   };
 
-  const poolCount = (p: CustomerPool) => rows.filter((r) => r.pool === p).length;
+  const poolCount = (p: CustomerPool) => poolCounts[p] ?? 0;
 
   // 담당자별 상태 통계 (현재 Pool, 현재 필터 적용 후)
   const staffStats = useMemo(() => {
