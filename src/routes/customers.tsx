@@ -756,7 +756,7 @@ function CustomersPage() {
           ))}
         </TabsList>
 
-        {POOLS.map((p) => (
+        {POOLS.filter((p) => p === tab).map((p) => (
           <TabsContent key={p} value={p} className="mt-4">
             <Card>
               <CardContent className="space-y-4 p-4">
