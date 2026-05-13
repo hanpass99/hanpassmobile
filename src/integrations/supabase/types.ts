@@ -443,12 +443,41 @@ export type Database = {
       }
       current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
+      customers_existing_phones: {
+        Args: {
+          _phones: string[]
+          _pool: Database["public"]["Enums"]["customer_pool"]
+        }
+        Returns: {
+          phone: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      search_customers: {
+        Args: {
+          _assigned_country?: string
+          _assigned_to?: string
+          _country_id?: string
+          _date_from?: string
+          _date_to?: string
+          _page?: number
+          _page_size?: number
+          _pool: Database["public"]["Enums"]["customer_pool"]
+          _search?: string
+          _sort_dir?: string
+          _sort_key?: string
+          _status?: Database["public"]["Enums"]["customer_status"]
+        }
+        Returns: {
+          data: Json
+          total_count: number
+        }[]
       }
     }
     Enums: {

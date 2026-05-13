@@ -78,6 +78,8 @@ type CustomerRow = {
 
 type SortDir = "asc" | "desc" | null;
 
+const PAGE_SIZE = 200;
+
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
@@ -86,7 +88,11 @@ function CustomersPage() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [staff, setStaff] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [tab, setTab] = useState<CustomerPool>("existing");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [poolCounts, setPoolCounts] = useState<Record<string, number>>({});
 
   const [search, setSearch] = useState("");
   const [country, setCountry] = useState("all");
@@ -106,28 +112,96 @@ function CustomersPage() {
   // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
   const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
 
-  // 필터/정렬/탭 변경 시 고정 해제
-  useEffect(() => { setPinnedOrder(null); }, [search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo, tab]);
+  // RPC가 지원하는 정렬 키 (그 외는 클라이언트 정렬 폴백)
+  const SERVER_SORT_KEYS = new Set([
+    "name", "phone", "status", "imported_at", "activation_date",
+    "application_date", "carrier_plan", "requested_plan",
+  ]);
 
-  const load = async () => {
-    setLoading(true);
-    const [c, co, ch, sf] = await Promise.all([
-      supabase.from("customers").select("*").order("imported_at", { ascending: false }).limit(2000),
+  // 룩업 데이터 (1회 로드)
+  const loadLookups = async () => {
+    const [co, ch, sf] = await Promise.all([
       supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
       supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
       supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true),
     ]);
-    if (c.error) toast.error(`고객 로드 실패: ${c.error.message}`);
-    setRows((c.data ?? []) as CustomerRow[]);
     setCountries(co.data ?? []);
     setChannels(ch.data ?? []);
     setStaff(sf.data ?? []);
-    setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  // Pool별 총 건수 (탭 뱃지용)
+  const loadPoolCounts = async () => {
+    const out: Record<string, number> = {};
+    for (const p of POOLS) {
+      const { count } = await supabase
+        .from("customers")
+        .select("id", { count: "exact", head: true })
+        .eq("pool", p);
+      out[p] = count ?? 0;
+    }
+    setPoolCounts(out);
+  };
 
-  // 실시간 동기화: customers 변경 시 다른 사용자 화면도 자동 반영 (현재 정렬/위치 유지)
+  // 서버사이드 검색 (페이지네이션)
+  const fetchPage = async (pageNum: number, reset: boolean) => {
+    if (reset) setLoading(true); else setLoadingMore(true);
+    const fromIso = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString() : null;
+    const toIso = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString() : null;
+    const sortKeyForRpc = SERVER_SORT_KEYS.has(sortKey) ? sortKey : "imported_at";
+    const sortDirForRpc = sortDir ?? "desc";
+    const { data, error } = await supabase.rpc("search_customers", {
+      _pool: tab,
+      _search: search.trim() || undefined,
+      _country_id: country === "all" ? undefined : country,
+      _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
+      _assigned_country: assignedCountry === "all" ? undefined : (assignedCountry === "__none__" ? "none" : assignedCountry),
+      _status: statusF === "all" ? undefined : statusF,
+      _date_from: fromIso ?? undefined,
+      _date_to: toIso ?? undefined,
+      _sort_key: sortKeyForRpc,
+      _sort_dir: sortDirForRpc,
+      _page: pageNum,
+      _page_size: PAGE_SIZE,
+    });
+    if (error) {
+      toast.error(`고객 로드 실패: ${error.message}`);
+      setLoading(false); setLoadingMore(false);
+      return;
+    }
+    const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
+    const newRows = fetched.map((r) => r.data);
+    setTotal(fetched[0]?.total_count ?? 0);
+    setRows((prev) => reset ? newRows : [...prev, ...newRows]);
+    setLoading(false); setLoadingMore(false);
+  };
+
+  // 초기 로드
+  useEffect(() => { loadLookups(); loadPoolCounts(); }, []);
+
+  // 필터/정렬/탭 변경 시 1페이지 재조회 (디바운스)
+  useEffect(() => {
+    setPinnedOrder(null);
+    setPage(1);
+    const handle = setTimeout(() => { fetchPage(1, true); }, 250);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo]);
+
+  const loadMore = async () => {
+    const next = page + 1;
+    setPage(next);
+    await fetchPage(next, false);
+  };
+
+  const refresh = async () => {
+    setPage(1);
+    await Promise.all([fetchPage(1, true), loadPoolCounts()]);
+  };
+
+  const load = refresh;
+
+  // 실시간 동기화: 화면에 보이는 행만 in-place 업데이트, 신규/삭제는 카운트 갱신
   useEffect(() => {
     const ch = supabase
       .channel("customers-rt")
@@ -135,26 +209,22 @@ function CustomersPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "customers" },
         (payload) => {
-          setRows((prev) => {
-            if (payload.eventType === "INSERT") {
-              const n = payload.new as CustomerRow;
-              if (prev.some((r) => r.id === n.id)) return prev;
-              return [n, ...prev];
-            }
-            if (payload.eventType === "UPDATE") {
-              const n = payload.new as CustomerRow;
-              return prev.map((r) => (r.id === n.id ? { ...r, ...n } : r));
-            }
-            if (payload.eventType === "DELETE") {
-              const o = payload.old as { id: string };
-              return prev.filter((r) => r.id !== o.id);
-            }
-            return prev;
-          });
+          if (payload.eventType === "UPDATE") {
+            const n = payload.new as CustomerRow;
+            setRows((prev) => prev.map((r) => (r.id === n.id ? { ...r, ...n } : r)));
+          } else if (payload.eventType === "DELETE") {
+            const o = payload.old as { id: string };
+            setRows((prev) => prev.filter((r) => r.id !== o.id));
+            setTotal((t) => Math.max(0, t - 1));
+          } else if (payload.eventType === "INSERT") {
+            // 새 행이 현재 필터에 매치되는지 모르므로 카운트만 즉시 갱신, 데이터는 다음 새로고침/페이지에서 반영
+            loadPoolCounts();
+          }
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const staffById = useMemo(() => {
@@ -173,48 +243,24 @@ function CustomersPage() {
     return m;
   }, [countries]);
 
-  const poolRows = useMemo(() => rows.filter((r) => r.pool === tab), [rows, tab]);
-
+  // 서버에서 이미 필터·정렬·페이지네이션 적용됨. 클라이언트는 표시만.
+  // 단, 서버가 지원하지 않는 정렬 키(country/assigned/assigned_country)는 현재 로드된 행 한정 폴백 정렬.
   const filtered = useMemo(() => {
-    const out = poolRows.filter((r) => {
-      if (search) {
-        const q = search.toLowerCase();
-        const staffName = (r.assigned_to && staffById.get(r.assigned_to)) || "";
-        const hay = `${r.name} ${r.phone} ${r.email ?? ""} ${r.charge_phone ?? ""} ${staffName}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      if (country !== "all" && r.country_id !== country) return false;
-      if (assignedCountry !== "all") {
-        const sc = r.assigned_to ? staffCountryById.get(r.assigned_to) ?? null : null;
-        if (assignedCountry === "__none__") { if (sc) return false; }
-        else if (sc !== assignedCountry) return false;
-      }
-      if (statusF !== "all" && r.status !== statusF) return false;
-      if (staffF !== "all") {
-        if (staffF === "__none__") { if (r.assigned_to) return false; }
-        else if (r.assigned_to !== staffF) return false;
-      }
-      if (dateFrom || dateTo) {
-        const t = new Date(r.imported_at).getTime();
-        if (dateFrom && t < new Date(dateFrom.setHours(0, 0, 0, 0)).getTime()) return false;
-        if (dateTo && t > new Date(new Date(dateTo).setHours(23, 59, 59, 999)).getTime()) return false;
-      }
-      return true;
-    });
-
-    if (sortKey && sortDir) {
+    const out = rows.slice();
+    if (sortKey && sortDir && !SERVER_SORT_KEYS.has(sortKey)) {
       const dir = sortDir === "asc" ? 1 : -1;
       out.sort((a: any, b: any) => {
-        let av = a[sortKey]; let bv = b[sortKey];
-        if (sortKey === "country") { av = countryById.get(a.country_id ?? "")?.code ?? ""; bv = countryById.get(b.country_id ?? "")?.code ?? ""; }
-        if (sortKey === "assigned_country") {
+        let av: any = ""; let bv: any = "";
+        if (sortKey === "country") {
+          av = countryById.get(a.country_id ?? "")?.code ?? "";
+          bv = countryById.get(b.country_id ?? "")?.code ?? "";
+        } else if (sortKey === "assigned_country") {
           av = countryById.get(staffCountryById.get(a.assigned_to ?? "") ?? "")?.code ?? "";
           bv = countryById.get(staffCountryById.get(b.assigned_to ?? "") ?? "")?.code ?? "";
+        } else if (sortKey === "assigned") {
+          av = staffById.get(a.assigned_to ?? "") ?? "";
+          bv = staffById.get(b.assigned_to ?? "") ?? "";
         }
-        if (sortKey === "assigned") { av = staffById.get(a.assigned_to ?? "") ?? ""; bv = staffById.get(b.assigned_to ?? "") ?? ""; }
-        if (sortKey === "status") { av = STATUS_LABEL[a.status as CustomerStatus]; bv = STATUS_LABEL[b.status as CustomerStatus]; }
-        av = av ?? ""; bv = bv ?? "";
-        if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
         return String(av).localeCompare(String(bv)) * dir;
       });
     }
@@ -223,7 +269,7 @@ function CustomersPage() {
       out.sort((a, b) => (idx.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (idx.get(b.id) ?? Number.MAX_SAFE_INTEGER));
     }
     return out;
-  }, [poolRows, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, staffById, staffCountryById, countryById, dateFrom, dateTo, pinnedOrder]);
+  }, [rows, sortKey, sortDir, staffById, staffCountryById, countryById, pinnedOrder]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
@@ -325,6 +371,7 @@ function CustomersPage() {
 
   const onUpload = async (file: File) => {
     setImporting(true);
+    const toastId = toast.loading("엑셀 파싱 중...");
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
@@ -344,16 +391,15 @@ function CustomersPage() {
       const countryByName = new Map(countries.map((c) => [c.name_ko, c.id]));
 
       const seenPhones = new Set<string>();
-      const existingPhones = new Set(rows.filter((r) => r.pool === tab).map((r) => r.phone));
-      let dupInFile = 0, dupInDb = 0, invalid = 0;
+      let dupInFile = 0, invalid = 0;
 
-      const payload = json
+      // 1차: 파일 파싱 + 파일 내 중복 제거
+      const parsed = json
         .map((row) => {
           const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"));
           let name = norm(findKey(row, "name", "이름", "고객명", "성명"));
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
-          if (existingPhones.has(phone)) { dupInDb++; return null; }
           seenPhones.add(phone);
           const cc = norm(findKey(row, "country", "국가", "국적", "고객국적", "고객 국적", "nationality"));
           const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
@@ -370,20 +416,56 @@ function CustomersPage() {
         })
         .filter((x): x is NonNullable<typeof x> => x !== null);
 
-      if (!payload.length) {
-        const headers = json[0] ? Object.keys(json[0]).join(", ") : "(빈 파일)";
-        toast.error(`업로드할 데이터가 없습니다. (중복 ${dupInFile + dupInDb}건, 누락 ${invalid}건) — 인식된 컬럼: ${headers}`);
+      if (!parsed.length) {
+        toast.error(`업로드할 데이터가 없습니다. (파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
         return;
       }
 
-      const { error } = await supabase.from("customers").insert(payload);
-      if (error) { toast.error(`업로드 실패: ${error.message}`); return; }
+      // 2차: DB 측 전체 중복 체크 (chunk 1000개씩)
+      toast.loading("DB 중복 체크 중...", { id: toastId });
+      const dbDupSet = new Set<string>();
+      const phoneList = parsed.map((p) => p.phone);
+      const dupChunkSize = 1000;
+      for (let i = 0; i < phoneList.length; i += dupChunkSize) {
+        const chunk = phoneList.slice(i, i + dupChunkSize);
+        const { data: dupes, error: dupErr } = await supabase
+          .rpc("customers_existing_phones", { _pool: tab, _phones: chunk });
+        if (dupErr) {
+          toast.error(`중복 체크 실패: ${dupErr.message}`, { id: toastId });
+          return;
+        }
+        (dupes ?? []).forEach((d: { phone: string }) => dbDupSet.add(d.phone));
+      }
+      const finalPayload = parsed.filter((p) => !dbDupSet.has(p.phone));
+      const dupInDb = parsed.length - finalPayload.length;
+
+      if (!finalPayload.length) {
+        toast.error(`업로드할 데이터가 없습니다. (DB 중복 ${dupInDb}건, 파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
+        return;
+      }
+
+      // 3차: 청크 단위 INSERT (500건씩)
+      const insertChunkSize = 500;
+      let inserted = 0;
+      const totalToInsert = finalPayload.length;
+      for (let i = 0; i < totalToInsert; i += insertChunkSize) {
+        const chunk = finalPayload.slice(i, i + insertChunkSize);
+        const { error } = await supabase.from("customers").insert(chunk);
+        if (error) {
+          toast.error(`업로드 중단 (${inserted}/${totalToInsert} 완료): ${error.message}`, { id: toastId });
+          await refresh();
+          return;
+        }
+        inserted += chunk.length;
+        toast.loading(`업로드 중 ${inserted.toLocaleString()}/${totalToInsert.toLocaleString()}`, { id: toastId });
+      }
       toast.success(
-        `${payload.length}명 추가 / 중복제거 ${dupInFile + dupInDb}건${invalid ? ` / 누락 ${invalid}건` : ""}`
+        `${inserted.toLocaleString()}명 추가 / DB중복 ${dupInDb}건 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
+        { id: toastId }
       );
-      load();
+      await refresh();
     } catch (e: any) {
-      toast.error(`엑셀 파싱 실패: ${e.message}`);
+      toast.error(`엑셀 파싱 실패: ${e.message}`, { id: toastId });
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -403,7 +485,7 @@ function CustomersPage() {
     XLSX.writeFile(wb, `샘플_${POOL_SHORT[tab]}.xlsx`);
   };
 
-  const poolCount = (p: CustomerPool) => rows.filter((r) => r.pool === p).length;
+  const poolCount = (p: CustomerPool) => poolCounts[p] ?? 0;
 
   // 담당자별 상태 통계 (현재 Pool, 현재 필터 적용 후)
   const staffStats = useMemo(() => {
@@ -555,7 +637,7 @@ function CustomersPage() {
     <div className="space-y-5">
       <PageHeader
         title="고객 관리"
-        description={`${t("customers.totalDesc",{count:rows.length.toLocaleString()})}${loading?" · "+t("common.loading"):""}`}
+        description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · 표시 ${rows.length.toLocaleString()}건${loading?" · "+t("common.loading"):""}`}
         actions={
           <Button variant="outline" size="sm" onClick={load}>
             <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
@@ -683,6 +765,13 @@ function CustomersPage() {
                 <div className="overflow-x-auto rounded-lg border border-border/60">
                   {renderTable(p)}
                 </div>
+                {rows.length < total && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
+                      {loadingMore ? "불러오는 중..." : `더 불러오기 (${rows.length.toLocaleString()} / ${total.toLocaleString()})`}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
