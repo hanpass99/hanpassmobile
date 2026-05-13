@@ -157,6 +157,41 @@ function Settings() {
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, country_ids } : x)));
   };
 
+  const moveRow = async (idx: number, dir: -1 | 1) => {
+    const next = [...rows];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    const reordered = next.map((r, i) => ({ ...r, sort_order: (i + 1) * 10 }));
+    setRows(reordered);
+    const { error } = await supabase.rpc("admin_set_profile_sort_orders", {
+      _user_ids: reordered.map((r) => r.id) as any,
+    });
+    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); load(); return; }
+  };
+
+  const deleteStaff = async () => {
+    if (!deleteTarget) return;
+    if (deleteConfirmText !== deleteTarget.display_name) {
+      toast.error(t("settings.deleteNameMismatch"));
+      return;
+    }
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("admin-delete-staff", {
+      body: { user_id: deleteTarget.id },
+    });
+    setDeleting(false);
+    const errMsg = (data as any)?.error ?? error?.message;
+    if (errMsg) {
+      toast.error(t("settings.deleteFailed", { msg: errMsg }));
+      return;
+    }
+    toast.success(t("settings.deleteDone", { name: deleteTarget.display_name }));
+    setDeleteTarget(null);
+    setDeleteConfirmText("");
+    load();
+  };
+
   const bulkApply = async () => {
     const payload = rows
       .filter((r) => r.is_active && r.role === "staff")
