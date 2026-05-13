@@ -34,11 +34,10 @@ function CountryPerf() {
 
   const load = async () => {
     setLoading(true);
-    const fromIso = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString() : null;
-    const toIso = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString() : null;
-    const { data, error } = await supabase.rpc("stats_by_country", {
-      _date_from: fromIso, _date_to: toIso,
-    });
+    const args: { _date_from?: string; _date_to?: string } = {};
+    if (dateFrom) args._date_from = new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString();
+    if (dateTo) args._date_to = new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString();
+    const { data, error } = await supabase.rpc("stats_by_country", args);
     if (!error) {
       const out: Row[] = (data ?? []).map((r: any) => {
         const counts = emptyCounts();
