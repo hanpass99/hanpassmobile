@@ -28,11 +28,16 @@ export const Route = createFileRoute("/")({
 
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"];
 
-type CallLog = { call_date: string; result: CallResult; is_activation: boolean; staff_id: string; customer_id: string };
-type Customer = {
-  id: string; status: CustomerStatus; country_id: string | null; channel_id: string | null;
-  assigned_to: string | null; updated_at: string; created_at: string; imported_at: string;
-};
+type StatusCounts = Record<CustomerStatus, number>;
+type DailyRow = { date: string; [k: string]: string | number };
+type ChannelRow = { name: string; [k: string]: string | number };
+type CountryRow = { name: string; value: number };
+type RankRow = { id: string; name: string; totalCalls: number; activated: number; target: number };
+
+const emptyStatus = (): StatusCounts => ({
+  new: 0, in_progress: 0, no_answer: 0, not_interested: 0, callback: 0,
+  activated: 0, stay_expired: 0, delinquent: 0, line_exceeded: 0, minor: 0,
+});
 
 function Dashboard() {
   const { t } = useTranslation();
@@ -42,14 +47,22 @@ function Dashboard() {
   const [to, setTo] = useState<Date>(today);
   const [countryF, setCountryF] = useState<string>("all");
 
-  const [logs, setLogs] = useState<CallLog[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [countries, setCountries] = useState<{ id: string; code: string }[]>([]);
-  const [channels, setChannels] = useState<{ id: string; name: string }[]>([]);
-  const [staff, setStaff] = useState<{ id: string; display_name: string }[]>([]);
-  const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
-  const [targets, setTargets] = useState<{ user_id: string; activation_target: number; call_target: number }[]>([]);
+  const [statusCounts, setStatusCounts] = useState<StatusCounts>(emptyStatus());
+  const [totals, setTotals] = useState<{ totalCalls: number; totalCustomers: number; monthlyTargetTotal: number }>({ totalCalls: 0, totalCustomers: 0, monthlyTargetTotal: 0 });
+  const [dailyData, setDailyData] = useState<DailyRow[]>([]);
+  const [channelData, setChannelData] = useState<ChannelRow[]>([]);
+  const [countryData, setCountryData] = useState<CountryRow[]>([]);
+  const [ranking, setRanking] = useState<RankRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 국가 목록은 한 번만
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("countries").select("id, code").eq("is_active", true);
+      setCountries(data ?? []);
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -57,113 +70,79 @@ function Dashboard() {
       const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
       const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
       const Y = from.getFullYear(); const M = from.getMonth() + 1;
-      const [l, c, co, ch, sf, tg, ur] = await Promise.all([
-        supabase.from("call_logs").select("call_date, result, is_activation, staff_id, customer_id").gte("call_date", fromIso).lte("call_date", toIso),
-        supabase.from("customers").select("id, status, country_id, channel_id, assigned_to, updated_at, created_at, imported_at").limit(5000),
-        supabase.from("countries").select("id, code").eq("is_active", true),
-        supabase.from("channels").select("id, name").eq("is_active", true),
-        supabase.from("profiles").select("id, display_name").eq("is_active", true),
-        supabase.from("targets").select("user_id, activation_target, call_target").eq("year", Y).eq("month", M),
-        supabase.from("user_roles").select("user_id, role").eq("role", "staff"),
+      const cId = countryF === "all" ? null : countryF;
+
+      const [sc, tt, dc, ca, ch, rk] = await Promise.all([
+        supabase.rpc("stats_status_counts", cId ? { _country_id: cId } : {}),
+        supabase.rpc("stats_totals", { _date_from: fromIso, _date_to: toIso, _year: Y, _month: M, ...(cId ? { _country_id: cId } : {}) }),
+        supabase.rpc("stats_daily_calls", { _date_from: fromIso, _date_to: toIso, ...(cId ? { _country_id: cId } : {}) }),
+        supabase.rpc("stats_country_activated"),
+        supabase.rpc("stats_channel_summary", cId ? { _country_id: cId } : {}),
+        supabase.rpc("stats_staff_ranking", { _date_from: fromIso, _date_to: toIso, _year: Y, _month: M, ...(cId ? { _country_id: cId } : {}) }),
       ]);
-      setLogs((l.data ?? []) as CallLog[]);
-      setCustomers((c.data ?? []) as Customer[]);
-      setCountries(co.data ?? []);
-      setChannels(ch.data ?? []);
-      setStaff(sf.data ?? []);
-      setStaffIds(new Set((ur.data ?? []).map((r: any) => r.user_id)));
-      setTargets(tg.data ?? []);
+
+      const sMap = emptyStatus();
+      for (const r of (sc.data ?? []) as any[]) {
+        if (sMap[r.status as CustomerStatus] !== undefined) sMap[r.status as CustomerStatus] = Number(r.cnt);
+      }
+      setStatusCounts(sMap);
+
+      const ttRow = (tt.data ?? [])[0] as any;
+      setTotals({
+        totalCalls: Number(ttRow?.total_calls ?? 0),
+        totalCustomers: Number(ttRow?.total_customers ?? 0),
+        monthlyTargetTotal: Number(ttRow?.monthly_target_total ?? 0),
+      });
+
+      // 일별: RPC 결과를 모든 날짜에 채워넣기
+      const dayMap = new Map<string, { calls: number; activations: number }>();
+      for (const r of (dc.data ?? []) as any[]) {
+        dayMap.set(String(r.day), { calls: Number(r.calls), activations: Number(r.activations) });
+      }
+      const days: DailyRow[] = [];
+      const cur = new Date(from);
+      while (cur <= to) {
+        const key = cur.toISOString().slice(0, 10);
+        const d = dayMap.get(key) ?? { calls: 0, activations: 0 };
+        days.push({
+          date: `${cur.getMonth() + 1}/${cur.getDate()}`,
+          [t("dashboard.calls")]: d.calls,
+          [t("dashboard.activations")]: d.activations,
+        });
+        cur.setDate(cur.getDate() + 1);
+      }
+      setDailyData(days);
+
+      const cd = ((ca.data ?? []) as any[]).map((r) => ({ name: r.code as string, value: Number(r.activated) }))
+        .sort((a, b) => b.value - a.value).slice(0, 8);
+      setCountryData(cd);
+
+      const chd = ((ch.data ?? []) as any[]).map((r) => ({
+        name: String(r.name).replace("한패스 ", ""),
+        [t("dashboard.customers")]: Number(r.customers),
+        [t("dashboard.activations")]: Number(r.activations),
+      }));
+      setChannelData(chd);
+
+      const rkd = ((rk.data ?? []) as any[]).map((r) => ({
+        id: r.user_id, name: r.display_name,
+        totalCalls: Number(r.total_calls), activated: Number(r.activated),
+        target: Number(r.activation_target ?? 0),
+      }));
+      setRanking(rkd);
+
       setLoading(false);
     })();
-  }, [from, to]);
+  }, [from, to, countryF, t]);
 
-  // 국가 필터 적용 — 고객은 country로, 콜로그는 customer 매핑으로
-  const customerById = useMemo(() => {
-    const m = new Map<string, Customer>();
-    customers.forEach((c) => m.set(c.id, c));
-    return m;
-  }, [customers]);
-
-  const fCustomers = useMemo(() => {
-    return customers.filter((c) => countryF === "all" || c.country_id === countryF);
-  }, [customers, countryF]);
-
-  const fLogs = useMemo(() => {
-    if (countryF === "all") return logs;
-    return logs.filter((l) => customerById.get(l.customer_id)?.country_id === countryF);
-  }, [logs, countryF, customerById]);
-
-  // 상태별 카운트 (고객 기준)
-  const statusCounts = useMemo(() => {
-    const m: Record<CustomerStatus, number> = {
-      new: 0, in_progress: 0, no_answer: 0, not_interested: 0, callback: 0,
-      activated: 0, stay_expired: 0, delinquent: 0, line_exceeded: 0, minor: 0,
-    };
-    fCustomers.forEach((c) => { m[c.status] = (m[c.status] ?? 0) + 1; });
-    return m;
-  }, [fCustomers]);
-
-  const totalCustomers = fCustomers.length;
-  const totalCalls = fLogs.length;
+  const totalCustomers = totals.totalCustomers;
+  const totalCalls = totals.totalCalls;
   const activated = statusCounts.activated;
-  // 성공 = 개통완료 + 진행중 + 재연락요청
   const success = statusCounts.activated + statusCounts.in_progress + statusCounts.callback;
   const successRate = totalCustomers ? (success / totalCustomers) * 100 : 0;
   const activationRate = totalCustomers ? (activated / totalCustomers) * 100 : 0;
-  const monthlyTargetTotal = targets.reduce((a, b) => a + (b.activation_target || 0), 0);
+  const monthlyTargetTotal = totals.monthlyTargetTotal;
   const achievement = monthlyTargetTotal ? (activated / monthlyTargetTotal) * 100 : 0;
-
-  // 일별 추이 (콜수 + 개통)
-  const dailyData = useMemo(() => {
-    const days: { date: string; key: string }[] = [];
-    const cur = new Date(from);
-    while (cur <= to) {
-      days.push({ date: `${cur.getMonth() + 1}/${cur.getDate()}`, key: cur.toISOString().slice(0, 10) });
-      cur.setDate(cur.getDate() + 1);
-    }
-    return days.map((d) => {
-      const day = fLogs.filter((l) => l.call_date.slice(0, 10) === d.key);
-      return {
-        date: d.date,
-        [t("dashboard.calls")]: day.length,
-        [t("dashboard.activations")]: day.filter((l) => l.is_activation).length,
-      };
-    });
-  }, [fLogs, from, to, t]);
-
-  const channelData = (() => {
-    const arr = channels.map((ch) => {
-      const list = fCustomers.filter((c) => c.channel_id === ch.id);
-      return {
-        name: ch.name.replace("한패스 ", ""),
-        [t("dashboard.customers")]: list.length,
-        [t("dashboard.activations")]: list.filter((c) => c.status === "activated").length,
-      };
-    });
-    return arr;
-  })();
-
-  const countryData = countries.map((co) => ({
-    name: co.code,
-    value: customers.filter((c) => c.country_id === co.id && c.status === "activated").length,
-  })).sort((a, b) => b.value - a.value).slice(0, 8);
-
-  // 직원 랭킹 — 관리자 제외
-  const ranking = staff
-    .filter((u) => staffIds.has(u.id))
-    .map((u) => {
-      const userLogs = fLogs.filter((l) => l.staff_id === u.id);
-      const userCustomers = fCustomers.filter((c) => c.assigned_to === u.id);
-      const tg = targets.find((x) => x.user_id === u.id);
-      const userActivated = userCustomers.filter((c) => c.status === "activated").length;
-      return {
-        id: u.id, name: u.display_name,
-        totalCalls: userLogs.length,
-        activated: userActivated,
-        target: tg?.activation_target ?? 0,
-      };
-    })
-    .sort((a, b) => b.activated - a.activated || b.totalCalls - a.totalCalls);
 
   return (
     <div className="space-y-6">
