@@ -279,6 +279,90 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_logs: {
+        Row: {
+          aligo_msg_id: string | null
+          aligo_response: Json | null
+          cost: number | null
+          created_at: string
+          customer_id: string | null
+          error_message: string | null
+          id: string
+          message: string
+          msg_type: string
+          receiver_name: string | null
+          receiver_phone: string
+          sent_at: string
+          staff_id: string
+          status: string
+          title: string | null
+        }
+        Insert: {
+          aligo_msg_id?: string | null
+          aligo_response?: Json | null
+          cost?: number | null
+          created_at?: string
+          customer_id?: string | null
+          error_message?: string | null
+          id?: string
+          message: string
+          msg_type?: string
+          receiver_name?: string | null
+          receiver_phone: string
+          sent_at?: string
+          staff_id: string
+          status?: string
+          title?: string | null
+        }
+        Update: {
+          aligo_msg_id?: string | null
+          aligo_response?: Json | null
+          cost?: number | null
+          created_at?: string
+          customer_id?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string
+          msg_type?: string
+          receiver_name?: string | null
+          receiver_phone?: string
+          sent_at?: string
+          staff_id?: string
+          status?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
+      sms_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_shared: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_shared?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_shared?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       targets: {
         Row: {
           activation_target: number
