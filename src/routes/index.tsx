@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  PhoneCall, CheckCircle2, TrendingUp, Target, Award, CalendarIcon, Globe2,
+  PhoneCall, TrendingUp, Target, Award, CalendarIcon, Globe2,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend,
@@ -14,12 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus, type CallResult } from "@/lib/labels";
+import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "대시보드 — Hanpass Mobile OB Call CRM" }] }),
@@ -33,10 +33,27 @@ type DailyRow = { date: string; [k: string]: string | number };
 type ChannelRow = { name: string; [k: string]: string | number };
 type CountryRow = { name: string; value: number };
 type RankRow = { id: string; name: string; totalCalls: number; activated: number; target: number };
+type DashboardData = {
+  statusCounts: StatusCounts;
+  totals: { totalCalls: number; totalCustomers: number; monthlyTargetTotal: number };
+  dailyData: DailyRow[];
+  channelData: ChannelRow[];
+  countryData: CountryRow[];
+  ranking: RankRow[];
+};
 
 const emptyStatus = (): StatusCounts => ({
   new: 0, in_progress: 0, no_answer: 0, not_interested: 0, callback: 0,
   activated: 0, stay_expired: 0, delinquent: 0, line_exceeded: 0, minor: 0,
+});
+
+const emptyDashboard = (): DashboardData => ({
+  statusCounts: emptyStatus(),
+  totals: { totalCalls: 0, totalCustomers: 0, monthlyTargetTotal: 0 },
+  dailyData: [],
+  channelData: [],
+  countryData: [],
+  ranking: [],
 });
 
 function Dashboard() {
@@ -48,13 +65,11 @@ function Dashboard() {
   const [countryF, setCountryF] = useState<string>("all");
 
   const [countries, setCountries] = useState<{ id: string; code: string }[]>([]);
-  const [statusCounts, setStatusCounts] = useState<StatusCounts>(emptyStatus());
-  const [totals, setTotals] = useState<{ totalCalls: number; totalCustomers: number; monthlyTargetTotal: number }>({ totalCalls: 0, totalCustomers: 0, monthlyTargetTotal: 0 });
-  const [dailyData, setDailyData] = useState<DailyRow[]>([]);
-  const [channelData, setChannelData] = useState<ChannelRow[]>([]);
-  const [countryData, setCountryData] = useState<CountryRow[]>([]);
-  const [ranking, setRanking] = useState<RankRow[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardData>(emptyDashboard());
   const [loading, setLoading] = useState(true);
+  const latestFetchRef = useRef(0);
+
+  const { statusCounts, totals, dailyData, channelData, countryData, ranking } = dashboard;
 
   // 국가 목록은 한 번만
   useEffect(() => {
