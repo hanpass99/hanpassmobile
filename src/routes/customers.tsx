@@ -109,8 +109,14 @@ function CustomersPage() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const importingRef = useRef(false);
+  const poolCountRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
   const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
+
+  useEffect(() => { importingRef.current = importing; }, [importing]);
 
   // RPC가 지원하는 정렬 키 (그 외는 클라이언트 정렬 폴백)
   const SERVER_SORT_KEYS = new Set([
@@ -132,15 +138,27 @@ function CustomersPage() {
 
   // Pool별 총 건수 (탭 뱃지용)
   const loadPoolCounts = async () => {
-    const out: Record<string, number> = {};
-    for (const p of POOLS) {
-      const { count } = await supabase
-        .from("customers")
-        .select("id", { count: "exact", head: true })
-        .eq("pool", p);
-      out[p] = count ?? 0;
+    const { data, error } = await (supabase as any).rpc("customer_pool_counts");
+    if (!error) {
+      const out: Record<string, number> = {};
+      (data ?? []).forEach((r: { pool: string; cnt: number | string }) => { out[r.pool] = Number(r.cnt ?? 0); });
+      setPoolCounts(out);
+      return;
     }
-    setPoolCounts(out);
+    const fallback: Record<string, number> = {};
+    await Promise.all(POOLS.map(async (p) => {
+      const { count } = await supabase.from("customers").select("id", { count: "exact", head: true }).eq("pool", p);
+      fallback[p] = count ?? 0;
+    }));
+    setPoolCounts(fallback);
+  };
+
+  const schedulePoolCountRefresh = () => {
+    if (poolCountRefreshTimer.current) return;
+    poolCountRefreshTimer.current = setTimeout(() => {
+      poolCountRefreshTimer.current = null;
+      void loadPoolCounts();
+    }, 1500);
   };
 
   // 서버사이드 검색 (페이지네이션)
@@ -172,7 +190,7 @@ function CustomersPage() {
     const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
     const newRows = fetched.map((r) => r.data);
     setTotal(fetched[0]?.total_count ?? 0);
-    setRows((prev) => reset ? newRows : [...prev, ...newRows]);
+    setRows(newRows);
     setLoading(false); setLoadingMore(false);
   };
 
@@ -192,6 +210,12 @@ function CustomersPage() {
     const next = page + 1;
     setPage(next);
     await fetchPage(next, false);
+  };
+
+  const loadPrevious = async () => {
+    const prev = Math.max(1, page - 1);
+    setPage(prev);
+    await fetchPage(prev, false);
   };
 
   const refresh = async () => {
@@ -217,13 +241,16 @@ function CustomersPage() {
             setRows((prev) => prev.filter((r) => r.id !== o.id));
             setTotal((t) => Math.max(0, t - 1));
           } else if (payload.eventType === "INSERT") {
-            // 새 행이 현재 필터에 매치되는지 모르므로 카운트만 즉시 갱신, 데이터는 다음 새로고침/페이지에서 반영
-            loadPoolCounts();
+            // 대량 업로드 중에는 1건마다 재집계하지 않고 업로드 완료 후 한 번만 새로고침
+            if (!importingRef.current) schedulePoolCountRefresh();
           }
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      if (poolCountRefreshTimer.current) clearTimeout(poolCountRefreshTimer.current);
+      supabase.removeChannel(ch);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
