@@ -76,6 +76,20 @@ type CustomerRow = {
   requested_plan: string | null;
 };
 
+type ImportCustomer = {
+  name: string;
+  phone: string;
+  country_id: string | null;
+  notes: string | null;
+  pool: CustomerPool;
+  carrier_plan: string | null;
+  activation_date: string | null;
+  application_date: string | null;
+  requested_plan: string | null;
+  charge_date?: string;
+  signup_date?: string;
+};
+
 type SortDir = "asc" | "desc" | null;
 
 const PAGE_SIZE = 200;
@@ -109,8 +123,15 @@ function CustomersPage() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const importingRef = useRef(false);
+  const poolCountRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestFetchRef = useRef(0);
   // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
   const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
+
+  useEffect(() => { importingRef.current = importing; }, [importing]);
 
   // RPC가 지원하는 정렬 키 (그 외는 클라이언트 정렬 폴백)
   const SERVER_SORT_KEYS = new Set([
@@ -132,19 +153,32 @@ function CustomersPage() {
 
   // Pool별 총 건수 (탭 뱃지용)
   const loadPoolCounts = async () => {
-    const out: Record<string, number> = {};
-    for (const p of POOLS) {
-      const { count } = await supabase
-        .from("customers")
-        .select("id", { count: "exact", head: true })
-        .eq("pool", p);
-      out[p] = count ?? 0;
+    const { data, error } = await (supabase as any).rpc("customer_pool_counts");
+    if (!error) {
+      const out: Record<string, number> = {};
+      (data ?? []).forEach((r: { pool: string; cnt: number | string }) => { out[r.pool] = Number(r.cnt ?? 0); });
+      setPoolCounts(out);
+      return;
     }
-    setPoolCounts(out);
+    const fallback: Record<string, number> = {};
+    await Promise.all(POOLS.map(async (p) => {
+      const { count } = await supabase.from("customers").select("id", { count: "exact", head: true }).eq("pool", p);
+      fallback[p] = count ?? 0;
+    }));
+    setPoolCounts(fallback);
+  };
+
+  const schedulePoolCountRefresh = () => {
+    if (poolCountRefreshTimer.current) return;
+    poolCountRefreshTimer.current = setTimeout(() => {
+      poolCountRefreshTimer.current = null;
+      void loadPoolCounts();
+    }, 1500);
   };
 
   // 서버사이드 검색 (페이지네이션)
   const fetchPage = async (pageNum: number, reset: boolean) => {
+    const requestId = ++latestFetchRef.current;
     if (reset) setLoading(true); else setLoadingMore(true);
     const fromIso = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString() : null;
     const toIso = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString() : null;
@@ -165,14 +199,17 @@ function CustomersPage() {
       _page_size: PAGE_SIZE,
     });
     if (error) {
+      if (requestId !== latestFetchRef.current) return;
       toast.error(`고객 로드 실패: ${error.message}`);
       setLoading(false); setLoadingMore(false);
       return;
     }
+    if (requestId !== latestFetchRef.current) return;
     const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
     const newRows = fetched.map((r) => r.data);
     setTotal(fetched[0]?.total_count ?? 0);
-    setRows((prev) => reset ? newRows : [...prev, ...newRows]);
+    setRows(newRows);
+    setSelected(new Set());
     setLoading(false); setLoadingMore(false);
   };
 
@@ -188,10 +225,18 @@ function CustomersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo]);
 
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   const loadMore = async () => {
     const next = page + 1;
     setPage(next);
     await fetchPage(next, false);
+  };
+
+  const loadPrevious = async () => {
+    const prev = Math.max(1, page - 1);
+    setPage(prev);
+    await fetchPage(prev, false);
   };
 
   const refresh = async () => {
@@ -217,13 +262,16 @@ function CustomersPage() {
             setRows((prev) => prev.filter((r) => r.id !== o.id));
             setTotal((t) => Math.max(0, t - 1));
           } else if (payload.eventType === "INSERT") {
-            // 새 행이 현재 필터에 매치되는지 모르므로 카운트만 즉시 갱신, 데이터는 다음 새로고침/페이지에서 반영
-            loadPoolCounts();
+            // 대량 업로드 중에는 1건마다 재집계하지 않고 업로드 완료 후 한 번만 새로고침
+            if (!importingRef.current) schedulePoolCountRefresh();
           }
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      if (poolCountRefreshTimer.current) clearTimeout(poolCountRefreshTimer.current);
+      supabase.removeChannel(ch);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -366,10 +414,9 @@ function CustomersPage() {
     });
   };
   const allChecked = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [importing, setImporting] = useState(false);
 
   const onUpload = async (file: File) => {
+    importingRef.current = true;
     setImporting(true);
     const toastId = toast.loading("엑셀 파싱 중...");
     try {
@@ -380,13 +427,22 @@ function CustomersPage() {
 
       const norm = (v: any) => String(v ?? "").trim();
       const normKey = (s: string) => s.toLowerCase().replace(/\s+/g, "").trim();
-      const findKey = (row: Record<string, any>, ...keys: string[]) => {
-        const map = Object.keys(row).reduce<Record<string, string>>((acc, k) => {
-          acc[normKey(k)] = k; return acc;
-        }, {});
-        for (const k of keys) { const hit = map[normKey(k)]; if (hit) return row[hit]; }
-        return "";
+      const headerMap = new Map<string, string>();
+      Object.keys(json[0] ?? {}).forEach((k) => headerMap.set(normKey(k), k));
+      const pickHeader = (...keys: string[]) => keys.map((k) => headerMap.get(normKey(k))).find(Boolean);
+      const headers = {
+        phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"),
+        name: pickHeader("name", "이름", "고객명", "성명"),
+        country: pickHeader("country", "국가", "국적", "고객국적", "고객 국적", "nationality"),
+        notes: pickHeader("notes", "메모", "비고", "note"),
+        carrierPlan: pickHeader("요금제", "plan", "carrier_plan"),
+        activationDate: pickHeader("개통일", "activation_date"),
+        applicationDate: pickHeader("신청일", "application_date"),
+        chargeDate: pickHeader("충전일", "charge_date"),
+        signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일"),
+        requestedPlan: pickHeader("신청요금제", "requested_plan"),
       };
+      const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
       // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
       const pad = (n: number) => String(n).padStart(2, "0");
       const fmtYmd = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
@@ -433,22 +489,22 @@ function CustomersPage() {
       let dupInFile = 0, invalid = 0;
 
       // 1차: 파일 파싱 + 파일 내 중복 제거
-      const parsed = json
+      const parsed: ImportCustomer[] = json
         .map((row) => {
-          const phone = norm(findKey(row, "phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"));
-          let name = norm(findKey(row, "name", "이름", "고객명", "성명"));
+          const phone = norm(valueOf(row, headers.phone));
+          const name = norm(valueOf(row, headers.name));
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
           seenPhones.add(phone);
-          const cc = norm(findKey(row, "country", "국가", "국적", "고객국적", "고객 국적", "nationality"));
+          const cc = norm(valueOf(row, headers.country));
           const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
-          const notes = norm(findKey(row, "notes", "메모", "비고", "note")) || null;
-          const carrier_plan = norm(findKey(row, "요금제", "plan", "carrier_plan")) || null;
-          const activation_date = toDateStr(findKey(row, "개통일", "activation_date"));
-          const application_date = toDateStr(findKey(row, "신청일", "application_date"));
-          const charge_date = toDateStr(findKey(row, "충전일", "charge_date"));
-          const signup_date = toDateStr(findKey(row, "가입일", "signup_date", "등록일", "데이터등록일"));
-          const requested_plan = norm(findKey(row, "신청요금제", "requested_plan")) || null;
+          const notes = norm(valueOf(row, headers.notes)) || null;
+          const carrier_plan = norm(valueOf(row, headers.carrierPlan)) || null;
+          const activation_date = toDateStr(valueOf(row, headers.activationDate));
+          const application_date = toDateStr(valueOf(row, headers.applicationDate));
+          const charge_date = toDateStr(valueOf(row, headers.chargeDate));
+          const signup_date = toDateStr(valueOf(row, headers.signupDate));
+          const requested_plan = norm(valueOf(row, headers.requestedPlan)) || null;
           return {
             name, phone, country_id, notes, pool: tab,
             carrier_plan, activation_date,
@@ -457,7 +513,7 @@ function CustomersPage() {
             ...(signup_date ? { signup_date } : {}),
           };
         })
-        .filter((x): x is NonNullable<typeof x> => x !== null);
+        .filter((x): x is ImportCustomer => x !== null);
 
       if (!parsed.length) {
         toast.error(`업로드할 데이터가 없습니다. (파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
@@ -496,7 +552,9 @@ function CustomersPage() {
         const { error } = await supabase.from("customers").insert(chunk);
         if (error) {
           toast.error(`업로드 중단 (${inserted}/${totalToInsert} 완료): ${error.message}`, { id: toastId });
-          await refresh();
+          await loadPoolCounts();
+          setPage(1);
+          await fetchPage(1, true);
           return;
         }
         inserted += chunk.length;
@@ -506,10 +564,13 @@ function CustomersPage() {
         `${inserted.toLocaleString()}명 추가 / DB중복 ${dupInDb}건 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
         { id: toastId }
       );
-      await refresh();
+      await loadPoolCounts();
+      setPage(1);
+      await fetchPage(1, true);
     } catch (e: any) {
       toast.error(`엑셀 파싱 실패: ${e.message}`, { id: toastId });
     } finally {
+      importingRef.current = false;
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
     }
@@ -697,7 +758,7 @@ function CustomersPage() {
           ))}
         </TabsList>
 
-        {POOLS.map((p) => (
+        {POOLS.filter((p) => p === tab).map((p) => (
           <TabsContent key={p} value={p} className="mt-4">
             <Card>
               <CardContent className="space-y-4 p-4">
@@ -808,10 +869,16 @@ function CustomersPage() {
                 <div className="overflow-x-auto rounded-lg border border-border/60">
                   {renderTable(p)}
                 </div>
-                {rows.length < total && (
-                  <div className="flex justify-center pt-2">
-                    <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
-                      {loadingMore ? "불러오는 중..." : `더 불러오기 (${rows.length.toLocaleString()} / ${total.toLocaleString()})`}
+                {total > PAGE_SIZE && (
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={loadPrevious} disabled={loadingMore || page <= 1}>
+                      이전
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      {loadingMore ? "불러오는 중..." : `${page.toLocaleString()} / ${totalPages.toLocaleString()} 페이지 · 총 ${total.toLocaleString()}건`}
+                    </span>
+                    <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore || page >= totalPages}>
+                      다음
                     </Button>
                   </div>
                 )}

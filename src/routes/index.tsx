@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  PhoneCall, CheckCircle2, TrendingUp, Target, Award, CalendarIcon, Globe2,
+  PhoneCall, TrendingUp, Target, Award, CalendarIcon, Globe2,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend,
@@ -14,12 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus, type CallResult } from "@/lib/labels";
+import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "대시보드 — Hanpass Mobile OB Call CRM" }] }),
@@ -33,10 +33,27 @@ type DailyRow = { date: string; [k: string]: string | number };
 type ChannelRow = { name: string; [k: string]: string | number };
 type CountryRow = { name: string; value: number };
 type RankRow = { id: string; name: string; totalCalls: number; activated: number; target: number };
+type DashboardData = {
+  statusCounts: StatusCounts;
+  totals: { totalCalls: number; totalCustomers: number; monthlyTargetTotal: number };
+  dailyData: DailyRow[];
+  channelData: ChannelRow[];
+  countryData: CountryRow[];
+  ranking: RankRow[];
+};
 
 const emptyStatus = (): StatusCounts => ({
   new: 0, in_progress: 0, no_answer: 0, not_interested: 0, callback: 0,
   activated: 0, stay_expired: 0, delinquent: 0, line_exceeded: 0, minor: 0,
+});
+
+const emptyDashboard = (): DashboardData => ({
+  statusCounts: emptyStatus(),
+  totals: { totalCalls: 0, totalCustomers: 0, monthlyTargetTotal: 0 },
+  dailyData: [],
+  channelData: [],
+  countryData: [],
+  ranking: [],
 });
 
 function Dashboard() {
@@ -48,13 +65,11 @@ function Dashboard() {
   const [countryF, setCountryF] = useState<string>("all");
 
   const [countries, setCountries] = useState<{ id: string; code: string }[]>([]);
-  const [statusCounts, setStatusCounts] = useState<StatusCounts>(emptyStatus());
-  const [totals, setTotals] = useState<{ totalCalls: number; totalCustomers: number; monthlyTargetTotal: number }>({ totalCalls: 0, totalCustomers: 0, monthlyTargetTotal: 0 });
-  const [dailyData, setDailyData] = useState<DailyRow[]>([]);
-  const [channelData, setChannelData] = useState<ChannelRow[]>([]);
-  const [countryData, setCountryData] = useState<CountryRow[]>([]);
-  const [ranking, setRanking] = useState<RankRow[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardData>(emptyDashboard());
   const [loading, setLoading] = useState(true);
+  const latestFetchRef = useRef(0);
+
+  const { statusCounts, totals, dailyData, channelData, countryData, ranking } = dashboard;
 
   // 국가 목록은 한 번만
   useEffect(() => {
@@ -66,37 +81,39 @@ function Dashboard() {
 
   useEffect(() => {
     (async () => {
+      const requestId = ++latestFetchRef.current;
       setLoading(true);
       const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
       const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
       const Y = from.getFullYear(); const M = from.getMonth() + 1;
       const cId = countryF === "all" ? null : countryF;
 
-      const [sc, tt, dc, ca, ch, rk] = await Promise.all([
-        supabase.rpc("stats_status_counts", cId ? { _country_id: cId } : {}),
-        supabase.rpc("stats_totals", { _date_from: fromIso, _date_to: toIso, _year: Y, _month: M, ...(cId ? { _country_id: cId } : {}) }),
-        supabase.rpc("stats_daily_calls", { _date_from: fromIso, _date_to: toIso, ...(cId ? { _country_id: cId } : {}) }),
-        supabase.rpc("stats_country_activated"),
-        supabase.rpc("stats_channel_summary", cId ? { _country_id: cId } : {}),
-        supabase.rpc("stats_staff_ranking", { _date_from: fromIso, _date_to: toIso, _year: Y, _month: M, ...(cId ? { _country_id: cId } : {}) }),
-      ]);
+      const { data, error } = await (supabase as any).rpc("stats_dashboard_summary", {
+        _date_from: fromIso,
+        _date_to: toIso,
+        _year: Y,
+        _month: M,
+        ...(cId ? { _country_id: cId } : {}),
+      });
+      if (requestId !== latestFetchRef.current) return;
+      if (error) { setLoading(false); return; }
+      const summary = data ?? {};
 
       const sMap = emptyStatus();
-      for (const r of (sc.data ?? []) as any[]) {
-        if (sMap[r.status as CustomerStatus] !== undefined) sMap[r.status as CustomerStatus] = Number(r.cnt);
-      }
-      setStatusCounts(sMap);
+      Object.entries((summary.status_counts ?? {}) as Record<string, unknown>).forEach(([status, cnt]) => {
+        if (sMap[status as CustomerStatus] !== undefined) sMap[status as CustomerStatus] = Number(cnt ?? 0);
+      });
 
-      const ttRow = (tt.data ?? [])[0] as any;
-      setTotals({
+      const ttRow = (summary.totals ?? {}) as any;
+      const nextTotals = {
         totalCalls: Number(ttRow?.total_calls ?? 0),
         totalCustomers: Number(ttRow?.total_customers ?? 0),
         monthlyTargetTotal: Number(ttRow?.monthly_target_total ?? 0),
-      });
+      };
 
       // 일별: RPC 결과를 모든 날짜에 채워넣기
       const dayMap = new Map<string, { calls: number; activations: number }>();
-      for (const r of (dc.data ?? []) as any[]) {
+      for (const r of (summary.daily_calls ?? []) as any[]) {
         dayMap.set(String(r.day), { calls: Number(r.calls), activations: Number(r.activations) });
       }
       const days: DailyRow[] = [];
@@ -111,25 +128,23 @@ function Dashboard() {
         });
         cur.setDate(cur.getDate() + 1);
       }
-      setDailyData(days);
 
-      const cd = ((ca.data ?? []) as any[]).map((r) => ({ name: r.code as string, value: Number(r.activated) }))
+      const cd = ((summary.country_activated ?? []) as any[]).map((r) => ({ name: r.code as string, value: Number(r.activated) }))
         .sort((a, b) => b.value - a.value).slice(0, 8);
-      setCountryData(cd);
 
-      const chd = ((ch.data ?? []) as any[]).map((r) => ({
+      const chd = ((summary.channel_summary ?? []) as any[]).map((r) => ({
         name: String(r.name).replace("한패스 ", ""),
         [t("dashboard.customers")]: Number(r.customers),
         [t("dashboard.activations")]: Number(r.activations),
       }));
-      setChannelData(chd);
 
-      const rkd = ((rk.data ?? []) as any[]).map((r) => ({
+      const rkd = ((summary.staff_ranking ?? []) as any[]).map((r) => ({
         id: r.user_id, name: r.display_name,
         totalCalls: Number(r.total_calls), activated: Number(r.activated),
         target: Number(r.activation_target ?? 0),
       }));
-      setRanking(rkd);
+
+      setDashboard({ statusCounts: sMap, totals: nextTotals, dailyData: days, countryData: cd, channelData: chd, ranking: rkd });
 
       setLoading(false);
     })();
