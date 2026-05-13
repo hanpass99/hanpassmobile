@@ -225,6 +225,8 @@ function CustomersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo]);
 
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   const loadMore = async () => {
     const next = page + 1;
     setPage(next);
@@ -865,10 +867,16 @@ function CustomersPage() {
                 <div className="overflow-x-auto rounded-lg border border-border/60">
                   {renderTable(p)}
                 </div>
-                {rows.length < total && (
-                  <div className="flex justify-center pt-2">
-                    <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
-                      {loadingMore ? "불러오는 중..." : `더 불러오기 (${rows.length.toLocaleString()} / ${total.toLocaleString()})`}
+                {total > PAGE_SIZE && (
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={loadPrevious} disabled={loadingMore || page <= 1}>
+                      이전
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      {loadingMore ? "불러오는 중..." : `${page.toLocaleString()} / ${totalPages.toLocaleString()} 페이지 · 총 ${total.toLocaleString()}건`}
+                    </span>
+                    <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore || page >= totalPages}>
+                      다음
                     </Button>
                   </div>
                 )}
