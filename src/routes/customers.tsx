@@ -393,8 +393,6 @@ function CustomersPage() {
     });
   };
   const allChecked = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [importing, setImporting] = useState(false);
 
   const onUpload = async (file: File) => {
     setImporting(true);
