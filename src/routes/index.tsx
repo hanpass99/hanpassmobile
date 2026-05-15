@@ -40,6 +40,7 @@ type DashboardData = {
   channelData: ChannelRow[];
   countryData: CountryRow[];
   ranking: RankRow[];
+  callCompleted: number;
 };
 
 const emptyStatus = (): StatusCounts => ({
