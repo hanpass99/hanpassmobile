@@ -833,8 +833,11 @@ function CustomersPage() {
         }
       />
 
-      <Tabs value={tab} onValueChange={(v) => { setTab(v as CustomerPool); setSelected(new Set()); }}>
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all" className="text-xs md:text-sm">
+            전체 <span className="ml-1 text-muted-foreground">({Object.values(poolCounts).reduce((a, b) => a + (b ?? 0), 0).toLocaleString()})</span>
+          </TabsTrigger>
           {POOLS.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
@@ -842,8 +845,10 @@ function CustomersPage() {
           ))}
         </TabsList>
 
-        {POOLS.filter((p) => p === tab).map((p) => (
-          <TabsContent key={p} value={p} className="mt-4">
+        {([tab] as TabValue[]).map((tv) => {
+          const p: CustomerPool = tv === "all" ? "existing" : tv;
+          return (
+          <TabsContent key={tv} value={tv} className="mt-4">
             <Card>
               <CardContent className="space-y-4 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
