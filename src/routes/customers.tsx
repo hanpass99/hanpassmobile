@@ -46,8 +46,21 @@ const POOL_SHORT = new Proxy({} as Record<CustomerPool, string>, {
   get: (_t, p: string) => i18n.t(`pool.short.${p}`),
 });
 
+type CustomersSearch = {
+  status?: string;
+  country?: string;
+  from?: string;
+  to?: string;
+};
+
 export const Route = createFileRoute("/customers")({
   head: () => ({ meta: [{ title: "고객 관리 — Hanpass OB CRM" }] }),
+  validateSearch: (search: Record<string, unknown>): CustomersSearch => ({
+    status: typeof search.status === "string" ? search.status : undefined,
+    country: typeof search.country === "string" ? search.country : undefined,
+    from: typeof search.from === "string" ? search.from : undefined,
+    to: typeof search.to === "string" ? search.to : undefined,
+  }),
   component: CustomersPage,
 });
 
