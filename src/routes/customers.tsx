@@ -348,7 +348,7 @@ function CustomersPage() {
       out.sort((a, b) => (idx.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (idx.get(b.id) ?? Number.MAX_SAFE_INTEGER));
     }
     return out;
-  }, [rows, sortKey, sortDir, staffById, staffCountryById, countryById, pinnedOrder]);
+  }, [rows, sortKey, sortDir, staffById, staffCountryById, countryById, pinnedOrder, statusF]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
