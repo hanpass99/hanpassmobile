@@ -635,8 +635,9 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
+    const effPool: CustomerPool = tab === "all" ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
-    if (tab === "existing") {
+    if (effPool === "existing") {
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
     } else {
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
@@ -644,7 +645,7 @@ function CustomersPage() {
     const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Customers");
-    XLSX.writeFile(wb, `샘플_${POOL_SHORT[tab]}.xlsx`);
+    XLSX.writeFile(wb, `샘플_${POOL_SHORT[effPool]}.xlsx`);
   };
 
   const poolCount = (p: CustomerPool) => poolCounts[p] ?? 0;
