@@ -568,7 +568,12 @@ export type Database = {
         }[]
       }
       stats_call_completed: {
-        Args: { _country_id?: string; _date_from?: string; _date_to?: string }
+        Args: {
+          _country_id?: string
+          _date_from?: string
+          _date_to?: string
+          _pool?: Database["public"]["Enums"]["customer_pool"]
+        }
         Returns: number
       }
       stats_channel_summary: {
@@ -596,28 +601,17 @@ export type Database = {
           day: string
         }[]
       }
-      stats_dashboard_summary:
-        | {
-            Args: {
-              _country_id?: string
-              _date_from: string
-              _date_to: string
-              _month: number
-              _year: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _country_id?: string
-              _date_from: string
-              _date_to: string
-              _month: number
-              _pool?: Database["public"]["Enums"]["customer_pool"]
-              _year: number
-            }
-            Returns: Json
-          }
+      stats_dashboard_summary: {
+        Args: {
+          _country_id?: string
+          _date_from: string
+          _date_to: string
+          _month: number
+          _pool?: Database["public"]["Enums"]["customer_pool"]
+          _year: number
+        }
+        Returns: Json
+      }
       stats_staff_ranking: {
         Args: {
           _country_id?: string
@@ -634,26 +628,18 @@ export type Database = {
           user_id: string
         }[]
       }
-      stats_status_counts:
-        | {
-            Args: { _country_id?: string }
-            Returns: {
-              cnt: number
-              status: string
-            }[]
-          }
-        | {
-            Args: {
-              _country_id?: string
-              _date_from?: string
-              _date_to?: string
-              _pool?: Database["public"]["Enums"]["customer_pool"]
-            }
-            Returns: {
-              cnt: number
-              status: string
-            }[]
-          }
+      stats_status_counts: {
+        Args: {
+          _country_id?: string
+          _date_from?: string
+          _date_to?: string
+          _pool?: Database["public"]["Enums"]["customer_pool"]
+        }
+        Returns: {
+          cnt: number
+          status: string
+        }[]
+      }
       stats_totals: {
         Args: {
           _country_id?: string
