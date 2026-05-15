@@ -87,6 +87,7 @@ type CustomerRow = {
   charge_date: string | null;
   application_date: string | null;
   requested_plan: string | null;
+  call_round: number | null;
 };
 
 type ImportCustomer = {
@@ -136,6 +137,7 @@ function CustomersPage() {
   const [assignedCountry, setAssignedCountry] = useState("all");
   const [statusF, setStatusF] = useState<"all" | CustomerStatus | "__call_completed__">(initialStatus);
   const [staffF, setStaffF] = useState("all");
+  const [callRoundF, setCallRoundF] = useState<"all" | "none" | "1" | "2" | "3">("all");
   const [sortKey, setSortKey] = useState<string>("imported_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -224,7 +226,8 @@ function CustomersPage() {
       _sort_dir: sortDirForRpc,
       _page: pageNum,
       _page_size: PAGE_SIZE,
-    });
+      _call_round: callRoundF === "all" ? undefined : (callRoundF === "none" ? null : Number(callRoundF)),
+    } as any);
     if (error) {
       if (requestId !== latestFetchRef.current) return;
       toast.error(`고객 로드 실패: ${error.message}`);
@@ -250,7 +253,7 @@ function CustomersPage() {
     const handle = setTimeout(() => { fetchPage(1, true); }, 250);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo]);
+  }, [tab, search, country, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -393,6 +396,18 @@ function CustomersPage() {
       return;
     }
     toast.success(t("status.changed", { label: STATUS_LABEL[status] }));
+  };
+
+  const changeCallRound = async (id: string, value: number | null) => {
+    setPinnedOrder(filtered.map((r) => r.id));
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, call_round: value } : r)));
+    const { error } = await supabase.from("customers").update({ call_round: value } as any).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+      return;
+    }
+    toast.success(t("dashboard.callRound") + " " + (value ? `${value}차` : t("dashboard.roundNone")));
   };
 
   const deleteCustomer = async () => {
@@ -683,6 +698,27 @@ function CustomersPage() {
       </TableCell>
     );
 
+    const CallRoundCell = ({ c }: { c: CustomerRow }) => (
+      <TableCell>
+        <Select
+          value={c.call_round ? String(c.call_round) : "__none__"}
+          onValueChange={(v) => changeCallRound(c.id, v === "__none__" ? null : Number(v))}
+        >
+          <SelectTrigger className="h-8 w-[90px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">-</SelectItem>
+            <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
+            <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
+            <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </TableCell>
+    );
+
+    const CallRoundHead = <SortHead k="call_round">{t("dashboard.callRound")}</SortHead>;
+
     const Assigned = ({ c }: { c: CustomerRow }) => (
       <TableCell className="text-xs">
         {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">{t("common.unassigned")}</span>}
@@ -702,6 +738,7 @@ function CustomersPage() {
               <SortHead k="country">국적</SortHead>
               <SortHead k="assigned">담당자</SortHead>
               <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              {CallRoundHead}
               <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
@@ -718,12 +755,13 @@ function CustomersPage() {
                 <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
                 <Assigned c={c} />
                 <StatusCell c={c} />
+                <CallRoundCell c={c} />
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
                 <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -741,6 +779,7 @@ function CustomersPage() {
             <SortHead k="requested_plan">신청 요금제</SortHead>
             <SortHead k="assigned">담당자</SortHead>
             <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+            {CallRoundHead}
             <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
             <TableHead>메모</TableHead>
             <TableHead className="text-right">액션</TableHead>
@@ -757,12 +796,13 @@ function CustomersPage() {
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
               <Assigned c={c} />
               <StatusCell c={c} />
+              <CallRoundCell c={c} />
               <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
               <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
               {renderActions(c)}
             </TableRow>
           ))}
-          {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
+          {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
         </TableBody>
       </Table>
     );
@@ -856,6 +896,16 @@ function CustomersPage() {
                       <SelectItem value="all">{t("customers.allAssigned")}</SelectItem>
                       <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
                       {staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={callRoundF} onValueChange={(v) => setCallRoundF(v as typeof callRoundF)}>
+                    <SelectTrigger><SelectValue placeholder={t("dashboard.callRound")} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("dashboard.roundAll")}</SelectItem>
+                      <SelectItem value="none">{t("dashboard.roundNone")}</SelectItem>
+                      <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
+                      <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
+                      <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

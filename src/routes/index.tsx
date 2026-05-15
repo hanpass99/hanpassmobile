@@ -40,6 +40,7 @@ type DashboardData = {
   channelData: ChannelRow[];
   countryData: CountryRow[];
   ranking: RankRow[];
+  callCompleted: number;
 };
 
 const emptyStatus = (): StatusCounts => ({
@@ -55,6 +56,7 @@ const emptyDashboard = (): DashboardData => ({
   channelData: [],
   countryData: [],
   ranking: [],
+  callCompleted: 0,
 });
 
 function Dashboard() {
@@ -70,7 +72,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const latestFetchRef = useRef(0);
 
-  const { statusCounts, totals, dailyData, channelData, countryData, ranking } = dashboard;
+  const { statusCounts, totals, dailyData, channelData, countryData, ranking, callCompleted: callCompletedFromRpc } = dashboard;
 
   // 국가 목록은 한 번만
   useEffect(() => {
@@ -145,7 +147,7 @@ function Dashboard() {
         target: Number(r.activation_target ?? 0),
       }));
 
-      setDashboard({ statusCounts: sMap, totals: nextTotals, dailyData: days, countryData: cd, channelData: chd, ranking: rkd });
+      setDashboard({ statusCounts: sMap, totals: nextTotals, dailyData: days, countryData: cd, channelData: chd, ranking: rkd, callCompleted: Number(summary.call_completed ?? 0) });
 
       setLoading(false);
     })();
@@ -154,10 +156,8 @@ function Dashboard() {
   const totalCustomers = totals.totalCustomers; void totalCustomers;
   const totalCalls = totals.totalCalls; void totalCalls;
   const activated = statusCounts.activated;
-  // 콜 완료 = 전체 상태 합 - 미처리(new)
-  const callCompleted = (Object.keys(statusCounts) as CustomerStatus[])
-    .filter((k) => k !== "new")
-    .reduce((sum, k) => sum + (statusCounts[k] ?? 0), 0);
+  // 콜 완료 = 콜 라운드 변경 기록 (날짜+고객 단위 distinct)
+  const callCompleted = callCompletedFromRpc;
   const monthlyTargetTotal = totals.monthlyTargetTotal;
   void monthlyTargetTotal;
 
