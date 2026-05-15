@@ -761,7 +761,7 @@ function CustomersPage() {
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -802,7 +802,7 @@ function CustomersPage() {
               {renderActions(c)}
             </TableRow>
           ))}
-          {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
+          {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
         </TableBody>
       </Table>
     );
