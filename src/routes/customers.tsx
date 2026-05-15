@@ -796,6 +796,7 @@ function CustomersPage() {
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
               <Assigned c={c} />
               <StatusCell c={c} />
+              <CallRoundCell c={c} />
               <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
               <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
               {renderActions(c)}
