@@ -586,7 +586,7 @@ function CustomersPage() {
       for (let i = 0; i < phoneList.length; i += dupChunkSize) {
         const chunk = phoneList.slice(i, i + dupChunkSize);
         const { data: dupes, error: dupErr } = await supabase
-          .rpc("customers_existing_phones", { _pool: tab, _phones: chunk });
+          .rpc("customers_existing_phones", { _pool: (tab === "all" ? "existing" : tab) as CustomerPool, _phones: chunk });
         if (dupErr) {
           toast.error(`중복 체크 실패: ${dupErr.message}`, { id: toastId });
           return;
