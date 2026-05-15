@@ -46,8 +46,21 @@ const POOL_SHORT = new Proxy({} as Record<CustomerPool, string>, {
   get: (_t, p: string) => i18n.t(`pool.short.${p}`),
 });
 
+type CustomersSearch = {
+  status?: string;
+  country?: string;
+  from?: string;
+  to?: string;
+};
+
 export const Route = createFileRoute("/customers")({
   head: () => ({ meta: [{ title: "고객 관리 — Hanpass OB CRM" }] }),
+  validateSearch: (search: Record<string, unknown>): CustomersSearch => ({
+    status: typeof search.status === "string" ? search.status : undefined,
+    country: typeof search.country === "string" ? search.country : undefined,
+    from: typeof search.from === "string" ? search.from : undefined,
+    to: typeof search.to === "string" ? search.to : undefined,
+  }),
   component: CustomersPage,
 });
 
@@ -97,6 +110,14 @@ const PAGE_SIZE = 200;
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
+  const initialSearch = Route.useSearch();
+  const initialStatus = (() => {
+    const s = initialSearch.status;
+    if (!s) return "all" as const;
+    if (s === "__call_completed__") return "__call_completed__" as const;
+    if ((CUSTOMER_STATUSES as readonly string[]).includes(s)) return s as CustomerStatus;
+    return "all" as const;
+  })();
   const [rows, setRows] = useState<CustomerRow[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -109,9 +130,11 @@ function CustomersPage() {
   const [poolCounts, setPoolCounts] = useState<Record<string, number>>({});
 
   const [search, setSearch] = useState("");
-  const [country, setCountry] = useState("all");
+  const [country, setCountry] = useState<string>(
+    initialSearch.country && initialSearch.country !== "all" ? initialSearch.country : "all"
+  );
   const [assignedCountry, setAssignedCountry] = useState("all");
-  const [statusF, setStatusF] = useState<"all" | CustomerStatus>("all");
+  const [statusF, setStatusF] = useState<"all" | CustomerStatus | "__call_completed__">(initialStatus);
   const [staffF, setStaffF] = useState("all");
   const [sortKey, setSortKey] = useState<string>("imported_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -119,8 +142,12 @@ function CustomersPage() {
   const [memoTarget, setMemoTarget] = useState<CustomerRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(
+    initialSearch.from ? new Date(initialSearch.from) : undefined
+  );
+  const [dateTo, setDateTo] = useState<Date | undefined>(
+    initialSearch.to ? new Date(initialSearch.to) : undefined
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -190,7 +217,7 @@ function CustomersPage() {
       _country_id: country === "all" ? undefined : country,
       _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
       _assigned_country: assignedCountry === "all" ? undefined : (assignedCountry === "__none__" ? "none" : assignedCountry),
-      _status: statusF === "all" ? undefined : statusF,
+      _status: (statusF === "all" || statusF === "__call_completed__") ? undefined : statusF,
       _date_from: fromIso ?? undefined,
       _date_to: toIso ?? undefined,
       _sort_key: sortKeyForRpc,
@@ -294,7 +321,11 @@ function CustomersPage() {
   // 서버에서 이미 필터·정렬·페이지네이션 적용됨. 클라이언트는 표시만.
   // 단, 서버가 지원하지 않는 정렬 키(country/assigned/assigned_country)는 현재 로드된 행 한정 폴백 정렬.
   const filtered = useMemo(() => {
-    const out = rows.slice();
+    let out = rows.slice();
+    // "콜 완료" 가상 필터: 미처리(new) 제외
+    if (statusF === "__call_completed__") {
+      out = out.filter((r) => r.status !== "new");
+    }
     if (sortKey && sortDir && !SERVER_SORT_KEYS.has(sortKey)) {
       const dir = sortDir === "asc" ? 1 : -1;
       out.sort((a: any, b: any) => {
@@ -317,7 +348,7 @@ function CustomersPage() {
       out.sort((a, b) => (idx.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (idx.get(b.id) ?? Number.MAX_SAFE_INTEGER));
     }
     return out;
-  }, [rows, sortKey, sortDir, staffById, staffCountryById, countryById, pinnedOrder]);
+  }, [rows, sortKey, sortDir, staffById, staffCountryById, countryById, pinnedOrder, statusF]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
@@ -815,6 +846,7 @@ function CustomersPage() {
                     <SelectTrigger><SelectValue placeholder={t("common.status")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("status.allStatus")}</SelectItem>
+                      <SelectItem value="__call_completed__">{t("dashboard.callCompleted")}</SelectItem>
                       {CUSTOMER_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
                     </SelectContent>
                   </Select>

@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  PhoneCall, TrendingUp, Target, Award, CalendarIcon, Globe2,
+  PhoneCall, TrendingUp, Award, CalendarIcon, Globe2, Inbox,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend,
@@ -151,12 +151,13 @@ function Dashboard() {
     })();
   }, [from, to, countryF, t]);
 
-  const totalCustomers = totals.totalCustomers;
-  const totalCalls = totals.totalCalls;
+  const totalCustomers = totals.totalCustomers; void totalCustomers;
+  const totalCalls = totals.totalCalls; void totalCalls;
   const activated = statusCounts.activated;
-  const success = statusCounts.activated + statusCounts.in_progress + statusCounts.callback;
-  const successRate = totalCustomers ? (success / totalCustomers) * 100 : 0;
-  const activationRate = totalCustomers ? (activated / totalCustomers) * 100 : 0;
+  // 콜 완료 = 전체 상태 합 - 미처리(new)
+  const callCompleted = (Object.keys(statusCounts) as CustomerStatus[])
+    .filter((k) => k !== "new")
+    .reduce((sum, k) => sum + (statusCounts[k] ?? 0), 0);
   const monthlyTargetTotal = totals.monthlyTargetTotal;
   void monthlyTargetTotal;
 
@@ -195,17 +196,36 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* 핵심 지표 */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <StatCard label={t("dashboard.totalCalls")} value={totalCalls.toLocaleString()} icon={PhoneCall} tone="primary" hint={t("dashboard.selectedPeriod")} />
-        <StatCard label={t("dashboard.activated")} value={activated} icon={Award} tone="success" />
+      {/* 핵심 지표: 미처리 / 콜 완료 / 개통 완료 / 개통 성공률 */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Link
+          to="/customers"
+          search={{ status: "new", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          className="block transition hover:scale-[1.01]"
+        >
+          <StatCard label={t("dashboard.notStarted")} value={statusCounts.new.toLocaleString()} icon={Inbox} tone="muted" />
+        </Link>
+        <Link
+          to="/customers"
+          search={{ status: "__call_completed__", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          className="block transition hover:scale-[1.01]"
+        >
+          <StatCard label={t("dashboard.callCompleted")} value={callCompleted.toLocaleString()} icon={PhoneCall} tone="primary" hint={t("dashboard.callCompletedHint")} />
+        </Link>
+        <Link
+          to="/customers"
+          search={{ status: "activated", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          className="block transition hover:scale-[1.01]"
+        >
+          <StatCard label={t("dashboard.activated")} value={activated.toLocaleString()} icon={Award} tone="success" />
+        </Link>
         <StatCard
-          label={t("dashboard.activationRate")}
-          value={(totalCalls ? (activated / totalCalls) * 100 : 0).toFixed(1)}
+          label={t("dashboard.activationSuccessRate")}
+          value={(callCompleted ? (activated / callCompleted) * 100 : 0).toFixed(1)}
           suffix="%"
-          icon={Target}
+          icon={TrendingUp}
           tone="info"
-          hint={t("dashboard.activationRateHint", { a: activated, t: totalCalls })}
+          hint={t("dashboard.activationSuccessHint") + ` (${activated}/${callCompleted})`}
         />
       </div>
 
@@ -218,19 +238,19 @@ function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
             {CUSTOMER_STATUSES.map((s) => (
-              <div key={s} className={`rounded-lg border border-border/60 p-3 ${STATUS_CLASS[s]}`}>
+              <Link
+                key={s}
+                to="/customers"
+                search={{ status: s, country: countryF, from: from.toISOString(), to: to.toISOString() }}
+                className={`block rounded-lg border border-border/60 p-3 transition hover:scale-[1.02] hover:shadow-md ${STATUS_CLASS[s]}`}
+              >
                 <div className="text-xs font-medium opacity-80">{t(`status.${s}`)}</div>
                 <div className="mt-1 text-2xl font-bold">{statusCounts[s].toLocaleString()}</div>
-              </div>
+              </Link>
             ))}
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <StatCard label={t("dashboard.callSuccessRate")} value={successRate.toFixed(1)} suffix="%" icon={TrendingUp} tone="primary" hint={t("dashboard.callSuccessHint")} />
-        <StatCard label={t("dashboard.activationSuccessRate")} value={activationRate.toFixed(1)} suffix="%" icon={Award} tone="success" hint={t("dashboard.activationSuccessHint")} />
-      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

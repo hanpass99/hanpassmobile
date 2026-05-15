@@ -53,20 +53,20 @@ export const STATUS_LABEL: Record<CustomerStatus, string> = {
   seasonal_worker: "계절 근로자",
 };
 
-// 상태별 색상 (semantic tokens 기반)
+// 상태별 색상 — 12종 모두 시각적으로 구분되도록 고유 색상 부여
 export const STATUS_CLASS: Record<CustomerStatus, string> = {
-  new: "bg-muted text-muted-foreground border-transparent",
-  in_progress: "bg-info/15 text-info border-transparent",
-  no_answer: "bg-warning/15 text-warning-foreground border-transparent",
-  not_interested: "bg-muted text-muted-foreground border-transparent",
-  callback: "bg-primary-soft text-primary border-transparent",
-  activated: "bg-success/15 text-success border-transparent",
-  stay_expired: "bg-destructive/10 text-destructive border-transparent",
-  delinquent: "bg-destructive/15 text-destructive border-transparent",
-  line_exceeded: "bg-destructive/15 text-destructive border-transparent",
-  minor: "bg-secondary text-secondary-foreground border-transparent",
-  wrong_application: "bg-warning/20 text-warning-foreground border-transparent",
-  seasonal_worker: "bg-info/15 text-info border-transparent",
+  new: "bg-slate-200 text-slate-800 border-transparent dark:bg-slate-700 dark:text-slate-100",
+  in_progress: "bg-sky-200 text-sky-900 border-transparent dark:bg-sky-800 dark:text-sky-50",
+  no_answer: "bg-yellow-200 text-yellow-900 border-transparent dark:bg-yellow-700 dark:text-yellow-50",
+  not_interested: "bg-orange-300 text-orange-950 border-transparent dark:bg-orange-700 dark:text-orange-50",
+  callback: "bg-blue-300 text-blue-950 border-transparent dark:bg-blue-700 dark:text-blue-50",
+  activated: "bg-green-300 text-green-950 border-transparent dark:bg-green-700 dark:text-green-50",
+  stay_expired: "bg-pink-300 text-pink-950 border-transparent dark:bg-pink-700 dark:text-pink-50",
+  delinquent: "bg-red-400 text-red-950 border-transparent dark:bg-red-700 dark:text-red-50",
+  line_exceeded: "bg-purple-300 text-purple-950 border-transparent dark:bg-purple-700 dark:text-purple-50",
+  minor: "bg-indigo-400 text-indigo-50 border-transparent dark:bg-indigo-700 dark:text-indigo-50",
+  wrong_application: "bg-amber-700 text-amber-50 border-transparent dark:bg-amber-800 dark:text-amber-50",
+  seasonal_worker: "bg-teal-300 text-teal-950 border-transparent dark:bg-teal-700 dark:text-teal-50",
 };
 
 // 콜 결과 → 자동 상태 추천
