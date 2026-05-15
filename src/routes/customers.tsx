@@ -398,6 +398,18 @@ function CustomersPage() {
     toast.success(t("status.changed", { label: STATUS_LABEL[status] }));
   };
 
+  const changeCallRound = async (id: string, value: number | null) => {
+    setPinnedOrder(filtered.map((r) => r.id));
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, call_round: value } : r)));
+    const { error } = await supabase.from("customers").update({ call_round: value } as any).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+      return;
+    }
+    toast.success(t("dashboard.callRound") + " " + (value ? `${value}차` : t("dashboard.roundNone")));
+  };
+
   const deleteCustomer = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from("customers").delete().eq("id", deleteId);
