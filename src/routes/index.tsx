@@ -156,10 +156,8 @@ function Dashboard() {
   const totalCustomers = totals.totalCustomers; void totalCustomers;
   const totalCalls = totals.totalCalls; void totalCalls;
   const activated = statusCounts.activated;
-  // 콜 완료 = 전체 상태 합 - 미처리(new)
-  const callCompleted = (Object.keys(statusCounts) as CustomerStatus[])
-    .filter((k) => k !== "new")
-    .reduce((sum, k) => sum + (statusCounts[k] ?? 0), 0);
+  // 콜 완료 = 콜 라운드 변경 기록 (날짜+고객 단위 distinct)
+  const callCompleted = callCompletedFromRpc;
   const monthlyTargetTotal = totals.monthlyTargetTotal;
   void monthlyTargetTotal;
 
