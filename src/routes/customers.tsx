@@ -226,7 +226,7 @@ function CustomersPage() {
     const sortKeyForRpc = SERVER_SORT_KEYS.has(sortKey) ? sortKey : "imported_at";
     const sortDirForRpc = sortDir ?? "desc";
     const { data, error } = await supabase.rpc("search_customers", {
-      _pool: tab,
+      _pool: tab === "all" ? undefined : tab,
       _search: search.trim() || undefined,
       _country_id: country === "all" ? undefined : country,
       _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
