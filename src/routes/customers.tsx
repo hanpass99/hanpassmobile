@@ -898,6 +898,16 @@ function CustomersPage() {
                       {staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  <Select value={callRoundF} onValueChange={(v) => setCallRoundF(v as typeof callRoundF)}>
+                    <SelectTrigger><SelectValue placeholder={t("dashboard.callRound")} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("dashboard.roundAll")}</SelectItem>
+                      <SelectItem value="none">{t("dashboard.roundNone")}</SelectItem>
+                      <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
+                      <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
+                      <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
