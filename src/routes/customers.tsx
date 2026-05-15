@@ -842,6 +842,7 @@ function CustomersPage() {
                     <SelectTrigger><SelectValue placeholder={t("common.status")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("status.allStatus")}</SelectItem>
+                      <SelectItem value="__call_completed__">{t("dashboard.callCompleted")}</SelectItem>
                       {CUSTOMER_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
                     </SelectContent>
                   </Select>
