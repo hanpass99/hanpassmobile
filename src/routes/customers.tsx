@@ -110,6 +110,14 @@ const PAGE_SIZE = 200;
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
+  const initialSearch = Route.useSearch();
+  const initialStatus = (() => {
+    const s = initialSearch.status;
+    if (!s) return "all" as const;
+    if (s === "__call_completed__") return "__call_completed__" as const;
+    if ((CUSTOMER_STATUSES as readonly string[]).includes(s)) return s as CustomerStatus;
+    return "all" as const;
+  })();
   const [rows, setRows] = useState<CustomerRow[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -122,9 +130,11 @@ function CustomersPage() {
   const [poolCounts, setPoolCounts] = useState<Record<string, number>>({});
 
   const [search, setSearch] = useState("");
-  const [country, setCountry] = useState("all");
+  const [country, setCountry] = useState<string>(
+    initialSearch.country && initialSearch.country !== "all" ? initialSearch.country : "all"
+  );
   const [assignedCountry, setAssignedCountry] = useState("all");
-  const [statusF, setStatusF] = useState<"all" | CustomerStatus>("all");
+  const [statusF, setStatusF] = useState<"all" | CustomerStatus | "__call_completed__">(initialStatus);
   const [staffF, setStaffF] = useState("all");
   const [sortKey, setSortKey] = useState<string>("imported_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -132,8 +142,12 @@ function CustomersPage() {
   const [memoTarget, setMemoTarget] = useState<CustomerRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(
+    initialSearch.from ? new Date(initialSearch.from) : undefined
+  );
+  const [dateTo, setDateTo] = useState<Date | undefined>(
+    initialSearch.to ? new Date(initialSearch.to) : undefined
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
