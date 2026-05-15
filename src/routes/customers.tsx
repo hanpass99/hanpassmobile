@@ -51,6 +51,7 @@ type CustomersSearch = {
   country?: string;
   from?: string;
   to?: string;
+  pool?: string;
 };
 
 export const Route = createFileRoute("/customers")({
@@ -60,9 +61,12 @@ export const Route = createFileRoute("/customers")({
     country: typeof search.country === "string" ? search.country : undefined,
     from: typeof search.from === "string" ? search.from : undefined,
     to: typeof search.to === "string" ? search.to : undefined,
+    pool: typeof search.pool === "string" ? search.pool : undefined,
   }),
   component: CustomersPage,
 });
+
+type TabValue = CustomerPool | "all";
 
 type Country = { id: string; code: string; name_ko: string };
 type Channel = { id: string; name: string };
