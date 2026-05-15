@@ -151,12 +151,13 @@ function Dashboard() {
     })();
   }, [from, to, countryF, t]);
 
-  const totalCustomers = totals.totalCustomers;
-  const totalCalls = totals.totalCalls;
+  const totalCustomers = totals.totalCustomers; void totalCustomers;
+  const totalCalls = totals.totalCalls; void totalCalls;
   const activated = statusCounts.activated;
-  const success = statusCounts.activated + statusCounts.in_progress + statusCounts.callback;
-  const successRate = totalCustomers ? (success / totalCustomers) * 100 : 0;
-  const activationRate = totalCustomers ? (activated / totalCustomers) * 100 : 0;
+  // 콜 완료 = 전체 상태 합 - 미처리(new)
+  const callCompleted = (Object.keys(statusCounts) as CustomerStatus[])
+    .filter((k) => k !== "new")
+    .reduce((sum, k) => sum + (statusCounts[k] ?? 0), 0);
   const monthlyTargetTotal = totals.monthlyTargetTotal;
   void monthlyTargetTotal;
 
