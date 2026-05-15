@@ -985,7 +985,8 @@ function CustomersPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        ))}
+          );
+        })}
       </Tabs>
 
       <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} />
