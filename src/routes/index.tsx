@@ -72,7 +72,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const latestFetchRef = useRef(0);
 
-  const { statusCounts, totals, dailyData, channelData, countryData, ranking } = dashboard;
+  const { statusCounts, totals, dailyData, channelData, countryData, ranking, callCompleted: callCompletedFromRpc } = dashboard;
 
   // 국가 목록은 한 번만
   useEffect(() => {
