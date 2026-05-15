@@ -147,7 +147,7 @@ function Dashboard() {
         target: Number(r.activation_target ?? 0),
       }));
 
-      setDashboard({ statusCounts: sMap, totals: nextTotals, dailyData: days, countryData: cd, channelData: chd, ranking: rkd });
+      setDashboard({ statusCounts: sMap, totals: nextTotals, dailyData: days, countryData: cd, channelData: chd, ranking: rkd, callCompleted: Number(summary.call_completed ?? 0) });
 
       setLoading(false);
     })();
