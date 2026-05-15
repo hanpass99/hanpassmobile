@@ -738,6 +738,7 @@ function CustomersPage() {
               <SortHead k="country">국적</SortHead>
               <SortHead k="assigned">담당자</SortHead>
               <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              {CallRoundHead}
               <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
