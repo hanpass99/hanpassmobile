@@ -129,7 +129,15 @@ function CustomersPage() {
   const [staff, setStaff] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [tab, setTab] = useState<CustomerPool>("existing");
+  const initialTab: TabValue = (() => {
+    const p = initialSearch.pool;
+    if (p === "all") return "all";
+    if (typeof p === "string" && (POOLS as readonly string[]).includes(p)) return p as CustomerPool;
+    // 대시보드에서 status/날짜 필터를 갖고 들어왔다면 풀이 명시되지 않았더라도 "전체" 뷰로 시작
+    if (initialSearch.status || initialSearch.from || initialSearch.to) return "all";
+    return "existing";
+  })();
+  const [tab, setTab] = useState<TabValue>(initialTab);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [poolCounts, setPoolCounts] = useState<Record<string, number>>({});
