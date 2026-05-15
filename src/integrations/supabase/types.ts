@@ -109,6 +109,44 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_call_rounds: {
+        Row: {
+          call_date: string
+          created_at: string
+          customer_id: string
+          id: string
+          round: number
+          staff_id: string
+          updated_at: string
+        }
+        Insert: {
+          call_date?: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          round: number
+          staff_id: string
+          updated_at?: string
+        }
+        Update: {
+          call_date?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          round?: number
+          staff_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_call_rounds_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_notes: {
         Row: {
           author_id: string
@@ -146,6 +184,7 @@ export type Database = {
           activation_date: string | null
           application_date: string | null
           assigned_to: string | null
+          call_round: number | null
           carrier_plan: string | null
           channel_id: string | null
           charge_amount: number | null
@@ -169,6 +208,7 @@ export type Database = {
           activation_date?: string | null
           application_date?: string | null
           assigned_to?: string | null
+          call_round?: number | null
           carrier_plan?: string | null
           channel_id?: string | null
           charge_amount?: number | null
@@ -192,6 +232,7 @@ export type Database = {
           activation_date?: string | null
           application_date?: string | null
           assigned_to?: string | null
+          call_round?: number | null
           carrier_plan?: string | null
           channel_id?: string | null
           charge_amount?: number | null
@@ -481,12 +522,13 @@ export type Database = {
         Args: {
           _assigned_country?: string
           _assigned_to?: string
+          _call_round?: number
           _country_id?: string
           _date_from?: string
           _date_to?: string
           _page?: number
           _page_size?: number
-          _pool: Database["public"]["Enums"]["customer_pool"]
+          _pool?: Database["public"]["Enums"]["customer_pool"]
           _search?: string
           _sort_dir?: string
           _sort_key?: string
@@ -524,6 +566,10 @@ export type Database = {
           total: number
           user_id: string
         }[]
+      }
+      stats_call_completed: {
+        Args: { _country_id?: string; _date_from?: string; _date_to?: string }
+        Returns: number
       }
       stats_channel_summary: {
         Args: { _country_id?: string }
@@ -576,13 +622,26 @@ export type Database = {
           user_id: string
         }[]
       }
-      stats_status_counts: {
-        Args: { _country_id?: string }
-        Returns: {
-          cnt: number
-          status: string
-        }[]
-      }
+      stats_status_counts:
+        | {
+            Args: { _country_id?: string }
+            Returns: {
+              cnt: number
+              status: string
+            }[]
+          }
+        | {
+            Args: {
+              _country_id?: string
+              _date_from?: string
+              _date_to?: string
+              _pool?: Database["public"]["Enums"]["customer_pool"]
+            }
+            Returns: {
+              cnt: number
+              status: string
+            }[]
+          }
       stats_totals: {
         Args: {
           _country_id?: string
