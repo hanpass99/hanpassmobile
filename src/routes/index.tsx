@@ -96,10 +96,11 @@ function Dashboard() {
         _date_to: toIso,
         _year: Y,
         _month: M,
-        ...(cId ? { _country_id: cId } : {}),
+        _country_id: cId,
+        _pool: null,
       });
       if (requestId !== latestFetchRef.current) return;
-      if (error) { setLoading(false); return; }
+      if (error) { console.error("Dashboard stats failed", error); setLoading(false); return; }
       const summary = data ?? {};
 
       const sMap = emptyStatus();
