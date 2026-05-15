@@ -596,16 +596,28 @@ export type Database = {
           day: string
         }[]
       }
-      stats_dashboard_summary: {
-        Args: {
-          _country_id?: string
-          _date_from: string
-          _date_to: string
-          _month: number
-          _year: number
-        }
-        Returns: Json
-      }
+      stats_dashboard_summary:
+        | {
+            Args: {
+              _country_id?: string
+              _date_from: string
+              _date_to: string
+              _month: number
+              _year: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _country_id?: string
+              _date_from: string
+              _date_to: string
+              _month: number
+              _pool?: Database["public"]["Enums"]["customer_pool"]
+              _year: number
+            }
+            Returns: Json
+          }
       stats_staff_ranking: {
         Args: {
           _country_id?: string

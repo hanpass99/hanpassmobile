@@ -200,21 +200,21 @@ function Dashboard() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Link
           to="/customers"
-          search={{ status: "new", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          search={{ status: "new", country: countryF, from: from.toISOString(), to: to.toISOString(), pool: "all" }}
           className="block transition hover:scale-[1.01]"
         >
           <StatCard label={t("dashboard.notStarted")} value={statusCounts.new.toLocaleString()} icon={Inbox} tone="muted" />
         </Link>
         <Link
           to="/customers"
-          search={{ status: "__call_completed__", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          search={{ status: "__call_completed__", country: countryF, from: from.toISOString(), to: to.toISOString(), pool: "all" }}
           className="block transition hover:scale-[1.01]"
         >
           <StatCard label={t("dashboard.callCompleted")} value={callCompleted.toLocaleString()} icon={PhoneCall} tone="primary" hint={t("dashboard.callCompletedHint")} />
         </Link>
         <Link
           to="/customers"
-          search={{ status: "activated", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          search={{ status: "activated", country: countryF, from: from.toISOString(), to: to.toISOString(), pool: "all" }}
           className="block transition hover:scale-[1.01]"
         >
           <StatCard label={t("dashboard.activated")} value={activated.toLocaleString()} icon={Award} tone="success" />
@@ -241,7 +241,7 @@ function Dashboard() {
               <Link
                 key={s}
                 to="/customers"
-                search={{ status: s, country: countryF, from: from.toISOString(), to: to.toISOString() }}
+                search={{ status: s, country: countryF, from: from.toISOString(), to: to.toISOString(), pool: "all" }}
                 className={`block rounded-lg border border-border/60 p-3 transition hover:scale-[1.02] hover:shadow-md ${STATUS_CLASS[s]}`}
               >
                 <div className="text-xs font-medium opacity-80">{t(`status.${s}`)}</div>

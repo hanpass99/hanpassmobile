@@ -51,6 +51,7 @@ type CustomersSearch = {
   country?: string;
   from?: string;
   to?: string;
+  pool?: string;
 };
 
 export const Route = createFileRoute("/customers")({
@@ -60,9 +61,12 @@ export const Route = createFileRoute("/customers")({
     country: typeof search.country === "string" ? search.country : undefined,
     from: typeof search.from === "string" ? search.from : undefined,
     to: typeof search.to === "string" ? search.to : undefined,
+    pool: typeof search.pool === "string" ? search.pool : undefined,
   }),
   component: CustomersPage,
 });
+
+type TabValue = CustomerPool | "all";
 
 type Country = { id: string; code: string; name_ko: string };
 type Channel = { id: string; name: string };
@@ -125,7 +129,15 @@ function CustomersPage() {
   const [staff, setStaff] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [tab, setTab] = useState<CustomerPool>("existing");
+  const initialTab: TabValue = (() => {
+    const p = initialSearch.pool;
+    if (p === "all") return "all";
+    if (typeof p === "string" && (POOLS as readonly string[]).includes(p)) return p as CustomerPool;
+    // 대시보드에서 status/날짜 필터를 갖고 들어왔다면 풀이 명시되지 않았더라도 "전체" 뷰로 시작
+    if (initialSearch.status || initialSearch.from || initialSearch.to) return "all";
+    return "existing";
+  })();
+  const [tab, setTab] = useState<TabValue>(initialTab);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [poolCounts, setPoolCounts] = useState<Record<string, number>>({});
@@ -214,7 +226,7 @@ function CustomersPage() {
     const sortKeyForRpc = SERVER_SORT_KEYS.has(sortKey) ? sortKey : "imported_at";
     const sortDirForRpc = sortDir ?? "desc";
     const { data, error } = await supabase.rpc("search_customers", {
-      _pool: tab,
+      _pool: tab === "all" ? undefined : tab,
       _search: search.trim() || undefined,
       _country_id: country === "all" ? undefined : country,
       _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
@@ -574,7 +586,7 @@ function CustomersPage() {
       for (let i = 0; i < phoneList.length; i += dupChunkSize) {
         const chunk = phoneList.slice(i, i + dupChunkSize);
         const { data: dupes, error: dupErr } = await supabase
-          .rpc("customers_existing_phones", { _pool: tab, _phones: chunk });
+          .rpc("customers_existing_phones", { _pool: (tab === "all" ? "existing" : tab) as CustomerPool, _phones: chunk });
         if (dupErr) {
           toast.error(`중복 체크 실패: ${dupErr.message}`, { id: toastId });
           return;
@@ -623,8 +635,9 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
+    const effPool: CustomerPool = tab === "all" ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
-    if (tab === "existing") {
+    if (effPool === "existing") {
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
     } else {
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
@@ -632,7 +645,7 @@ function CustomersPage() {
     const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Customers");
-    XLSX.writeFile(wb, `샘플_${POOL_SHORT[tab]}.xlsx`);
+    XLSX.writeFile(wb, `샘플_${POOL_SHORT[effPool]}.xlsx`);
   };
 
   const poolCount = (p: CustomerPool) => poolCounts[p] ?? 0;
@@ -820,8 +833,11 @@ function CustomersPage() {
         }
       />
 
-      <Tabs value={tab} onValueChange={(v) => { setTab(v as CustomerPool); setSelected(new Set()); }}>
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all" className="text-xs md:text-sm">
+            전체 <span className="ml-1 text-muted-foreground">({Object.values(poolCounts).reduce((a, b) => a + (b ?? 0), 0).toLocaleString()})</span>
+          </TabsTrigger>
           {POOLS.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
@@ -829,8 +845,10 @@ function CustomersPage() {
           ))}
         </TabsList>
 
-        {POOLS.filter((p) => p === tab).map((p) => (
-          <TabsContent key={p} value={p} className="mt-4">
+        {([tab] as TabValue[]).map((tv) => {
+          const p: CustomerPool = tv === "all" ? "existing" : tv;
+          return (
+          <TabsContent key={tv} value={tv} className="mt-4">
             <Card>
               <CardContent className="space-y-4 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -967,7 +985,8 @@ function CustomersPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        ))}
+          );
+        })}
       </Tabs>
 
       <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} />
@@ -977,7 +996,7 @@ function CustomersPage() {
         onAdded={load}
         countries={countries}
         channels={channels}
-        defaultPool={tab}
+        defaultPool={(tab === "all" ? "existing" : tab) as CustomerPool}
       />
       <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm">
