@@ -217,7 +217,7 @@ function CustomersPage() {
       _country_id: country === "all" ? undefined : country,
       _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
       _assigned_country: assignedCountry === "all" ? undefined : (assignedCountry === "__none__" ? "none" : assignedCountry),
-      _status: statusF === "all" ? undefined : statusF,
+      _status: (statusF === "all" || statusF === "__call_completed__") ? undefined : statusF,
       _date_from: fromIso ?? undefined,
       _date_to: toIso ?? undefined,
       _sort_key: sortKeyForRpc,
