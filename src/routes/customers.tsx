@@ -137,6 +137,7 @@ function CustomersPage() {
   const [assignedCountry, setAssignedCountry] = useState("all");
   const [statusF, setStatusF] = useState<"all" | CustomerStatus | "__call_completed__">(initialStatus);
   const [staffF, setStaffF] = useState("all");
+  const [callRoundF, setCallRoundF] = useState<"all" | "none" | "1" | "2" | "3">("all");
   const [sortKey, setSortKey] = useState<string>("imported_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
