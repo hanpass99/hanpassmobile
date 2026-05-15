@@ -56,6 +56,7 @@ const emptyDashboard = (): DashboardData => ({
   channelData: [],
   countryData: [],
   ranking: [],
+  callCompleted: 0,
 });
 
 function Dashboard() {
