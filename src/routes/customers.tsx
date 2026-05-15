@@ -698,6 +698,27 @@ function CustomersPage() {
       </TableCell>
     );
 
+    const CallRoundCell = ({ c }: { c: CustomerRow }) => (
+      <TableCell>
+        <Select
+          value={c.call_round ? String(c.call_round) : "__none__"}
+          onValueChange={(v) => changeCallRound(c.id, v === "__none__" ? null : Number(v))}
+        >
+          <SelectTrigger className="h-8 w-[90px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">-</SelectItem>
+            <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
+            <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
+            <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </TableCell>
+    );
+
+    const CallRoundHead = <SortHead k="call_round">{t("dashboard.callRound")}</SortHead>;
+
     const Assigned = ({ c }: { c: CustomerRow }) => (
       <TableCell className="text-xs">
         {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">{t("common.unassigned")}</span>}
