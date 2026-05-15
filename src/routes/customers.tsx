@@ -990,7 +990,7 @@ function CustomersPage() {
         onAdded={load}
         countries={countries}
         channels={channels}
-        defaultPool={tab}
+        defaultPool={(tab === "all" ? "existing" : tab) as CustomerPool}
       />
       <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm">
