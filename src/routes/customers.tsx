@@ -226,7 +226,8 @@ function CustomersPage() {
       _sort_dir: sortDirForRpc,
       _page: pageNum,
       _page_size: PAGE_SIZE,
-    });
+      _call_round: callRoundF === "all" ? undefined : (callRoundF === "none" ? null : Number(callRoundF)),
+    } as any);
     if (error) {
       if (requestId !== latestFetchRef.current) return;
       toast.error(`고객 로드 실패: ${error.message}`);
