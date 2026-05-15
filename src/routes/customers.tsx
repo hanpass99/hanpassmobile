@@ -87,6 +87,7 @@ type CustomerRow = {
   charge_date: string | null;
   application_date: string | null;
   requested_plan: string | null;
+  call_round: number | null;
 };
 
 type ImportCustomer = {
