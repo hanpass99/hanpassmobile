@@ -195,17 +195,36 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* 핵심 지표 */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <StatCard label={t("dashboard.totalCalls")} value={totalCalls.toLocaleString()} icon={PhoneCall} tone="primary" hint={t("dashboard.selectedPeriod")} />
-        <StatCard label={t("dashboard.activated")} value={activated} icon={Award} tone="success" />
+      {/* 핵심 지표: 미처리 / 콜 완료 / 개통 완료 / 개통 성공률 */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Link
+          to="/customers"
+          search={{ status: "new", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          className="block transition hover:scale-[1.01]"
+        >
+          <StatCard label={t("dashboard.notStarted")} value={statusCounts.new.toLocaleString()} icon={Inbox} tone="muted" />
+        </Link>
+        <Link
+          to="/customers"
+          search={{ status: "__call_completed__", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          className="block transition hover:scale-[1.01]"
+        >
+          <StatCard label={t("dashboard.callCompleted")} value={callCompleted.toLocaleString()} icon={PhoneCall} tone="primary" hint={t("dashboard.callCompletedHint")} />
+        </Link>
+        <Link
+          to="/customers"
+          search={{ status: "activated", country: countryF, from: from.toISOString(), to: to.toISOString() }}
+          className="block transition hover:scale-[1.01]"
+        >
+          <StatCard label={t("dashboard.activated")} value={activated.toLocaleString()} icon={Award} tone="success" />
+        </Link>
         <StatCard
-          label={t("dashboard.activationRate")}
-          value={(totalCalls ? (activated / totalCalls) * 100 : 0).toFixed(1)}
+          label={t("dashboard.activationSuccessRate")}
+          value={(callCompleted ? (activated / callCompleted) * 100 : 0).toFixed(1)}
           suffix="%"
-          icon={Target}
+          icon={TrendingUp}
           tone="info"
-          hint={t("dashboard.activationRateHint", { a: activated, t: totalCalls })}
+          hint={t("dashboard.activationSuccessHint") + ` (${activated}/${callCompleted})`}
         />
       </div>
 
