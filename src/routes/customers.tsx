@@ -321,7 +321,11 @@ function CustomersPage() {
   // 서버에서 이미 필터·정렬·페이지네이션 적용됨. 클라이언트는 표시만.
   // 단, 서버가 지원하지 않는 정렬 키(country/assigned/assigned_country)는 현재 로드된 행 한정 폴백 정렬.
   const filtered = useMemo(() => {
-    const out = rows.slice();
+    let out = rows.slice();
+    // "콜 완료" 가상 필터: 미처리(new) 제외
+    if (statusF === "__call_completed__") {
+      out = out.filter((r) => r.status !== "new");
+    }
     if (sortKey && sortDir && !SERVER_SORT_KEYS.has(sortKey)) {
       const dir = sortDir === "asc" ? 1 : -1;
       out.sort((a: any, b: any) => {
