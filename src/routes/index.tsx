@@ -238,19 +238,19 @@ function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
             {CUSTOMER_STATUSES.map((s) => (
-              <div key={s} className={`rounded-lg border border-border/60 p-3 ${STATUS_CLASS[s]}`}>
+              <Link
+                key={s}
+                to="/customers"
+                search={{ status: s, country: countryF, from: from.toISOString(), to: to.toISOString() }}
+                className={`block rounded-lg border border-border/60 p-3 transition hover:scale-[1.02] hover:shadow-md ${STATUS_CLASS[s]}`}
+              >
                 <div className="text-xs font-medium opacity-80">{t(`status.${s}`)}</div>
                 <div className="mt-1 text-2xl font-bold">{statusCounts[s].toLocaleString()}</div>
-              </div>
+              </Link>
             ))}
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <StatCard label={t("dashboard.callSuccessRate")} value={successRate.toFixed(1)} suffix="%" icon={TrendingUp} tone="primary" hint={t("dashboard.callSuccessHint")} />
-        <StatCard label={t("dashboard.activationSuccessRate")} value={activationRate.toFixed(1)} suffix="%" icon={Award} tone="success" hint={t("dashboard.activationSuccessHint")} />
-      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
