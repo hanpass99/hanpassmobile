@@ -253,7 +253,7 @@ function CustomersPage() {
     const handle = setTimeout(() => { fetchPage(1, true); }, 250);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, search, country, assignedCountry, statusF, staffF, sortKey, sortDir, dateFrom, dateTo]);
+  }, [tab, search, country, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
