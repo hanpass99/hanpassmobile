@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  PhoneCall, TrendingUp, Target, Award, CalendarIcon, Globe2,
+  PhoneCheck, TrendingUp, Target, Award, CalendarIcon, Globe2, Inbox,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend,
