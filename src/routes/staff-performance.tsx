@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import {
   CUSTOMER_STATUSES, type CustomerStatus,
   ATTENDANCE_CLASS, type AttendanceStatus,
@@ -49,10 +50,6 @@ function tierFor(activated: number): Tier {
 
 const emptyCounts = (): Counts => Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
-function isoDate(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 function StaffPerf() {
   const { t } = useTranslation();
   const today = new Date();
@@ -66,9 +63,9 @@ function StaffPerf() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
-    const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
-    const dateKey = isoDate(attendanceDate);
+    const fromIso = dayStartIso(from);
+    const toIso = dayEndIso(to);
+    const attendanceKey = dateKey(attendanceDate);
     const [{ data: staffData, error }, { data: ranking, error: rankingError }, { data: profiles }, { data: att }] = await Promise.all([
       supabase.rpc("stats_by_staff", { _date_from: fromIso, _date_to: toIso }),
       (supabase as any).rpc("stats_staff_ranking", {
@@ -80,7 +77,7 @@ function StaffPerf() {
         _attendance_date: null,
       }),
       supabase.from("profiles").select("id, sort_order"),
-      supabase.from("staff_attendance").select("user_id, status").eq("attendance_date", dateKey),
+      supabase.from("staff_attendance").select("user_id, status").eq("attendance_date", attendanceKey),
     ]);
     const orderMap = new Map<string, number>();
     (profiles ?? []).forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
