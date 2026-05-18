@@ -82,6 +82,20 @@ const ko = {
     allStatus: "전체 상태",
     changed: "상태 변경: {{label}}",
   },
+  attendance: {
+    title: "직원 출근 관리",
+    today: "오늘 출근 현황",
+    presentToday: "오늘 출근",
+    avgCalls: "출근 직원 평균 콜",
+    filterPresentOnly: "출근 직원만 보기",
+    setStatus: "출근 상태 변경",
+    status: {
+      present: "출근", day_off: "휴무", annual_leave: "연차",
+      half_day: "반차", training: "교육", sick_leave: "병가",
+    },
+    updated: "출근 상태가 업데이트되었습니다",
+    forbidden: "권한이 없습니다",
+  },
   pool: {
     existing: "한패스 모바일 기존 고객",
     activation_request: "개통 신청자",
