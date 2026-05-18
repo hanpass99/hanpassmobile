@@ -118,7 +118,7 @@ function SendTab() {
   }
 
   async function loadTemplates() {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("sms_templates")
       .select("*")
       .order("created_at", { ascending: false });
@@ -350,7 +350,7 @@ function TemplatesTab() {
   useEffect(() => { void load(); }, []);
 
   async function load() {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("sms_templates")
       .select("*")
       .order("created_at", { ascending: false });
@@ -373,13 +373,13 @@ function TemplatesTab() {
     if (!user) return;
     if (!form.title.trim() || !form.content.trim()) { toast.error("제목과 내용은 필수"); return; }
     if (editing) {
-      const { error } = await (supabase as any).from("sms_templates")
+      const { error } = await supabase.from("sms_templates")
         .update({ title: form.title, content: form.content, is_shared: form.is_shared })
         .eq("id", editing.id);
       if (error) return toast.error("수정 실패: " + error.message);
       toast.success("수정됨");
     } else {
-      const { error } = await (supabase as any).from("sms_templates")
+      const { error } = await supabase.from("sms_templates")
         .insert({ user_id: user.id, title: form.title, content: form.content, is_shared: form.is_shared });
       if (error) return toast.error("저장 실패: " + error.message);
       toast.success("저장됨");
@@ -390,7 +390,7 @@ function TemplatesTab() {
 
   async function remove(id: string) {
     if (!confirm("삭제하시겠습니까?")) return;
-    const { error } = await (supabase as any).from("sms_templates").delete().eq("id", id);
+    const { error } = await supabase.from("sms_templates").delete().eq("id", id);
     if (error) return toast.error("삭제 실패: " + error.message);
     toast.success("삭제됨");
     void load();
@@ -506,7 +506,7 @@ function HistoryTab() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("sms_logs")
       .select("*")
       .order("sent_at", { ascending: false })

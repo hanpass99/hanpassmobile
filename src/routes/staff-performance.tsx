@@ -69,7 +69,7 @@ function StaffPerf() {
     const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
     const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
     const dateKey = isoDate(attendanceDate);
-    const [{ data: data, error }, { data: ranking, error: rankingError }, { data: profiles }, { data: att }] = await Promise.all([
+    const [{ data: staffData, error }, { data: ranking, error: rankingError }, { data: profiles }, { data: att }] = await Promise.all([
       supabase.rpc("stats_by_staff", { _date_from: fromIso, _date_to: toIso }),
       (supabase as any).rpc("stats_staff_ranking", {
         _date_from: fromIso,
@@ -88,7 +88,7 @@ function StaffPerf() {
     (att ?? []).forEach((a: any) => attMap.set(a.user_id, a.status));
     if (!error && !rankingError) {
       const statsMap = new Map<string, any>();
-      (data ?? []).forEach((r: any) => statsMap.set(r.user_id, r));
+      (staffData ?? []).forEach((r: any) => statsMap.set(r.user_id, r));
       const out: Row[] = (ranking ?? []).map((r: any) => {
         const stat = statsMap.get(r.user_id);
         const counts = emptyCounts();
