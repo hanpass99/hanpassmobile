@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
-import { CALL_RESULT_LABEL, STATUS_LABEL, type CallResult, type CustomerStatus } from "@/lib/labels";
+import { STATUS_LABEL, type CustomerStatus } from "@/lib/labels";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/reports")({
