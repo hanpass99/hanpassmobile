@@ -625,31 +625,74 @@ export type Database = {
         }
         Returns: number
       }
-      stats_channel_summary: {
-        Args: { _country_id?: string }
-        Returns: {
-          activations: number
-          channel_id: string
-          customers: number
-          name: string
-        }[]
-      }
-      stats_country_activated: {
-        Args: never
-        Returns: {
-          activated: number
-          code: string
-          country_id: string
-        }[]
-      }
-      stats_daily_calls: {
-        Args: { _country_id?: string; _date_from: string; _date_to: string }
-        Returns: {
-          activations: number
-          calls: number
-          day: string
-        }[]
-      }
+      stats_channel_summary:
+        | {
+            Args: { _country_id?: string }
+            Returns: {
+              activations: number
+              channel_id: string
+              customers: number
+              name: string
+            }[]
+          }
+        | {
+            Args: {
+              _country_id?: string
+              _date_from?: string
+              _date_to?: string
+              _pool?: Database["public"]["Enums"]["customer_pool"]
+            }
+            Returns: {
+              activations: number
+              channel_id: string
+              customers: number
+              name: string
+            }[]
+          }
+      stats_country_activated:
+        | {
+            Args: never
+            Returns: {
+              activated: number
+              code: string
+              country_id: string
+            }[]
+          }
+        | {
+            Args: {
+              _country_id?: string
+              _date_from?: string
+              _date_to?: string
+              _pool?: Database["public"]["Enums"]["customer_pool"]
+            }
+            Returns: {
+              activated: number
+              code: string
+              country_id: string
+            }[]
+          }
+      stats_daily_calls:
+        | {
+            Args: { _country_id?: string; _date_from: string; _date_to: string }
+            Returns: {
+              activations: number
+              calls: number
+              day: string
+            }[]
+          }
+        | {
+            Args: {
+              _country_id?: string
+              _date_from: string
+              _date_to: string
+              _pool?: Database["public"]["Enums"]["customer_pool"]
+            }
+            Returns: {
+              activations: number
+              calls: number
+              day: string
+            }[]
+          }
       stats_dashboard_summary: {
         Args: {
           _country_id?: string
@@ -691,20 +734,36 @@ export type Database = {
           status: string
         }[]
       }
-      stats_totals: {
-        Args: {
-          _country_id?: string
-          _date_from: string
-          _date_to: string
-          _month: number
-          _year: number
-        }
-        Returns: {
-          monthly_target_total: number
-          total_calls: number
-          total_customers: number
-        }[]
-      }
+      stats_totals:
+        | {
+            Args: {
+              _country_id?: string
+              _date_from: string
+              _date_to: string
+              _month: number
+              _year: number
+            }
+            Returns: {
+              monthly_target_total: number
+              total_calls: number
+              total_customers: number
+            }[]
+          }
+        | {
+            Args: {
+              _country_id?: string
+              _date_from: string
+              _date_to: string
+              _month: number
+              _pool?: Database["public"]["Enums"]["customer_pool"]
+              _year: number
+            }
+            Returns: {
+              monthly_target_total: number
+              total_calls: number
+              total_customers: number
+            }[]
+          }
     }
     Enums: {
       app_role: "admin" | "staff"
