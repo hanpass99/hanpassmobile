@@ -6,6 +6,7 @@ import { Download, Users, PhoneCall } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CALL_RESULT_LABEL, STATUS_LABEL, type CallResult, type CustomerStatus } from "@/lib/labels";
 import i18n from "@/i18n";
 
@@ -77,15 +78,15 @@ async function exportStaffMonthly() {
   const t = i18n.t.bind(i18n);
   const now = new Date();
   const Y = now.getFullYear(); const M = now.getMonth() + 1;
-  const monthStart = new Date(Y, M - 1, 1, 0, 0, 0).toISOString();
-  const monthEnd = new Date(Y, M, 0, 23, 59, 59).toISOString();
+  const monthStart = dayStartIso(new Date(Y, M - 1, 1));
+  const monthEnd = dayEndIso(new Date(Y, M, 0));
   const { data, error } = await (supabase as any).rpc("stats_staff_ranking", {
     _date_from: monthStart,
     _date_to: monthEnd,
     _year: Y,
     _month: M,
     _country_id: null,
-    _attendance_date: new Date().toISOString().slice(0, 10),
+    _attendance_date: dateKey(new Date()),
   });
   if (error) return toast.error(error.message);
   const rows: (string | number)[][] = [["직원", "콜수", "개통", "개통목표", "달성률(%)", "출근상태"]];
