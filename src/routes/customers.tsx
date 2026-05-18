@@ -112,6 +112,11 @@ type SortDir = "asc" | "desc" | null;
 
 const PAGE_SIZE = 50;
 
+// 세션 단위 룩업 캐시 (페이지 재방문 시 재요청 방지)
+type LookupsCache = { countries: Country[]; channels: Channel[]; staff: Profile[] };
+let lookupsCache: LookupsCache | null = null;
+let lookupsPromise: Promise<LookupsCache> | null = null;
+
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
