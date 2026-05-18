@@ -103,7 +103,7 @@ function StaffPerf() {
           tier: tierFor(Number(r.activated ?? 0)),
           attendance: (attMap.get(r.user_id) ?? "present") as AttendanceStatus,
         };
-      }).sort((a, b) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
+      }).sort((a: Row, b: Row) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
       setRows(out);
     }
     setLoading(false);
@@ -193,22 +193,9 @@ function StaffPerf() {
                   </TableCell>
                   <TableCell className="font-semibold whitespace-nowrap">{u.name}</TableCell>
                   <TableCell>
-                    {(isAdmin || user?.id === u.id) ? (
-                      <Select value={u.attendance} onValueChange={(v) => changeAttendance(u.id, v as AttendanceStatus)}>
-                        <SelectTrigger className={cn("h-7 w-[110px] text-xs border-transparent", ATTENDANCE_CLASS[u.attendance])}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ATTENDANCE_STATUSES.map((s) => (
-                            <SelectItem key={s} value={s}>{t(`attendance.status.${s}`)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge className={cn("border-transparent", ATTENDANCE_CLASS[u.attendance])}>
-                        {t(`attendance.status.${u.attendance}`)}
-                      </Badge>
-                    )}
+                    <Badge className={cn("border-transparent", ATTENDANCE_CLASS[u.attendance])}>
+                      {t(`attendance.status.${u.attendance}`)}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge className={cn("border-transparent", u.tier.cls)}>{t(`staffPerf.${u.tier.key}`)}</Badge>
