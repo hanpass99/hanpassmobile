@@ -1,20 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { CalendarIcon, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { CUSTOMER_STATUSES, type CustomerStatus } from "@/lib/labels";
+import {
+  CUSTOMER_STATUSES, type CustomerStatus,
+  ATTENDANCE_STATUSES, ATTENDANCE_CLASS, type AttendanceStatus,
+} from "@/lib/labels";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/staff-performance")({
   head: () => ({ meta: [{ title: "직원 성과 — Hanpass OB CRM" }] }),
@@ -24,7 +34,14 @@ export const Route = createFileRoute("/staff-performance")({
 type Counts = Record<CustomerStatus, number>;
 type TierKey = "diamond" | "platinum" | "gold" | "silver" | "bronze" | "rookie";
 type Tier = { key: TierKey; cls: string };
-type Row = { id: string; name: string; total: number; counts: Counts; tier: Tier };
+type Row = {
+  id: string;
+  name: string;
+  total: number;
+  counts: Counts;
+  tier: Tier;
+  attendance: AttendanceStatus;
+};
 
 function tierFor(activated: number): Tier {
   if (activated >= 50) return { key: "diamond", cls: "bg-info/15 text-info" };
@@ -37,42 +54,78 @@ function tierFor(activated: number): Tier {
 
 const emptyCounts = (): Counts => Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
+function isoDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function StaffPerf() {
   const { t } = useTranslation();
+  const { isAdmin, user } = useAuth();
   const today = new Date();
   const start = new Date(today.getFullYear(), today.getMonth(), 1);
   const [from, setFrom] = useState<Date>(start);
   const [to, setTo] = useState<Date>(today);
+  const [attendanceDate, setAttendanceDate] = useState<Date>(today);
+  const [presentOnly, setPresentOnly] = useState<boolean>(true);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
-      const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
-      const [{ data, error }, { data: profiles }] = await Promise.all([
-        supabase.rpc("stats_by_staff", { _date_from: fromIso, _date_to: toIso }),
-        supabase.from("profiles").select("id, sort_order"),
-      ]);
-      const orderMap = new Map<string, number>();
-      (profiles ?? []).forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
-      if (!error) {
-        const out: Row[] = (data ?? []).map((r: any) => {
-          const counts = emptyCounts();
-          const sc = (r.status_counts ?? {}) as Record<string, number>;
-          for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
-          return {
-            id: r.user_id, name: r.display_name,
-            total: Number(r.total ?? 0), counts,
-            tier: tierFor(counts.activated),
-          };
-        }).sort((a, b) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
-        setRows(out);
-      }
-      setLoading(false);
-    })();
-  }, [from, to]);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
+    const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
+    const dateKey = isoDate(attendanceDate);
+    const [{ data, error }, { data: profiles }, { data: att }] = await Promise.all([
+      supabase.rpc("stats_by_staff", { _date_from: fromIso, _date_to: toIso }),
+      supabase.from("profiles").select("id, sort_order"),
+      supabase.from("staff_attendance").select("user_id, status").eq("attendance_date", dateKey),
+    ]);
+    const orderMap = new Map<string, number>();
+    (profiles ?? []).forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
+    const attMap = new Map<string, AttendanceStatus>();
+    (att ?? []).forEach((a: any) => attMap.set(a.user_id, a.status));
+    if (!error) {
+      const out: Row[] = (data ?? []).map((r: any) => {
+        const counts = emptyCounts();
+        const sc = (r.status_counts ?? {}) as Record<string, number>;
+        for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
+        return {
+          id: r.user_id,
+          name: r.display_name,
+          total: Number(r.total ?? 0),
+          counts,
+          tier: tierFor(counts.activated),
+          attendance: (attMap.get(r.user_id) ?? "present") as AttendanceStatus,
+        };
+      }).sort((a, b) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
+      setRows(out);
+    }
+    setLoading(false);
+  }, [from, to, attendanceDate]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const changeAttendance = async (userId: string, status: AttendanceStatus) => {
+    if (!isAdmin && user?.id !== userId) {
+      toast.error(t("attendance.forbidden"));
+      return;
+    }
+    const { error } = await (supabase as any).rpc("set_staff_attendance", {
+      _user_id: userId,
+      _date: isoDate(attendanceDate),
+      _status: status,
+      _note: null,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success(t("attendance.updated"));
+    load();
+  };
+
+  const visibleRows = presentOnly ? rows.filter((r) => r.attendance === "present") : rows;
+  const presentCount = rows.filter((r) => r.attendance === "present").length;
+  const avgCalls = presentCount > 0
+    ? Math.round(rows.filter((r) => r.attendance === "present").reduce((s, r) => s + r.total, 0) / presentCount)
+    : 0;
 
   return (
     <div className="space-y-5">
@@ -88,19 +141,42 @@ function StaffPerf() {
             <div className="text-xs font-medium text-muted-foreground">{t("common.endDate")}</div>
             <DatePick value={to} onChange={setTo} />
           </div>
-          <Button variant="outline" size="sm" onClick={() => { setFrom(start); setTo(today); }}>
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium text-muted-foreground">{t("attendance.today")}</div>
+            <DatePick value={attendanceDate} onChange={setAttendanceDate} />
+          </div>
+          <Button variant="outline" size="sm" onClick={() => { setFrom(start); setTo(today); setAttendanceDate(today); }}>
             {t("common.thisMonth")}
           </Button>
+          <div className="flex items-center gap-2 ml-auto">
+            <Switch id="presentOnly" checked={presentOnly} onCheckedChange={setPresentOnly} />
+            <Label htmlFor="presentOnly" className="cursor-pointer">{t("attendance.filterPresentOnly")}</Label>
+          </div>
         </CardContent>
       </Card>
 
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">{t("attendance.presentToday")}</div>
+          <div className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{presentCount}</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">{t("attendance.avgCalls")}</div>
+          <div className="mt-1 text-2xl font-bold">{avgCalls}</div>
+        </CardContent></Card>
+      </div>
+
       <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{t("attendance.title")}</CardTitle>
+        </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead className="w-12">{t("staffPerf.rank")}</TableHead>
                 <TableHead>{t("staffPerf.staff")}</TableHead>
+                <TableHead>{t("attendance.title")}</TableHead>
                 <TableHead>{t("staffPerf.tier")}</TableHead>
                 <TableHead className="text-right">{t("dashboard.totalCalls")}</TableHead>
                 {CUSTOMER_STATUSES.map((s) => (
@@ -109,7 +185,7 @@ function StaffPerf() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((u, i) => (
+              {visibleRows.map((u, i) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     {i < 3 ? (
@@ -127,6 +203,24 @@ function StaffPerf() {
                   </TableCell>
                   <TableCell className="font-semibold whitespace-nowrap">{u.name}</TableCell>
                   <TableCell>
+                    {(isAdmin || user?.id === u.id) ? (
+                      <Select value={u.attendance} onValueChange={(v) => changeAttendance(u.id, v as AttendanceStatus)}>
+                        <SelectTrigger className={cn("h-7 w-[110px] text-xs border-transparent", ATTENDANCE_CLASS[u.attendance])}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ATTENDANCE_STATUSES.map((s) => (
+                            <SelectItem key={s} value={s}>{t(`attendance.status.${s}`)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge className={cn("border-transparent", ATTENDANCE_CLASS[u.attendance])}>
+                        {t(`attendance.status.${u.attendance}`)}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Badge className={cn("border-transparent", u.tier.cls)}>{t(`staffPerf.${u.tier.key}`)}</Badge>
                   </TableCell>
                   <TableCell className="text-right font-bold">{u.total}</TableCell>
@@ -138,8 +232,8 @@ function StaffPerf() {
                   ))}
                 </TableRow>
               ))}
-              {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={4 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("dashboard.noStaff")}</TableCell></TableRow>
+              {!visibleRows.length && !loading && (
+                <TableRow><TableCell colSpan={5 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
