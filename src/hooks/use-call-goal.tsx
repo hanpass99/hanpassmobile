@@ -60,7 +60,7 @@ export function useCallGoal() {
       .channel(`call-goal-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "customer_call_rounds", filter: `staff_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "customer_call_rounds", filter: `staff_id=eq.${user.id}` },
         () => fetchCount(),
       )
       .subscribe();
