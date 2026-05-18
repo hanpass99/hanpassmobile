@@ -35,6 +35,7 @@ export const CUSTOMER_STATUSES = [
   "minor",
   "wrong_application",
   "seasonal_worker",
+  "suspended_number",
 ] as const;
 export type CustomerStatus = (typeof CUSTOMER_STATUSES)[number];
 
@@ -51,9 +52,10 @@ export const STATUS_LABEL: Record<CustomerStatus, string> = {
   minor: "미성년자",
   wrong_application: "오신청",
   seasonal_worker: "계절 근로자",
+  suspended_number: "정지 번호",
 };
 
-// 상태별 색상 — 파스텔톤, 12종 시각적 구분, 라이트/다크 모두 가독성 확보
+// 상태별 색상 — 파스텔톤, 13종 시각적 구분, 라이트/다크 모두 가독성 확보
 export const STATUS_CLASS: Record<CustomerStatus, string> = {
   new:               "bg-slate-100 text-slate-700 border-transparent dark:bg-slate-800/60 dark:text-slate-200",
   in_progress:       "bg-sky-100 text-sky-800 border-transparent dark:bg-sky-900/40 dark:text-sky-200",
@@ -67,6 +69,7 @@ export const STATUS_CLASS: Record<CustomerStatus, string> = {
   minor:             "bg-indigo-100 text-indigo-800 border-transparent dark:bg-indigo-900/40 dark:text-indigo-200",
   wrong_application: "bg-stone-100 text-stone-800 border-transparent dark:bg-stone-800/60 dark:text-stone-200",
   seasonal_worker:   "bg-teal-100 text-teal-800 border-transparent dark:bg-teal-900/40 dark:text-teal-200",
+  suspended_number:  "bg-fuchsia-100 text-fuchsia-800 border-transparent dark:bg-fuchsia-900/40 dark:text-fuchsia-200",
 };
 
 // 콜 결과 → 자동 상태 추천
@@ -97,4 +100,33 @@ export const POOL_LABEL: Record<CustomerPool, string> = {
 export const POOL_SHORT: Record<CustomerPool, string> = {
   existing: "기존 고객",
   activation_request: "개통 신청자",
+};
+
+// === 직원 출근 상태 ===
+export const ATTENDANCE_STATUSES = [
+  "present",
+  "day_off",
+  "annual_leave",
+  "half_day",
+  "training",
+  "sick_leave",
+] as const;
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
+
+export const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
+  present: "출근",
+  day_off: "휴무",
+  annual_leave: "연차",
+  half_day: "반차",
+  training: "교육",
+  sick_leave: "병가",
+};
+
+export const ATTENDANCE_CLASS: Record<AttendanceStatus, string> = {
+  present:      "bg-emerald-100 text-emerald-800 border-transparent dark:bg-emerald-900/40 dark:text-emerald-200",
+  day_off:      "bg-slate-100 text-slate-700 border-transparent dark:bg-slate-800/60 dark:text-slate-200",
+  annual_leave: "bg-sky-100 text-sky-800 border-transparent dark:bg-sky-900/40 dark:text-sky-200",
+  half_day:     "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-900/40 dark:text-amber-200",
+  training:     "bg-violet-100 text-violet-800 border-transparent dark:bg-violet-900/40 dark:text-violet-200",
+  sick_leave:   "bg-rose-100 text-rose-800 border-transparent dark:bg-rose-900/40 dark:text-rose-200",
 };
