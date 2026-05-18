@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { dateKey as formatDateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import { ATTENDANCE_STATUSES, ATTENDANCE_CLASS, type AttendanceStatus } from "@/lib/labels";
 
 export const Route = createFileRoute("/attendance")({
@@ -26,7 +27,7 @@ type StaffRow = { id: string; name: string; totalCalls: number; activated: numbe
 type HistoryRow = { id: string; user_id: string; attendance_date: string; status: AttendanceStatus; note: string | null; set_by: string | null; updated_at: string };
 
 function isoDate(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return formatDateKey(d);
 }
 
 function AttendancePage() {
@@ -45,8 +46,8 @@ function AttendancePage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const fromIso = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0).toISOString();
-    const toIso = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59).toISOString();
+    const fromIso = dayStartIso(date);
+    const toIso = dayEndIso(date);
     const [{ data: ranking, error: rankingError }, { data: attendance }, { data: history }] = await Promise.all([
       (supabase as any).rpc("stats_staff_ranking", {
         _date_from: fromIso,
