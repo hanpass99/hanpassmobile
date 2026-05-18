@@ -180,16 +180,33 @@ function CustomersPage() {
     "application_date", "carrier_plan", "requested_plan",
   ]);
 
-  // 룩업 데이터 (1회 로드)
+  // 룩업 데이터 (세션 단위 1회 로드, 페이지 재방문 시 캐시 재사용)
   const loadLookups = async () => {
-    const [co, ch, sf] = await Promise.all([
-      supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
-      supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-      supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true).order("sort_order").order("display_name"),
-    ]);
-    setCountries(co.data ?? []);
-    setChannels(ch.data ?? []);
-    setStaff(sf.data ?? []);
+    if (lookupsCache) {
+      setCountries(lookupsCache.countries);
+      setChannels(lookupsCache.channels);
+      setStaff(lookupsCache.staff);
+      return;
+    }
+    if (!lookupsPromise) {
+      lookupsPromise = (async () => {
+        const [co, ch, sf] = await Promise.all([
+          supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
+          supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
+          supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true).order("sort_order").order("display_name"),
+        ]);
+        lookupsCache = {
+          countries: co.data ?? [],
+          channels: ch.data ?? [],
+          staff: sf.data ?? [],
+        };
+        return lookupsCache;
+      })();
+    }
+    const result = await lookupsPromise;
+    setCountries(result.countries);
+    setChannels(result.channels);
+    setStaff(result.staff);
   };
 
   // Pool별 총 건수 (탭 뱃지용)
