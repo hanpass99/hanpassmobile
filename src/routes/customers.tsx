@@ -110,7 +110,7 @@ type ImportCustomer = {
 
 type SortDir = "asc" | "desc" | null;
 
-const PAGE_SIZE = 200;
+const PAGE_SIZE = 50;
 
 function CustomersPage() {
   const { t } = useTranslation();

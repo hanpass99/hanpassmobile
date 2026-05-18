@@ -36,7 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
-        setTimeout(() => loadProfile(s.user.id), 0);
+        setTimeout(() => {
+          loadProfile(s.user.id).catch(console.error);
+        }, 0);
       } else {
         setIsAdmin(false);
         setDisplayName("");
