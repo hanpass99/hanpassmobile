@@ -112,6 +112,11 @@ type SortDir = "asc" | "desc" | null;
 
 const PAGE_SIZE = 50;
 
+// 세션 단위 룩업 캐시 (페이지 재방문 시 재요청 방지)
+type LookupsCache = { countries: Country[]; channels: Channel[]; staff: Profile[] };
+let lookupsCache: LookupsCache | null = null;
+let lookupsPromise: Promise<LookupsCache> | null = null;
+
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
@@ -180,16 +185,33 @@ function CustomersPage() {
     "application_date", "carrier_plan", "requested_plan",
   ]);
 
-  // 룩업 데이터 (1회 로드)
+  // 룩업 데이터 (세션 단위 1회 로드, 페이지 재방문 시 캐시 재사용)
   const loadLookups = async () => {
-    const [co, ch, sf] = await Promise.all([
-      supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
-      supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-      supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true).order("sort_order").order("display_name"),
-    ]);
-    setCountries(co.data ?? []);
-    setChannels(ch.data ?? []);
-    setStaff(sf.data ?? []);
+    if (lookupsCache) {
+      setCountries(lookupsCache.countries);
+      setChannels(lookupsCache.channels);
+      setStaff(lookupsCache.staff);
+      return;
+    }
+    if (!lookupsPromise) {
+      lookupsPromise = (async () => {
+        const [co, ch, sf] = await Promise.all([
+          supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
+          supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
+          supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true).order("sort_order").order("display_name"),
+        ]);
+        lookupsCache = {
+          countries: co.data ?? [],
+          channels: ch.data ?? [],
+          staff: sf.data ?? [],
+        };
+        return lookupsCache;
+      })();
+    }
+    const result = await lookupsPromise;
+    setCountries(result.countries);
+    setChannels(result.channels);
+    setStaff(result.staff);
   };
 
   // Pool별 총 건수 (탭 뱃지용)
@@ -262,7 +284,7 @@ function CustomersPage() {
   useEffect(() => {
     setPinnedOrder(null);
     setPage(1);
-    const handle = setTimeout(() => { fetchPage(1, true); }, 250);
+    const handle = setTimeout(() => { fetchPage(1, true); }, 600);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, search, country, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);

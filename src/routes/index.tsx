@@ -9,6 +9,7 @@ import {
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -197,6 +198,23 @@ function Dashboard() {
         </CardContent>
       </Card>
 
+      {loading ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-[104px] w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-[220px] w-full" />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Skeleton className="h-[340px] w-full lg:col-span-2" />
+            <Skeleton className="h-[340px] w-full" />
+          </div>
+          <Skeleton className="h-[340px] w-full" />
+          <Skeleton className="h-[280px] w-full" />
+        </div>
+      ) : (
+      <>
       {/* 핵심 지표: 미처리 / 콜 완료 / 개통 완료 / 개통 성공률 */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Link
@@ -334,6 +352,8 @@ function Dashboard() {
           </div>
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   );
 }
