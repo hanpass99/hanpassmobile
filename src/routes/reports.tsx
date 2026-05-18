@@ -77,20 +77,23 @@ async function exportStaffMonthly() {
   const t = i18n.t.bind(i18n);
   const now = new Date();
   const Y = now.getFullYear(); const M = now.getMonth() + 1;
-  const monthStart = new Date(Y, M - 1, 1).toISOString();
-  const [sf, lg, tg] = await Promise.all([
-    supabase.from("profiles").select("id, display_name").eq("is_active", true).order("sort_order").order("display_name"),
-    supabase.from("call_logs").select("staff_id, result, is_activation").gte("call_date", monthStart),
-    supabase.from("targets").select("user_id, activation_target, call_target").eq("year", Y).eq("month", M),
-  ]);
-  const rows: (string | number)[][] = [["직원", "콜수", "성공", "개통", "콜목표", "개통목표", "달성률(%)"]];
-  for (const u of sf.data ?? []) {
-    const ul = (lg.data ?? []).filter((l) => l.staff_id === u.id);
-    const success = ul.filter((l) => l.result === "interested" || l.result === "activated").length;
-    const activated = ul.filter((l) => l.is_activation).length;
-    const tgt = (tg.data ?? []).find((x) => x.user_id === u.id);
-    const target = tgt?.activation_target ?? 0;
-    rows.push([u.display_name, ul.length, success, activated, tgt?.call_target ?? 0, target, target ? Math.round((activated / target) * 100) : 0]);
+  const monthStart = new Date(Y, M - 1, 1, 0, 0, 0).toISOString();
+  const monthEnd = new Date(Y, M, 0, 23, 59, 59).toISOString();
+  const { data, error } = await (supabase as any).rpc("stats_staff_ranking", {
+    _date_from: monthStart,
+    _date_to: monthEnd,
+    _year: Y,
+    _month: M,
+    _country_id: null,
+    _attendance_date: new Date().toISOString().slice(0, 10),
+  });
+  if (error) return toast.error(error.message);
+  const rows: (string | number)[][] = [["직원", "콜수", "개통", "개통목표", "달성률(%)", "출근상태"]];
+  for (const u of data ?? []) {
+    const calls = Number(u.total_calls ?? 0);
+    const activated = Number(u.activated ?? 0);
+    const target = Number(u.activation_target ?? 0);
+    rows.push([u.display_name, calls, activated, target, target ? Math.round((activated / target) * 100) : 0, u.attendance ?? "present"]);
   }
   downloadCSV(`직원성과_${Y}-${String(M).padStart(2,"0")}.csv`, rows);
   toast.success(t("reports.exportDone", { n: rows.length - 1 }));

@@ -8,9 +8,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useEffect, useState, useCallback } from "react";
@@ -21,10 +18,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CUSTOMER_STATUSES, type CustomerStatus,
-  ATTENDANCE_STATUSES, ATTENDANCE_CLASS, type AttendanceStatus,
+  ATTENDANCE_CLASS, type AttendanceStatus,
 } from "@/lib/labels";
-import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/staff-performance")({
   head: () => ({ meta: [{ title: "직원 성과 — Hanpass OB CRM" }] }),
@@ -60,7 +55,6 @@ function isoDate(d: Date) {
 
 function StaffPerf() {
   const { t } = useTranslation();
-  const { isAdmin, user } = useAuth();
   const today = new Date();
   const start = new Date(today.getFullYear(), today.getMonth(), 1);
   const [from, setFrom] = useState<Date>(start);
@@ -75,8 +69,16 @@ function StaffPerf() {
     const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
     const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
     const dateKey = isoDate(attendanceDate);
-    const [{ data, error }, { data: profiles }, { data: att }] = await Promise.all([
+    const [{ data: data, error }, { data: ranking, error: rankingError }, { data: profiles }, { data: att }] = await Promise.all([
       supabase.rpc("stats_by_staff", { _date_from: fromIso, _date_to: toIso }),
+      (supabase as any).rpc("stats_staff_ranking", {
+        _date_from: fromIso,
+        _date_to: toIso,
+        _year: from.getFullYear(),
+        _month: from.getMonth() + 1,
+        _country_id: null,
+        _attendance_date: null,
+      }),
       supabase.from("profiles").select("id, sort_order"),
       supabase.from("staff_attendance").select("user_id, status").eq("attendance_date", dateKey),
     ]);
@@ -84,42 +86,30 @@ function StaffPerf() {
     (profiles ?? []).forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
     const attMap = new Map<string, AttendanceStatus>();
     (att ?? []).forEach((a: any) => attMap.set(a.user_id, a.status));
-    if (!error) {
-      const out: Row[] = (data ?? []).map((r: any) => {
+    if (!error && !rankingError) {
+      const statsMap = new Map<string, any>();
+      (data ?? []).forEach((r: any) => statsMap.set(r.user_id, r));
+      const out: Row[] = (ranking ?? []).map((r: any) => {
+        const stat = statsMap.get(r.user_id);
         const counts = emptyCounts();
-        const sc = (r.status_counts ?? {}) as Record<string, number>;
+        const sc = (stat?.status_counts ?? {}) as Record<string, number>;
         for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
+        counts.activated = Number(r.activated ?? counts.activated);
         return {
           id: r.user_id,
           name: r.display_name,
-          total: Number(r.total ?? 0),
+          total: Number(r.total_calls ?? 0),
           counts,
-          tier: tierFor(counts.activated),
+          tier: tierFor(Number(r.activated ?? 0)),
           attendance: (attMap.get(r.user_id) ?? "present") as AttendanceStatus,
         };
-      }).sort((a, b) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
+      }).sort((a: Row, b: Row) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
       setRows(out);
     }
     setLoading(false);
   }, [from, to, attendanceDate]);
 
   useEffect(() => { load(); }, [load]);
-
-  const changeAttendance = async (userId: string, status: AttendanceStatus) => {
-    if (!isAdmin && user?.id !== userId) {
-      toast.error(t("attendance.forbidden"));
-      return;
-    }
-    const { error } = await (supabase as any).rpc("set_staff_attendance", {
-      _user_id: userId,
-      _date: isoDate(attendanceDate),
-      _status: status,
-      _note: null,
-    });
-    if (error) { toast.error(error.message); return; }
-    toast.success(t("attendance.updated"));
-    load();
-  };
 
   const visibleRows = presentOnly ? rows.filter((r) => r.attendance === "present") : rows;
   const presentCount = rows.filter((r) => r.attendance === "present").length;
@@ -203,22 +193,9 @@ function StaffPerf() {
                   </TableCell>
                   <TableCell className="font-semibold whitespace-nowrap">{u.name}</TableCell>
                   <TableCell>
-                    {(isAdmin || user?.id === u.id) ? (
-                      <Select value={u.attendance} onValueChange={(v) => changeAttendance(u.id, v as AttendanceStatus)}>
-                        <SelectTrigger className={cn("h-7 w-[110px] text-xs border-transparent", ATTENDANCE_CLASS[u.attendance])}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ATTENDANCE_STATUSES.map((s) => (
-                            <SelectItem key={s} value={s}>{t(`attendance.status.${s}`)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge className={cn("border-transparent", ATTENDANCE_CLASS[u.attendance])}>
-                        {t(`attendance.status.${u.attendance}`)}
-                      </Badge>
-                    )}
+                    <Badge className={cn("border-transparent", ATTENDANCE_CLASS[u.attendance])}>
+                      {t(`attendance.status.${u.attendance}`)}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge className={cn("border-transparent", u.tier.cls)}>{t(`staffPerf.${u.tier.key}`)}</Badge>

@@ -18,6 +18,7 @@ import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as CountryPerformanceRouteImport } from './routes/country-performance'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
 
 const StaffPerformanceRoute = StaffPerformanceRouteImport.update({
@@ -65,6 +66,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AttendanceRoute = AttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -73,6 +79,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/attendance'
     | '/auth'
     | '/channel-performance'
     | '/country-performance'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/attendance'
     | '/auth'
     | '/channel-performance'
     | '/country-performance'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/attendance'
     | '/auth'
     | '/channel-performance'
     | '/country-performance'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AttendanceRoute: typeof AttendanceRoute
   AuthRoute: typeof AuthRoute
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CountryPerformanceRoute: typeof CountryPerformanceRoute
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/attendance': {
+      id: '/attendance'
+      path: '/attendance'
+      fullPath: '/attendance'
+      preLoaderRoute: typeof AttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -237,6 +257,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AttendanceRoute: AttendanceRoute,
   AuthRoute: AuthRoute,
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CountryPerformanceRoute: CountryPerformanceRoute,
