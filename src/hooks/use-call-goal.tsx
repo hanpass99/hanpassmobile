@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { dayEndIso, dayStartIso } from "@/lib/date-range";
 
 const DAILY_GOAL = 50;
 const STEP = 10;
@@ -43,14 +44,13 @@ export function useCallGoal() {
     };
 
     const fetchCount = async () => {
-      const start = new Date(); start.setHours(0, 0, 0, 0);
-      const end = new Date(); end.setHours(23, 59, 59, 999);
+      const today = new Date();
       const { count } = await supabase
-        .from("call_logs")
+        .from("customer_call_rounds")
         .select("id", { count: "exact", head: true })
         .eq("staff_id", user.id)
-        .gte("call_date", start.toISOString())
-        .lte("call_date", end.toISOString());
+        .gte("call_date", dayStartIso(today).slice(0, 10))
+        .lte("call_date", dayEndIso(today).slice(0, 10));
       if (active) fireIfNeeded(count ?? 0);
     };
 
@@ -60,7 +60,7 @@ export function useCallGoal() {
       .channel(`call-goal-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "call_logs", filter: `staff_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "customer_call_rounds", filter: `staff_id=eq.${user.id}` },
         () => fetchCount(),
       )
       .subscribe();

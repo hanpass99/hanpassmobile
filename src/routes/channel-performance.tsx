@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, type CustomerStatus } from "@/lib/labels";
 
 export const Route = createFileRoute("/channel-performance")({
@@ -38,8 +39,8 @@ function ChannelPerf() {
     const requestId = ++latestLoadRef.current;
     setLoading(true);
     const args: { _date_from?: string; _date_to?: string } = {};
-    if (dateFrom) args._date_from = new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString();
-    if (dateTo) args._date_to = new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString();
+    if (dateFrom) args._date_from = dayStartIso(dateFrom);
+    if (dateTo) args._date_to = dayEndIso(dateTo);
     const { data, error } = await supabase.rpc("stats_by_channel", args);
     if (requestId !== latestLoadRef.current) return;
     if (!error) {

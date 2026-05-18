@@ -551,27 +551,50 @@ export type Database = {
         }
         Returns: boolean
       }
-      search_customers: {
-        Args: {
-          _assigned_country?: string
-          _assigned_to?: string
-          _call_round?: number
-          _country_id?: string
-          _date_from?: string
-          _date_to?: string
-          _page?: number
-          _page_size?: number
-          _pool?: Database["public"]["Enums"]["customer_pool"]
-          _search?: string
-          _sort_dir?: string
-          _sort_key?: string
-          _status?: Database["public"]["Enums"]["customer_status"]
-        }
-        Returns: {
-          data: Json
-          total_count: number
-        }[]
-      }
+      search_customers:
+        | {
+            Args: {
+              _assigned_country?: string
+              _assigned_to?: string
+              _call_round?: number
+              _country_id?: string
+              _date_from?: string
+              _date_to?: string
+              _page?: number
+              _page_size?: number
+              _pool?: Database["public"]["Enums"]["customer_pool"]
+              _search?: string
+              _sort_dir?: string
+              _sort_key?: string
+              _status?: Database["public"]["Enums"]["customer_status"]
+            }
+            Returns: {
+              data: Json
+              total_count: number
+            }[]
+          }
+        | {
+            Args: {
+              _assigned_country?: string
+              _assigned_to?: string
+              _call_completed?: boolean
+              _call_round?: number
+              _country_id?: string
+              _date_from?: string
+              _date_to?: string
+              _page?: number
+              _page_size?: number
+              _pool?: Database["public"]["Enums"]["customer_pool"]
+              _search?: string
+              _sort_dir?: string
+              _sort_key?: string
+              _status?: Database["public"]["Enums"]["customer_status"]
+            }
+            Returns: {
+              data: Json
+              total_count: number
+            }[]
+          }
       set_staff_attendance: {
         Args: {
           _date: string

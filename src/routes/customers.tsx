@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import i18n from "@/i18n";
 import {
   CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus,
@@ -243,8 +244,8 @@ function CustomersPage() {
   const fetchPage = async (pageNum: number, reset: boolean) => {
     const requestId = ++latestFetchRef.current;
     if (reset) setLoading(true); else setLoadingMore(true);
-    const fromIso = dateFrom ? new Date(new Date(dateFrom).setHours(0,0,0,0)).toISOString() : null;
-    const toIso = dateTo ? new Date(new Date(dateTo).setHours(23,59,59,999)).toISOString() : null;
+    const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
+    const toIso = dateTo ? dayEndIso(dateTo) : null;
     const sortKeyForRpc = SERVER_SORT_KEYS.has(sortKey) ? sortKey : "imported_at";
     const sortDirForRpc = sortDir ?? "desc";
     const { data, error } = await supabase.rpc("search_customers", {
@@ -261,6 +262,7 @@ function CustomersPage() {
       _page: pageNum,
       _page_size: PAGE_SIZE,
       _call_round: callRoundF === "all" ? undefined : (callRoundF === "none" ? null : Number(callRoundF)),
+      _call_completed: statusF === "__call_completed__",
     } as any);
     if (error) {
       if (requestId !== latestFetchRef.current) return;
@@ -359,10 +361,6 @@ function CustomersPage() {
   // 단, 서버가 지원하지 않는 정렬 키(country/assigned/assigned_country)는 현재 로드된 행 한정 폴백 정렬.
   const filtered = useMemo(() => {
     let out = rows.slice();
-    // "콜 완료" 가상 필터: 미처리(new) 제외
-    if (statusF === "__call_completed__") {
-      out = out.filter((r) => r.status !== "new");
-    }
     if (sortKey && sortDir && !SERVER_SORT_KEYS.has(sortKey)) {
       const dir = sortDir === "asc" ? 1 : -1;
       out.sort((a: any, b: any) => {

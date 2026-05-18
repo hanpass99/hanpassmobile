@@ -6,7 +6,8 @@ import { Download, Users, PhoneCall } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { CALL_RESULT_LABEL, STATUS_LABEL, type CallResult, type CustomerStatus } from "@/lib/labels";
+import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
+import { STATUS_LABEL, type CustomerStatus } from "@/lib/labels";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/reports")({
@@ -31,21 +32,32 @@ function downloadCSV(filename: string, rows: (string | number | null | undefined
 async function exportCalls() {
   const t = i18n.t.bind(i18n);
   const { data, error } = await supabase
-    .from("call_logs")
-    .select("call_date, result, duration_sec, is_activation, notes, customer:customers(name, phone), staff:profiles!call_logs_staff_id_fkey(display_name)")
-    .order("call_date", { ascending: false });
+    .from("customer_call_rounds")
+    .select("call_date, round, customer_id, staff_id, created_at")
+    .order("call_date", { ascending: false })
+    .order("created_at", { ascending: false });
   if (error) return toast.error(error.message);
-  const rows: (string | number)[][] = [["일시", "고객명", "전화번호", "담당자", "결과", "통화(초)", "개통", "메모"]];
-  for (const r of (data ?? []) as any[]) {
+
+  const logs = (data ?? []) as { call_date: string; round: number; customer_id: string; staff_id: string; created_at: string }[];
+  const customerIds = [...new Set(logs.map((r) => r.customer_id))];
+  const staffIds = [...new Set(logs.map((r) => r.staff_id))];
+  const [{ data: customers }, { data: staff }] = await Promise.all([
+    customerIds.length ? supabase.from("customers").select("id, name, phone").in("id", customerIds) : Promise.resolve({ data: [] }),
+    staffIds.length ? supabase.from("profiles").select("id, display_name").in("id", staffIds) : Promise.resolve({ data: [] }),
+  ]);
+  const customerMap = new Map((customers ?? []).map((c: any) => [c.id, c]));
+  const staffMap = new Map((staff ?? []).map((p: any) => [p.id, p.display_name]));
+
+  const rows: (string | number)[][] = [["콜일", "기록시간", "고객명", "전화번호", "직원", "콜라운드"]];
+  for (const r of logs) {
+    const customer = customerMap.get(r.customer_id);
     rows.push([
-      new Date(r.call_date).toLocaleString("ko-KR"),
-      r.customer?.name ?? "",
-      r.customer?.phone ?? "",
-      r.staff?.display_name ?? "",
-      CALL_RESULT_LABEL[r.result as CallResult],
-      r.duration_sec,
-      r.is_activation ? "Y" : "N",
-      r.notes ?? "",
+      r.call_date,
+      new Date(r.created_at).toLocaleString("ko-KR"),
+      customer?.name ?? "",
+      customer?.phone ?? "",
+      staffMap.get(r.staff_id) ?? "",
+      `${r.round}차`,
     ]);
   }
   downloadCSV(`콜로그_${new Date().toISOString().slice(0, 10)}.csv`, rows);
@@ -77,15 +89,15 @@ async function exportStaffMonthly() {
   const t = i18n.t.bind(i18n);
   const now = new Date();
   const Y = now.getFullYear(); const M = now.getMonth() + 1;
-  const monthStart = new Date(Y, M - 1, 1, 0, 0, 0).toISOString();
-  const monthEnd = new Date(Y, M, 0, 23, 59, 59).toISOString();
+  const monthStart = dayStartIso(new Date(Y, M - 1, 1));
+  const monthEnd = dayEndIso(new Date(Y, M, 0));
   const { data, error } = await (supabase as any).rpc("stats_staff_ranking", {
     _date_from: monthStart,
     _date_to: monthEnd,
     _year: Y,
     _month: M,
     _country_id: null,
-    _attendance_date: new Date().toISOString().slice(0, 10),
+    _attendance_date: dateKey(new Date()),
   });
   if (error) return toast.error(error.message);
   const rows: (string | number)[][] = [["직원", "콜수", "개통", "개통목표", "달성률(%)", "출근상태"]];

@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
 
 export const Route = createFileRoute("/")({
@@ -87,8 +88,8 @@ function Dashboard() {
     (async () => {
       const requestId = ++latestFetchRef.current;
       setLoading(true);
-      const fromIso = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0).toISOString();
-      const toIso = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString();
+      const fromIso = dayStartIso(from);
+      const toIso = dayEndIso(to);
       const Y = from.getFullYear(); const M = from.getMonth() + 1;
       const cId = countryF === "all" ? null : countryF;
 
@@ -124,7 +125,7 @@ function Dashboard() {
       const days: DailyRow[] = [];
       const cur = new Date(from);
       while (cur <= to) {
-        const key = cur.toISOString().slice(0, 10);
+        const key = dateKey(cur);
         const d = dayMap.get(key) ?? { calls: 0, activations: 0 };
         days.push({
           date: `${cur.getMonth() + 1}/${cur.getDate()}`,
@@ -219,21 +220,21 @@ function Dashboard() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Link
           to="/customers"
-          search={{ status: "new", country: countryF, from: from.toISOString(), to: to.toISOString(), pool: "all" }}
+          search={{ status: "new", country: countryF, from: dayStartIso(from), to: dayEndIso(to), pool: "all" }}
           className="block transition hover:scale-[1.01]"
         >
           <StatCard label={t("dashboard.notStarted")} value={statusCounts.new.toLocaleString()} icon={Inbox} tone="muted" />
         </Link>
         <Link
           to="/customers"
-          search={{ status: "__call_completed__", country: countryF, from: from.toISOString(), to: to.toISOString(), pool: "all" }}
+          search={{ status: "__call_completed__", country: countryF, from: dayStartIso(from), to: dayEndIso(to), pool: "all" }}
           className="block transition hover:scale-[1.01]"
         >
           <StatCard label={t("dashboard.callCompleted")} value={callCompleted.toLocaleString()} icon={PhoneCall} tone="primary" hint={t("dashboard.callCompletedHint")} />
         </Link>
         <Link
           to="/customers"
-          search={{ status: "activated", country: countryF, from: from.toISOString(), to: to.toISOString(), pool: "all" }}
+          search={{ status: "activated", country: countryF, from: dayStartIso(from), to: dayEndIso(to), pool: "all" }}
           className="block transition hover:scale-[1.01]"
         >
           <StatCard label={t("dashboard.activated")} value={activated.toLocaleString()} icon={Award} tone="success" />
@@ -260,7 +261,7 @@ function Dashboard() {
               <Link
                 key={s}
                 to="/customers"
-                search={{ status: s, country: countryF, from: from.toISOString(), to: to.toISOString(), pool: "all" }}
+                search={{ status: s, country: countryF, from: dayStartIso(from), to: dayEndIso(to), pool: "all" }}
                 className={`block rounded-lg border border-border/60 p-3 transition hover:scale-[1.02] hover:shadow-md ${STATUS_CLASS[s]}`}
               >
                 <div className="text-xs font-medium opacity-80">{t(`status.${s}`)}</div>
