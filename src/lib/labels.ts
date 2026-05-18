@@ -52,6 +52,7 @@ export const STATUS_LABEL: Record<CustomerStatus, string> = {
   minor: "미성년자",
   wrong_application: "오신청",
   seasonal_worker: "계절 근로자",
+  suspended_number: "정지 번호",
 };
 
 // 상태별 색상 — 파스텔톤, 13종 시각적 구분, 라이트/다크 모두 가독성 확보
