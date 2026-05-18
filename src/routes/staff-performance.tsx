@@ -158,7 +158,13 @@ function StaffPerf() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">{t("attendance.title")}</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-base">{t("attendance.title")}</CardTitle>
+            <Badge variant="outline" className="font-normal">
+              <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+              {t("dashboard.totalCalls")}: {format(from, "yyyy.MM.dd")} ~ {format(to, "yyyy.MM.dd")}
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <Table>
