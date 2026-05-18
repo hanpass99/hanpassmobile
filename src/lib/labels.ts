@@ -35,6 +35,7 @@ export const CUSTOMER_STATUSES = [
   "minor",
   "wrong_application",
   "seasonal_worker",
+  "suspended_number",
 ] as const;
 export type CustomerStatus = (typeof CUSTOMER_STATUSES)[number];
 
