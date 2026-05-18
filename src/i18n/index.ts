@@ -366,6 +366,20 @@ const en = {
     allStatus: "All statuses",
     changed: "Status changed: {{label}}",
   },
+  attendance: {
+    title: "Staff attendance",
+    today: "Today's attendance",
+    presentToday: "Present today",
+    avgCalls: "Avg calls (present staff)",
+    filterPresentOnly: "Show present staff only",
+    setStatus: "Change attendance",
+    status: {
+      present: "Present", day_off: "Day off", annual_leave: "Annual leave",
+      half_day: "Half day", training: "Training", sick_leave: "Sick leave",
+    },
+    updated: "Attendance updated",
+    forbidden: "Not allowed",
+  },
   pool: {
     existing: "Hanpass Mobile existing customers",
     activation_request: "Activation requests",
