@@ -54,7 +54,7 @@ export const STATUS_LABEL: Record<CustomerStatus, string> = {
   seasonal_worker: "계절 근로자",
 };
 
-// 상태별 색상 — 파스텔톤, 12종 시각적 구분, 라이트/다크 모두 가독성 확보
+// 상태별 색상 — 파스텔톤, 13종 시각적 구분, 라이트/다크 모두 가독성 확보
 export const STATUS_CLASS: Record<CustomerStatus, string> = {
   new:               "bg-slate-100 text-slate-700 border-transparent dark:bg-slate-800/60 dark:text-slate-200",
   in_progress:       "bg-sky-100 text-sky-800 border-transparent dark:bg-sky-900/40 dark:text-sky-200",
@@ -68,6 +68,7 @@ export const STATUS_CLASS: Record<CustomerStatus, string> = {
   minor:             "bg-indigo-100 text-indigo-800 border-transparent dark:bg-indigo-900/40 dark:text-indigo-200",
   wrong_application: "bg-stone-100 text-stone-800 border-transparent dark:bg-stone-800/60 dark:text-stone-200",
   seasonal_worker:   "bg-teal-100 text-teal-800 border-transparent dark:bg-teal-900/40 dark:text-teal-200",
+  suspended_number:  "bg-fuchsia-100 text-fuchsia-800 border-transparent dark:bg-fuchsia-900/40 dark:text-fuchsia-200",
 };
 
 // 콜 결과 → 자동 상태 추천
