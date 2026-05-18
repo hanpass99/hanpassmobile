@@ -352,6 +352,8 @@ function Dashboard() {
           </div>
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   );
 }
