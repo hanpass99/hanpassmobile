@@ -348,6 +348,7 @@ const en = {
     activated: "Activated", stay_expired: "Stay expired",
     delinquent: "Delinquent", line_exceeded: "Line exceeded", minor: "Minor",
     wrong_application: "Wrong application", seasonal_worker: "Seasonal worker",
+    suspended_number: "Suspended number",
     allStatus: "All statuses",
     changed: "Status changed: {{label}}",
   },
