@@ -284,7 +284,7 @@ function CustomersPage() {
   useEffect(() => {
     setPinnedOrder(null);
     setPage(1);
-    const handle = setTimeout(() => { fetchPage(1, true); }, 250);
+    const handle = setTimeout(() => { fetchPage(1, true); }, 600);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, search, country, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
