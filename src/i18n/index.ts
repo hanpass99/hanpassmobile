@@ -78,6 +78,7 @@ const ko = {
     activated: "개통 완료", stay_expired: "체류 기간 만료",
     delinquent: "체납자", line_exceeded: "회선 초과", minor: "미성년자",
     wrong_application: "오신청", seasonal_worker: "계절 근로자",
+    suspended_number: "정지 번호",
     allStatus: "전체 상태",
     changed: "상태 변경: {{label}}",
   },
