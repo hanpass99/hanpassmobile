@@ -407,6 +407,39 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_attendance: {
+        Row: {
+          attendance_date: string
+          created_at: string
+          id: string
+          note: string | null
+          set_by: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attendance_date?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          set_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attendance_date?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          set_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       targets: {
         Row: {
           activation_target: number
@@ -539,6 +572,22 @@ export type Database = {
           total_count: number
         }[]
       }
+      set_staff_attendance: {
+        Args: {
+          _date: string
+          _note?: string
+          _status: Database["public"]["Enums"]["attendance_status"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      stats_attendance_summary: {
+        Args: { _date?: string }
+        Returns: {
+          cnt: number
+          status: string
+        }[]
+      }
       stats_by_channel: {
         Args: { _date_from?: string; _date_to?: string }
         Returns: {
@@ -612,22 +661,41 @@ export type Database = {
         }
         Returns: Json
       }
-      stats_staff_ranking: {
-        Args: {
-          _country_id?: string
-          _date_from: string
-          _date_to: string
-          _month: number
-          _year: number
-        }
-        Returns: {
-          activated: number
-          activation_target: number
-          display_name: string
-          total_calls: number
-          user_id: string
-        }[]
-      }
+      stats_staff_ranking:
+        | {
+            Args: {
+              _country_id?: string
+              _date_from: string
+              _date_to: string
+              _month: number
+              _year: number
+            }
+            Returns: {
+              activated: number
+              activation_target: number
+              display_name: string
+              total_calls: number
+              user_id: string
+            }[]
+          }
+        | {
+            Args: {
+              _attendance_date?: string
+              _country_id?: string
+              _date_from: string
+              _date_to: string
+              _month: number
+              _year: number
+            }
+            Returns: {
+              activated: number
+              activation_target: number
+              attendance: string
+              display_name: string
+              total_calls: number
+              user_id: string
+            }[]
+          }
       stats_status_counts: {
         Args: {
           _country_id?: string
@@ -657,6 +725,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "staff"
+      attendance_status:
+        | "present"
+        | "day_off"
+        | "annual_leave"
+        | "half_day"
+        | "training"
+        | "sick_leave"
       call_result:
         | "no_answer"
         | "wrong_number"
@@ -683,6 +758,7 @@ export type Database = {
         | "minor"
         | "wrong_application"
         | "seasonal_worker"
+        | "suspended_number"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -811,6 +887,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "staff"],
+      attendance_status: [
+        "present",
+        "day_off",
+        "annual_leave",
+        "half_day",
+        "training",
+        "sick_leave",
+      ],
       call_result: [
         "no_answer",
         "wrong_number",
@@ -839,6 +923,7 @@ export const Constants = {
         "minor",
         "wrong_application",
         "seasonal_worker",
+        "suspended_number",
       ],
     },
   },
