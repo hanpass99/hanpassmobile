@@ -661,41 +661,24 @@ export type Database = {
         }
         Returns: Json
       }
-      stats_staff_ranking:
-        | {
-            Args: {
-              _country_id?: string
-              _date_from: string
-              _date_to: string
-              _month: number
-              _year: number
-            }
-            Returns: {
-              activated: number
-              activation_target: number
-              display_name: string
-              total_calls: number
-              user_id: string
-            }[]
-          }
-        | {
-            Args: {
-              _attendance_date?: string
-              _country_id?: string
-              _date_from: string
-              _date_to: string
-              _month: number
-              _year: number
-            }
-            Returns: {
-              activated: number
-              activation_target: number
-              attendance: string
-              display_name: string
-              total_calls: number
-              user_id: string
-            }[]
-          }
+      stats_staff_ranking: {
+        Args: {
+          _attendance_date?: string
+          _country_id?: string
+          _date_from: string
+          _date_to: string
+          _month: number
+          _year: number
+        }
+        Returns: {
+          activated: number
+          activation_target: number
+          attendance: string
+          display_name: string
+          total_calls: number
+          user_id: string
+        }[]
+      }
       stats_status_counts: {
         Args: {
           _country_id?: string
