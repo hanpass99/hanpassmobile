@@ -108,9 +108,11 @@ const ko = {
   pool: {
     existing: "한패스 모바일 기존 고객",
     activation_request: "개통 신청자",
+    new_signup: "한패스 신규 가입자",
     short: {
       existing: "기존 고객",
       activation_request: "개통 신청자",
+      new_signup: "한패스 신규 가입자",
     },
     emptyPool: "{{name}} Pool에 고객이 없습니다.",
   },
@@ -401,9 +403,11 @@ const en = {
   pool: {
     existing: "Hanpass Mobile existing customers",
     activation_request: "Activation requests",
+    new_signup: "Hanpass new signups",
     short: {
       existing: "Existing",
       activation_request: "Activation",
+      new_signup: "New signup",
     },
     emptyPool: "No customers in {{name}} pool.",
   },
