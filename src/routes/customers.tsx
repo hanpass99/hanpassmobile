@@ -668,12 +668,19 @@ function CustomersPage() {
   const downloadSample = () => {
     const effPool: CustomerPool = tab === "all" ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
+    let header: string[] = [];
     if (effPool === "existing") {
+      header = ["고객명", "전화번호", "개통일", "요금제", "국적", "메모"];
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
-    } else {
+    } else if (effPool === "activation_request") {
+      header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
+    } else {
+      // new_signup
+      header = ["고객명", "전화번호", "국적", "가입일", "담당자", "상태", "콜 라운드", "데이터 등록일", "메모"];
+      sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 가입일: "2026-05-08", 담당자: "", 상태: "", "콜 라운드": "", "데이터 등록일": "", 메모: "" }];
     }
-    const ws = XLSX.utils.json_to_sheet(sample);
+    const ws = XLSX.utils.json_to_sheet(sample, { header });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Customers");
     XLSX.writeFile(wb, `샘플_${POOL_SHORT[effPool]}.xlsx`);
