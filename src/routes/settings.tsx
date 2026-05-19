@@ -40,6 +40,7 @@ type Row = {
   email: string | null;
   last_sign_in_at: string | null;
   sort_order: number;
+  can_access_new_signup: boolean;
 };
 
 const now = new Date();
