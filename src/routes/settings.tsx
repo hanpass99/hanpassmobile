@@ -160,6 +160,21 @@ function Settings() {
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, country_ids } : x)));
   };
 
+  const setNewSignupAccess = async (r: Row, value: boolean) => {
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_new_signup: value } : x)));
+    const { error } = await (supabase as any).rpc("admin_set_profile_new_signup_access", {
+      _user_id: r.id,
+      _value: value,
+    });
+    if (error) {
+      toast.error(error.message);
+      setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_new_signup: !value } : x)));
+      return;
+    }
+    toast.success(value ? "신규 가입자 접근 허용" : "신규 가입자 접근 차단");
+  };
+
+
   const moveRow = async (idx: number, dir: -1 | 1) => {
     const next = [...rows];
     const target = idx + dir;
