@@ -299,6 +299,7 @@ function Settings() {
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="w-28">{t("settings.callTarget")}</TableHead>
                 <TableHead className="w-28">{t("settings.activationTarget")}</TableHead>
+                {isAdmin && <TableHead className="w-32">신규 가입자 접근</TableHead>}
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
