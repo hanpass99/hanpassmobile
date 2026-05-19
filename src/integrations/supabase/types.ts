@@ -290,6 +290,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          can_access_new_signup: boolean
           country_id: string | null
           created_at: string
           department: string | null
@@ -301,6 +302,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          can_access_new_signup?: boolean
           country_id?: string | null
           created_at?: string
           department?: string | null
@@ -312,6 +314,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          can_access_new_signup?: boolean
           country_id?: string | null
           created_at?: string
           department?: string | null
@@ -511,6 +514,10 @@ export type Database = {
         Args: { _country_id: string; _user_id: string }
         Returns: undefined
       }
+      admin_set_profile_new_signup_access: {
+        Args: { _user_id: string; _value: boolean }
+        Returns: undefined
+      }
       admin_set_profile_sort_order: {
         Args: { _sort_order: number; _user_id: string }
         Returns: undefined
@@ -526,6 +533,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_access_new_signup: { Args: { _user_id: string }; Returns: boolean }
       current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
       customer_pool_counts: {
