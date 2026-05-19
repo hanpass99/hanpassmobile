@@ -81,7 +81,7 @@ function Settings() {
   const load = async () => {
     setLoading(true);
     const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, { data: pcs }, activityRes] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url, sort_order").order("sort_order").order("display_name"),
+      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url, sort_order, can_access_new_signup").order("sort_order").order("display_name"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
       supabase.from("countries").select("id, code, name_ko").order("code"),
@@ -115,6 +115,7 @@ function Settings() {
         email: a?.email ?? null,
         last_sign_in_at: a?.last_sign_in_at ?? null,
         sort_order: p.sort_order ?? 1000,
+        can_access_new_signup: !!p.can_access_new_signup,
       };
     });
     merged.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
