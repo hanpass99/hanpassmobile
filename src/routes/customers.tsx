@@ -382,6 +382,9 @@ function CustomersPage() {
         } else if (sortKey === "assigned") {
           av = staffById.get(a.assigned_to ?? "") ?? "";
           bv = staffById.get(b.assigned_to ?? "") ?? "";
+        } else {
+          av = (a as any)[sortKey] ?? "";
+          bv = (b as any)[sortKey] ?? "";
         }
         return String(av).localeCompare(String(bv)) * dir;
       });
