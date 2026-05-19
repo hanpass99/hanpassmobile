@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setIsAdmin(false);
+        setCanAccessNewSignup(false);
         setDisplayName("");
         setAvatarUrl(null);
       }
@@ -63,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         isAdmin,
+        canAccessNewSignup,
         displayName,
         avatarUrl,
         signOut: async () => {
