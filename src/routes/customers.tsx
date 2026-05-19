@@ -120,7 +120,11 @@ let lookupsPromise: Promise<LookupsCache> | null = null;
 
 function CustomersPage() {
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, canAccessNewSignup } = useAuth();
+  const visiblePools = useMemo<readonly CustomerPool[]>(
+    () => POOLS.filter((p) => p !== "new_signup" || isAdmin || canAccessNewSignup),
+    [isAdmin, canAccessNewSignup]
+  );
   const initialSearch = Route.useSearch();
   const initialStatus = (() => {
     const s = initialSearch.status;
@@ -137,10 +141,7 @@ function CustomersPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const initialTab: TabValue = (() => {
     const p = initialSearch.pool;
-    if (p === "all") return "all";
-    if (typeof p === "string" && (POOLS as readonly string[]).includes(p)) return p as CustomerPool;
-    // 대시보드에서 status/날짜 필터를 갖고 들어왔다면 풀이 명시되지 않았더라도 "전체" 뷰로 시작
-    if (initialSearch.status || initialSearch.from || initialSearch.to) return "all";
+    if (typeof p === "string" && visiblePools.includes(p as CustomerPool)) return p as CustomerPool;
     return "existing";
   })();
   const [tab, setTab] = useState<TabValue>(initialTab);
