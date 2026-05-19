@@ -403,9 +403,11 @@ const en = {
   pool: {
     existing: "Hanpass Mobile existing customers",
     activation_request: "Activation requests",
+    new_signup: "Hanpass new signups",
     short: {
       existing: "Existing",
       activation_request: "Activation",
+      new_signup: "New signup",
     },
     emptyPool: "No customers in {{name}} pool.",
   },
