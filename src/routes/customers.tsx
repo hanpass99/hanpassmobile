@@ -120,7 +120,11 @@ let lookupsPromise: Promise<LookupsCache> | null = null;
 
 function CustomersPage() {
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, canAccessNewSignup } = useAuth();
+  const visiblePools = useMemo<readonly CustomerPool[]>(
+    () => POOLS.filter((p) => p !== "new_signup" || isAdmin || canAccessNewSignup),
+    [isAdmin, canAccessNewSignup]
+  );
   const initialSearch = Route.useSearch();
   const initialStatus = (() => {
     const s = initialSearch.status;
@@ -137,10 +141,7 @@ function CustomersPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const initialTab: TabValue = (() => {
     const p = initialSearch.pool;
-    if (p === "all") return "all";
-    if (typeof p === "string" && (POOLS as readonly string[]).includes(p)) return p as CustomerPool;
-    // 대시보드에서 status/날짜 필터를 갖고 들어왔다면 풀이 명시되지 않았더라도 "전체" 뷰로 시작
-    if (initialSearch.status || initialSearch.from || initialSearch.to) return "all";
+    if (typeof p === "string" && visiblePools.includes(p as CustomerPool)) return p as CustomerPool;
     return "existing";
   })();
   const [tab, setTab] = useState<TabValue>(initialTab);
@@ -281,6 +282,13 @@ function CustomersPage() {
 
   // 초기 로드
   useEffect(() => { loadLookups(); loadPoolCounts(); }, []);
+
+  // 권한 변경/로드 시 비허용 풀이 선택돼 있으면 안전한 탭으로 리셋
+  useEffect(() => {
+    if (tab !== "all" && !visiblePools.includes(tab as CustomerPool)) {
+      setTab(visiblePools[0] ?? "existing");
+    }
+  }, [visiblePools, tab]);
 
   // 필터/정렬/탭 변경 시 1페이지 재조회 (디바운스)
   useEffect(() => {
@@ -854,11 +862,8 @@ function CustomersPage() {
       />
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all" className="text-xs md:text-sm">
-            전체 <span className="ml-1 text-muted-foreground">({Object.values(poolCounts).reduce((a, b) => a + (b ?? 0), 0).toLocaleString()})</span>
-          </TabsTrigger>
-          {POOLS.map((p) => (
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
+          {visiblePools.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>

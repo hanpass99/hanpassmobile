@@ -9,6 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -40,6 +41,7 @@ type Row = {
   email: string | null;
   last_sign_in_at: string | null;
   sort_order: number;
+  can_access_new_signup: boolean;
 };
 
 const now = new Date();
@@ -80,7 +82,7 @@ function Settings() {
   const load = async () => {
     setLoading(true);
     const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, { data: pcs }, activityRes] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url, sort_order").order("sort_order").order("display_name"),
+      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url, sort_order, can_access_new_signup").order("sort_order").order("display_name"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
       supabase.from("countries").select("id, code, name_ko").order("code"),
@@ -114,6 +116,7 @@ function Settings() {
         email: a?.email ?? null,
         last_sign_in_at: a?.last_sign_in_at ?? null,
         sort_order: p.sort_order ?? 1000,
+        can_access_new_signup: !!p.can_access_new_signup,
       };
     });
     merged.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
@@ -156,6 +159,21 @@ function Settings() {
     toast.success(t("settings.countryChanged"));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, country_ids } : x)));
   };
+
+  const setNewSignupAccess = async (r: Row, value: boolean) => {
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_new_signup: value } : x)));
+    const { error } = await (supabase as any).rpc("admin_set_profile_new_signup_access", {
+      _user_id: r.id,
+      _value: value,
+    });
+    if (error) {
+      toast.error(error.message);
+      setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_new_signup: !value } : x)));
+      return;
+    }
+    toast.success(value ? "신규 가입자 접근 허용" : "신규 가입자 접근 차단");
+  };
+
 
   const moveRow = async (idx: number, dir: -1 | 1) => {
     const next = [...rows];
@@ -281,6 +299,7 @@ function Settings() {
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="w-28">{t("settings.callTarget")}</TableHead>
                 <TableHead className="w-28">{t("settings.activationTarget")}</TableHead>
+                {isAdmin && <TableHead className="w-32">신규 가입자 접근</TableHead>}
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -375,6 +394,20 @@ function Settings() {
                       className="h-8 w-20"
                     />
                   </TableCell>
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={r.role === "admin" || r.can_access_new_signup}
+                          disabled={r.role === "admin"}
+                          onCheckedChange={(v) => setNewSignupAccess(r, v)}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {r.role === "admin" ? "전체 허용" : r.can_access_new_signup ? "허용" : "차단"}
+                        </span>
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell className="text-right whitespace-nowrap">
                     {isAdmin && (
                       <>
@@ -406,7 +439,7 @@ function Settings() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={isAdmin ? 11 : 10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isAdmin ? 12 : 10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
