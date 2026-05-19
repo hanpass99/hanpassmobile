@@ -382,6 +382,9 @@ function CustomersPage() {
         } else if (sortKey === "assigned") {
           av = staffById.get(a.assigned_to ?? "") ?? "";
           bv = staffById.get(b.assigned_to ?? "") ?? "";
+        } else {
+          av = (a as any)[sortKey] ?? "";
+          bv = (b as any)[sortKey] ?? "";
         }
         return String(av).localeCompare(String(bv)) * dir;
       });
@@ -807,6 +810,47 @@ function CustomersPage() {
         </Table>
       );
     }
+
+    if (p === "new_signup") {
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              {CheckHead}
+              <SortHead k="name">고객명</SortHead>
+              <SortHead k="phone">전화번호</SortHead>
+              <SortHead k="country">국적</SortHead>
+              <SortHead k="signup_date">가입일</SortHead>
+              <SortHead k="assigned">담당자</SortHead>
+              <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              {CallRoundHead}
+              <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
+              <TableHead>메모</TableHead>
+              <TableHead className="text-right">액션</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((c) => (
+              <TableRow key={c.id} className="hover:bg-muted/30">
+                <CheckCell c={c} />
+                <TableCell className="font-medium">{c.name}</TableCell>
+                <TableCell className="font-mono text-xs">{c.phone}</TableCell>
+                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                <TableCell className="text-xs">{fmtDate(c.signup_date)}</TableCell>
+                <Assigned c={c} />
+                <StatusCell c={c} />
+                <CallRoundCell c={c} />
+                <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
+                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                {renderActions(c)}
+              </TableRow>
+            ))}
+            {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
+          </TableBody>
+        </Table>
+      );
+    }
+
 
     return (
       <Table>
