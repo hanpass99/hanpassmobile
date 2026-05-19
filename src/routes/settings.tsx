@@ -394,6 +394,20 @@ function Settings() {
                       className="h-8 w-20"
                     />
                   </TableCell>
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={r.role === "admin" || r.can_access_new_signup}
+                          disabled={r.role === "admin"}
+                          onCheckedChange={(v) => setNewSignupAccess(r, v)}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {r.role === "admin" ? "전체 허용" : r.can_access_new_signup ? "허용" : "차단"}
+                        </span>
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell className="text-right whitespace-nowrap">
                     {isAdmin && (
                       <>
