@@ -262,6 +262,13 @@ function Settings() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {loading && !rows.length && Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  {Array.from({ length: isAdmin ? 12 : 10 }).map((__, j) => (
+                    <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))}
               {rows.map((r, idx) => (
                 <TableRow key={r.id} className={r.is_active ? "" : "opacity-50"}>
                   {isAdmin && (
