@@ -141,7 +141,7 @@ export function useCustomersList(p: CustomersSearchParams, options?: { enabled?:
         _page_size: p.pageSize,
         _call_round: p.callRound === "all" || !p.callRound ? undefined : (p.callRound === "none" ? null : Number(p.callRound)),
         _call_completed: p.status === "__call_completed__",
-      } as any);
+      });
       if (error) throw new Error(error.message);
       const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
       return {
