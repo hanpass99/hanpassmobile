@@ -86,10 +86,10 @@ export function useCustomerPoolCounts() {
     queryKey: ["customers", "poolCounts"],
     staleTime: 30_000,
     queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc("customer_pool_counts");
+      const { data, error } = await supabase.rpc("customer_pool_counts");
       if (!error) {
         const out: Record<string, number> = {};
-        (data ?? []).forEach((r: { pool: string; cnt: number | string }) => {
+        ((data ?? []) as CustomerPoolCountRow[]).forEach((r) => {
           out[r.pool] = Number(r.cnt ?? 0);
         });
         return out;
