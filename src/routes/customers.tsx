@@ -278,8 +278,8 @@ function CustomersPage() {
     let out = rows.slice();
     if (sortKey && sortDir && !SERVER_SORT_KEYS.has(sortKey)) {
       const dir = sortDir === "asc" ? 1 : -1;
-      out.sort((a: any, b: any) => {
-        let av: any = ""; let bv: any = "";
+      out.sort((a, b) => {
+        let av: string = ""; let bv: string = "";
         if (sortKey === "country") {
           av = countryById.get(a.country_id ?? "")?.code ?? "";
           bv = countryById.get(b.country_id ?? "")?.code ?? "";
@@ -290,8 +290,9 @@ function CustomersPage() {
           av = staffById.get(a.assigned_to ?? "") ?? "";
           bv = staffById.get(b.assigned_to ?? "") ?? "";
         } else {
-          av = (a as any)[sortKey] ?? "";
-          bv = (b as any)[sortKey] ?? "";
+          const k = sortKey as keyof CustomerRow;
+          av = String(a[k] ?? "");
+          bv = String(b[k] ?? "");
         }
         return String(av).localeCompare(String(bv)) * dir;
       });
