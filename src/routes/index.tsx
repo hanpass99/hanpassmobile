@@ -15,13 +15,14 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
+import { useDashboardCountries, useDashboardSummary } from "@/hooks/use-dashboard";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "대시보드 — Hanpass Mobile OB Call CRM" }] }),
