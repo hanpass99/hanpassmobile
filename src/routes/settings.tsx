@@ -17,43 +17,36 @@ import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Cloc
 import { MultiCountrySelect } from "@/components/MultiCountrySelect";
 import { resizeImage } from "@/lib/image-resize";
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSettingsData, type Country, type SettingsRow as Row } from "@/hooks/use-settings";
+import type {
+  AdminResetPasswordResponse,
+  AdminDeleteStaffResponse,
+  AdminCreateStaffResponse,
+} from "@/types/rpc";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "설정 — Hanpass OB CRM" }] }),
   component: Settings,
 });
 
-type Country = { id: string; code: string; name_ko: string };
-type Row = {
-  id: string;
-  display_name: string;
-  department: string | null;
-  is_active: boolean;
-  role: "admin" | "staff";
-  country_ids: string[];
-  avatar_url: string | null;
-  call_target: number;
-  activation_target: number;
-  email: string | null;
-  last_sign_in_at: string | null;
-  sort_order: number;
-  can_access_new_signup: boolean;
-};
-
 const now = new Date();
 const Y = now.getFullYear();
 const M = now.getMonth() + 1;
 
+
 function Settings() {
   const { t } = useTranslation();
   const { isAdmin, user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data, isLoading: loading } = useSettingsData({ year: Y, month: M, isAdmin });
   const [rows, setRows] = useState<Row[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
-  const [loading, setLoading] = useState(true);
   const [bulkCall, setBulkCall] = useState(200);
   const [bulkAct, setBulkAct] = useState(120);
   const [showCreate, setShowCreate] = useState(false);
@@ -64,68 +57,31 @@ function Settings() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  useEffect(() => {
+    if (data) {
+      setRows(data.rows);
+      setCountries(data.countries);
+    }
+  }, [data]);
+
+  const load = () => queryClient.invalidateQueries({ queryKey: ["settings", Y, M, isAdmin] });
+
   const resetPassword = async () => {
     if (!resetTarget) return;
     setResetting(true);
-    const { data, error } = await supabase.functions.invoke("admin-reset-staff-password", {
-      body: { user_id: resetTarget.id },
-    });
+    const { data: res, error } = await supabase.functions.invoke<AdminResetPasswordResponse>(
+      "admin-reset-staff-password",
+      { body: { user_id: resetTarget.id } },
+    );
     setResetting(false);
-    if (error || (data as any)?.error) {
-      return toast.error(t("settings.resetFailed", { msg: (data as any)?.error ?? error?.message }));
+    if (error || res?.error) {
+      return toast.error(t("settings.resetFailed", { msg: res?.error ?? error?.message }));
     }
-    setResetResult({ name: resetTarget.display_name, tempPassword: (data as any).temp_password });
+    setResetResult({ name: resetTarget.display_name, tempPassword: res?.temp_password ?? "" });
     setResetTarget(null);
     toast.success(t("settings.tempPwdIssued"));
   };
 
-  const load = async () => {
-    setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, { data: pcs }, activityRes] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url, sort_order, can_access_new_signup").order("sort_order").order("display_name"),
-      supabase.from("user_roles").select("user_id, role"),
-      supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
-      supabase.from("countries").select("id, code, name_ko").order("code"),
-      supabase.from("profile_countries").select("user_id, country_id"),
-      isAdmin
-        ? supabase.functions.invoke("admin-list-staff-activity")
-        : Promise.resolve({ data: { users: [] }, error: null } as any),
-    ]);
-    const activityList: { id: string; email: string | null; last_sign_in_at: string | null }[] =
-      (activityRes as any)?.data?.users ?? [];
-    const pcMap = new Map<string, string[]>();
-    (pcs ?? []).forEach((p: any) => {
-      const arr = pcMap.get(p.user_id) ?? [];
-      arr.push(p.country_id);
-      pcMap.set(p.user_id, arr);
-    });
-    const merged: Row[] = (profiles ?? []).map((p: any) => {
-      const r = roles?.find((x) => x.user_id === p.id);
-      const tg = targets?.find((x) => x.user_id === p.id);
-      const a = activityList.find((x) => x.id === p.id);
-      return {
-        id: p.id,
-        display_name: p.display_name,
-        department: p.department,
-        is_active: p.is_active,
-        role: (r?.role as "admin" | "staff") ?? "staff",
-        country_ids: pcMap.get(p.id) ?? [],
-        avatar_url: p.avatar_url ?? null,
-        call_target: tg?.call_target ?? 0,
-        activation_target: tg?.activation_target ?? 0,
-        email: a?.email ?? null,
-        last_sign_in_at: a?.last_sign_in_at ?? null,
-        sort_order: p.sort_order ?? 1000,
-        can_access_new_signup: !!p.can_access_new_signup,
-      };
-    });
-    merged.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
-    setRows(merged);
-    setCountries(co ?? []);
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, [isAdmin]);
 
   const saveTarget = async (r: Row) => {
     const { error } = await supabase.from("targets").upsert(
@@ -153,7 +109,7 @@ function Settings() {
   const setCountries2 = async (r: Row, country_ids: string[]) => {
     const { error } = await supabase.rpc("admin_set_profile_countries", {
       _user_id: r.id,
-      _country_ids: country_ids as any,
+      _country_ids: country_ids,
     });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.countryChanged"));
@@ -162,7 +118,7 @@ function Settings() {
 
   const setNewSignupAccess = async (r: Row, value: boolean) => {
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_new_signup: value } : x)));
-    const { error } = await (supabase as any).rpc("admin_set_profile_new_signup_access", {
+    const { error } = await supabase.rpc("admin_set_profile_new_signup_access", {
       _user_id: r.id,
       _value: value,
     });
@@ -183,7 +139,7 @@ function Settings() {
     const reordered = next.map((r, i) => ({ ...r, sort_order: (i + 1) * 10 }));
     setRows(reordered);
     const { error } = await supabase.rpc("admin_set_profile_sort_orders", {
-      _user_ids: reordered.map((r) => r.id) as any,
+      _user_ids: reordered.map((r) => r.id),
     });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); load(); return; }
   };
@@ -195,11 +151,12 @@ function Settings() {
       return;
     }
     setDeleting(true);
-    const { data, error } = await supabase.functions.invoke("admin-delete-staff", {
-      body: { user_id: deleteTarget.id },
-    });
+    const { data: res, error } = await supabase.functions.invoke<AdminDeleteStaffResponse>(
+      "admin-delete-staff",
+      { body: { user_id: deleteTarget.id } },
+    );
     setDeleting(false);
-    const errMsg = (data as any)?.error ?? error?.message;
+    const errMsg = res?.error ?? error?.message;
     if (errMsg) {
       toast.error(t("settings.deleteFailed", { msg: errMsg }));
       return;
@@ -209,6 +166,7 @@ function Settings() {
     setDeleteConfirmText("");
     load();
   };
+
 
   const bulkApply = async () => {
     const payload = rows
@@ -304,6 +262,13 @@ function Settings() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {loading && !rows.length && Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  {Array.from({ length: isAdmin ? 12 : 10 }).map((__, j) => (
+                    <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))}
               {rows.map((r, idx) => (
                 <TableRow key={r.id} className={r.is_active ? "" : "opacity-50"}>
                   {isAdmin && (
@@ -664,30 +629,36 @@ function CreateStaffDialog({
     if (!email || !password || !displayName) return toast.error(t("settings.createRequired"));
     if (password.length < 6) return toast.error(t("settings.pwdLenError"));
     setSaving(true);
-    const { data, error } = await supabase.functions.invoke("admin-create-staff", {
-      body: {
-        email, password,
-        display_name: displayName,
-        department: department || undefined,
-        country_ids: countryIds,
-        role,
+    const { data: res, error } = await supabase.functions.invoke<AdminCreateStaffResponse>(
+      "admin-create-staff",
+      {
+        body: {
+          email, password,
+          display_name: displayName,
+          department: department || undefined,
+          country_ids: countryIds,
+          role,
+        },
       },
-    });
+    );
     setSaving(false);
-    let errMsg: string | undefined = (data as any)?.error;
+    let errMsg: string | undefined = res?.error;
     if (error) {
       // supabase-js 는 non-2xx 시 본문을 숨기므로 직접 파싱
       try {
-        const ctx: any = (error as any).context;
+        const ctx = (error as { context?: { json?: () => Promise<{ error?: string; message?: string }>; text?: () => Promise<string> } }).context;
         if (ctx?.json) {
           const body = await ctx.json();
           errMsg = body?.error ?? body?.message ?? errMsg;
         } else if (ctx?.text) {
           errMsg = (await ctx.text()) || errMsg;
         }
-      } catch {}
+      } catch {
+        // ignore parse errors
+      }
       errMsg = errMsg ?? error.message;
     }
+
     if (errMsg) {
       return toast.error(t("settings.createFailed", { msg: errMsg }));
     }
@@ -719,7 +690,7 @@ function CreateStaffDialog({
           </div>
           <div className="space-y-2">
             <Label>{t("settings.role")}</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+            <Select value={role} onValueChange={(v) => setRole(v as "admin" | "staff")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="staff">{t("common.staff")}</SelectItem>

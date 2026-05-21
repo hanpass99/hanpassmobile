@@ -38,15 +38,19 @@ async function exportCalls() {
     .order("created_at", { ascending: false });
   if (error) return toast.error(error.message);
 
-  const logs = (data ?? []) as { call_date: string; round: number; customer_id: string; staff_id: string; created_at: string }[];
+  const logs = data ?? [];
   const customerIds = [...new Set(logs.map((r) => r.customer_id))];
   const staffIds = [...new Set(logs.map((r) => r.staff_id))];
   const [{ data: customers }, { data: staff }] = await Promise.all([
-    customerIds.length ? supabase.from("customers").select("id, name, phone").in("id", customerIds) : Promise.resolve({ data: [] }),
-    staffIds.length ? supabase.from("profiles").select("id, display_name").in("id", staffIds) : Promise.resolve({ data: [] }),
+    customerIds.length
+      ? supabase.from("customers").select("id, name, phone").in("id", customerIds)
+      : Promise.resolve({ data: [] as { id: string; name: string; phone: string }[] }),
+    staffIds.length
+      ? supabase.from("profiles").select("id, display_name").in("id", staffIds)
+      : Promise.resolve({ data: [] as { id: string; display_name: string }[] }),
   ]);
-  const customerMap = new Map((customers ?? []).map((c: any) => [c.id, c]));
-  const staffMap = new Map((staff ?? []).map((p: any) => [p.id, p.display_name]));
+  const customerMap = new Map((customers ?? []).map((c) => [c.id, c]));
+  const staffMap = new Map((staff ?? []).map((p) => [p.id, p.display_name]));
 
   const rows: (string | number)[][] = [["콜일", "기록시간", "고객명", "전화번호", "직원", "콜라운드"]];
   for (const r of logs) {
@@ -64,6 +68,17 @@ async function exportCalls() {
   toast.success(t("reports.exportDone", { n: rows.length - 1 }));
 }
 
+type CustomerExportRow = {
+  name: string;
+  phone: string;
+  email: string | null;
+  status: CustomerStatus;
+  signup_date: string;
+  country: { code: string; name_ko: string } | null;
+  channel: { name: string } | null;
+  staff: { display_name: string } | null;
+};
+
 async function exportCustomers() {
   const t = i18n.t.bind(i18n);
   const { data, error } = await supabase
@@ -71,13 +86,13 @@ async function exportCustomers() {
     .select("name, phone, email, status, signup_date, country:countries(code, name_ko), channel:channels(name), staff:profiles!customers_assigned_to_fkey(display_name)");
   if (error) return toast.error(error.message);
   const rows: (string | number)[][] = [["이름", "전화", "이메일", "국가", "채널", "담당자", "상태", "등록일"]];
-  for (const r of (data ?? []) as any[]) {
+  for (const r of (data ?? []) as unknown as CustomerExportRow[]) {
     rows.push([
       r.name, r.phone, r.email ?? "",
       r.country ? `${r.country.code} ${r.country.name_ko}` : "",
       r.channel?.name ?? "",
       r.staff?.display_name ?? "",
-      STATUS_LABEL[r.status as CustomerStatus],
+      STATUS_LABEL[r.status],
       r.signup_date,
     ]);
   }
@@ -91,12 +106,11 @@ async function exportStaffMonthly() {
   const Y = now.getFullYear(); const M = now.getMonth() + 1;
   const monthStart = dayStartIso(new Date(Y, M - 1, 1));
   const monthEnd = dayEndIso(new Date(Y, M, 0));
-  const { data, error } = await (supabase as any).rpc("stats_staff_ranking", {
+  const { data, error } = await supabase.rpc("stats_staff_ranking", {
     _date_from: monthStart,
     _date_to: monthEnd,
     _year: Y,
     _month: M,
-    _country_id: null,
     _attendance_date: dateKey(new Date()),
   });
   if (error) return toast.error(error.message);

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { CalendarIcon, CheckCircle2, History, Users } from "lucide-react";
@@ -12,11 +13,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { dateKey as formatDateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
+import { dateKey as formatDateKey } from "@/lib/date-range";
 import { ATTENDANCE_STATUSES, ATTENDANCE_CLASS, type AttendanceStatus } from "@/lib/labels";
+import { useAttendance } from "@/hooks/use-attendance";
 
 export const Route = createFileRoute("/attendance")({
   head: () => ({ meta: [{ title: "출근 관리 — Hanpass OB CRM" }] }),
@@ -24,98 +27,67 @@ export const Route = createFileRoute("/attendance")({
 });
 
 type StaffRow = { id: string; name: string; totalCalls: number; activated: number; attendance: AttendanceStatus };
-type HistoryRow = { id: string; user_id: string; attendance_date: string; status: AttendanceStatus; note: string | null; set_by: string | null; updated_at: string };
-
-function isoDate(d: Date) {
-  return formatDateKey(d);
-}
 
 function AttendancePage() {
   const { t } = useTranslation();
   const { isAdmin, user } = useAuth();
   const today = new Date();
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
   const [date, setDate] = useState<Date>(today);
-  const [rows, setRows] = useState<StaffRow[]>([]);
-  const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<string>("all");
   const [bulkStatus, setBulkStatus] = useState<AttendanceStatus>("present");
-  const [loading, setLoading] = useState(true);
 
-  const dateKey = isoDate(date);
+  const dateKey = formatDateKey(date);
+  const queryClient = useQueryClient();
+  const { data, isLoading: loading } = useAttendance(date);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const fromIso = dayStartIso(date);
-    const toIso = dayEndIso(date);
-    const [{ data: ranking, error: rankingError }, { data: attendance }, { data: history }] = await Promise.all([
-      (supabase as any).rpc("stats_staff_ranking", {
-        _date_from: fromIso,
-        _date_to: toIso,
-        _year: date.getFullYear(),
-        _month: date.getMonth() + 1,
-        _country_id: null,
-        _attendance_date: null,
-      }),
-      supabase.from("staff_attendance").select("user_id, status").eq("attendance_date", dateKey),
-      supabase.from("staff_attendance").select("id, user_id, attendance_date, status, note, set_by, updated_at").order("attendance_date", { ascending: false }).order("updated_at", { ascending: false }).limit(300),
-    ]);
-
-    if (rankingError) {
-      toast.error(rankingError.message);
-      setLoading(false);
-      return;
-    }
-
+  const rows = useMemo<StaffRow[]>(() => {
+    if (!data) return [];
     const attendanceMap = new Map<string, AttendanceStatus>();
-    (attendance ?? []).forEach((a: any) => attendanceMap.set(a.user_id, a.status));
-    setRows((ranking ?? []).map((r: any) => ({
+    data.attendance.forEach((a) => attendanceMap.set(a.user_id, a.status as AttendanceStatus));
+    return data.ranking.map((r) => ({
       id: r.user_id,
       name: r.display_name,
       totalCalls: Number(r.total_calls ?? 0),
       activated: Number(r.activated ?? 0),
       attendance: (attendanceMap.get(r.user_id) ?? "present") as AttendanceStatus,
-    })));
-    setHistoryRows((history ?? []) as HistoryRow[]);
-    setLoading(false);
-  }, [date, dateKey]);
-
-  useEffect(() => { void load(); }, [load]);
+    }));
+  }, [data]);
+  const historyRows = data?.history ?? [];
 
   const staffName = useMemo(() => new Map(rows.map((r) => [r.id, r.name])), [rows]);
   const visibleHistory = selectedStaff === "all" ? historyRows : historyRows.filter((h) => h.user_id === selectedStaff);
   const presentRows = rows.filter((r) => r.attendance === "present");
   const avgCalls = presentRows.length ? Math.round(presentRows.reduce((sum, r) => sum + r.totalCalls, 0) / presentRows.length) : 0;
 
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["attendance", dateKey] });
+
   const changeAttendance = async (userId: string, status: AttendanceStatus) => {
     if (!isAdmin && user?.id !== userId) {
       toast.error(t("attendance.forbidden"));
       return;
     }
-    const { error } = await (supabase as any).rpc("set_staff_attendance", {
+    const { error } = await supabase.rpc("set_staff_attendance", {
       _user_id: userId,
       _date: dateKey,
       _status: status,
-      _note: null,
     });
     if (error) { toast.error(error.message); return; }
     toast.success(t("attendance.updated"));
-    void load();
+    invalidate();
   };
 
   const applyBulk = async () => {
     if (!isAdmin) return toast.error(t("attendance.forbidden"));
     const targets = rows.map((r) => r.id);
-    const results = await Promise.all(targets.map((id) => (supabase as any).rpc("set_staff_attendance", {
+    const results = await Promise.all(targets.map((id) => supabase.rpc("set_staff_attendance", {
       _user_id: id,
       _date: dateKey,
       _status: bulkStatus,
-      _note: null,
     })));
     const failed = results.find((r) => r.error);
     if (failed?.error) return toast.error(failed.error.message);
     toast.success(t("attendance.savedCount", { count: targets.length }));
-    void load();
+    invalidate();
   };
 
   return (
@@ -134,7 +106,7 @@ function AttendancePage() {
                 <div className="text-xs font-medium text-muted-foreground">{t("attendance.bulkStatus")}</div>
                 <AttendanceSelect value={bulkStatus} onChange={setBulkStatus} />
               </div>
-              <Button size="sm" onClick={applyBulk}>{t("attendance.bulkApply")}</Button>
+              <Button size="sm" onClick={applyBulk} aria-busy={loading}>{t("attendance.bulkApply")}</Button>
             </div>
           )}
         </CardContent>
@@ -159,7 +131,16 @@ function AttendancePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r) => (
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={`sk-${i}`}>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-7 w-28" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-12" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-12" /></TableCell>
+                  </TableRow>
+                ))
+              ) : rows.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-semibold whitespace-nowrap">{r.name}</TableCell>
                   <TableCell>
@@ -173,7 +154,7 @@ function AttendancePage() {
                   <TableCell className="text-right font-bold text-primary">{r.activated.toLocaleString()}</TableCell>
                 </TableRow>
               ))}
-              {!rows.length && !loading && (
+              {!loading && !rows.length && (
                 <TableRow><TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">{t("common.noData")}</TableCell></TableRow>
               )}
             </TableBody>
@@ -203,7 +184,16 @@ function AttendancePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visibleHistory.map((h) => (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={`sh-${i}`}>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  </TableRow>
+                ))
+              ) : visibleHistory.map((h) => (
                 <TableRow key={h.id}>
                   <TableCell className="whitespace-nowrap">{h.attendance_date}</TableCell>
                   <TableCell className="font-medium whitespace-nowrap">{staffName.get(h.user_id) ?? "—"}</TableCell>
@@ -211,7 +201,7 @@ function AttendancePage() {
                   <TableCell className="text-muted-foreground">{h.set_by ? (staffName.get(h.set_by) ?? "—") : "—"}</TableCell>
                 </TableRow>
               ))}
-              {!visibleHistory.length && (
+              {!loading && !visibleHistory.length && (
                 <TableRow><TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">{t("attendance.noHistory")}</TableCell></TableRow>
               )}
             </TableBody>

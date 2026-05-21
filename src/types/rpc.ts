@@ -74,3 +74,29 @@ export interface CustomerPoolCountRow {
   pool: string;
   cnt: number | string;
 }
+
+// ---- Edge function payloads ----
+
+export interface AdminStaffActivityUser {
+  id: string;
+  email: string | null;
+  last_sign_in_at: string | null;
+}
+
+export interface AdminStaffActivityResponse {
+  users: AdminStaffActivityUser[];
+}
+
+export interface AdminResetPasswordResponse {
+  temp_password?: string;
+  error?: string;
+}
+
+export interface AdminDeleteStaffResponse {
+  error?: string;
+}
+
+export interface AdminCreateStaffResponse {
+  error?: string;
+}
+
