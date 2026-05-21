@@ -622,30 +622,36 @@ function CreateStaffDialog({
     if (!email || !password || !displayName) return toast.error(t("settings.createRequired"));
     if (password.length < 6) return toast.error(t("settings.pwdLenError"));
     setSaving(true);
-    const { data, error } = await supabase.functions.invoke("admin-create-staff", {
-      body: {
-        email, password,
-        display_name: displayName,
-        department: department || undefined,
-        country_ids: countryIds,
-        role,
+    const { data: res, error } = await supabase.functions.invoke<AdminCreateStaffResponse>(
+      "admin-create-staff",
+      {
+        body: {
+          email, password,
+          display_name: displayName,
+          department: department || undefined,
+          country_ids: countryIds,
+          role,
+        },
       },
-    });
+    );
     setSaving(false);
-    let errMsg: string | undefined = (data as any)?.error;
+    let errMsg: string | undefined = res?.error;
     if (error) {
       // supabase-js 는 non-2xx 시 본문을 숨기므로 직접 파싱
       try {
-        const ctx: any = (error as any).context;
+        const ctx = (error as { context?: { json?: () => Promise<{ error?: string; message?: string }>; text?: () => Promise<string> } }).context;
         if (ctx?.json) {
           const body = await ctx.json();
           errMsg = body?.error ?? body?.message ?? errMsg;
         } else if (ctx?.text) {
           errMsg = (await ctx.text()) || errMsg;
         }
-      } catch {}
+      } catch {
+        // ignore parse errors
+      }
       errMsg = errMsg ?? error.message;
     }
+
     if (errMsg) {
       return toast.error(t("settings.createFailed", { msg: errMsg }));
     }
