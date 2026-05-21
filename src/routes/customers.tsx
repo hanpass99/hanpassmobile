@@ -541,9 +541,9 @@ function CustomersPage() {
         const { error } = await supabase.from("customers").insert(chunk);
         if (error) {
           toast.error(`업로드 중단 (${inserted}/${totalToInsert} 완료): ${error.message}`, { id: toastId });
-          await loadPoolCounts();
+          await refetchPoolCounts();
           setPage(1);
-          await fetchPage(1, true);
+          await refetchList();
           return;
         }
         inserted += chunk.length;
