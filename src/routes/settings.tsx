@@ -109,7 +109,7 @@ function Settings() {
   const setCountries2 = async (r: Row, country_ids: string[]) => {
     const { error } = await supabase.rpc("admin_set_profile_countries", {
       _user_id: r.id,
-      _country_ids: country_ids as any,
+      _country_ids: country_ids,
     });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.countryChanged"));
@@ -118,7 +118,7 @@ function Settings() {
 
   const setNewSignupAccess = async (r: Row, value: boolean) => {
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_new_signup: value } : x)));
-    const { error } = await (supabase as any).rpc("admin_set_profile_new_signup_access", {
+    const { error } = await supabase.rpc("admin_set_profile_new_signup_access", {
       _user_id: r.id,
       _value: value,
     });
@@ -139,7 +139,7 @@ function Settings() {
     const reordered = next.map((r, i) => ({ ...r, sort_order: (i + 1) * 10 }));
     setRows(reordered);
     const { error } = await supabase.rpc("admin_set_profile_sort_orders", {
-      _user_ids: reordered.map((r) => r.id) as any,
+      _user_ids: reordered.map((r) => r.id),
     });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); load(); return; }
   };
@@ -151,11 +151,12 @@ function Settings() {
       return;
     }
     setDeleting(true);
-    const { data, error } = await supabase.functions.invoke("admin-delete-staff", {
-      body: { user_id: deleteTarget.id },
-    });
+    const { data: res, error } = await supabase.functions.invoke<AdminDeleteStaffResponse>(
+      "admin-delete-staff",
+      { body: { user_id: deleteTarget.id } },
+    );
     setDeleting(false);
-    const errMsg = (data as any)?.error ?? error?.message;
+    const errMsg = res?.error ?? error?.message;
     if (errMsg) {
       toast.error(t("settings.deleteFailed", { msg: errMsg }));
       return;
@@ -165,6 +166,7 @@ function Settings() {
     setDeleteConfirmText("");
     load();
   };
+
 
   const bulkApply = async () => {
     const payload = rows
