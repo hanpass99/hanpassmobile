@@ -435,25 +435,13 @@ function TemplateList({
 
 /* ============== HISTORY TAB ============== */
 function HistoryTab() {
-  const [logs, setLogs] = useState<SmsLog[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: logs = [], isLoading: loading, refetch } = useSmsLogs();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [detail, setDetail] = useState<SmsLog | null>(null);
 
-  useEffect(() => { void load(); }, []);
+  const load = () => { void refetch(); };
 
-  async function load() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("sms_logs")
-      .select("*")
-      .order("sent_at", { ascending: false })
-      .limit(500);
-    if (error) toast.error("내역 로드 실패: " + error.message);
-    else setLogs((data as SmsLog[]) || []);
-    setLoading(false);
-  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
