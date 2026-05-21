@@ -553,9 +553,9 @@ function CustomersPage() {
         `${inserted.toLocaleString()}명 추가 / DB중복 ${dupInDb}건 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
         { id: toastId }
       );
-      await loadPoolCounts();
+      await refetchPoolCounts();
       setPage(1);
-      await fetchPage(1, true);
+      await refetchList();
     } catch (e: any) {
       toast.error(`엑셀 파싱 실패: ${e.message}`, { id: toastId });
     } finally {
