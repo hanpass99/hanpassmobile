@@ -10,17 +10,17 @@ import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { CalendarIcon, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import {
   CUSTOMER_STATUSES, type CustomerStatus,
   ATTENDANCE_CLASS, type AttendanceStatus,
 } from "@/lib/labels";
+import { useStaffPerformance } from "@/hooks/use-staff";
+
 
 export const Route = createFileRoute("/staff-performance")({
   head: () => ({ meta: [{ title: "직원 성과 — Hanpass OB CRM" }] }),
