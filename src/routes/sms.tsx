@@ -66,39 +66,17 @@ function SmsPage() {
 /* ============== SEND TAB ============== */
 function SendTab() {
   const { user } = useAuth();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { data: customers = [] } = useSmsCustomers();
+  const { data: templates = [] } = useSmsTemplates();
+  const sendMutation = useSendSms();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState("");
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [pickTpl, setPickTpl] = useState<string>("");
-  const [sending, setSending] = useState(false);
   const [manualPhones, setManualPhones] = useState("");
-
-  useEffect(() => {
-    void loadCustomers();
-    void loadTemplates();
-  }, []);
-
-  async function loadCustomers() {
-    const { data, error } = await supabase
-      .from("customers")
-      .select("id,name,phone,status,country_id")
-      .order("imported_at", { ascending: false })
-      .limit(500);
-    if (error) toast.error("고객 로드 실패: " + error.message);
-    else setCustomers((data as Customer[]) || []);
-  }
-
-  async function loadTemplates() {
-    const { data } = await supabase
-      .from("sms_templates")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setTemplates((data as Template[]) || []);
-  }
+  const sending = sendMutation.isPending;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -147,28 +125,23 @@ function SendTab() {
     if (recv.length === 0) { toast.error("수신자를 선택하거나 번호를 입력하세요"); return; }
     if (isLms && !title.trim()) { toast.error("LMS는 제목이 필요합니다 (44자 이내)"); return; }
 
-    setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-sms", {
-        body: { receivers: recv, message, title: title || undefined },
-      });
-      if (error) throw error;
-      if ((data as any)?.ok) {
-        toast.success(`발송 완료 (${(data as any).msg_type} · ${(data as any).count}건)`);
+      const data = await sendMutation.mutateAsync({ receivers: recv, message, title: title || undefined });
+      if (data?.ok) {
+        toast.success(`발송 완료 (${data.msg_type} · ${data.count}건)`);
         setSelected(new Set());
         setMessage("");
         setTitle("");
         setManualPhones("");
         setPickTpl("");
       } else {
-        toast.error(`발송 실패: ${(data as any)?.aligo?.message || JSON.stringify((data as any)?.aligo)}`);
+        toast.error(`발송 실패: ${data?.aligo?.message || JSON.stringify(data?.aligo)}`);
       }
     } catch (e) {
       toast.error("발송 실패: " + (e as Error).message);
-    } finally {
-      setSending(false);
     }
   }
+
 
   return (
     <div className="grid gap-4 md:grid-cols-[1fr,420px]">
