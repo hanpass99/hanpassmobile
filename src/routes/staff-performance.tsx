@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
