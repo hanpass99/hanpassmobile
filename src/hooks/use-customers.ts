@@ -139,7 +139,7 @@ export function useCustomersList(p: CustomersSearchParams, options?: { enabled?:
         _sort_dir: sortDirForRpc,
         _page: p.page,
         _page_size: p.pageSize,
-        _call_round: p.callRound === "all" || !p.callRound ? undefined : (p.callRound === "none" ? null : Number(p.callRound)),
+        _call_round: (p.callRound === "all" || !p.callRound ? undefined : (p.callRound === "none" ? null : Number(p.callRound))) as number | undefined,
         _call_completed: p.status === "__call_completed__",
       });
       if (error) throw new Error(error.message);
