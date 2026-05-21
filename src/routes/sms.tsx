@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { MessageSquare, Send, FileText, History, Plus, Trash2, Edit3, Search, Users as UsersIcon } from "lucide-react";
 import { format } from "date-fns";
 import { PageHeader } from "@/components/PageHeader";
@@ -23,48 +23,23 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  useSmsCustomers, useSmsTemplates, useSmsLogs,
+  useInvalidateSmsTemplates, useSendSms,
+  type SmsTemplate as Template, type SmsLog,
+} from "@/hooks/use-sms";
 
 export const Route = createFileRoute("/sms")({
   head: () => ({ meta: [{ title: "문자 발송 — Hanpass OB CRM" }] }),
   component: SmsPage,
 });
 
-type Template = {
-  id: string;
-  user_id: string;
-  title: string;
-  content: string;
-  is_shared: boolean;
-  created_at: string;
-};
-
-type Customer = {
-  id: string;
-  name: string;
-  phone: string;
-  status: string;
-  country_id: string | null;
-};
-
-type SmsLog = {
-  id: string;
-  staff_id: string;
-  customer_id: string | null;
-  receiver_name: string | null;
-  receiver_phone: string;
-  message: string;
-  msg_type: string;
-  title: string | null;
-  status: string;
-  error_message: string | null;
-  sent_at: string;
-};
-
 function byteLength(s: string): number {
   let n = 0;
   for (const ch of s) n += ch.charCodeAt(0) > 127 ? 2 : 1;
   return n;
 }
+
 
 function SmsPage() {
   const [tab, setTab] = useState("send");
@@ -91,39 +66,17 @@ function SmsPage() {
 /* ============== SEND TAB ============== */
 function SendTab() {
   const { user } = useAuth();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { data: customers = [] } = useSmsCustomers();
+  const { data: templates = [] } = useSmsTemplates();
+  const sendMutation = useSendSms();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState("");
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [pickTpl, setPickTpl] = useState<string>("");
-  const [sending, setSending] = useState(false);
   const [manualPhones, setManualPhones] = useState("");
-
-  useEffect(() => {
-    void loadCustomers();
-    void loadTemplates();
-  }, []);
-
-  async function loadCustomers() {
-    const { data, error } = await supabase
-      .from("customers")
-      .select("id,name,phone,status,country_id")
-      .order("imported_at", { ascending: false })
-      .limit(500);
-    if (error) toast.error("고객 로드 실패: " + error.message);
-    else setCustomers((data as Customer[]) || []);
-  }
-
-  async function loadTemplates() {
-    const { data } = await supabase
-      .from("sms_templates")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setTemplates((data as Template[]) || []);
-  }
+  const sending = sendMutation.isPending;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -172,28 +125,23 @@ function SendTab() {
     if (recv.length === 0) { toast.error("수신자를 선택하거나 번호를 입력하세요"); return; }
     if (isLms && !title.trim()) { toast.error("LMS는 제목이 필요합니다 (44자 이내)"); return; }
 
-    setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-sms", {
-        body: { receivers: recv, message, title: title || undefined },
-      });
-      if (error) throw error;
-      if ((data as any)?.ok) {
-        toast.success(`발송 완료 (${(data as any).msg_type} · ${(data as any).count}건)`);
+      const data = await sendMutation.mutateAsync({ receivers: recv, message, title: title || undefined });
+      if (data?.ok) {
+        toast.success(`발송 완료 (${data.msg_type} · ${data.count}건)`);
         setSelected(new Set());
         setMessage("");
         setTitle("");
         setManualPhones("");
         setPickTpl("");
       } else {
-        toast.error(`발송 실패: ${(data as any)?.aligo?.message || JSON.stringify((data as any)?.aligo)}`);
+        toast.error(`발송 실패: ${data?.aligo?.message || JSON.stringify(data?.aligo)}`);
       }
     } catch (e) {
       toast.error("발송 실패: " + (e as Error).message);
-    } finally {
-      setSending(false);
     }
   }
+
 
   return (
     <div className="grid gap-4 md:grid-cols-[1fr,420px]">
@@ -342,21 +290,11 @@ function SendTab() {
 /* ============== TEMPLATES TAB ============== */
 function TemplatesTab() {
   const { user } = useAuth();
-  const [items, setItems] = useState<Template[]>([]);
+  const { data: items = [] } = useSmsTemplates();
+  const invalidateTemplates = useInvalidateSmsTemplates();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Template | null>(null);
   const [form, setForm] = useState({ title: "", content: "", is_shared: false });
-
-  useEffect(() => { void load(); }, []);
-
-  async function load() {
-    const { data, error } = await supabase
-      .from("sms_templates")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) toast.error("로드 실패: " + error.message);
-    else setItems((data as Template[]) || []);
-  }
 
   function startNew() {
     setEditing(null);
@@ -385,7 +323,7 @@ function TemplatesTab() {
       toast.success("저장됨");
     }
     setOpen(false);
-    void load();
+    void invalidateTemplates();
   }
 
   async function remove(id: string) {
@@ -393,11 +331,12 @@ function TemplatesTab() {
     const { error } = await supabase.from("sms_templates").delete().eq("id", id);
     if (error) return toast.error("삭제 실패: " + error.message);
     toast.success("삭제됨");
-    void load();
+    void invalidateTemplates();
   }
 
   const mine = items.filter((t) => t.user_id === user?.id);
   const shared = items.filter((t) => t.user_id !== user?.id && t.is_shared);
+
 
   return (
     <Card>
@@ -496,25 +435,13 @@ function TemplateList({
 
 /* ============== HISTORY TAB ============== */
 function HistoryTab() {
-  const [logs, setLogs] = useState<SmsLog[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: logs = [], isLoading: loading, refetch } = useSmsLogs();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [detail, setDetail] = useState<SmsLog | null>(null);
 
-  useEffect(() => { void load(); }, []);
+  const load = () => { void refetch(); };
 
-  async function load() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("sms_logs")
-      .select("*")
-      .order("sent_at", { ascending: false })
-      .limit(500);
-    if (error) toast.error("내역 로드 실패: " + error.message);
-    else setLogs((data as SmsLog[]) || []);
-    setLoading(false);
-  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
