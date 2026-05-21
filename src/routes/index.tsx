@@ -74,15 +74,15 @@ function Dashboard() {
       if (sMap[status as CustomerStatus] !== undefined) sMap[status as CustomerStatus] = Number(cnt ?? 0);
     });
 
-    const ttRow = (summary.totals ?? {}) as any;
+    const ttRow = summary.totals ?? {};
     const nextTotals = {
-      totalCalls: Number(ttRow?.total_calls ?? 0),
-      totalCustomers: Number(ttRow?.total_customers ?? 0),
-      monthlyTargetTotal: Number(ttRow?.monthly_target_total ?? 0),
+      totalCalls: Number(ttRow.total_calls ?? 0),
+      totalCustomers: Number(ttRow.total_customers ?? 0),
+      monthlyTargetTotal: Number(ttRow.monthly_target_total ?? 0),
     };
 
     const dayMap = new Map<string, { calls: number; activations: number }>();
-    for (const r of (summary.daily_calls ?? []) as any[]) {
+    for (const r of summary.daily_calls ?? []) {
       dayMap.set(String(r.day), { calls: Number(r.calls), activations: Number(r.activations) });
     }
     const days: DailyRow[] = [];
@@ -98,16 +98,16 @@ function Dashboard() {
       cur.setDate(cur.getDate() + 1);
     }
 
-    const cd = ((summary.country_activated ?? []) as any[]).map((r) => ({ name: r.code as string, value: Number(r.activated) }))
+    const cd = (summary.country_activated ?? []).map((r) => ({ name: r.code, value: Number(r.activated) }))
       .sort((a, b) => b.value - a.value).slice(0, 8);
 
-    const chd = ((summary.channel_summary ?? []) as any[]).map((r) => ({
+    const chd = (summary.channel_summary ?? []).map((r) => ({
       name: String(r.name).replace("한패스 ", ""),
       [t("dashboard.customers")]: Number(r.customers),
       [t("dashboard.activations")]: Number(r.activations),
     }));
 
-    const rkd = ((summary.staff_ranking ?? []) as any[]).map((r) => ({
+    const rkd = (summary.staff_ranking ?? []).map((r) => ({
       id: r.user_id, name: r.display_name,
       totalCalls: Number(r.total_calls), activated: Number(r.activated),
       target: Number(r.activation_target ?? 0),
