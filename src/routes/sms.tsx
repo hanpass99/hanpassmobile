@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { MessageSquare, Send, FileText, History, Plus, Trash2, Edit3, Search, Users as UsersIcon } from "lucide-react";
 import { format } from "date-fns";
 import { PageHeader } from "@/components/PageHeader";
@@ -23,48 +23,23 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  useSmsCustomers, useSmsTemplates, useSmsLogs,
+  useInvalidateSmsTemplates, useSendSms,
+  type SmsTemplate as Template, type SmsLog,
+} from "@/hooks/use-sms";
 
 export const Route = createFileRoute("/sms")({
   head: () => ({ meta: [{ title: "문자 발송 — Hanpass OB CRM" }] }),
   component: SmsPage,
 });
 
-type Template = {
-  id: string;
-  user_id: string;
-  title: string;
-  content: string;
-  is_shared: boolean;
-  created_at: string;
-};
-
-type Customer = {
-  id: string;
-  name: string;
-  phone: string;
-  status: string;
-  country_id: string | null;
-};
-
-type SmsLog = {
-  id: string;
-  staff_id: string;
-  customer_id: string | null;
-  receiver_name: string | null;
-  receiver_phone: string;
-  message: string;
-  msg_type: string;
-  title: string | null;
-  status: string;
-  error_message: string | null;
-  sent_at: string;
-};
-
 function byteLength(s: string): number {
   let n = 0;
   for (const ch of s) n += ch.charCodeAt(0) > 127 ? 2 : 1;
   return n;
 }
+
 
 function SmsPage() {
   const [tab, setTab] = useState("send");
