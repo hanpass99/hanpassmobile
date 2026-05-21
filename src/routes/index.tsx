@@ -52,15 +52,6 @@ const emptyStatus = (): StatusCounts => ({
   wrong_application: 0, seasonal_worker: 0, suspended_number: 0,
 });
 
-const emptyDashboard = (): DashboardData => ({
-  statusCounts: emptyStatus(),
-  totals: { totalCalls: 0, totalCustomers: 0, monthlyTargetTotal: 0 },
-  dailyData: [],
-  channelData: [],
-  countryData: [],
-  ranking: [],
-  callCompleted: 0,
-});
 
 function Dashboard() {
   const { t } = useTranslation();
