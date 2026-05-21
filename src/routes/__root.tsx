@@ -17,6 +17,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useCallGoal } from "@/hooks/use-call-goal";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "@/i18n";
 
 function NotFoundComponent() {
@@ -145,7 +146,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <AuthGate />
+          <ErrorBoundary>
+            <AuthGate />
+          </ErrorBoundary>
           <Toaster richColors position="top-right" />
         </AuthProvider>
       </ThemeProvider>
