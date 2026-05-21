@@ -158,7 +158,19 @@ function StaffPerf() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visibleRows.map((u, i) => (
+              {loading && Array.from({ length: 8 }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  <TableCell><Skeleton className="h-7 w-7 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-14" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-10" /></TableCell>
+                  {CUSTOMER_STATUSES.map((s) => (
+                    <TableCell key={s} className="text-right"><Skeleton className="ml-auto h-4 w-8" /></TableCell>
+                  ))}
+                </TableRow>
+              ))}
+              {!loading && visibleRows.map((u, i) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     {i < 3 ? (
