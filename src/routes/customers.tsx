@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
@@ -36,6 +37,10 @@ import {
   CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus,
   POOLS, type CustomerPool,
 } from "@/lib/labels";
+import {
+  useCustomersLookups, useCustomerPoolCounts, useCustomersList, useCustomersCache,
+  type Country, type Channel, type CustomerRow,
+} from "@/hooks/use-customers";
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
   get: (_t, p: string) => i18n.t(`status.${p}`),
@@ -69,31 +74,7 @@ export const Route = createFileRoute("/customers")({
 
 type TabValue = CustomerPool | "all";
 
-type Country = { id: string; code: string; name_ko: string };
-type Channel = { id: string; name: string };
 type Profile = { id: string; display_name: string; country_id: string | null };
-type CustomerRow = {
-  id: string;
-  name: string;
-  phone: string;
-  email: string | null;
-  country_id: string | null;
-  channel_id: string | null;
-  assigned_to: string | null;
-  status: CustomerStatus;
-  pool: CustomerPool;
-  signup_date: string;
-  imported_at: string;
-  notes: string | null;
-  activation_date: string | null;
-  carrier_plan: string | null;
-  charge_phone: string | null;
-  charge_amount: number | null;
-  charge_date: string | null;
-  application_date: string | null;
-  requested_plan: string | null;
-  call_round: number | null;
-};
 
 type ImportCustomer = {
   name: string;
@@ -113,11 +94,6 @@ type SortDir = "asc" | "desc" | null;
 
 const PAGE_SIZE = 50;
 
-// 세션 단위 룩업 캐시 (페이지 재방문 시 재요청 방지)
-type LookupsCache = { countries: Country[]; channels: Channel[]; staff: Profile[] };
-let lookupsCache: LookupsCache | null = null;
-let lookupsPromise: Promise<LookupsCache> | null = null;
-
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin, canAccessNewSignup } = useAuth();
@@ -133,12 +109,6 @@ function CustomersPage() {
     if ((CUSTOMER_STATUSES as readonly string[]).includes(s)) return s as CustomerStatus;
     return "all" as const;
   })();
-  const [rows, setRows] = useState<CustomerRow[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [staff, setStaff] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const initialTab: TabValue = (() => {
     const p = initialSearch.pool;
     if (typeof p === "string" && visiblePools.includes(p as CustomerPool)) return p as CustomerPool;
@@ -146,10 +116,9 @@ function CustomersPage() {
   })();
   const [tab, setTab] = useState<TabValue>(initialTab);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [poolCounts, setPoolCounts] = useState<Record<string, number>>({});
 
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [country, setCountry] = useState<string>(
     initialSearch.country && initialSearch.country !== "all" ? initialSearch.country : "all"
   );
@@ -175,7 +144,6 @@ function CustomersPage() {
   const [importing, setImporting] = useState(false);
   const importingRef = useRef(false);
   const poolCountRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestFetchRef = useRef(0);
   // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
   const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
 
@@ -187,101 +155,62 @@ function CustomersPage() {
     "application_date", "carrier_plan", "requested_plan",
   ]);
 
-  // 룩업 데이터 (세션 단위 1회 로드, 페이지 재방문 시 캐시 재사용)
-  const loadLookups = async () => {
-    if (lookupsCache) {
-      setCountries(lookupsCache.countries);
-      setChannels(lookupsCache.channels);
-      setStaff(lookupsCache.staff);
-      return;
-    }
-    if (!lookupsPromise) {
-      lookupsPromise = (async () => {
-        const [co, ch, sf] = await Promise.all([
-          supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
-          supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-          supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true).order("sort_order").order("display_name"),
-        ]);
-        lookupsCache = {
-          countries: co.data ?? [],
-          channels: ch.data ?? [],
-          staff: sf.data ?? [],
-        };
-        return lookupsCache;
-      })();
-    }
-    const result = await lookupsPromise;
-    setCountries(result.countries);
-    setChannels(result.channels);
-    setStaff(result.staff);
-  };
+  // === React Query: 룩업 / 풀 카운트 / 리스트 ===
+  const { countries, channels, staff } = useCustomersLookups();
+  const { counts: poolCounts, refetch: refetchPoolCounts } = useCustomerPoolCounts();
+  const cache = useCustomersCache();
 
-  // Pool별 총 건수 (탭 뱃지용)
-  const loadPoolCounts = async () => {
-    const { data, error } = await (supabase as any).rpc("customer_pool_counts");
-    if (!error) {
-      const out: Record<string, number> = {};
-      (data ?? []).forEach((r: { pool: string; cnt: number | string }) => { out[r.pool] = Number(r.cnt ?? 0); });
-      setPoolCounts(out);
-      return;
-    }
-    const fallback: Record<string, number> = {};
-    await Promise.all(POOLS.map(async (p) => {
-      const { count } = await supabase.from("customers").select("id", { count: "exact", head: true }).eq("pool", p);
-      fallback[p] = count ?? 0;
-    }));
-    setPoolCounts(fallback);
-  };
+  // 입력 디바운스 (검색어 600ms)
+  useEffect(() => {
+    const h = setTimeout(() => setDebouncedSearch(searchInput), 600);
+    return () => clearTimeout(h);
+  }, [searchInput]);
+
+  // 필터/정렬/탭 변경 시 1페이지로 리셋 + 핀 해제
+  useEffect(() => {
+    setPinnedOrder(null);
+    setPage(1);
+  }, [tab, debouncedSearch, country, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
+
+  const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
+  const toIso = dateTo ? dayEndIso(dateTo) : null;
+
+  const {
+    rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
+  } = useCustomersList({
+    pool: tab,
+    search: debouncedSearch,
+    country,
+    assignedCountry,
+    status: statusF,
+    staff: staffF,
+    callRound: callRoundF,
+    sortKey,
+    sortDir,
+    page,
+    pageSize: PAGE_SIZE,
+    dateFromIso: fromIso,
+    dateToIso: toIso,
+  });
+
+  useEffect(() => {
+    if (listError) toast.error(`고객 로드 실패: ${(listError as Error).message}`);
+  }, [listError]);
+
+  // 페이지 전환 시 선택 초기화
+  useEffect(() => { setSelected(new Set()); }, [page, tab]);
+
+  const loading = listLoading;
+  const loadingMore = listFetching && !listLoading;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const schedulePoolCountRefresh = () => {
     if (poolCountRefreshTimer.current) return;
     poolCountRefreshTimer.current = setTimeout(() => {
       poolCountRefreshTimer.current = null;
-      void loadPoolCounts();
+      void refetchPoolCounts();
     }, 1500);
   };
-
-  // 서버사이드 검색 (페이지네이션)
-  const fetchPage = async (pageNum: number, reset: boolean) => {
-    const requestId = ++latestFetchRef.current;
-    if (reset) setLoading(true); else setLoadingMore(true);
-    const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
-    const toIso = dateTo ? dayEndIso(dateTo) : null;
-    const sortKeyForRpc = SERVER_SORT_KEYS.has(sortKey) ? sortKey : "imported_at";
-    const sortDirForRpc = sortDir ?? "desc";
-    const { data, error } = await supabase.rpc("search_customers", {
-      _pool: tab === "all" ? undefined : tab,
-      _search: search.trim() || undefined,
-      _country_id: country === "all" ? undefined : country,
-      _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
-      _assigned_country: assignedCountry === "all" ? undefined : (assignedCountry === "__none__" ? "none" : assignedCountry),
-      _status: (statusF === "all" || statusF === "__call_completed__") ? undefined : statusF,
-      _date_from: fromIso ?? undefined,
-      _date_to: toIso ?? undefined,
-      _sort_key: sortKeyForRpc,
-      _sort_dir: sortDirForRpc,
-      _page: pageNum,
-      _page_size: PAGE_SIZE,
-      _call_round: callRoundF === "all" ? undefined : (callRoundF === "none" ? null : Number(callRoundF)),
-      _call_completed: statusF === "__call_completed__",
-    } as any);
-    if (error) {
-      if (requestId !== latestFetchRef.current) return;
-      toast.error(`고객 로드 실패: ${error.message}`);
-      setLoading(false); setLoadingMore(false);
-      return;
-    }
-    if (requestId !== latestFetchRef.current) return;
-    const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
-    const newRows = fetched.map((r) => r.data);
-    setTotal(fetched[0]?.total_count ?? 0);
-    setRows(newRows);
-    setSelected(new Set());
-    setLoading(false); setLoadingMore(false);
-  };
-
-  // 초기 로드
-  useEffect(() => { loadLookups(); loadPoolCounts(); }, []);
 
   // 권한 변경/로드 시 비허용 풀이 선택돼 있으면 안전한 탭으로 리셋
   useEffect(() => {
@@ -290,34 +219,13 @@ function CustomersPage() {
     }
   }, [visiblePools, tab]);
 
-  // 필터/정렬/탭 변경 시 1페이지 재조회 (디바운스)
-  useEffect(() => {
-    setPinnedOrder(null);
-    setPage(1);
-    const handle = setTimeout(() => { fetchPage(1, true); }, 600);
-    return () => clearTimeout(handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, search, country, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
-
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
-  const loadMore = async () => {
-    const next = page + 1;
-    setPage(next);
-    await fetchPage(next, false);
-  };
-
-  const loadPrevious = async () => {
-    const prev = Math.max(1, page - 1);
-    setPage(prev);
-    await fetchPage(prev, false);
-  };
+  const loadMore = () => setPage((p) => Math.min(totalPages, p + 1));
+  const loadPrevious = () => setPage((p) => Math.max(1, p - 1));
 
   const refresh = async () => {
     setPage(1);
-    await Promise.all([fetchPage(1, true), loadPoolCounts()]);
+    await Promise.all([refetchList(), refetchPoolCounts()]);
   };
-
   const load = refresh;
 
   // 실시간 동기화: 화면에 보이는 행만 in-place 업데이트, 신규/삭제는 카운트 갱신
@@ -330,11 +238,10 @@ function CustomersPage() {
         (payload) => {
           if (payload.eventType === "UPDATE") {
             const n = payload.new as CustomerRow;
-            setRows((prev) => prev.map((r) => (r.id === n.id ? { ...r, ...n } : r)));
+            cache.patchRow(n.id, n);
           } else if (payload.eventType === "DELETE") {
             const o = payload.old as { id: string };
-            setRows((prev) => prev.filter((r) => r.id !== o.id));
-            setTotal((t) => Math.max(0, t - 1));
+            cache.removeRow(o.id);
           } else if (payload.eventType === "INSERT") {
             // 대량 업로드 중에는 1건마다 재집계하지 않고 업로드 완료 후 한 번만 새로고침
             if (!importingRef.current) schedulePoolCountRefresh();
@@ -420,18 +327,11 @@ function CustomersPage() {
     // 현재 표시 순서 고정 → 상태 변경 후에도 행이 이동하지 않음
     setPinnedOrder(filtered.map((r) => r.id));
     // 낙관적 업데이트: 자동 재정렬 없이 현재 위치 유지
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              status,
-              ...(status === "activated" ? { activation_date: patch.activation_date! } : {}),
-              ...(status === "new" ? { assigned_to: null } : {}),
-            }
-          : r
-      )
-    );
+    cache.patchRow(id, {
+      status,
+      ...(status === "activated" ? { activation_date: patch.activation_date! } : {}),
+      ...(status === "new" ? { assigned_to: null } : {}),
+    });
     const { error } = await supabase.from("customers").update(patch).eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -443,7 +343,7 @@ function CustomersPage() {
 
   const changeCallRound = async (id: string, value: number | null) => {
     setPinnedOrder(filtered.map((r) => r.id));
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, call_round: value } : r)));
+    cache.patchRow(id, { call_round: value });
     const { error } = await supabase.from("customers").update({ call_round: value } as any).eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -641,9 +541,9 @@ function CustomersPage() {
         const { error } = await supabase.from("customers").insert(chunk);
         if (error) {
           toast.error(`업로드 중단 (${inserted}/${totalToInsert} 완료): ${error.message}`, { id: toastId });
-          await loadPoolCounts();
+          await refetchPoolCounts();
           setPage(1);
-          await fetchPage(1, true);
+          await refetchList();
           return;
         }
         inserted += chunk.length;
@@ -653,9 +553,9 @@ function CustomersPage() {
         `${inserted.toLocaleString()}명 추가 / DB중복 ${dupInDb}건 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
         { id: toastId }
       );
-      await loadPoolCounts();
+      await refetchPoolCounts();
       setPage(1);
-      await fetchPage(1, true);
+      await refetchList();
     } catch (e: any) {
       toast.error(`엑셀 파싱 실패: ${e.message}`, { id: toastId });
     } finally {
@@ -956,8 +856,8 @@ function CustomersPage() {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder={t("customers.searchPlaceholder")}
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
                       className="pl-9"
                     />
                   </div>
