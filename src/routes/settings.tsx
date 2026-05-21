@@ -683,7 +683,7 @@ function CreateStaffDialog({
           </div>
           <div className="space-y-2">
             <Label>{t("settings.role")}</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+            <Select value={role} onValueChange={(v) => setRole(v as "admin" | "staff")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="staff">{t("common.staff")}</SelectItem>
