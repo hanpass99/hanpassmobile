@@ -310,9 +310,12 @@ function CustomersPage() {
   };
 
   const SortHead = ({ k, children, className = "" }: { k: string; children: React.ReactNode; className?: string }) => {
-    const Icon = sortKey === k ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
+    const isActive = sortKey === k;
+    const Icon = isActive ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
+    const ariaSort: "ascending" | "descending" | "none" =
+      isActive && sortDir === "asc" ? "ascending" : isActive && sortDir === "desc" ? "descending" : "none";
     return (
-      <TableHead className={className}>
+      <TableHead className={className} aria-sort={ariaSort}>
         <button type="button" onClick={() => toggleSort(k)} className="inline-flex items-center gap-1 font-medium hover:text-foreground">
           {children} <Icon className="h-3 w-3 opacity-50" />
         </button>
