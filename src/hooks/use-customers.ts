@@ -1,7 +1,18 @@
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { POOLS, type CustomerPool, type CustomerStatus } from "@/lib/labels";
 import type { CustomerPoolCountRow } from "@/types/rpc";
+
+/** Debounce a value. Default 250ms — used for customer search input. */
+export function useDebouncedValue<T>(value: T, delay = 250): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const h = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(h);
+  }, [value, delay]);
+  return debounced;
+}
 
 // === Types ===
 export type Country = { id: string; code: string; name_ko: string };

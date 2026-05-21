@@ -40,6 +40,7 @@ import {
 } from "@/lib/labels";
 import {
   useCustomersLookups, useCustomerPoolCounts, useCustomersList, useCustomersCache,
+  useDebouncedValue,
   type Country, type Channel, type CustomerRow,
 } from "@/hooks/use-customers";
 
@@ -119,7 +120,7 @@ function CustomersPage() {
   const [page, setPage] = useState(1);
 
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput, 250);
   const [country, setCountry] = useState<string>(
     initialSearch.country && initialSearch.country !== "all" ? initialSearch.country : "all"
   );
@@ -161,11 +162,7 @@ function CustomersPage() {
   const { counts: poolCounts, refetch: refetchPoolCounts } = useCustomerPoolCounts();
   const cache = useCustomersCache();
 
-  // 입력 디바운스 (검색어 600ms)
-  useEffect(() => {
-    const h = setTimeout(() => setDebouncedSearch(searchInput), 600);
-    return () => clearTimeout(h);
-  }, [searchInput]);
+  // 검색어 디바운스는 useDebouncedValue 훅에서 처리
 
   // 필터/정렬/탭 변경 시 1페이지로 리셋 + 핀 해제
   useEffect(() => {
@@ -313,9 +310,12 @@ function CustomersPage() {
   };
 
   const SortHead = ({ k, children, className = "" }: { k: string; children: React.ReactNode; className?: string }) => {
-    const Icon = sortKey === k ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
+    const isActive = sortKey === k;
+    const Icon = isActive ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
+    const ariaSort: "ascending" | "descending" | "none" =
+      isActive && sortDir === "asc" ? "ascending" : isActive && sortDir === "desc" ? "descending" : "none";
     return (
-      <TableHead className={className}>
+      <TableHead className={className} aria-sort={ariaSort}>
         <button type="button" onClick={() => toggleSort(k)} className="inline-flex items-center gap-1 font-medium hover:text-foreground">
           {children} <Icon className="h-3 w-3 opacity-50" />
         </button>
@@ -680,7 +680,7 @@ function CustomersPage() {
 
     if (p === "existing") {
       return (
-        <Table>
+        <Table aria-label="Customer list">
           <TableHeader>
             <TableRow className="bg-muted/40">
               {CheckHead}
@@ -722,7 +722,7 @@ function CustomersPage() {
 
     if (p === "new_signup") {
       return (
-        <Table>
+        <Table aria-label="Customer list">
           <TableHeader>
             <TableRow className="bg-muted/40">
               {CheckHead}
@@ -762,7 +762,7 @@ function CustomersPage() {
 
 
     return (
-      <Table>
+      <Table aria-label="Customer list">
         <TableHeader>
           <TableRow className="bg-muted/40">
             {CheckHead}
@@ -802,17 +802,35 @@ function CustomersPage() {
     );
   };
 
+  if (listError) {
+    return (
+      <div className="space-y-5">
+        <PageHeader title="고객 관리" description="" />
+        <Card role="alert">
+          <CardContent className="space-y-3 p-6 text-center">
+            <div className="text-sm font-semibold">고객 데이터를 불러오지 못했습니다</div>
+            <div className="text-xs text-muted-foreground">{(listError as Error).message}</div>
+            <Button onClick={() => void refetchList()} size="sm" aria-busy={listFetching}>
+              <RefreshCw className="mr-2 h-4 w-4" /> 다시 시도
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
         title="고객 관리"
         description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · 표시 ${rows.length.toLocaleString()}건${loading?" · "+t("common.loading"):""}`}
         actions={
-          <Button variant="outline" size="sm" onClick={load}>
+          <Button variant="outline" size="sm" onClick={load} aria-busy={loading || loadingMore}>
             <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
           </Button>
         }
       />
+
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
         <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
@@ -843,7 +861,7 @@ function CustomersPage() {
                       <Button variant="outline" size="sm" onClick={downloadSample}>
                         <Download className="mr-2 h-4 w-4" /> {t("customers.sample")}
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
+                      <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing} aria-busy={importing}>
                         <Upload className="mr-2 h-4 w-4" /> {importing ? t("customers.uploading") : t("customers.excelUpload")}
                       </Button>
                       <Button size="sm" onClick={() => setShowAdd(true)}>

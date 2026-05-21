@@ -66,6 +66,7 @@ function Dashboard() {
     from, to, countryId: countryF === "all" ? null : countryF,
   });
   const loading = summaryQ.isLoading;
+  const isError = summaryQ.isError;
 
   const dashboard = useMemo<DashboardData>(() => {
     const summary: DashboardSummary = summaryQ.data ?? {};
@@ -138,6 +139,19 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader title={t("dashboard.title")} description={loading ? t("common.loading") : t("dashboard.subtitle")} />
+
+      {isError && (
+        <Card role="alert">
+          <CardContent className="space-y-3 p-6 text-center">
+            <div className="text-sm font-semibold">대시보드 데이터를 불러오지 못했습니다</div>
+            <div className="text-xs text-muted-foreground">{(summaryQ.error as Error)?.message}</div>
+            <Button onClick={() => void summaryQ.refetch()} size="sm" aria-busy={summaryQ.isFetching}>
+              다시 시도
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
 
       <Card>
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
