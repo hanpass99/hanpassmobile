@@ -1021,11 +1021,26 @@ function DateRangePicker({ label, value, onChange }: { label: string; value?: Da
 }
 
 function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; pool: CustomerPool }) {
+  if (loading) {
+    return (
+      <>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <TableRow key={`sk-${i}`}>
+            {Array.from({ length: cols }).map((__, j) => (
+              <TableCell key={j} className="py-3">
+                <Skeleton className="h-4 w-full max-w-[120px]" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </>
+    );
+  }
   return (
     <TableRow>
       <TableCell colSpan={cols} className="py-12 text-center text-sm text-muted-foreground">
         <FileSpreadsheet className="mx-auto mb-2 h-8 w-8 opacity-50" />
-        {loading ? "로드 중..." : `${POOL_LABEL[pool]} Pool에 고객이 없습니다.`}
+        {`${POOL_LABEL[pool]} Pool에 고객이 없습니다.`}
       </TableCell>
     </TableRow>
   );
