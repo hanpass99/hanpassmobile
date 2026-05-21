@@ -68,9 +68,9 @@ function Dashboard() {
   const loading = summaryQ.isLoading;
 
   const dashboard = useMemo<DashboardData>(() => {
-    const summary = summaryQ.data ?? {};
+    const summary: DashboardSummary = summaryQ.data ?? {};
     const sMap = emptyStatus();
-    Object.entries((summary.status_counts ?? {}) as Record<string, unknown>).forEach(([status, cnt]) => {
+    Object.entries(summary.status_counts ?? {}).forEach(([status, cnt]) => {
       if (sMap[status as CustomerStatus] !== undefined) sMap[status as CustomerStatus] = Number(cnt ?? 0);
     });
 
