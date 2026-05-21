@@ -802,17 +802,35 @@ function CustomersPage() {
     );
   };
 
+  if (listError) {
+    return (
+      <div className="space-y-5">
+        <PageHeader title="고객 관리" description="" />
+        <Card role="alert">
+          <CardContent className="space-y-3 p-6 text-center">
+            <div className="text-sm font-semibold">고객 데이터를 불러오지 못했습니다</div>
+            <div className="text-xs text-muted-foreground">{(listError as Error).message}</div>
+            <Button onClick={() => void refetchList()} size="sm" aria-busy={listFetching}>
+              <RefreshCw className="mr-2 h-4 w-4" /> 다시 시도
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
         title="고객 관리"
         description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · 표시 ${rows.length.toLocaleString()}건${loading?" · "+t("common.loading"):""}`}
         actions={
-          <Button variant="outline" size="sm" onClick={load}>
+          <Button variant="outline" size="sm" onClick={load} aria-busy={loading || loadingMore}>
             <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
           </Button>
         }
       />
+
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
         <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
