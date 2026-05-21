@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { POOLS, type CustomerPool, type CustomerStatus } from "@/lib/labels";
+import type { CustomerPoolCountRow } from "@/types/rpc";
 
 // === Types ===
 export type Country = { id: string; code: string; name_ko: string };
