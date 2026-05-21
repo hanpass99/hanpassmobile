@@ -17,10 +17,18 @@ import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Mail, Cloc
 import { MultiCountrySelect } from "@/components/MultiCountrySelect";
 import { resizeImage } from "@/lib/image-resize";
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSettingsData, type Country, type SettingsRow as Row } from "@/hooks/use-settings";
+import type {
+  AdminResetPasswordResponse,
+  AdminDeleteStaffResponse,
+  AdminCreateStaffResponse,
+} from "@/types/rpc";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "설정 — Hanpass OB CRM" }] }),
