@@ -290,21 +290,11 @@ function SendTab() {
 /* ============== TEMPLATES TAB ============== */
 function TemplatesTab() {
   const { user } = useAuth();
-  const [items, setItems] = useState<Template[]>([]);
+  const { data: items = [] } = useSmsTemplates();
+  const invalidateTemplates = useInvalidateSmsTemplates();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Template | null>(null);
   const [form, setForm] = useState({ title: "", content: "", is_shared: false });
-
-  useEffect(() => { void load(); }, []);
-
-  async function load() {
-    const { data, error } = await supabase
-      .from("sms_templates")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) toast.error("로드 실패: " + error.message);
-    else setItems((data as Template[]) || []);
-  }
 
   function startNew() {
     setEditing(null);
@@ -333,7 +323,7 @@ function TemplatesTab() {
       toast.success("저장됨");
     }
     setOpen(false);
-    void load();
+    void invalidateTemplates();
   }
 
   async function remove(id: string) {
@@ -341,11 +331,12 @@ function TemplatesTab() {
     const { error } = await supabase.from("sms_templates").delete().eq("id", id);
     if (error) return toast.error("삭제 실패: " + error.message);
     toast.success("삭제됨");
-    void load();
+    void invalidateTemplates();
   }
 
   const mine = items.filter((t) => t.user_id === user?.id);
   const shared = items.filter((t) => t.user_id !== user?.id && t.is_shared);
+
 
   return (
     <Card>
