@@ -10,17 +10,17 @@ import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { CalendarIcon, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import {
   CUSTOMER_STATUSES, type CustomerStatus,
   ATTENDANCE_CLASS, type AttendanceStatus,
 } from "@/lib/labels";
+import { useStaffPerformance } from "@/hooks/use-staff";
+
 
 export const Route = createFileRoute("/staff-performance")({
   head: () => ({ meta: [{ title: "직원 성과 — Hanpass OB CRM" }] }),
@@ -58,55 +58,34 @@ function StaffPerf() {
   const [to, setTo] = useState<Date>(today);
   const [attendanceDate, setAttendanceDate] = useState<Date>(today);
   const [presentOnly, setPresentOnly] = useState<boolean>(true);
-  const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const fromIso = dayStartIso(from);
-    const toIso = dayEndIso(to);
-    const attendanceKey = dateKey(attendanceDate);
-    const [{ data: staffData, error }, { data: ranking, error: rankingError }, { data: profiles }, { data: att }] = await Promise.all([
-      supabase.rpc("stats_by_staff", { _date_from: fromIso, _date_to: toIso }),
-      (supabase as any).rpc("stats_staff_ranking", {
-        _date_from: fromIso,
-        _date_to: toIso,
-        _year: from.getFullYear(),
-        _month: from.getMonth() + 1,
-        _country_id: null,
-        _attendance_date: null,
-      }),
-      supabase.from("profiles").select("id, sort_order"),
-      supabase.from("staff_attendance").select("user_id, status").eq("attendance_date", attendanceKey),
-    ]);
+  const { data, isLoading: loading } = useStaffPerformance({ from, to, attendanceDate });
+
+  const rows = useMemo<Row[]>(() => {
+    if (!data) return [];
     const orderMap = new Map<string, number>();
-    (profiles ?? []).forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
+    data.profiles.forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
     const attMap = new Map<string, AttendanceStatus>();
-    (att ?? []).forEach((a: any) => attMap.set(a.user_id, a.status));
-    if (!error && !rankingError) {
-      const statsMap = new Map<string, any>();
-      (staffData ?? []).forEach((r: any) => statsMap.set(r.user_id, r));
-      const out: Row[] = (ranking ?? []).map((r: any) => {
-        const stat = statsMap.get(r.user_id);
-        const counts = emptyCounts();
-        const sc = (stat?.status_counts ?? {}) as Record<string, number>;
-        for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
-        counts.activated = Number(r.activated ?? counts.activated);
-        return {
-          id: r.user_id,
-          name: r.display_name,
-          total: Number(r.total_calls ?? 0),
-          counts,
-          tier: tierFor(Number(r.activated ?? 0)),
-          attendance: (attMap.get(r.user_id) ?? "present") as AttendanceStatus,
-        };
-      }).sort((a: Row, b: Row) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
-      setRows(out);
-    }
-    setLoading(false);
-  }, [from, to, attendanceDate]);
+    data.attendance.forEach((a: any) => attMap.set(a.user_id, a.status as AttendanceStatus));
+    const statsMap = new Map<string, any>();
+    data.staffStats.forEach((r: any) => statsMap.set(r.user_id, r));
+    return data.ranking.map((r: any) => {
+      const stat = statsMap.get(r.user_id);
+      const counts = emptyCounts();
+      const sc = (stat?.status_counts ?? {}) as Record<string, number>;
+      for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
+      counts.activated = Number(r.activated ?? counts.activated);
+      return {
+        id: r.user_id,
+        name: r.display_name,
+        total: Number(r.total_calls ?? 0),
+        counts,
+        tier: tierFor(Number(r.activated ?? 0)),
+        attendance: (attMap.get(r.user_id) ?? "present") as AttendanceStatus,
+      };
+    }).sort((a: Row, b: Row) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
+  }, [data]);
 
-  useEffect(() => { load(); }, [load]);
 
   const visibleRows = presentOnly ? rows.filter((r) => r.attendance === "present") : rows;
   const presentCount = rows.filter((r) => r.attendance === "present").length;
