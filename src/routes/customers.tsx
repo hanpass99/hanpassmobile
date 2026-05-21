@@ -327,18 +327,11 @@ function CustomersPage() {
     // 현재 표시 순서 고정 → 상태 변경 후에도 행이 이동하지 않음
     setPinnedOrder(filtered.map((r) => r.id));
     // 낙관적 업데이트: 자동 재정렬 없이 현재 위치 유지
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              status,
-              ...(status === "activated" ? { activation_date: patch.activation_date! } : {}),
-              ...(status === "new" ? { assigned_to: null } : {}),
-            }
-          : r
-      )
-    );
+    cache.patchRow(id, {
+      status,
+      ...(status === "activated" ? { activation_date: patch.activation_date! } : {}),
+      ...(status === "new" ? { assigned_to: null } : {}),
+    });
     const { error } = await supabase.from("customers").update(patch).eq("id", id);
     if (error) {
       toast.error(error.message);
