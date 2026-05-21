@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
+import type { DashboardSummary } from "@/types/rpc";
+
+export type { DashboardSummary } from "@/types/rpc";
 
 export function useDashboardCountries() {
   return useQuery({
@@ -17,19 +20,6 @@ export function useDashboardCountries() {
   });
 }
 
-export type DashboardSummary = {
-  status_counts?: Record<string, number>;
-  totals?: { total_calls?: number; total_customers?: number; monthly_target_total?: number };
-  daily_calls?: { day: string; calls: number; activations: number }[];
-  country_activated?: { code: string; activated: number }[];
-  channel_summary?: { name: string; customers: number; activations: number }[];
-  staff_ranking?: {
-    user_id: string; display_name: string;
-    total_calls: number; activated: number; activation_target?: number;
-  }[];
-  call_completed?: number;
-};
-
 export function useDashboardSummary(params: {
   from: Date; to: Date; countryId: string | null;
 }) {
@@ -41,17 +31,16 @@ export function useDashboardSummary(params: {
 
   return useQuery({
     queryKey: ["dashboard", "summary", fromIso, toIso, year, month, countryId],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc("stats_dashboard_summary", {
+    queryFn: async (): Promise<DashboardSummary> => {
+      const { data, error } = await supabase.rpc("stats_dashboard_summary", {
         _date_from: fromIso,
         _date_to: toIso,
         _year: year,
         _month: month,
-        _country_id: countryId,
-        _pool: null,
+        _country_id: countryId ?? undefined,
       });
       if (error) throw error;
-      return (data ?? {}) as DashboardSummary;
+      return (data ?? {}) as unknown as DashboardSummary;
     },
   });
 }

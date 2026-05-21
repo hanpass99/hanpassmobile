@@ -21,6 +21,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
@@ -278,8 +279,8 @@ function CustomersPage() {
     let out = rows.slice();
     if (sortKey && sortDir && !SERVER_SORT_KEYS.has(sortKey)) {
       const dir = sortDir === "asc" ? 1 : -1;
-      out.sort((a: any, b: any) => {
-        let av: any = ""; let bv: any = "";
+      out.sort((a, b) => {
+        let av: string = ""; let bv: string = "";
         if (sortKey === "country") {
           av = countryById.get(a.country_id ?? "")?.code ?? "";
           bv = countryById.get(b.country_id ?? "")?.code ?? "";
@@ -290,8 +291,9 @@ function CustomersPage() {
           av = staffById.get(a.assigned_to ?? "") ?? "";
           bv = staffById.get(b.assigned_to ?? "") ?? "";
         } else {
-          av = (a as any)[sortKey] ?? "";
-          bv = (b as any)[sortKey] ?? "";
+          const k = sortKey as keyof CustomerRow;
+          av = String(a[k] ?? "");
+          bv = String(b[k] ?? "");
         }
         return String(av).localeCompare(String(bv)) * dir;
       });
@@ -344,7 +346,7 @@ function CustomersPage() {
   const changeCallRound = async (id: string, value: number | null) => {
     setPinnedOrder(filtered.map((r) => r.id));
     cache.patchRow(id, { call_round: value });
-    const { error } = await supabase.from("customers").update({ call_round: value } as any).eq("id", id);
+    const { error } = await supabase.from("customers").update({ call_round: value }).eq("id", id);
     if (error) {
       toast.error(error.message);
       load();
@@ -1019,11 +1021,26 @@ function DateRangePicker({ label, value, onChange }: { label: string; value?: Da
 }
 
 function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; pool: CustomerPool }) {
+  if (loading) {
+    return (
+      <>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <TableRow key={`sk-${i}`}>
+            {Array.from({ length: cols }).map((__, j) => (
+              <TableCell key={j} className="py-3">
+                <Skeleton className="h-4 w-full max-w-[120px]" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </>
+    );
+  }
   return (
     <TableRow>
       <TableCell colSpan={cols} className="py-12 text-center text-sm text-muted-foreground">
         <FileSpreadsheet className="mx-auto mb-2 h-8 w-8 opacity-50" />
-        {loading ? "로드 중..." : `${POOL_LABEL[pool]} Pool에 고객이 없습니다.`}
+        {`${POOL_LABEL[pool]} Pool에 고객이 없습니다.`}
       </TableCell>
     </TableRow>
   );

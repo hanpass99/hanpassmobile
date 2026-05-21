@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
@@ -64,12 +65,12 @@ function StaffPerf() {
   const rows = useMemo<Row[]>(() => {
     if (!data) return [];
     const orderMap = new Map<string, number>();
-    data.profiles.forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
+    data.profiles.forEach((p) => orderMap.set(p.id, p.sort_order ?? 1000));
     const attMap = new Map<string, AttendanceStatus>();
-    data.attendance.forEach((a: any) => attMap.set(a.user_id, a.status as AttendanceStatus));
-    const statsMap = new Map<string, any>();
-    data.staffStats.forEach((r: any) => statsMap.set(r.user_id, r));
-    return data.ranking.map((r: any) => {
+    data.attendance.forEach((a) => attMap.set(a.user_id, a.status as AttendanceStatus));
+    const statsMap = new Map<string, (typeof data.staffStats)[number]>();
+    data.staffStats.forEach((r) => statsMap.set(r.user_id, r));
+    return data.ranking.map((r) => {
       const stat = statsMap.get(r.user_id);
       const counts = emptyCounts();
       const sc = (stat?.status_counts ?? {}) as Record<string, number>;
@@ -83,7 +84,7 @@ function StaffPerf() {
         tier: tierFor(Number(r.activated ?? 0)),
         attendance: (attMap.get(r.user_id) ?? "present") as AttendanceStatus,
       };
-    }).sort((a: Row, b: Row) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
+    }).sort((a, b) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
   }, [data]);
 
 
@@ -157,7 +158,19 @@ function StaffPerf() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visibleRows.map((u, i) => (
+              {loading && Array.from({ length: 8 }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  <TableCell><Skeleton className="h-7 w-7 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-14" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-10" /></TableCell>
+                  {CUSTOMER_STATUSES.map((s) => (
+                    <TableCell key={s} className="text-right"><Skeleton className="ml-auto h-4 w-8" /></TableCell>
+                  ))}
+                </TableRow>
+              ))}
+              {!loading && visibleRows.map((u, i) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     {i < 3 ? (

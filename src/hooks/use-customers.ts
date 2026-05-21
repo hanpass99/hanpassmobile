@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { POOLS, type CustomerPool, type CustomerStatus } from "@/lib/labels";
+import type { CustomerPoolCountRow } from "@/types/rpc";
 
 // === Types ===
 export type Country = { id: string; code: string; name_ko: string };
@@ -85,10 +86,10 @@ export function useCustomerPoolCounts() {
     queryKey: ["customers", "poolCounts"],
     staleTime: 30_000,
     queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc("customer_pool_counts");
+      const { data, error } = await supabase.rpc("customer_pool_counts");
       if (!error) {
         const out: Record<string, number> = {};
-        (data ?? []).forEach((r: { pool: string; cnt: number | string }) => {
+        ((data ?? []) as CustomerPoolCountRow[]).forEach((r) => {
           out[r.pool] = Number(r.cnt ?? 0);
         });
         return out;
@@ -138,9 +139,9 @@ export function useCustomersList(p: CustomersSearchParams, options?: { enabled?:
         _sort_dir: sortDirForRpc,
         _page: p.page,
         _page_size: p.pageSize,
-        _call_round: p.callRound === "all" || !p.callRound ? undefined : (p.callRound === "none" ? null : Number(p.callRound)),
+        _call_round: (p.callRound === "all" || !p.callRound ? undefined : (p.callRound === "none" ? null : Number(p.callRound))) as number | undefined,
         _call_completed: p.status === "__call_completed__",
-      } as any);
+      });
       if (error) throw new Error(error.message);
       const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
       return {
