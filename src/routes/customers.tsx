@@ -345,7 +345,7 @@ function CustomersPage() {
   const changeCallRound = async (id: string, value: number | null) => {
     setPinnedOrder(filtered.map((r) => r.id));
     cache.patchRow(id, { call_round: value });
-    const { error } = await supabase.from("customers").update({ call_round: value } as any).eq("id", id);
+    const { error } = await supabase.from("customers").update({ call_round: value }).eq("id", id);
     if (error) {
       toast.error(error.message);
       load();
