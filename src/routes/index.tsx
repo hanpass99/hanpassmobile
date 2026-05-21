@@ -21,7 +21,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
-import { useDashboardCountries, useDashboardSummary } from "@/hooks/use-dashboard";
+import { useDashboardCountries, useDashboardSummary, type DashboardSummary } from "@/hooks/use-dashboard";
 
 
 export const Route = createFileRoute("/")({
