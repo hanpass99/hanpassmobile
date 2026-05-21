@@ -43,9 +43,10 @@ const M = now.getMonth() + 1;
 function Settings() {
   const { t } = useTranslation();
   const { isAdmin, user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data, isLoading: loading } = useSettingsData({ year: Y, month: M, isAdmin });
   const [rows, setRows] = useState<Row[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
-  const [loading, setLoading] = useState(true);
   const [bulkCall, setBulkCall] = useState(200);
   const [bulkAct, setBulkAct] = useState(120);
   const [showCreate, setShowCreate] = useState(false);
@@ -56,68 +57,31 @@ function Settings() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  useEffect(() => {
+    if (data) {
+      setRows(data.rows);
+      setCountries(data.countries);
+    }
+  }, [data]);
+
+  const load = () => queryClient.invalidateQueries({ queryKey: ["settings", Y, M, isAdmin] });
+
   const resetPassword = async () => {
     if (!resetTarget) return;
     setResetting(true);
-    const { data, error } = await supabase.functions.invoke("admin-reset-staff-password", {
-      body: { user_id: resetTarget.id },
-    });
+    const { data: res, error } = await supabase.functions.invoke<AdminResetPasswordResponse>(
+      "admin-reset-staff-password",
+      { body: { user_id: resetTarget.id } },
+    );
     setResetting(false);
-    if (error || (data as any)?.error) {
-      return toast.error(t("settings.resetFailed", { msg: (data as any)?.error ?? error?.message }));
+    if (error || res?.error) {
+      return toast.error(t("settings.resetFailed", { msg: res?.error ?? error?.message }));
     }
-    setResetResult({ name: resetTarget.display_name, tempPassword: (data as any).temp_password });
+    setResetResult({ name: resetTarget.display_name, tempPassword: res?.temp_password ?? "" });
     setResetTarget(null);
     toast.success(t("settings.tempPwdIssued"));
   };
 
-  const load = async () => {
-    setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: targets }, { data: co }, { data: pcs }, activityRes] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, department, is_active, country_id, avatar_url, sort_order, can_access_new_signup").order("sort_order").order("display_name"),
-      supabase.from("user_roles").select("user_id, role"),
-      supabase.from("targets").select("user_id, call_target, activation_target").eq("year", Y).eq("month", M),
-      supabase.from("countries").select("id, code, name_ko").order("code"),
-      supabase.from("profile_countries").select("user_id, country_id"),
-      isAdmin
-        ? supabase.functions.invoke("admin-list-staff-activity")
-        : Promise.resolve({ data: { users: [] }, error: null } as any),
-    ]);
-    const activityList: { id: string; email: string | null; last_sign_in_at: string | null }[] =
-      (activityRes as any)?.data?.users ?? [];
-    const pcMap = new Map<string, string[]>();
-    (pcs ?? []).forEach((p: any) => {
-      const arr = pcMap.get(p.user_id) ?? [];
-      arr.push(p.country_id);
-      pcMap.set(p.user_id, arr);
-    });
-    const merged: Row[] = (profiles ?? []).map((p: any) => {
-      const r = roles?.find((x) => x.user_id === p.id);
-      const tg = targets?.find((x) => x.user_id === p.id);
-      const a = activityList.find((x) => x.id === p.id);
-      return {
-        id: p.id,
-        display_name: p.display_name,
-        department: p.department,
-        is_active: p.is_active,
-        role: (r?.role as "admin" | "staff") ?? "staff",
-        country_ids: pcMap.get(p.id) ?? [],
-        avatar_url: p.avatar_url ?? null,
-        call_target: tg?.call_target ?? 0,
-        activation_target: tg?.activation_target ?? 0,
-        email: a?.email ?? null,
-        last_sign_in_at: a?.last_sign_in_at ?? null,
-        sort_order: p.sort_order ?? 1000,
-        can_access_new_signup: !!p.can_access_new_signup,
-      };
-    });
-    merged.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
-    setRows(merged);
-    setCountries(co ?? []);
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, [isAdmin]);
 
   const saveTarget = async (r: Row) => {
     const { error } = await supabase.from("targets").upsert(
