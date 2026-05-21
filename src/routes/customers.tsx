@@ -40,6 +40,7 @@ import {
 } from "@/lib/labels";
 import {
   useCustomersLookups, useCustomerPoolCounts, useCustomersList, useCustomersCache,
+  useDebouncedValue,
   type Country, type Channel, type CustomerRow,
 } from "@/hooks/use-customers";
 
@@ -119,7 +120,7 @@ function CustomersPage() {
   const [page, setPage] = useState(1);
 
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput, 250);
   const [country, setCountry] = useState<string>(
     initialSearch.country && initialSearch.country !== "all" ? initialSearch.country : "all"
   );
@@ -161,11 +162,7 @@ function CustomersPage() {
   const { counts: poolCounts, refetch: refetchPoolCounts } = useCustomerPoolCounts();
   const cache = useCustomersCache();
 
-  // 입력 디바운스 (검색어 600ms)
-  useEffect(() => {
-    const h = setTimeout(() => setDebouncedSearch(searchInput), 600);
-    return () => clearTimeout(h);
-  }, [searchInput]);
+  // 검색어 디바운스는 useDebouncedValue 훅에서 처리
 
   // 필터/정렬/탭 변경 시 1페이지로 리셋 + 핀 해제
   useEffect(() => {
