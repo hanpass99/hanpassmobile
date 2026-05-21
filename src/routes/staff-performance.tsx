@@ -64,12 +64,12 @@ function StaffPerf() {
   const rows = useMemo<Row[]>(() => {
     if (!data) return [];
     const orderMap = new Map<string, number>();
-    data.profiles.forEach((p: any) => orderMap.set(p.id, p.sort_order ?? 1000));
+    data.profiles.forEach((p) => orderMap.set(p.id, p.sort_order ?? 1000));
     const attMap = new Map<string, AttendanceStatus>();
-    data.attendance.forEach((a: any) => attMap.set(a.user_id, a.status as AttendanceStatus));
-    const statsMap = new Map<string, any>();
-    data.staffStats.forEach((r: any) => statsMap.set(r.user_id, r));
-    return data.ranking.map((r: any) => {
+    data.attendance.forEach((a) => attMap.set(a.user_id, a.status as AttendanceStatus));
+    const statsMap = new Map<string, (typeof data.staffStats)[number]>();
+    data.staffStats.forEach((r) => statsMap.set(r.user_id, r));
+    return data.ranking.map((r) => {
       const stat = statsMap.get(r.user_id);
       const counts = emptyCounts();
       const sc = (stat?.status_counts ?? {}) as Record<string, number>;
@@ -83,7 +83,7 @@ function StaffPerf() {
         tier: tierFor(Number(r.activated ?? 0)),
         attendance: (attMap.get(r.user_id) ?? "present") as AttendanceStatus,
       };
-    }).sort((a: Row, b: Row) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
+    }).sort((a, b) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
   }, [data]);
 
 
