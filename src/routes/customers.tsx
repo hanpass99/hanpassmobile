@@ -680,7 +680,7 @@ function CustomersPage() {
 
     if (p === "existing") {
       return (
-        <Table>
+        <Table aria-label="Customer list">
           <TableHeader>
             <TableRow className="bg-muted/40">
               {CheckHead}
@@ -722,7 +722,7 @@ function CustomersPage() {
 
     if (p === "new_signup") {
       return (
-        <Table>
+        <Table aria-label="Customer list">
           <TableHeader>
             <TableRow className="bg-muted/40">
               {CheckHead}
@@ -762,7 +762,7 @@ function CustomersPage() {
 
 
     return (
-      <Table>
+      <Table aria-label="Customer list">
         <TableHeader>
           <TableRow className="bg-muted/40">
             {CheckHead}
