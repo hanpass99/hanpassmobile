@@ -35,26 +35,10 @@ export const Route = createFileRoute("/settings")({
   component: Settings,
 });
 
-type Country = { id: string; code: string; name_ko: string };
-type Row = {
-  id: string;
-  display_name: string;
-  department: string | null;
-  is_active: boolean;
-  role: "admin" | "staff";
-  country_ids: string[];
-  avatar_url: string | null;
-  call_target: number;
-  activation_target: number;
-  email: string | null;
-  last_sign_in_at: string | null;
-  sort_order: number;
-  can_access_new_signup: boolean;
-};
-
 const now = new Date();
 const Y = now.getFullYear();
 const M = now.getMonth() + 1;
+
 
 function Settings() {
   const { t } = useTranslation();
