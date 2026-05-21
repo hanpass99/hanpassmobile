@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
@@ -36,6 +37,10 @@ import {
   CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus,
   POOLS, type CustomerPool,
 } from "@/lib/labels";
+import {
+  useCustomersLookups, useCustomerPoolCounts, useCustomersList, useCustomersCache,
+  type Country, type Channel, type CustomerRow,
+} from "@/hooks/use-customers";
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
   get: (_t, p: string) => i18n.t(`status.${p}`),
