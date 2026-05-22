@@ -849,21 +849,25 @@ function CustomersPage() {
               <CardContent className="space-y-4 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-semibold">{POOL_LABEL[p]}</div>
-                  {isAdmin && tab === p && (
+                  {tab === p && (
                     <div className="flex flex-wrap gap-2">
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        className="hidden"
-                        onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
-                      />
-                      <Button variant="outline" size="sm" onClick={downloadSample}>
-                        <Download className="mr-2 h-4 w-4" /> {t("customers.sample")}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing} aria-busy={importing}>
-                        <Upload className="mr-2 h-4 w-4" /> {importing ? t("customers.uploading") : t("customers.excelUpload")}
-                      </Button>
+                      {isAdmin && (
+                        <>
+                          <input
+                            ref={fileRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
+                          />
+                          <Button variant="outline" size="sm" onClick={downloadSample}>
+                            <Download className="mr-2 h-4 w-4" /> {t("customers.sample")}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing} aria-busy={importing}>
+                            <Upload className="mr-2 h-4 w-4" /> {importing ? t("customers.uploading") : t("customers.excelUpload")}
+                          </Button>
+                        </>
+                      )}
                       <Button size="sm" onClick={() => setShowAdd(true)}>
                         <Plus className="mr-2 h-4 w-4" /> {t("customers.addCustomer")}
                       </Button>
