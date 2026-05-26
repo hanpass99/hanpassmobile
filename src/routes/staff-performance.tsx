@@ -152,6 +152,8 @@ function StaffPerf() {
                 <TableHead>{t("attendance.title")}</TableHead>
                 <TableHead>{t("staffPerf.tier")}</TableHead>
                 <TableHead className="text-right">{t("dashboard.totalCalls")}</TableHead>
+                <TableHead className="text-right whitespace-nowrap">{t("dashboard.callCompleted")}</TableHead>
+                <TableHead className="text-right whitespace-nowrap">{t("dashboard.activationSuccessRate")}</TableHead>
                 {CUSTOMER_STATUSES.map((s) => (
                   <TableHead key={s} className="text-right whitespace-nowrap">{t(`status.${s}`)}</TableHead>
                 ))}
@@ -165,12 +167,17 @@ function StaffPerf() {
                   <TableCell><Skeleton className="h-5 w-14" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                   <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-10" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-10" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-10" /></TableCell>
                   {CUSTOMER_STATUSES.map((s) => (
                     <TableCell key={s} className="text-right"><Skeleton className="ml-auto h-4 w-8" /></TableCell>
                   ))}
                 </TableRow>
               ))}
-              {!loading && visibleRows.map((u, i) => (
+              {!loading && visibleRows.map((u, i) => {
+                const callCompleted = u.total - u.counts.new;
+                const rate = callCompleted > 0 ? (u.counts.activated / callCompleted) * 100 : 0;
+                return (
                 <TableRow key={u.id}>
                   <TableCell>
                     {i < 3 ? (
@@ -196,6 +203,8 @@ function StaffPerf() {
                     <Badge className={cn("border-transparent", u.tier.cls)}>{t(`staffPerf.${u.tier.key}`)}</Badge>
                   </TableCell>
                   <TableCell className="text-right font-bold">{u.total}</TableCell>
+                  <TableCell className="text-right font-semibold text-primary">{callCompleted}</TableCell>
+                  <TableCell className="text-right font-semibold">{rate.toFixed(1)}%</TableCell>
                   {CUSTOMER_STATUSES.map((s) => (
                     <TableCell key={s} className={cn(
                       "text-right",
@@ -203,9 +212,10 @@ function StaffPerf() {
                     )}>{u.counts[s]}</TableCell>
                   ))}
                 </TableRow>
-              ))}
+                );
+              })}
               {!visibleRows.length && !loading && (
-                <TableRow><TableCell colSpan={5 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("dashboard.noStaff")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
