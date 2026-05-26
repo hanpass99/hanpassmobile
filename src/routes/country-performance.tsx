@@ -96,19 +96,26 @@ function CountryPerf() {
               <TableRow className="bg-muted/40">
                 <TableHead>{t("countryPerf.country")}</TableHead>
                 <TableHead className="text-right">{t("dashboard.totalCalls")}</TableHead>
+                <TableHead className="text-right whitespace-nowrap">{t("dashboard.callCompleted")}</TableHead>
+                <TableHead className="text-right whitespace-nowrap">{t("dashboard.activationSuccessRate")}</TableHead>
                 {CUSTOMER_STATUSES.map((s) => (
                   <TableHead key={s} className="text-right whitespace-nowrap">{t(`status.${s}`)}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((c) => (
+              {rows.map((c) => {
+                const callCompleted = c.total - c.counts.new;
+                const rate = callCompleted > 0 ? (c.counts.activated / callCompleted) * 100 : 0;
+                return (
                 <TableRow key={c.code}>
                   <TableCell>
                     <span className="font-mono text-xs font-bold text-primary">{c.code}</span>
                     <span className="ml-2 text-sm">{c.name}</span>
                   </TableCell>
                   <TableCell className="text-right font-bold">{c.total}</TableCell>
+                  <TableCell className="text-right font-semibold text-primary">{callCompleted}</TableCell>
+                  <TableCell className="text-right font-semibold">{rate.toFixed(1)}%</TableCell>
                   {CUSTOMER_STATUSES.map((s) => (
                     <TableCell key={s} className={cn(
                       "text-right",
@@ -116,7 +123,8 @@ function CountryPerf() {
                     )}>{c.counts[s]}</TableCell>
                   ))}
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
