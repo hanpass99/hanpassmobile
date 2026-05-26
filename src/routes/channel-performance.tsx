@@ -98,16 +98,23 @@ function ChannelPerf() {
               <TableRow className="bg-muted/40">
                 <TableHead>{t("channelPerf.channel")}</TableHead>
                 <TableHead className="text-right">{t("dashboard.totalCalls")}</TableHead>
+                <TableHead className="text-right whitespace-nowrap">{t("dashboard.callCompleted")}</TableHead>
+                <TableHead className="text-right whitespace-nowrap">{t("dashboard.activationSuccessRate")}</TableHead>
                 {CUSTOMER_STATUSES.map((s) => (
                   <TableHead key={s} className="text-right whitespace-nowrap">{t(`status.${s}`)}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r) => (
+              {rows.map((r) => {
+                const callCompleted = r.total - r.counts.new;
+                const rate = callCompleted > 0 ? (r.counts.activated / callCompleted) * 100 : 0;
+                return (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium whitespace-nowrap">{r.name}</TableCell>
                   <TableCell className="text-right font-bold">{r.total}</TableCell>
+                  <TableCell className="text-right font-semibold text-primary">{callCompleted}</TableCell>
+                  <TableCell className="text-right font-semibold">{rate.toFixed(1)}%</TableCell>
                   {CUSTOMER_STATUSES.map((s) => (
                     <TableCell key={s} className={cn(
                       "text-right",
@@ -115,9 +122,10 @@ function ChannelPerf() {
                     )}>{r.counts[s]}</TableCell>
                   ))}
                 </TableRow>
-              ))}
+                );
+              })}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={2 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("channelPerf.noChannel")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("channelPerf.noChannel")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
