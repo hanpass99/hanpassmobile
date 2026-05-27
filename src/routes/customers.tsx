@@ -44,7 +44,7 @@ import {
 } from "@/lib/labels";
 import {
   useCustomersLookups, useCustomerPoolCounts, useCustomersList, useCustomersCache,
-  useDebouncedValue,
+  useCustomerStatusCounts, useDebouncedValue,
   type Country, type Channel, type CustomerRow,
 } from "@/hooks/use-customers";
 
