@@ -914,7 +914,6 @@ function CustomersPage() {
                   </button>
                   {CUSTOMER_STATUSES.map((s) => {
                     const n = statusCounts[s] ?? 0;
-                    if (n === 0 && statusF !== s) return null;
                     const active = statusF === s;
                     return (
                       <button
