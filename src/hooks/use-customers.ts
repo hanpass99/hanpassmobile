@@ -116,6 +116,49 @@ export function useCustomerPoolCounts() {
   return { counts: q.data ?? {}, refetch: q.refetch, isLoading: q.isLoading };
 }
 
+// === Status counts (per tab cards) ===
+export type StatusCountsParams = {
+  pool: CustomerPool | "all";
+  country?: string; // "all" | id
+  dateFromIso?: string | null;
+  dateToIso?: string | null;
+};
+
+export function useCustomerStatusCounts(p: StatusCountsParams) {
+  const q = useQuery({
+    queryKey: [
+      "customers", "statusCounts",
+      p.pool, p.country ?? "all", p.dateFromIso ?? "", p.dateToIso ?? "",
+    ] as const,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+    queryFn: async (): Promise<{ counts: Record<string, number>; total: number }> => {
+      const { data, error } = await supabase.rpc("stats_status_counts", {
+        _pool: p.pool === "all" ? undefined : p.pool,
+        _country_id: !p.country || p.country === "all" ? undefined : p.country,
+        _date_from: p.dateFromIso ?? undefined,
+        _date_to: p.dateToIso ?? undefined,
+      });
+      if (error) throw new Error(error.message);
+      const counts: Record<string, number> = {};
+      let total = 0;
+      ((data ?? []) as Array<{ status: string; cnt: number }>).forEach((r) => {
+        const n = Number(r.cnt ?? 0);
+        counts[r.status] = n;
+        total += n;
+      });
+      return { counts, total };
+    },
+  });
+  return {
+    counts: q.data?.counts ?? {},
+    total: q.data?.total ?? 0,
+    isLoading: q.isLoading,
+    isFetching: q.isFetching,
+    refetch: q.refetch,
+  };
+}
+
 // === Search / list (search_customers RPC) ===
 export type CustomersListResult = { rows: CustomerRow[]; total: number };
 
