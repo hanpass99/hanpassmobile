@@ -25,7 +25,6 @@ export function AppSidebar() {
   ];
   const analyticsItems = [
     { title: t("nav.staff"), url: "/staff-performance", icon: UserCog },
-    { title: t("nav.attendance"), url: "/attendance", icon: CalendarCheck },
     { title: t("nav.country"), url: "/country-performance", icon: Globe2 },
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
     { title: t("nav.reports"), url: "/reports", icon: FileBarChart },
