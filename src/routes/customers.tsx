@@ -209,6 +209,13 @@ function CustomersPage() {
     dateToIso: toIso,
   });
 
+  const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
+    pool: tab,
+    country,
+    dateFromIso: fromIso,
+    dateToIso: toIso,
+  });
+
   useEffect(() => {
     if (listError) toast.error(`고객 로드 실패: ${(listError as Error).message}`);
   }, [listError]);
