@@ -188,24 +188,14 @@ function Dashboard() {
         </CardContent>
       </Card>
 
+      {/* 핵심 지표: 미처리 / 콜 완료 / 개통 완료 / 개통 성공률 */}
       {loading ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-[104px] w-full" />
-            ))}
-          </div>
-          <Skeleton className="h-[220px] w-full" />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <Skeleton className="h-[340px] w-full lg:col-span-2" />
-            <Skeleton className="h-[340px] w-full" />
-          </div>
-          <Skeleton className="h-[340px] w-full" />
-          <Skeleton className="h-[280px] w-full" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[104px] w-full" />
+          ))}
         </div>
       ) : (
-      <>
-      {/* 핵심 지표: 미처리 / 콜 완료 / 개통 완료 / 개통 성공률 */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Link
           to="/customers"
@@ -237,6 +227,7 @@ function Dashboard() {
           hint={t("dashboard.activationSuccessHint") + ` (${activated}/${callCompleted})`}
         />
       </div>
+      )}
 
       {/* 상태별 카운트 (10종) */}
       <Card>
@@ -245,6 +236,13 @@ function Dashboard() {
           <CardDescription>{t("dashboard.statusDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
+          {loading ? (
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <Skeleton key={i} className="h-[68px] w-full" />
+              ))}
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
             {CUSTOMER_STATUSES.map((s) => (
               <Link
@@ -258,6 +256,7 @@ function Dashboard() {
               </Link>
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -265,6 +264,7 @@ function Dashboard() {
         <Card className="lg:col-span-2">
           <CardHeader><CardTitle>{t("dashboard.dailyTrend")}</CardTitle><CardDescription>{format(from, "yyyy.MM.dd")} ~ {format(to, "yyyy.MM.dd")}</CardDescription></CardHeader>
           <CardContent className="h-[280px]">
+            {loading ? <Skeleton className="h-full w-full" /> : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -273,13 +273,14 @@ function Dashboard() {
                 <Line type="monotone" dataKey={t("dashboard.activations")} stroke="#10b981" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader><CardTitle>{t("dashboard.countryDist")}</CardTitle><CardDescription>{t("dashboard.countryDistDesc")}</CardDescription></CardHeader>
           <CardContent className="h-[280px]">
-            {countryData.every((c) => c.value === 0) ? (
+            {loading ? <Skeleton className="h-full w-full" /> : countryData.every((c) => c.value === 0) ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t("common.empty")}</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -298,6 +299,7 @@ function Dashboard() {
       <Card>
         <CardHeader><CardTitle>{t("dashboard.channelPerf")}</CardTitle><CardDescription>{t("dashboard.channelPerfDesc")}</CardDescription></CardHeader>
         <CardContent className="h-[280px]">
+          {loading ? <Skeleton className="h-full w-full" /> : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={channelData} layout="vertical" margin={{ left: 30 }}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -308,12 +310,20 @@ function Dashboard() {
               <Bar dataKey={t("dashboard.activations")} fill="#10b981" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader><CardTitle>{t("dashboard.staffRanking")}</CardTitle><CardDescription>{t("dashboard.staffRankingDesc")}</CardDescription></CardHeader>
         <CardContent>
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-[68px] w-full" />
+              ))}
+            </div>
+          ) : (
           <div className="space-y-3">
             {ranking.map((u, i) => {
               const pct = u.target ? (u.activated / u.target) * 100 : 0;
@@ -340,10 +350,9 @@ function Dashboard() {
             })}
             {!ranking.length && <div className="text-center text-sm text-muted-foreground py-6">{t("dashboard.noStaff")}</div>}
           </div>
+          )}
         </CardContent>
       </Card>
-      </>
-      )}
     </div>
   );
 }
