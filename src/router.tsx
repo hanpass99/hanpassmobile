@@ -6,8 +6,8 @@ export const getRouter = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        // 페이지 전환 시 캐시된 데이터를 즉시 표시 (1분간 fresh)
-        staleTime: 60_000,
+        // 페이지 전환 시 캐시된 데이터를 즉시 표시 (5분간 fresh)
+        staleTime: 5 * 60_000,
         // 사용하지 않는 캐시는 10분간 보관
         gcTime: 10 * 60_000,
         // 창 포커스 / 재연결 시 자동 refetch 비활성화 (불필요한 호출 방지)
