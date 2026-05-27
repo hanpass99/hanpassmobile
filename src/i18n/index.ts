@@ -14,7 +14,7 @@ const ko = {
     save: "저장", search: "검색", reset: "초기화", confirm: "확인",
     language: "언어", theme: "테마", dark: "다크", light: "라이트",
     selectAll: "전체 선택", deleteSelected: "선택 삭제",
-    startDate: "시작일", endDate: "종료일", registeredDate: "데이터 등록일",
+    startDate: "시작일", endDate: "종료일", registeredDate: "데이터 등록일", from: "시작일", to: "종료일",
     loading: "로드 중...", saving: "저장 중...", processing: "처리 중...",
     actions: "액션", all: "전체", none: "없음", unassigned: "미배정",
     yes: "예", no: "아니오", thisMonth: "이번 달",
