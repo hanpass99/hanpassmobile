@@ -382,7 +382,7 @@ const en = {
     save: "Save", search: "Search", reset: "Reset", confirm: "Confirm",
     language: "Language", theme: "Theme", dark: "Dark", light: "Light",
     selectAll: "Select all", deleteSelected: "Delete selected",
-    startDate: "Start date", endDate: "End date", registeredDate: "Registered date",
+    startDate: "Start date", endDate: "End date", registeredDate: "Registered date", from: "From", to: "To",
     loading: "Loading...", saving: "Saving...", processing: "Processing...",
     actions: "Actions", all: "All", none: "None", unassigned: "Unassigned",
     yes: "Yes", no: "No", thisMonth: "This month",
