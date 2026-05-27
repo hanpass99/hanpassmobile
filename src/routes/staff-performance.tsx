@@ -91,10 +91,6 @@ function StaffPerf() {
 
 
   const visibleRows = presentOnly ? rows.filter((r) => r.attendance === "present") : rows;
-  const presentCount = rows.filter((r) => r.attendance === "present").length;
-  const avgCalls = presentCount > 0
-    ? Math.round(rows.filter((r) => r.attendance === "present").reduce((s, r) => s + r.total, 0) / presentCount)
-    : 0;
 
   return (
     <div className="space-y-5">
@@ -123,17 +119,6 @@ function StaffPerf() {
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card><CardContent className="p-4">
-          <div className="text-xs text-muted-foreground">{t("attendance.presentToday")}</div>
-          <div className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{presentCount}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="text-xs text-muted-foreground">{t("attendance.avgCalls")}</div>
-          <div className="mt-1 text-2xl font-bold">{avgCalls}</div>
-        </CardContent></Card>
-      </div>
 
       <Card>
         <CardHeader className="pb-2">
