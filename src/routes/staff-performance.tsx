@@ -177,8 +177,9 @@ function StaffPerf() {
                 </TableRow>
               ))}
               {!loading && visibleRows.map((u, i) => {
-                const callCompleted = u.total - u.counts.new;
+                const callCompleted = u.callCompleted;
                 const rate = callCompleted > 0 ? (u.counts.activated / callCompleted) * 100 : 0;
+
                 return (
                 <TableRow key={u.id}>
                   <TableCell>
