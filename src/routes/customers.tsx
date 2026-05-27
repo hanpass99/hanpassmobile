@@ -4,7 +4,6 @@ import * as XLSX from "xlsx";
 import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
   StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon,
-  Users, CheckCircle2, TrendingUp, PhoneCall, Clock, PhoneMissed,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -900,61 +899,6 @@ function CustomersPage() {
                     </div>
                   )}
                 </div>
-
-                {(() => {
-                  const activated = statusCounts.activated ?? 0;
-                  const inProgress = statusCounts.in_progress ?? 0;
-                  const pending = statusCounts.new ?? 0;
-                  const callback = statusCounts.callback ?? 0;
-                  const noAnswer = statusCounts.no_answer ?? 0;
-                  const rate = statusTotal > 0 ? (activated / statusTotal) * 100 : 0;
-                  const kpis: {
-                    label: string;
-                    value: string | number;
-                    icon: React.ComponentType<{ className?: string }>;
-                    filter?: "all" | CustomerStatus;
-                    accent: string;
-                  }[] = [
-                    { label: "전체 고객", value: statusTotal, icon: Users, filter: "all", accent: "from-sky-500/15 to-sky-500/5 text-sky-600 dark:text-sky-300" },
-                    { label: "개통 완료", value: activated, icon: CheckCircle2, filter: "activated", accent: "from-emerald-500/15 to-emerald-500/5 text-emerald-600 dark:text-emerald-300" },
-                    { label: "개통 전환율", value: `${rate.toFixed(1)}%`, icon: TrendingUp, accent: "from-violet-500/15 to-violet-500/5 text-violet-600 dark:text-violet-300" },
-                    { label: "진행중", value: inProgress, icon: PhoneCall, filter: "in_progress", accent: "from-blue-500/15 to-blue-500/5 text-blue-600 dark:text-blue-300" },
-                    { label: "미처리", value: pending, icon: Clock, filter: "new", accent: "from-slate-500/15 to-slate-500/5 text-slate-600 dark:text-slate-300" },
-                    { label: "재연락 / 부재", value: `${callback} / ${noAnswer}`, icon: PhoneMissed, accent: "from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-300" },
-                  ];
-                  return (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-                      {kpis.map((k) => {
-                        const Icon = k.icon;
-                        const isActive = k.filter ? statusF === k.filter : false;
-                        return (
-                          <button
-                            key={k.label}
-                            type="button"
-                            disabled={!k.filter}
-                            onClick={() => k.filter && setStatusF(k.filter)}
-                            className={cn(
-                              "relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br p-3 text-left transition",
-                              k.filter ? "cursor-pointer hover:shadow-md" : "cursor-default",
-                              isActive ? "ring-1 ring-primary border-primary" : "",
-                              k.accent
-                            )}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <div className="text-[11px] font-medium text-muted-foreground">{k.label}</div>
-                                <div className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                                  {typeof k.value === "number" ? k.value.toLocaleString() : k.value}
-                                </div>
-                              </div>
-                              <Icon className="h-5 w-5 shrink-0 opacity-80" />
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
 
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
                   <button
