@@ -62,8 +62,8 @@ function StaffPerf() {
 
   const { data, isLoading: loading } = useStaffPerformance({ from, to, attendanceDate });
 
-  const rows = useMemo<Row[]>(() => {
-    if (!data) return [];
+  const rows = useMemo(() => {
+    if (!data) return [] as (Row & { callCompleted: number })[];
     const orderMap = new Map<string, number>();
     data.profiles.forEach((p) => orderMap.set(p.id, p.sort_order ?? 1000));
     const attMap = new Map<string, AttendanceStatus>();
@@ -83,9 +83,11 @@ function StaffPerf() {
         counts,
         tier: tierFor(Number(r.activated ?? 0)),
         attendance: (attMap.get(r.user_id) ?? "present") as AttendanceStatus,
+        callCompleted: Number(data.callCompleted[r.user_id] ?? 0),
       };
     }).sort((a, b) => (orderMap.get(a.id) ?? 1000) - (orderMap.get(b.id) ?? 1000) || a.name.localeCompare(b.name));
   }, [data]);
+
 
 
   const visibleRows = presentOnly ? rows.filter((r) => r.attendance === "present") : rows;
@@ -175,8 +177,9 @@ function StaffPerf() {
                 </TableRow>
               ))}
               {!loading && visibleRows.map((u, i) => {
-                const callCompleted = u.total - u.counts.new;
+                const callCompleted = u.callCompleted;
                 const rate = callCompleted > 0 ? (u.counts.activated / callCompleted) * 100 : 0;
+
                 return (
                 <TableRow key={u.id}>
                   <TableCell>
