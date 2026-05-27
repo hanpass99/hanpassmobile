@@ -28,6 +28,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import {
+  Pagination, PaginationContent, PaginationItem, PaginationLink,
+  PaginationNext, PaginationPrevious, PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { useTranslation } from "react-i18next";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +97,20 @@ type ImportCustomer = {
 };
 
 type SortDir = "asc" | "desc" | null;
+
+/** 페이지네이션 번호 목록: 1, ..., 4, 5, 6, ..., 110 형태로 줄임표 포함 */
+function getPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "...")[] = [1];
+  const left = Math.max(2, current - 1);
+  const right = Math.min(total - 1, current + 1);
+  if (left > 2) pages.push("...");
+  for (let i = left; i <= right; i++) pages.push(i);
+  if (right < total - 1) pages.push("...");
+  pages.push(total);
+  return pages;
+}
+
 
 const PAGE_SIZE = 50;
 
@@ -970,16 +988,45 @@ function CustomersPage() {
                   {renderTable(p)}
                 </div>
                 {total > PAGE_SIZE && (
-                  <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                    <Button variant="outline" size="sm" onClick={loadPrevious} disabled={loadingMore || page <= 1}>
-                      이전
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      {loadingMore ? "불러오는 중..." : `${page.toLocaleString()} / ${totalPages.toLocaleString()} 페이지 · 총 ${total.toLocaleString()}건`}
-                    </span>
-                    <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore || page >= totalPages}>
-                      다음
-                    </Button>
+                  <div className="flex flex-col items-center gap-2 pt-3">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            href="#"
+                            aria-disabled={loadingMore || page <= 1}
+                            className={page <= 1 || loadingMore ? "pointer-events-none opacity-50" : ""}
+                            onClick={(e) => { e.preventDefault(); if (page > 1 && !loadingMore) loadPrevious(); }}
+                          />
+                        </PaginationItem>
+                        {getPageNumbers(page, totalPages).map((p, i) =>
+                          p === "..." ? (
+                            <PaginationItem key={`e${i}`}><PaginationEllipsis /></PaginationItem>
+                          ) : (
+                            <PaginationItem key={p}>
+                              <PaginationLink
+                                href="#"
+                                isActive={p === page}
+                                onClick={(e) => { e.preventDefault(); if (!loadingMore) setPage(p as number); }}
+                              >
+                                {p}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            href="#"
+                            aria-disabled={loadingMore || page >= totalPages}
+                            className={page >= totalPages || loadingMore ? "pointer-events-none opacity-50" : ""}
+                            onClick={(e) => { e.preventDefault(); if (page < totalPages && !loadingMore) loadMore(); }}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                    <div className="text-xs text-muted-foreground">
+                      {loadingMore ? "불러오는 중..." : `${page.toLocaleString()} / ${totalPages.toLocaleString()} 페이지 · 총 ${total.toLocaleString()}건 (페이지당 ${PAGE_SIZE}건)`}
+                    </div>
                   </div>
                 )}
               </CardContent>
