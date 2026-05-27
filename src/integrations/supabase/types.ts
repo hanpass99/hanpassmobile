@@ -735,6 +735,13 @@ export type Database = {
         }
         Returns: Json
       }
+      stats_staff_call_completed: {
+        Args: { _country_id?: string; _date_from?: string; _date_to?: string }
+        Returns: {
+          call_completed: number
+          user_id: string
+        }[]
+      }
       stats_staff_ranking: {
         Args: {
           _attendance_date?: string
