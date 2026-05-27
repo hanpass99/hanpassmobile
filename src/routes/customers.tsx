@@ -44,7 +44,7 @@ import {
 } from "@/lib/labels";
 import {
   useCustomersLookups, useCustomerPoolCounts, useCustomersList, useCustomersCache,
-  useDebouncedValue,
+  useCustomerStatusCounts, useDebouncedValue,
   type Country, type Channel, type CustomerRow,
 } from "@/hooks/use-customers";
 
@@ -205,6 +205,13 @@ function CustomersPage() {
     sortDir,
     page,
     pageSize: PAGE_SIZE,
+    dateFromIso: fromIso,
+    dateToIso: toIso,
+  });
+
+  const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
+    pool: tab,
+    country,
     dateFromIso: fromIso,
     dateToIso: toIso,
   });
@@ -892,6 +899,42 @@ function CustomersPage() {
                     </div>
                   )}
                 </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+                  <button
+                    type="button"
+                    onClick={() => setStatusF("all")}
+                    className={cn(
+                      "rounded-lg border bg-card p-3 text-left transition hover:shadow-card-hover",
+                      statusF === "all" ? "border-primary ring-1 ring-primary" : "border-border/60"
+                    )}
+                  >
+                    <div className="text-[11px] font-medium text-muted-foreground">{t("status.allStatus")}</div>
+                    <div className="mt-1 text-xl font-bold tracking-tight">{statusTotal.toLocaleString()}</div>
+                  </button>
+                  {CUSTOMER_STATUSES.map((s) => {
+                    const n = statusCounts[s] ?? 0;
+                    if (n === 0 && statusF !== s) return null;
+                    const active = statusF === s;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setStatusF(active ? "all" : s)}
+                        className={cn(
+                          "rounded-lg border bg-card p-3 text-left transition hover:shadow-card-hover",
+                          active ? "border-primary ring-1 ring-primary" : "border-border/60"
+                        )}
+                      >
+                        <div className={cn("inline-block rounded px-1.5 py-0.5 text-[11px] font-medium", STATUS_CLASS[s])}>
+                          {STATUS_LABEL[s]}
+                        </div>
+                        <div className="mt-1 text-xl font-bold tracking-tight">{n.toLocaleString()}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
 
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
                   <div className="relative md:col-span-2">
