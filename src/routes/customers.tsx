@@ -688,6 +688,7 @@ function CustomersPage() {
     } finally {
       setDownloading(false);
     }
+  };
 
   const poolCount = (p: CustomerPool) => poolCounts[p] ?? 0;
 
