@@ -139,8 +139,8 @@ function CustomersPage() {
 
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput, 250);
-  const [country, setCountry] = useState<string>(
-    initialSearch.country && initialSearch.country !== "all" ? initialSearch.country : "all"
+  const [countryIds, setCountryIds] = useState<string[]>(
+    initialSearch.country && initialSearch.country !== "all" ? [initialSearch.country] : []
   );
   const [assignedCountry, setAssignedCountry] = useState("all");
   const [statusF, setStatusF] = useState<"all" | CustomerStatus | "__call_completed__">(initialStatus);
