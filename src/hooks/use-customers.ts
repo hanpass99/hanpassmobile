@@ -45,7 +45,7 @@ export type CustomerRow = {
 export type CustomersSearchParams = {
   pool: CustomerPool | "all";
   search?: string;
-  country?: string; // "all" | id
+  countryIds?: string[]; // [] = all
   assignedCountry?: string; // "all" | "__none__" | id
   status?: "all" | CustomerStatus | "__call_completed__";
   staff?: string; // "all" | "__none__" | id
