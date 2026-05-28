@@ -196,7 +196,7 @@ function CustomersPage() {
   } = useCustomersList({
     pool: tab,
     search: debouncedSearch,
-    country,
+    countryIds,
     assignedCountry,
     status: statusF,
     staff: staffF,
