@@ -945,13 +945,14 @@ function CustomersPage() {
                       className="pl-9"
                     />
                   </div>
-                  <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger><SelectValue placeholder={t("customers.col.customerCountry")} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("customers.col.customerCountry")} · {t("dashboard.allCountries")}</SelectItem>
-                      {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <MultiCountrySelect
+                    options={countries}
+                    value={countryIds}
+                    onChange={setCountryIds}
+                    placeholder={`${t("customers.col.customerCountry")} · ${t("dashboard.allCountries")}`}
+                    className="h-10 w-full"
+                  />
+
                   <Select value={assignedCountry} onValueChange={setAssignedCountry}>
                     <SelectTrigger><SelectValue placeholder={t("customers.col.assignedCountry")} /></SelectTrigger>
                     <SelectContent>
