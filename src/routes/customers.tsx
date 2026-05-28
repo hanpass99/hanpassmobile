@@ -614,6 +614,81 @@ function CustomersPage() {
     XLSX.writeFile(wb, `샘플_${POOL_SHORT[effPool]}.xlsx`);
   };
 
+  // 관리자 전용: 현재 필터로 조회된 데이터를 Excel로 다운로드
+  const [downloading, setDownloading] = useState(false);
+  const downloadFiltered = async () => {
+    if (!isAdmin) return;
+    setDownloading(true);
+    const toastId = toast.loading("엑셀 생성 중...");
+    try {
+      const EXPORT_LIMIT = 50000;
+      const pageSize = 1000;
+      const all: CustomerRow[] = [];
+      let p = 1;
+      let totalCount = 0;
+      const sortKeyForRpc = sortKey || "imported_at";
+      const sortDirForRpc = sortDir ?? "desc";
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error } = await supabase.rpc("search_customers", {
+          _pool: tab === "all" ? undefined : tab,
+          _search: debouncedSearch?.trim() || undefined,
+          _country_ids: countryIds.length ? countryIds : undefined,
+          _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
+          _assigned_country: assignedCountry === "all" ? undefined : (assignedCountry === "__none__" ? "none" : assignedCountry),
+          _status: (statusF === "all" || statusF === "__call_completed__") ? undefined : statusF,
+          _date_from: fromIso ?? undefined,
+          _date_to: toIso ?? undefined,
+          _sort_key: sortKeyForRpc,
+          _sort_dir: sortDirForRpc,
+          _page: p,
+          _page_size: pageSize,
+          _call_round: (callRoundF === "all" ? undefined : (callRoundF === "none" ? null : Number(callRoundF))) as number | undefined,
+          _call_completed: statusF === "__call_completed__",
+        });
+        if (error) throw new Error(error.message);
+        const chunk = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
+        if (!chunk.length) break;
+        totalCount = chunk[0].total_count ?? 0;
+        all.push(...chunk.map((r) => r.data));
+        toast.loading(`엑셀 생성 중... ${all.length.toLocaleString()}/${Math.min(totalCount, EXPORT_LIMIT).toLocaleString()}`, { id: toastId });
+        if (all.length >= totalCount || all.length >= EXPORT_LIMIT) break;
+        p += 1;
+      }
+      if (!all.length) {
+        toast.error("다운로드할 데이터가 없습니다.", { id: toastId });
+        return;
+      }
+      const rowsForXlsx = all.map((c) => ({
+        고객명: c.name,
+        전화번호: c.phone,
+        국적: countryById.get(c.country_id ?? "")?.code ?? "",
+        담당자: c.assigned_to ? (staffById.get(c.assigned_to) ?? "") : "",
+        상태: STATUS_LABEL[c.status],
+        풀: POOL_LABEL[c.pool],
+        "콜 라운드": c.call_round ?? "",
+        개통일: c.activation_date ?? "",
+        요금제: c.carrier_plan ?? "",
+        신청일: c.application_date ?? "",
+        신청요금제: c.requested_plan ?? "",
+        가입일: c.signup_date ?? "",
+        이메일: c.email ?? "",
+        충전번호: c.charge_phone ?? "",
+        "데이터 등록일": c.imported_at ? new Date(c.imported_at).toLocaleString("ko-KR") : "",
+        메모: c.notes ?? "",
+      }));
+      const ws = XLSX.utils.json_to_sheet(rowsForXlsx);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Customers");
+      const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      XLSX.writeFile(wb, `고객목록_${POOL_SHORT[(tab === "all" ? "existing" : tab) as CustomerPool]}_${ts}.xlsx`);
+      toast.success(`${all.length.toLocaleString()}건 다운로드 완료`, { id: toastId });
+    } catch (e: any) {
+      toast.error(`다운로드 실패: ${e.message}`, { id: toastId });
+    } finally {
+      setDownloading(false);
+    }
+
   const poolCount = (p: CustomerPool) => poolCounts[p] ?? 0;
 
   // 담당자별 상태 통계 (현재 Pool, 현재 필터 적용 후)
