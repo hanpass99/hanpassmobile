@@ -211,7 +211,7 @@ function CustomersPage() {
 
   const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
     pool: tab,
-    country,
+    countryIds,
     dateFromIso: fromIso,
     dateToIso: toIso,
   });
