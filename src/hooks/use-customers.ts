@@ -45,7 +45,7 @@ export type CustomerRow = {
 export type CustomersSearchParams = {
   pool: CustomerPool | "all";
   search?: string;
-  country?: string; // "all" | id
+  countryIds?: string[]; // [] = all
   assignedCountry?: string; // "all" | "__none__" | id
   status?: "all" | CustomerStatus | "__call_completed__";
   staff?: string; // "all" | "__none__" | id
@@ -119,23 +119,25 @@ export function useCustomerPoolCounts() {
 // === Status counts (per tab cards) ===
 export type StatusCountsParams = {
   pool: CustomerPool | "all";
-  country?: string; // "all" | id
+  countryIds?: string[];
   dateFromIso?: string | null;
   dateToIso?: string | null;
 };
 
 export function useCustomerStatusCounts(p: StatusCountsParams) {
+  const ids = p.countryIds ?? [];
+  const idsKey = ids.slice().sort().join(",");
   const q = useQuery({
     queryKey: [
       "customers", "statusCounts",
-      p.pool, p.country ?? "all", p.dateFromIso ?? "", p.dateToIso ?? "",
+      p.pool, idsKey, p.dateFromIso ?? "", p.dateToIso ?? "",
     ] as const,
     staleTime: 30_000,
     placeholderData: (prev) => prev,
     queryFn: async (): Promise<{ counts: Record<string, number>; total: number }> => {
       const { data, error } = await supabase.rpc("stats_status_counts", {
         _pool: p.pool === "all" ? undefined : p.pool,
-        _country_id: !p.country || p.country === "all" ? undefined : p.country,
+        _country_ids: ids.length ? ids : undefined,
         _date_from: p.dateFromIso ?? undefined,
         _date_to: p.dateToIso ?? undefined,
       });
@@ -163,9 +165,10 @@ export function useCustomerStatusCounts(p: StatusCountsParams) {
 export type CustomersListResult = { rows: CustomerRow[]; total: number };
 
 export function customersListQueryKey(p: CustomersSearchParams) {
+  const idsKey = (p.countryIds ?? []).slice().sort().join(",");
   return [
     "customers", "list",
-    p.pool, p.search ?? "", p.country ?? "all",
+    p.pool, p.search ?? "", idsKey,
     p.assignedCountry ?? "all", p.status ?? "all", p.staff ?? "all",
     p.callRound ?? "all", p.sortKey, p.sortDir,
     p.page, p.pageSize, p.dateFromIso ?? "", p.dateToIso ?? "",
@@ -180,10 +183,11 @@ export function useCustomersList(p: CustomersSearchParams, options?: { enabled?:
     queryFn: async (): Promise<CustomersListResult> => {
       const sortKeyForRpc = SERVER_SORT_KEYS.has(p.sortKey) ? p.sortKey : "imported_at";
       const sortDirForRpc = p.sortDir ?? "desc";
+      const ids = p.countryIds ?? [];
       const { data, error } = await supabase.rpc("search_customers", {
         _pool: p.pool === "all" ? undefined : p.pool,
         _search: p.search?.trim() || undefined,
-        _country_id: !p.country || p.country === "all" ? undefined : p.country,
+        _country_ids: ids.length ? ids : undefined,
         _assigned_to: !p.staff || p.staff === "all" ? undefined : (p.staff === "__none__" ? "unassigned" : p.staff),
         _assigned_country: !p.assignedCountry || p.assignedCountry === "all" ? undefined : (p.assignedCountry === "__none__" ? "none" : p.assignedCountry),
         _status: (!p.status || p.status === "all" || p.status === "__call_completed__") ? undefined : p.status,
