@@ -119,23 +119,25 @@ export function useCustomerPoolCounts() {
 // === Status counts (per tab cards) ===
 export type StatusCountsParams = {
   pool: CustomerPool | "all";
-  country?: string; // "all" | id
+  countryIds?: string[];
   dateFromIso?: string | null;
   dateToIso?: string | null;
 };
 
 export function useCustomerStatusCounts(p: StatusCountsParams) {
+  const ids = p.countryIds ?? [];
+  const idsKey = ids.slice().sort().join(",");
   const q = useQuery({
     queryKey: [
       "customers", "statusCounts",
-      p.pool, p.country ?? "all", p.dateFromIso ?? "", p.dateToIso ?? "",
+      p.pool, idsKey, p.dateFromIso ?? "", p.dateToIso ?? "",
     ] as const,
     staleTime: 30_000,
     placeholderData: (prev) => prev,
     queryFn: async (): Promise<{ counts: Record<string, number>; total: number }> => {
       const { data, error } = await supabase.rpc("stats_status_counts", {
         _pool: p.pool === "all" ? undefined : p.pool,
-        _country_id: !p.country || p.country === "all" ? undefined : p.country,
+        _country_ids: ids.length ? ids : undefined,
         _date_from: p.dateFromIso ?? undefined,
         _date_to: p.dateToIso ?? undefined,
       });
