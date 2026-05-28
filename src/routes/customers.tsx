@@ -186,7 +186,7 @@ function CustomersPage() {
   useEffect(() => {
     setPinnedOrder(null);
     setPage(1);
-  }, [tab, debouncedSearch, country, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
+  }, [tab, debouncedSearch, countryIds, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
 
   const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
   const toIso = dateTo ? dayEndIso(dateTo) : null;
