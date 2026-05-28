@@ -968,6 +968,9 @@ function CustomersPage() {
                           <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing} aria-busy={importing}>
                             <Upload className="mr-2 h-4 w-4" /> {importing ? t("customers.uploading") : t("customers.excelUpload")}
                           </Button>
+                          <Button variant="outline" size="sm" onClick={downloadFiltered} disabled={downloading} aria-busy={downloading}>
+                            <FileSpreadsheet className="mr-2 h-4 w-4" /> {downloading ? "다운로드 중..." : "엑셀 다운로드"}
+                          </Button>
                         </>
                       )}
                       <Button size="sm" onClick={() => setShowAdd(true)}>
