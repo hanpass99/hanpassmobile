@@ -710,6 +710,20 @@ function CustomersPage() {
   const fmtDate = (s: string | null | undefined) =>
     s ? new Date(s).toLocaleDateString("ko-KR") : "-";
 
+  const fmtDateTime = (s: string | null | undefined) =>
+    s ? new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" }) : "-";
+
+  const StatusChangedCell = ({ c }: { c: CustomerRow }) => {
+    const who = c.status_changed_by ? staffById.get(c.status_changed_by)?.display_name : null;
+    return (
+      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+        <div>{fmtDateTime(c.status_changed_at)}</div>
+        {who && <div className="text-[11px] opacity-70">{who}</div>}
+      </TableCell>
+    );
+  };
+  const StatusChangedHead = <TableHead className="whitespace-nowrap">상태 변경일</TableHead>;
+
   // === 풀별 컬럼 렌더러 ===
   const renderTable = (p: CustomerPool) => {
     const CheckHead = isAdmin ? (
