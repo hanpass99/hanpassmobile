@@ -714,7 +714,7 @@ function CustomersPage() {
     s ? new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" }) : "-";
 
   const StatusChangedCell = ({ c }: { c: CustomerRow }) => {
-    const who = c.status_changed_by ? staffById.get(c.status_changed_by)?.display_name : null;
+    const who = c.status_changed_by ? staffById.get(c.status_changed_by) : null;
     return (
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
         <div>{fmtDateTime(c.status_changed_at)}</div>
