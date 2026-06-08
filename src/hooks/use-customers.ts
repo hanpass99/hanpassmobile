@@ -40,6 +40,8 @@ export type CustomerRow = {
   application_date: string | null;
   requested_plan: string | null;
   call_round: number | null;
+  status_changed_at: string | null;
+  status_changed_by: string | null;
 };
 
 export type CustomersSearchParams = {
