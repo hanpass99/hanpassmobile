@@ -710,6 +710,20 @@ function CustomersPage() {
   const fmtDate = (s: string | null | undefined) =>
     s ? new Date(s).toLocaleDateString("ko-KR") : "-";
 
+  const fmtDateTime = (s: string | null | undefined) =>
+    s ? new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" }) : "-";
+
+  const StatusChangedCell = ({ c }: { c: CustomerRow }) => {
+    const who = c.status_changed_by ? staffById.get(c.status_changed_by) : null;
+    return (
+      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+        <div>{fmtDateTime(c.status_changed_at)}</div>
+        {who && <div className="text-[11px] opacity-70">{who}</div>}
+      </TableCell>
+    );
+  };
+  const StatusChangedHead = <TableHead className="whitespace-nowrap">상태 변경일</TableHead>;
+
   // === 풀별 컬럼 렌더러 ===
   const renderTable = (p: CustomerPool) => {
     const CheckHead = isAdmin ? (
@@ -794,6 +808,7 @@ function CustomersPage() {
               <SortHead k="assigned">담당자</SortHead>
               <SortHead k="status" className="min-w-[140px]">상태</SortHead>
               {CallRoundHead}
+              {StatusChangedHead}
               <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
@@ -811,12 +826,13 @@ function CustomersPage() {
                 <Assigned c={c} />
                 <StatusCell c={c} />
                 <CallRoundCell c={c} />
+                <StatusChangedCell c={c} />
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
                 <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={12 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -835,6 +851,7 @@ function CustomersPage() {
               <SortHead k="assigned">담당자</SortHead>
               <SortHead k="status" className="min-w-[140px]">상태</SortHead>
               {CallRoundHead}
+              {StatusChangedHead}
               <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
@@ -851,12 +868,13 @@ function CustomersPage() {
                 <Assigned c={c} />
                 <StatusCell c={c} />
                 <CallRoundCell c={c} />
+                <StatusChangedCell c={c} />
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
                 <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={12 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
@@ -876,6 +894,7 @@ function CustomersPage() {
             <SortHead k="assigned">담당자</SortHead>
             <SortHead k="status" className="min-w-[140px]">상태</SortHead>
             {CallRoundHead}
+            {StatusChangedHead}
             <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
             <TableHead>메모</TableHead>
             <TableHead className="text-right">액션</TableHead>
@@ -893,12 +912,13 @@ function CustomersPage() {
               <Assigned c={c} />
               <StatusCell c={c} />
               <CallRoundCell c={c} />
+              <StatusChangedCell c={c} />
               <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
               <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
               {renderActions(c)}
             </TableRow>
           ))}
-          {filtered.length === 0 && <EmptyRow cols={11 + extraCols} loading={loading} pool={p} />}
+          {filtered.length === 0 && <EmptyRow cols={12 + extraCols} loading={loading} pool={p} />}
         </TableBody>
       </Table>
     );

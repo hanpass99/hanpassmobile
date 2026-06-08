@@ -202,6 +202,8 @@ export type Database = {
           requested_plan: string | null
           signup_date: string
           status: Database["public"]["Enums"]["customer_status"]
+          status_changed_at: string | null
+          status_changed_by: string | null
           updated_at: string
         }
         Insert: {
@@ -226,6 +228,8 @@ export type Database = {
           requested_plan?: string | null
           signup_date?: string
           status?: Database["public"]["Enums"]["customer_status"]
+          status_changed_at?: string | null
+          status_changed_by?: string | null
           updated_at?: string
         }
         Update: {
@@ -250,6 +254,8 @@ export type Database = {
           requested_plan?: string | null
           signup_date?: string
           status?: Database["public"]["Enums"]["customer_status"]
+          status_changed_at?: string | null
+          status_changed_by?: string | null
           updated_at?: string
         }
         Relationships: [
