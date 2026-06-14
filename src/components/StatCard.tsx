@@ -5,9 +5,9 @@ import type { LucideIcon } from "lucide-react";
 type Tone = "primary" | "success" | "warning" | "destructive" | "info" | "muted";
 
 const tones: Record<Tone, string> = {
-  primary: "bg-primary-soft text-primary",
+  primary: "bg-primary/10 text-primary",
   success: "bg-success/10 text-success",
-  warning: "bg-warning/15 text-warning-foreground",
+  warning: "bg-warning/10 text-warning",
   destructive: "bg-destructive/10 text-destructive",
   info: "bg-info/10 text-info",
   muted: "bg-muted text-muted-foreground",
@@ -29,19 +29,21 @@ export function StatCard({
   suffix?: string;
 }) {
   return (
-    <Card className="border-border/60 shadow-card transition hover:shadow-card-hover">
-      <CardContent className="flex items-start justify-between gap-3 p-5">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">{label}</span>
-          <span className="text-2xl font-bold tracking-tight text-foreground">
+    <Card className="rounded-lg border-border/80 bg-card shadow-none transition-colors hover:bg-accent/40" style={{ borderWidth: "0.5px" }}>
+      <CardContent className="flex items-start justify-between gap-3 p-4">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            {label}
+          </span>
+          <span className="text-[22px] font-medium leading-tight tracking-tight text-primary">
             {value}
-            {suffix && <span className="ml-1 text-base font-medium text-muted-foreground">{suffix}</span>}
+            {suffix && <span className="ml-1 text-sm font-medium text-muted-foreground">{suffix}</span>}
           </span>
           {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
         </div>
         {Icon && (
-          <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", tones[tone])}>
-            <Icon className="h-5 w-5" />
+          <div className={cn("flex h-8 w-8 items-center justify-center rounded-md", tones[tone])}>
+            <Icon className="h-4 w-4" />
           </div>
         )}
       </CardContent>
