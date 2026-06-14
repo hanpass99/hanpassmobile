@@ -155,7 +155,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("dashboard.title")} description={loading ? t("common.loading") : t("dashboard.subtitle")} />
+      <PageHeader title={t("dashboard.title")} description={loading ? t("common.loading") : `${t("dashboard.subtitle")} · ${format(from, "MM.dd")} ~ ${format(to, "MM.dd")} 기준`} />
 
       {isError && (
         <Card role="alert">
