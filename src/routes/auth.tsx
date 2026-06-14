@@ -79,7 +79,7 @@ function AuthPage() {
           </div>
 
           <div className="space-y-5">
-            <h1 className="text-[26px] font-bold leading-snug tracking-tight">
+            <h1 className="text-[22px] font-bold leading-snug tracking-tight whitespace-nowrap">
               {t("auth.brandTagline")}
             </h1>
             <p className="text-[14px] leading-relaxed text-white/70">
