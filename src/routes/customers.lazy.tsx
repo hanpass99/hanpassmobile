@@ -1704,7 +1704,7 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
 type CustomerPatch = Partial<Pick<CustomerRow, "name" | "phone" | "email" | "country_id" | "channel_id" | "pool" | "notes" | "status" | "activation_date" | "assigned_to">>;
 
 function CustomerDetailSheet({
-  customer, onClose, staffById, countries, channels, visiblePools, onChangeStatus, onSaved,
+  customer, onClose, staffById, countries, channels, visiblePools, onChangeStatus, onSaved, onCall,
 }: {
   customer: CustomerRow | null;
   onClose: () => void;
@@ -1714,6 +1714,7 @@ function CustomerDetailSheet({
   visiblePools: readonly CustomerPool[];
   onChangeStatus: (id: string, status: CustomerStatus) => void;
   onSaved: (patch: CustomerPatch) => void;
+  onCall: (c: CustomerRow) => void;
 }) {
   const [form, setForm] = useState<CustomerPatch>({});
   const [saving, setSaving] = useState(false);
