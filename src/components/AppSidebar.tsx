@@ -32,47 +32,59 @@ export function AppSidebar() {
   const systemItems = [{ title: t("nav.settings"), url: "/settings", icon: Settings }];
 
   const renderItems = (items: typeof mainItems) =>
-    items.map((item) => (
-      <SidebarMenuItem key={item.url}>
-        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-          <Link to={item.url} className="flex items-center gap-3">
-            <item.icon className="h-4 w-4" />
-            <span>{item.title}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    ));
+    items.map((item) => {
+      const active = isActive(item.url);
+      return (
+        <SidebarMenuItem key={item.url}>
+          <SidebarMenuButton
+            asChild
+            isActive={active}
+            tooltip={item.title}
+            className={cn(
+              "text-sidebar-foreground/50 hover:bg-white/10 hover:text-sidebar-foreground",
+              "data-[active=true]:bg-white/[0.12] data-[active=true]:text-sidebar-foreground data-[active=true]:font-medium",
+            )}
+          >
+            <Link to={item.url} className="flex items-center gap-3">
+              <item.icon className="h-4 w-4" />
+              <span>{item.title}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    });
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
             <Phone className="h-5 w-5" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold leading-tight">Hanpass Mobile</span>
-            <span className="text-xs text-muted-foreground">OB Call CRM</span>
+            <span className="text-[13px] font-semibold leading-tight text-sidebar-foreground">Hanpass Mobile</span>
+            <span className="text-xs text-sidebar-foreground/50">OB Call CRM</span>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{t("nav.main")}</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/30">{t("nav.main")}</SidebarGroupLabel>
           <SidebarGroupContent><SidebarMenu>{renderItems(mainItems)}</SidebarMenu></SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>{t("nav.analytics")}</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/30">{t("nav.analytics")}</SidebarGroupLabel>
           <SidebarGroupContent><SidebarMenu>{renderItems(analyticsItems)}</SidebarMenu></SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>{t("nav.system")}</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/30">{t("nav.system")}</SidebarGroupLabel>
           <SidebarGroupContent><SidebarMenu>{renderItems(systemItems)}</SidebarMenu></SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border">
+
         <SidebarPrefs />
         <SidebarUserFooter />
       </SidebarFooter>
