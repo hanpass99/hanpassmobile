@@ -1251,6 +1251,18 @@ function CustomersPage() {
       </Tabs>
 
       <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} staffById={staffById} />
+      <CustomerDetailSheet
+        customer={detailTarget}
+        onClose={() => setDetailTarget(null)}
+        staffById={staffById}
+        countries={countries}
+        channels={channels}
+        visiblePools={visiblePools}
+        onChangeStatus={changeStatus}
+        onSaved={(patch) => {
+          if (detailTarget) cache.patchRow(detailTarget.id, patch);
+        }}
+      />
       <AddCustomerDialog
         open={showAdd}
         onClose={() => setShowAdd(false)}
