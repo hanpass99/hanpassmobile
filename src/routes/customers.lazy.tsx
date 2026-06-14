@@ -1181,7 +1181,7 @@ function CustomersPage() {
         })}
       </Tabs>
 
-      <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} />
+      <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} staffById={staffById} />
       <AddCustomerDialog
         open={showAdd}
         onClose={() => setShowAdd(false)}
@@ -1263,24 +1263,17 @@ function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; poo
 // === 메모 다이얼로그 ===
 type Note = { id: string; content: string; created_at: string; author_id: string };
 
-function MemoDialog({ customer, onClose }: { customer: CustomerRow | null; onClose: () => void }) {
+function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | null; onClose: () => void; staffById: Map<string, string> }) {
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
-  const [authors, setAuthors] = useState<Record<string, string>>({});
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const load = async (id: string) => {
     setLoading(true);
-    const [{ data: n }, { data: p }] = await Promise.all([
-      supabase.from("customer_notes").select("*").eq("customer_id", id).order("created_at", { ascending: false }),
-      supabase.from("profiles").select("id, display_name"),
-    ]);
+    const { data: n } = await supabase.from("customer_notes").select("*").eq("customer_id", id).order("created_at", { ascending: false });
     setNotes((n ?? []) as Note[]);
-    const map: Record<string, string> = {};
-    (p ?? []).forEach((x: any) => { map[x.id] = x.display_name; });
-    setAuthors(map);
     setLoading(false);
   };
 
@@ -1332,7 +1325,7 @@ function MemoDialog({ customer, onClose }: { customer: CustomerRow | null; onClo
               {notes.map((n) => (
                 <div key={n.id} className="rounded bg-muted/40 p-2 text-sm">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-medium">{authors[n.author_id] ?? "—"}</span>
+                    <span className="font-medium">{staffById.get(n.author_id) ?? "—"}</span>
                     <span>{new Date(n.created_at).toLocaleString("ko-KR")}</span>
                   </div>
                   <div className="mt-1 whitespace-pre-wrap">{n.content}</div>
