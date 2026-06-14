@@ -1210,9 +1210,14 @@ function CustomersPage() {
                     </Button>
                   )}
                   {isAdmin && selected.size > 0 && tab === p && (
-                    <Button variant="destructive" size="sm" className="ml-auto" onClick={() => setBulkOpen(true)}>
-                      <Trash2 className="mr-2 h-4 w-4" /> {t("customers.bulkDeleteBtn",{count:selected.size})}
-                    </Button>
+                    <div className="ml-auto flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setBulkStatusOpen(true)}>
+                        {selected.size}건 상태 변경
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => setBulkOpen(true)}>
+                        <Trash2 className="mr-2 h-4 w-4" /> {t("customers.bulkDeleteBtn",{count:selected.size})}
+                      </Button>
+                    </div>
                   )}
                 </div>
 
