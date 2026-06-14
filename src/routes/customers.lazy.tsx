@@ -844,7 +844,7 @@ function CustomersPage() {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
@@ -888,7 +888,7 @@ function CustomersPage() {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
@@ -930,7 +930,7 @@ function CustomersPage() {
     return (
       <Table aria-label="Customer list">
         <TableHeader>
-          <TableRow className="bg-muted/40">
+          <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
             {CheckHead}
             <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
             <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
@@ -1001,9 +1001,9 @@ function CustomersPage() {
 
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
           {visiblePools.map((p) => (
-            <TabsTrigger key={p} value={p} className="text-xs md:text-sm">
+            <TabsTrigger key={p} value={p} className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
@@ -1750,10 +1750,10 @@ function CustomerDetailSheet({
         </div>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">정보</TabsTrigger>
-            <TabsTrigger value="memo">메모</TabsTrigger>
-            <TabsTrigger value="calls">📞 콜 기록</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
+            <TabsTrigger value="info" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">정보</TabsTrigger>
+            <TabsTrigger value="memo" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">메모</TabsTrigger>
+            <TabsTrigger value="calls" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">📞 콜 기록</TabsTrigger>
           </TabsList>
 
 

@@ -5,12 +5,12 @@ import type { LucideIcon } from "lucide-react";
 type Tone = "primary" | "success" | "warning" | "destructive" | "info" | "muted";
 
 const tones: Record<Tone, string> = {
-  primary: "bg-primary/10 text-primary",
-  success: "bg-success/10 text-success",
+  primary: "bg-[#DBEAFE] text-[#2563EB]",
+  success: "bg-[#DCFCE7] text-[#15803D]",
   warning: "bg-warning/10 text-warning",
   destructive: "bg-destructive/10 text-destructive",
-  info: "bg-info/10 text-info",
-  muted: "bg-muted text-muted-foreground",
+  info: "bg-[#E0F2FE] text-[#0369A1]",
+  muted: "bg-[#EFF6FF] text-[#1E3A5F]",
 };
 
 export function StatCard({
@@ -42,8 +42,8 @@ export function StatCard({
           {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
         </div>
         {Icon && (
-          <div className={cn("flex h-8 w-8 items-center justify-center rounded-md", tones[tone])}>
-            <Icon className="h-4 w-4" />
+          <div className={cn("flex h-[34px] w-[34px] items-center justify-center rounded-md", tones[tone])}>
+            <Icon className="h-[18px] w-[18px]" />
           </div>
         )}
       </CardContent>
