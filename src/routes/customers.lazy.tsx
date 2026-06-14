@@ -1340,6 +1340,31 @@ function CustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={bulkStatusOpen} onOpenChange={(o) => !bulkStatusRunning && setBulkStatusOpen(o)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>일괄 상태 변경</DialogTitle>
+            <DialogDescription>선택한 {selected.size}명의 상태를 일괄 변경합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>새 상태</Label>
+            <Select value={bulkStatus} onValueChange={(v) => setBulkStatus(v as CustomerStatus)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CUSTOMER_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusRunning}>취소</Button>
+            <Button onClick={bulkChangeStatus} disabled={bulkStatusRunning}>
+              {bulkStatusRunning ? "변경 중..." : `${selected.size}명 변경`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
