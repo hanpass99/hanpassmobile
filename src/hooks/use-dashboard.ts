@@ -31,6 +31,7 @@ export function useDashboardSummary(params: {
 
   return useQuery({
     queryKey: ["dashboard", "summary", fromIso, toIso, year, month, countryId],
+    staleTime: 5 * 60_000,
     queryFn: async (): Promise<DashboardSummary> => {
       const { data, error } = await supabase.rpc("stats_dashboard_summary", {
         _date_from: fromIso,
