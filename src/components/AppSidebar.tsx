@@ -32,16 +32,29 @@ export function AppSidebar() {
   const systemItems = [{ title: t("nav.settings"), url: "/settings", icon: Settings }];
 
   const renderItems = (items: typeof mainItems) =>
-    items.map((item) => (
-      <SidebarMenuItem key={item.url}>
-        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-          <Link to={item.url} className="flex items-center gap-3">
-            <item.icon className="h-4 w-4" />
-            <span>{item.title}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    ));
+    items.map((item) => {
+      const active = isActive(item.url);
+      return (
+        <SidebarMenuItem key={item.url}>
+          <SidebarMenuButton
+            asChild
+            isActive={active}
+            tooltip={item.title}
+            className={
+              active
+                ? "bg-white/12 text-white hover:bg-white/15 hover:text-white data-[active=true]:bg-white/12 data-[active=true]:text-white"
+                : "text-white/50 hover:bg-white/8 hover:text-white"
+            }
+          >
+            <Link to={item.url} className="flex items-center gap-3">
+              <item.icon className="h-4 w-4" />
+              <span>{item.title}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    });
+
 
   return (
     <Sidebar collapsible="icon">
