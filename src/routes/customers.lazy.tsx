@@ -241,6 +241,7 @@ function CustomersPage() {
 
   const [memoTarget, setMemoTarget] = useState<CustomerRow | null>(null);
   const [detailTarget, setDetailTarget] = useState<CustomerRow | null>(null);
+  const [callLogTarget, setCallLogTarget] = useState<CustomerRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(
