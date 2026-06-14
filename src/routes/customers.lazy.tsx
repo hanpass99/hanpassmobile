@@ -1661,7 +1661,12 @@ function CustomerDetailSheet({
           <TabsContent value="memo" className="pt-3">
             <MemoPanel customer={customer} staffById={staffById} />
           </TabsContent>
+
+          <TabsContent value="calls" className="pt-3">
+            <CallLogPanel customer={customer} staffById={staffById} />
+          </TabsContent>
         </Tabs>
+
       </SheetContent>
     </Sheet>
   );
