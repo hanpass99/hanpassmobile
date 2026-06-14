@@ -1341,7 +1341,7 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
 }
 
 function AddCustomerDialog({
-  open, onClose, onAdded, countries, channels, defaultPool,
+  open, onClose, onAdded, countries, channels, defaultPool, visiblePools,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1349,6 +1349,7 @@ function AddCustomerDialog({
   countries: Country[];
   channels: Channel[];
   defaultPool: CustomerPool;
+  visiblePools: readonly CustomerPool[];
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
