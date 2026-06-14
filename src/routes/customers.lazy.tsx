@@ -232,6 +232,9 @@ function CustomersPage() {
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState<CustomerStatus>("new");
+  const [bulkStatusRunning, setBulkStatusRunning] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const importingRef = useRef(false);
@@ -466,6 +469,42 @@ function CustomersPage() {
     toast.success(t("customers.bulkDeleteConfirm",{count:ids.length}));
     setSelected(new Set());
     load();
+  };
+
+  const bulkChangeStatus = async () => {
+    const visibleIds = new Set(filtered.map((r) => r.id));
+    const ids = Array.from(selected).filter((id) => visibleIds.has(id));
+    if (!ids.length) {
+      setBulkStatusOpen(false);
+      setSelected(new Set());
+      return;
+    }
+    setBulkStatusRunning(true);
+    const patch: { status: CustomerStatus; activation_date?: string } = { status: bulkStatus };
+    if (bulkStatus === "activated") patch.activation_date = new Date().toISOString().slice(0, 10);
+    const chunkSize = 100;
+    const total = ids.length;
+    let done = 0;
+    const toastId = toast.loading(`상태 변경 중... (0/${total})`);
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { error } = await supabase.from("customers").update(patch).in("id", chunk);
+      if (error) {
+        toast.dismiss(toastId);
+        setBulkStatusRunning(false);
+        setBulkStatusOpen(false);
+        return toast.error(error.message);
+      }
+      done += chunk.length;
+      toast.loading(`상태 변경 중... (${done}/${total})`, { id: toastId });
+    }
+    toast.dismiss(toastId);
+    setBulkStatusRunning(false);
+    setBulkStatusOpen(false);
+    toast.success(t("status.changed", { label: STATUS_LABEL[bulkStatus] }) + ` (${total})`);
+    setSelected(new Set());
+    load();
+    refetchPoolCounts();
   };
 
   const toggleOne = (id: string) => {
@@ -1171,9 +1210,14 @@ function CustomersPage() {
                     </Button>
                   )}
                   {isAdmin && selected.size > 0 && tab === p && (
-                    <Button variant="destructive" size="sm" className="ml-auto" onClick={() => setBulkOpen(true)}>
-                      <Trash2 className="mr-2 h-4 w-4" /> {t("customers.bulkDeleteBtn",{count:selected.size})}
-                    </Button>
+                    <div className="ml-auto flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setBulkStatusOpen(true)}>
+                        {selected.size}건 상태 변경
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => setBulkOpen(true)}>
+                        <Trash2 className="mr-2 h-4 w-4" /> {t("customers.bulkDeleteBtn",{count:selected.size})}
+                      </Button>
+                    </div>
                   )}
                 </div>
 
@@ -1293,6 +1337,31 @@ function CustomersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkOpen(false)}>취소</Button>
             <Button variant="destructive" onClick={bulkDelete}>{selected.size}명 삭제</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={bulkStatusOpen} onOpenChange={(o) => !bulkStatusRunning && setBulkStatusOpen(o)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>일괄 상태 변경</DialogTitle>
+            <DialogDescription>선택한 {selected.size}명의 상태를 일괄 변경합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>새 상태</Label>
+            <Select value={bulkStatus} onValueChange={(v) => setBulkStatus(v as CustomerStatus)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CUSTOMER_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusRunning}>취소</Button>
+            <Button onClick={bulkChangeStatus} disabled={bulkStatusRunning}>
+              {bulkStatusRunning ? "변경 중..." : `${selected.size}명 변경`}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
