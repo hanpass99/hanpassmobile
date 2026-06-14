@@ -824,7 +824,7 @@ function CustomersPage() {
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-                <TableCell className="font-medium">{c.name}</TableCell>
+                <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                 <TableCell className="font-mono text-xs">{c.phone}</TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
