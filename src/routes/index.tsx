@@ -144,11 +144,7 @@ function Dashboard() {
   const totalCalls = totals.totalCalls; void totalCalls;
   const activated = statusCounts.activated;
   // 콜 완료 = 미처리 제외 전체 상태 합산 (모든 성과 화면에서 동일 계산)
-  void callCompletedFromRpc;
-  const callCompleted = Object.entries(statusCounts).reduce(
-    (sum, [s, n]) => (s === "new" ? sum : sum + (Number(n) || 0)),
-    0,
-  );
+  const callCompleted = callCompletedFromRpc;
   const monthlyTargetTotal = totals.monthlyTargetTotal;
   void monthlyTargetTotal;
 
