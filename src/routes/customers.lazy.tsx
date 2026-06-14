@@ -1750,10 +1750,10 @@ function CustomerDetailSheet({
         </div>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">정보</TabsTrigger>
-            <TabsTrigger value="memo">메모</TabsTrigger>
-            <TabsTrigger value="calls">📞 콜 기록</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
+            <TabsTrigger value="info" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">정보</TabsTrigger>
+            <TabsTrigger value="memo" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">메모</TabsTrigger>
+            <TabsTrigger value="calls" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">📞 콜 기록</TabsTrigger>
           </TabsList>
 
 
