@@ -100,7 +100,6 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
 
 const PAGE_SIZE = 50;
 
-type SortDir = "asc" | "desc" | null;
 
 function SortHead({ k, children, className = "", sortKey, sortDir, onSort }: { k: string; children: React.ReactNode; className?: string; sortKey: string; sortDir: SortDir; onSort: (key: string) => void }) {
   const isActive = sortKey === k;
