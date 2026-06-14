@@ -99,8 +99,10 @@ function Dashboard() {
       dayMap.set(String(r.day), { calls: Number(r.calls), activations: Number(r.activations) });
     }
     const days: DailyRow[] = [];
+    const today = new Date();
     const cur = new Date(from);
     while (cur <= to) {
+      if (cur > today) break;
       const key = dateKey(cur);
       const d = dayMap.get(key) ?? { calls: 0, activations: 0 };
       days.push({
