@@ -11,7 +11,6 @@ import { STATUS_LABEL, type CustomerStatus } from "@/lib/labels";
 import i18n from "@/i18n";
 
 export const Route = createLazyFileRoute("/reports")({
-  head: () => ({ meta: [{ title: "리포트 — Hanpass OB CRM" }] }),
   component: Reports,
 });
 

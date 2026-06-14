@@ -31,7 +31,6 @@ import {
 } from "@/hooks/use-sms";
 
 export const Route = createLazyFileRoute("/sms")({
-  head: () => ({ meta: [{ title: "문자 발송 — Hanpass OB CRM" }] }),
   component: SmsPage,
 });
 
