@@ -8,42 +8,29 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StaffPerformanceRouteImport } from './routes/staff-performance'
+import { Route as SmsRouteImport } from './routes/sms'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as CountryPerformanceRouteImport } from './routes/country-performance'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
 
-const SmsLazyRouteImport = createFileRoute('/sms')()
-const ReportsLazyRouteImport = createFileRoute('/reports')()
-const CustomersLazyRouteImport = createFileRoute('/customers')()
-
-const SmsLazyRoute = SmsLazyRouteImport.update({
-  id: '/sms',
-  path: '/sms',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/sms.lazy').then((d) => d.Route))
-const ReportsLazyRoute = ReportsLazyRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/reports.lazy').then((d) => d.Route))
-const CustomersLazyRoute = CustomersLazyRouteImport.update({
-  id: '/customers',
-  path: '/customers',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/customers.lazy').then((d) => d.Route))
 const StaffPerformanceRoute = StaffPerformanceRouteImport.update({
   id: '/staff-performance',
   path: '/staff-performance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SmsRoute = SmsRouteImport.update({
+  id: '/sms',
+  path: '/sms',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/sms.lazy').then((d) => d.Route))
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -54,6 +41,16 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/reports.lazy').then((d) => d.Route))
+const CustomersRoute = CustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/customers.lazy').then((d) => d.Route))
 const CountryPerformanceRoute = CountryPerformanceRouteImport.update({
   id: '/country-performance',
   path: '/country-performance',
@@ -86,12 +83,12 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
+  '/customers': typeof CustomersRoute
+  '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/sms': typeof SmsRoute
   '/staff-performance': typeof StaffPerformanceRoute
-  '/customers': typeof CustomersLazyRoute
-  '/reports': typeof ReportsLazyRoute
-  '/sms': typeof SmsLazyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,12 +96,12 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
+  '/customers': typeof CustomersRoute
+  '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/sms': typeof SmsRoute
   '/staff-performance': typeof StaffPerformanceRoute
-  '/customers': typeof CustomersLazyRoute
-  '/reports': typeof ReportsLazyRoute
-  '/sms': typeof SmsLazyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,12 +110,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/country-performance': typeof CountryPerformanceRoute
+  '/customers': typeof CustomersRoute
+  '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/sms': typeof SmsRoute
   '/staff-performance': typeof StaffPerformanceRoute
-  '/customers': typeof CustomersLazyRoute
-  '/reports': typeof ReportsLazyRoute
-  '/sms': typeof SmsLazyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,12 +125,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/channel-performance'
     | '/country-performance'
-    | '/reset-password'
-    | '/settings'
-    | '/staff-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
+    | '/settings'
     | '/sms'
+    | '/staff-performance'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -141,12 +138,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/channel-performance'
     | '/country-performance'
-    | '/reset-password'
-    | '/settings'
-    | '/staff-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
+    | '/settings'
     | '/sms'
+    | '/staff-performance'
   id:
     | '__root__'
     | '/'
@@ -154,12 +151,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/channel-performance'
     | '/country-performance'
-    | '/reset-password'
-    | '/settings'
-    | '/staff-performance'
     | '/customers'
     | '/reports'
+    | '/reset-password'
+    | '/settings'
     | '/sms'
+    | '/staff-performance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -168,42 +165,28 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CountryPerformanceRoute: typeof CountryPerformanceRoute
+  CustomersRoute: typeof CustomersRoute
+  ReportsRoute: typeof ReportsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
+  SmsRoute: typeof SmsRoute
   StaffPerformanceRoute: typeof StaffPerformanceRoute
-  CustomersLazyRoute: typeof CustomersLazyRoute
-  ReportsLazyRoute: typeof ReportsLazyRoute
-  SmsLazyRoute: typeof SmsLazyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sms': {
-      id: '/sms'
-      path: '/sms'
-      fullPath: '/sms'
-      preLoaderRoute: typeof SmsLazyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsLazyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/customers': {
-      id: '/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof CustomersLazyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/staff-performance': {
       id: '/staff-performance'
       path: '/staff-performance'
       fullPath: '/staff-performance'
       preLoaderRoute: typeof StaffPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sms': {
+      id: '/sms'
+      path: '/sms'
+      fullPath: '/sms'
+      preLoaderRoute: typeof SmsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -218,6 +201,20 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customers': {
+      id: '/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof CustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/country-performance': {
@@ -264,13 +261,23 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CountryPerformanceRoute: CountryPerformanceRoute,
+  CustomersRoute: CustomersRoute,
+  ReportsRoute: ReportsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
+  SmsRoute: SmsRoute,
   StaffPerformanceRoute: StaffPerformanceRoute,
-  CustomersLazyRoute: CustomersLazyRoute,
-  ReportsLazyRoute: ReportsLazyRoute,
-  SmsLazyRoute: SmsLazyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
