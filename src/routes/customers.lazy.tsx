@@ -1181,7 +1181,7 @@ function CustomersPage() {
         })}
       </Tabs>
 
-      <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} />
+      <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} staffById={staffById} />
       <AddCustomerDialog
         open={showAdd}
         onClose={() => setShowAdd(false)}
@@ -1325,7 +1325,7 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
               {notes.map((n) => (
                 <div key={n.id} className="rounded bg-muted/40 p-2 text-sm">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-medium">{authors[n.author_id] ?? "—"}</span>
+                    <span className="font-medium">{staffById.get(n.author_id) ?? "—"}</span>
                     <span>{new Date(n.created_at).toLocaleString("ko-KR")}</span>
                   </div>
                   <div className="mt-1 whitespace-pre-wrap">{n.content}</div>
