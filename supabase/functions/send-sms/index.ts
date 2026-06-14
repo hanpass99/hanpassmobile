@@ -57,6 +57,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const ipRes = await fetch("https://api64.ipify.org?format=json");
+    const ipData = await ipRes.json();
+    console.log("PROXY EGRESS IP:", ipData.ip);
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "missing auth" }, 401);
 
