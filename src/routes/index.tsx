@@ -146,7 +146,10 @@ function Dashboard() {
   const totalCalls = totals.totalCalls; void totalCalls;
   const activated = statusCounts.activated;
   // 콜 완료 = 미처리 제외 전체 상태 합산 (모든 성과 화면에서 동일 계산)
-  const callCompleted = callCompletedFromRpc;
+  const callCompleted = Object.entries(statusCounts).reduce(
+    (sum, [s, n]) => (s === "new" ? sum : sum + (Number(n) || 0)),
+    0,
+  );
   const monthlyTargetTotal = totals.monthlyTargetTotal;
   void monthlyTargetTotal;
 
@@ -239,11 +242,6 @@ function Dashboard() {
       </div>
       )}
 
-      {!loading && (
-        <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
-          Debug: callCompletedRpc={callCompletedFromRpc} | statusSum={Object.entries(statusCounts).filter(([s])=>s!=="new").reduce((a,[,n])=>a+Number(n),0)} | activated={statusCounts.activated} | new={statusCounts.new}
-        </div>
-      )}
 
       {/* 상태별 카운트 (10종) */}
       <Card>
