@@ -47,6 +47,7 @@ import {
   useCustomersLookups, useCustomerPoolCounts, useCustomersList, useCustomersCache,
   useCustomerStatusCounts, useDebouncedValue,
   type Country, type Channel, type CustomerRow,
+  SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
@@ -98,6 +99,88 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
 
 
 const PAGE_SIZE = 50;
+
+
+function SortHead({ k, children, className = "", sortKey, sortDir, onSort }: { k: string; children: React.ReactNode; className?: string; sortKey: string; sortDir: SortDir; onSort: (key: string) => void }) {
+  const isActive = sortKey === k;
+  const Icon = isActive ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
+  const ariaSort: "ascending" | "descending" | "none" =
+    isActive && sortDir === "asc" ? "ascending" : isActive && sortDir === "desc" ? "descending" : "none";
+  return (
+    <TableHead className={className} aria-sort={ariaSort}>
+      <button type="button" onClick={() => onSort(k)} className="inline-flex items-center gap-1 font-medium hover:text-foreground">
+        {children} <Icon className="h-3 w-3 opacity-50" />
+      </button>
+    </TableHead>
+  );
+}
+
+function StatusChangedCell({ c, staffById, fmtDateTime }: { c: CustomerRow; staffById: Map<string, string>; fmtDateTime: (s: string | null | undefined) => string }) {
+  const who = c.status_changed_by ? staffById.get(c.status_changed_by) : null;
+  return (
+    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+      <div>{fmtDateTime(c.status_changed_at)}</div>
+      {who && <div className="text-[11px] opacity-70">{who}</div>}
+    </TableCell>
+  );
+}
+
+function CheckCell({ c, isAdmin, selected, onToggle }: { c: CustomerRow; isAdmin: boolean; selected: Set<string>; onToggle: (id: string) => void }) {
+  if (!isAdmin) return null;
+  return (
+    <TableCell className="w-10">
+      <Checkbox checked={selected.has(c.id)} onCheckedChange={() => onToggle(c.id)} aria-label="select row" />
+    </TableCell>
+  );
+}
+
+function StatusCell({ c, onChangeStatus }: { c: CustomerRow; onChangeStatus: (id: string, status: CustomerStatus) => void }) {
+  return (
+    <TableCell>
+      <Select value={c.status} onValueChange={(v) => onChangeStatus(c.id, v as CustomerStatus)}>
+        <SelectTrigger className={`h-8 w-[140px] border-0 ${STATUS_CLASS[c.status]} font-medium`}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {CUSTOMER_STATUSES.map((s) => (
+            <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </TableCell>
+  );
+}
+
+function CallRoundCell({ c, onChangeCallRound }: { c: CustomerRow; onChangeCallRound: (id: string, value: number | null) => void }) {
+  const { t } = useTranslation();
+  return (
+    <TableCell>
+      <Select
+        value={c.call_round ? String(c.call_round) : "__none__"}
+        onValueChange={(v) => onChangeCallRound(c.id, v === "__none__" ? null : Number(v))}
+      >
+        <SelectTrigger className="h-8 w-[90px] text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__">-</SelectItem>
+          <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
+          <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
+          <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
+        </SelectContent>
+      </Select>
+    </TableCell>
+  );
+}
+
+function Assigned({ c, staffById }: { c: CustomerRow; staffById: Map<string, string> }) {
+  const { t } = useTranslation();
+  return (
+    <TableCell className="text-xs">
+      {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">{t("common.unassigned")}</span>}
+    </TableCell>
+  );
+}
 
 function CustomersPage() {
   const { t } = useTranslation();
@@ -153,12 +236,6 @@ function CustomersPage() {
   const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
 
   useEffect(() => { importingRef.current = importing; }, [importing]);
-
-  // RPC가 지원하는 정렬 키 (그 외는 클라이언트 정렬 폴백)
-  const SERVER_SORT_KEYS = new Set([
-    "name", "phone", "status", "imported_at", "activation_date",
-    "application_date", "carrier_plan", "requested_plan",
-  ]);
 
   // === React Query: 룩업 / 풀 카운트 / 리스트 ===
   const { countries, channels, staff } = useCustomersLookups();
@@ -319,19 +396,7 @@ function CustomersPage() {
     else setSortDir("asc");
   };
 
-  const SortHead = ({ k, children, className = "" }: { k: string; children: React.ReactNode; className?: string }) => {
-    const isActive = sortKey === k;
-    const Icon = isActive ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
-    const ariaSort: "ascending" | "descending" | "none" =
-      isActive && sortDir === "asc" ? "ascending" : isActive && sortDir === "desc" ? "descending" : "none";
-    return (
-      <TableHead className={className} aria-sort={ariaSort}>
-        <button type="button" onClick={() => toggleSort(k)} className="inline-flex items-center gap-1 font-medium hover:text-foreground">
-          {children} <Icon className="h-3 w-3 opacity-50" />
-        </button>
-      </TableHead>
-    );
-  };
+
 
   const changeStatus = async (id: string, status: CustomerStatus) => {
     const patch: { status: CustomerStatus; activation_date?: string } = { status };
@@ -697,15 +762,7 @@ function CustomersPage() {
   const fmtDateTime = (s: string | null | undefined) =>
     s ? new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" }) : "-";
 
-  const StatusChangedCell = ({ c }: { c: CustomerRow }) => {
-    const who = c.status_changed_by ? staffById.get(c.status_changed_by) : null;
-    return (
-      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-        <div>{fmtDateTime(c.status_changed_at)}</div>
-        {who && <div className="text-[11px] opacity-70">{who}</div>}
-      </TableCell>
-    );
-  };
+
   const StatusChangedHead = <TableHead className="whitespace-nowrap">상태 변경일</TableHead>;
 
   // === 풀별 컬럼 렌더러 ===
@@ -715,12 +772,7 @@ function CustomersPage() {
         <Checkbox checked={allChecked} onCheckedChange={toggleAll} aria-label="select all" />
       </TableHead>
     ) : null;
-    const CheckCell = ({ c }: { c: CustomerRow }) =>
-      isAdmin ? (
-        <TableCell className="w-10">
-          <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="select row" />
-        </TableCell>
-      ) : null;
+
     const extraCols = isAdmin ? 1 : 0;
 
     const renderActions = (c: CustomerRow) => (
@@ -736,47 +788,13 @@ function CustomersPage() {
       </TableCell>
     );
 
-    const StatusCell = ({ c }: { c: CustomerRow }) => (
-      <TableCell>
-        <Select value={c.status} onValueChange={(v) => changeStatus(c.id, v as CustomerStatus)}>
-          <SelectTrigger className={`h-8 w-[140px] border-0 ${STATUS_CLASS[c.status]} font-medium`}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {CUSTOMER_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-    );
 
-    const CallRoundCell = ({ c }: { c: CustomerRow }) => (
-      <TableCell>
-        <Select
-          value={c.call_round ? String(c.call_round) : "__none__"}
-          onValueChange={(v) => changeCallRound(c.id, v === "__none__" ? null : Number(v))}
-        >
-          <SelectTrigger className="h-8 w-[90px] text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none__">-</SelectItem>
-            <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
-            <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
-            <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </TableCell>
-    );
 
-    const CallRoundHead = <SortHead k="call_round">{t("dashboard.callRound")}</SortHead>;
 
-    const Assigned = ({ c }: { c: CustomerRow }) => (
-      <TableCell className="text-xs">
-        {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">{t("common.unassigned")}</span>}
-      </TableCell>
-    );
+
+    const CallRoundHead = <SortHead k="call_round" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("dashboard.callRound")}</SortHead>;
+
+
 
     if (p === "existing") {
       return (
@@ -784,16 +802,16 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-muted/40">
               {CheckHead}
-              <SortHead k="name">고객명</SortHead>
-              <SortHead k="phone">전화번호</SortHead>
-              <SortHead k="activation_date">개통일</SortHead>
-              <SortHead k="carrier_plan">요금제</SortHead>
-              <SortHead k="country">국적</SortHead>
-              <SortHead k="assigned">담당자</SortHead>
-              <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
+              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
+              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>요금제</SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
+              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
               {CallRoundHead}
               {StatusChangedHead}
-              <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
+              <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
             </TableRow>
@@ -801,16 +819,16 @@ function CustomersPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
-                <CheckCell c={c} />
+                <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="font-mono text-xs">{c.phone}</TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
                 <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
-                <Assigned c={c} />
-                <StatusCell c={c} />
-                <CallRoundCell c={c} />
-                <StatusChangedCell c={c} />
+                <Assigned c={c} staffById={staffById} />
+                <StatusCell c={c} onChangeStatus={changeStatus} />
+                <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
+                <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
                 <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
                 {renderActions(c)}
@@ -828,15 +846,15 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-muted/40">
               {CheckHead}
-              <SortHead k="name">고객명</SortHead>
-              <SortHead k="phone">전화번호</SortHead>
-              <SortHead k="country">국적</SortHead>
-              <SortHead k="signup_date">가입일</SortHead>
-              <SortHead k="assigned">담당자</SortHead>
-              <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
+              <SortHead k="signup_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>가입일</SortHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
+              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
               {CallRoundHead}
               {StatusChangedHead}
-              <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
+              <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
               <TableHead>메모</TableHead>
               <TableHead className="text-right">액션</TableHead>
             </TableRow>
@@ -844,15 +862,15 @@ function CustomersPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
-                <CheckCell c={c} />
+                <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="font-mono text-xs">{c.phone}</TableCell>
                 <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
                 <TableCell className="text-xs">{fmtDate(c.signup_date)}</TableCell>
-                <Assigned c={c} />
-                <StatusCell c={c} />
-                <CallRoundCell c={c} />
-                <StatusChangedCell c={c} />
+                <Assigned c={c} staffById={staffById} />
+                <StatusCell c={c} onChangeStatus={changeStatus} />
+                <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
+                <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
                 <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
                 {renderActions(c)}
@@ -870,16 +888,16 @@ function CustomersPage() {
         <TableHeader>
           <TableRow className="bg-muted/40">
             {CheckHead}
-            <SortHead k="name">고객명</SortHead>
-            <SortHead k="phone">전화번호</SortHead>
-            <SortHead k="country">국적</SortHead>
-            <SortHead k="application_date">신청일</SortHead>
-            <SortHead k="requested_plan">신청 요금제</SortHead>
-            <SortHead k="assigned">담당자</SortHead>
-            <SortHead k="status" className="min-w-[140px]">상태</SortHead>
+            <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
+            <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
+            <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
+            <SortHead k="application_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>신청일</SortHead>
+            <SortHead k="requested_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>신청 요금제</SortHead>
+            <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
+            <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
             {CallRoundHead}
             {StatusChangedHead}
-            <SortHead k="imported_at">{t("common.registeredDate")}</SortHead>
+            <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
             <TableHead>메모</TableHead>
             <TableHead className="text-right">액션</TableHead>
           </TableRow>
@@ -887,16 +905,16 @@ function CustomersPage() {
         <TableBody>
           {filtered.map((c) => (
             <TableRow key={c.id} className="hover:bg-muted/30">
-              <CheckCell c={c} />
+              <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
               <TableCell className="font-medium">{c.name}</TableCell>
               <TableCell className="font-mono text-xs">{c.phone}</TableCell>
               <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
               <TableCell className="text-xs">{fmtDate(c.application_date)}</TableCell>
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
-              <Assigned c={c} />
-              <StatusCell c={c} />
-              <CallRoundCell c={c} />
-              <StatusChangedCell c={c} />
+              <Assigned c={c} staffById={staffById} />
+              <StatusCell c={c} onChangeStatus={changeStatus} />
+              <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
+              <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
               <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
               <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
               {renderActions(c)}
