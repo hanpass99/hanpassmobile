@@ -185,6 +185,18 @@ function Assigned({ c, staffById }: { c: CustomerRow; staffById: Map<string, str
   );
 }
 
+function formatPhone(phone: string): string {
+  if (!phone) return "-";
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  return phone;
+}
+
 function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
   return (
     <a
@@ -196,7 +208,7 @@ function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
       }}
     >
       <Phone className="h-3 w-3" />
-      {phone}
+      {formatPhone(phone)}
     </a>
   );
 }
