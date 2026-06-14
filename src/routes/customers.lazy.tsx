@@ -1263,24 +1263,17 @@ function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; poo
 // === 메모 다이얼로그 ===
 type Note = { id: string; content: string; created_at: string; author_id: string };
 
-function MemoDialog({ customer, onClose }: { customer: CustomerRow | null; onClose: () => void }) {
+function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | null; onClose: () => void; staffById: Map<string, string> }) {
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
-  const [authors, setAuthors] = useState<Record<string, string>>({});
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const load = async (id: string) => {
     setLoading(true);
-    const [{ data: n }, { data: p }] = await Promise.all([
-      supabase.from("customer_notes").select("*").eq("customer_id", id).order("created_at", { ascending: false }),
-      supabase.from("profiles").select("id, display_name"),
-    ]);
+    const { data: n } = await supabase.from("customer_notes").select("*").eq("customer_id", id).order("created_at", { ascending: false });
     setNotes((n ?? []) as Note[]);
-    const map: Record<string, string> = {};
-    (p ?? []).forEach((x: any) => { map[x.id] = x.display_name; });
-    setAuthors(map);
     setLoading(false);
   };
 
