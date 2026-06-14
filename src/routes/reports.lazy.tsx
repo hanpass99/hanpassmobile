@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createLazyFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import { STATUS_LABEL, type CustomerStatus } from "@/lib/labels";
 import i18n from "@/i18n";
 
-export const Route = createFileRoute("/reports")({
+export const Route = createLazyFileRoute("/reports")({
   head: () => ({ meta: [{ title: "리포트 — Hanpass OB CRM" }] }),
   component: Reports,
 });

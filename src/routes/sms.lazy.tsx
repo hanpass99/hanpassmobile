@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createLazyFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { MessageSquare, Send, FileText, History, Plus, Trash2, Edit3, Search, Users as UsersIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -30,7 +30,7 @@ import {
   type SmsTemplate as Template, type SmsLog,
 } from "@/hooks/use-sms";
 
-export const Route = createFileRoute("/sms")({
+export const Route = createLazyFileRoute("/sms")({
   head: () => ({ meta: [{ title: "문자 발송 — Hanpass OB CRM" }] }),
   component: SmsPage,
 });

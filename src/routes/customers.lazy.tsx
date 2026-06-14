@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createLazyFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import {
@@ -67,7 +67,7 @@ type CustomersSearch = {
   pool?: string;
 };
 
-export const Route = createFileRoute("/customers")({
+export const Route = createLazyFileRoute("/customers")({
   head: () => ({ meta: [{ title: "고객 관리 — Hanpass OB CRM" }] }),
   validateSearch: (search: Record<string, unknown>): CustomersSearch => ({
     status: typeof search.status === "string" ? search.status : undefined,
