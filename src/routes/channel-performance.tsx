@@ -7,14 +7,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, type CustomerStatus } from "@/lib/labels";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from "recharts";
 
 export const Route = createFileRoute("/channel-performance")({
   head: () => ({ meta: [{ title: "채널별 성과 — Hanpass OB CRM" }] }),
@@ -32,6 +37,7 @@ function ChannelPerf() {
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [showEmpty, setShowEmpty] = useState(false);
   const latestLoadRef = useRef(0);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -74,6 +80,35 @@ function ChannelPerf() {
     };
   }, [dateFrom, dateTo]);
 
+  const visibleRows = useMemo(
+    () => (showEmpty ? rows : rows.filter((r) => r.total > 0)),
+    [rows, showEmpty],
+  );
+
+  const totals = useMemo(() => {
+    const total = rows.reduce((s, r) => s + r.total, 0);
+    const activated = rows.reduce((s, r) => s + r.counts.activated, 0);
+    const callCompleted = rows.reduce((s, r) => s + (r.total - r.counts.new), 0);
+    const rate = callCompleted > 0 ? (activated / callCompleted) * 100 : 0;
+    return { total, activated, callCompleted, rate };
+  }, [rows]);
+
+  const chartData = useMemo(
+    () => rows.filter((r) => r.total > 0).map((r) => ({
+      name: r.name,
+      total: r.total,
+      activated: r.counts.activated,
+    })),
+    [rows],
+  );
+
+  const rateBadge = (total: number, rate: number) => {
+    if (total === 0) return <Badge variant="secondary">—</Badge>;
+    if (rate >= 3) return <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white">{rate.toFixed(1)}%</Badge>;
+    if (rate >= 1) return <Badge className="bg-amber-500 hover:bg-amber-500 text-white">{rate.toFixed(1)}%</Badge>;
+    return <Badge className="bg-red-500 hover:bg-red-500 text-white">{rate.toFixed(1)}%</Badge>;
+  };
+
   return (
     <div className="space-y-5">
       <PageHeader title={t("channelPerf.title")} description={loading ? t("common.loading") : t("channelPerf.subtitle")} />
@@ -88,8 +123,41 @@ function ChannelPerf() {
               <X className="mr-1 h-3.5 w-3.5" /> {t("common.reset") || "초기화"}
             </Button>
           )}
+          <label className="ml-auto flex items-center gap-2 text-sm cursor-pointer select-none">
+            <Checkbox checked={showEmpty} onCheckedChange={(v) => setShowEmpty(v === true)} />
+            빈 채널 표시
+          </label>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
+          <SummaryStat label="전체 고객" value={totals.total.toLocaleString()} />
+          <SummaryStat label="개통 성공" value={totals.activated.toLocaleString()} accent="text-primary" />
+          <SummaryStat label="전체 개통 성공률" value={`${totals.rate.toFixed(1)}%`} accent="text-emerald-600" />
+        </CardContent>
+      </Card>
+
+      {chartData.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm font-semibold mb-3">채널별 고객 수 / 개통 성공</div>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} angle={-15} textAnchor="end" height={60} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="total" name="고객 수" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="activated" name="개통 성공" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardContent className="overflow-x-auto p-0">
@@ -106,7 +174,7 @@ function ChannelPerf() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r) => {
+              {visibleRows.map((r) => {
                 const callCompleted = r.total - r.counts.new;
                 const rate = callCompleted > 0 ? (r.counts.activated / callCompleted) * 100 : 0;
                 return (
@@ -114,7 +182,7 @@ function ChannelPerf() {
                   <TableCell className="font-medium whitespace-nowrap">{r.name}</TableCell>
                   <TableCell className="text-right font-bold">{r.total}</TableCell>
                   <TableCell className="text-right font-semibold text-primary">{callCompleted}</TableCell>
-                  <TableCell className="text-right font-semibold">{rate.toFixed(1)}%</TableCell>
+                  <TableCell className="text-right">{rateBadge(r.total, rate)}</TableCell>
                   {CUSTOMER_STATUSES.map((s) => (
                     <TableCell key={s} className={cn(
                       "text-right",
@@ -124,13 +192,22 @@ function ChannelPerf() {
                 </TableRow>
                 );
               })}
-              {!rows.length && !loading && (
+              {!visibleRows.length && !loading && (
                 <TableRow><TableCell colSpan={4 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("channelPerf.noChannel")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function SummaryStat({ label, value, accent }: { label: string; value: string; accent?: string }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={cn("text-2xl font-bold", accent)}>{value}</span>
     </div>
   );
 }
