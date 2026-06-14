@@ -1189,6 +1189,7 @@ function CustomersPage() {
         countries={countries}
         channels={channels}
         defaultPool={(tab === "all" ? "existing" : tab) as CustomerPool}
+        visiblePools={visiblePools}
       />
       <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm">
@@ -1340,7 +1341,7 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
 }
 
 function AddCustomerDialog({
-  open, onClose, onAdded, countries, channels, defaultPool,
+  open, onClose, onAdded, countries, channels, defaultPool, visiblePools,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1348,6 +1349,7 @@ function AddCustomerDialog({
   countries: Country[];
   channels: Channel[];
   defaultPool: CustomerPool;
+  visiblePools: readonly CustomerPool[];
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -1400,7 +1402,7 @@ function AddCustomerDialog({
             <Select value={pool} onValueChange={(v) => setPool(v as CustomerPool)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {POOLS.map((p) => <SelectItem key={p} value={p}>{POOL_LABEL[p]}</SelectItem>)}
+                {visiblePools.map((p) => <SelectItem key={p} value={p}>{POOL_LABEL[p]}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
