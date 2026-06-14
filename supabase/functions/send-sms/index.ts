@@ -38,25 +38,8 @@ function aligoErrorMessage(aligoData: Record<string, unknown>): string {
   return String(aligoData?.message || `code ${aligoData?.result_code ?? "unknown"}`);
 }
 
-async function fetchViaProxy(proxyUrl: string, proxySecret: string, fields: Record<string, string>) {
-  const url = `${proxyUrl.replace(/\/$/, "")}/send`;
-  const attempts = [
-    { headers: { "x-proxy-secret": proxySecret }, body: fields },
-    { headers: { authorization: `Bearer ${proxySecret}`, "x-proxy-secret": proxySecret }, body: fields },
-    { headers: { "x-proxy-secret": proxySecret }, body: { ...fields, proxy_secret: proxySecret, secret: proxySecret } },
-  ];
+// Direct Aligo call — proxy removed on 2026-06-14
 
-  let lastResponse: Response | null = null;
-  for (const attempt of attempts) {
-    lastResponse = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json", ...attempt.headers },
-      body: JSON.stringify(attempt.body),
-    });
-    if (lastResponse.status !== 401) return lastResponse;
-  }
-  return lastResponse!;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
