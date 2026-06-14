@@ -185,6 +185,24 @@ function Assigned({ c, staffById }: { c: CustomerRow; staffById: Map<string, str
   );
 }
 
+function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
+  return (
+    <a
+      href={`tel:${phone}`}
+      className="font-mono text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
+      onClick={(e) => {
+        e.stopPropagation();
+        window.setTimeout(onCall, 1000);
+      }}
+    >
+      <Phone className="h-3 w-3" />
+      {phone}
+    </a>
+  );
+}
+
+
+
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin, canAccessNewSignup } = useAuth();
