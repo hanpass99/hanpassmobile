@@ -90,22 +90,11 @@ Deno.serve(async (req) => {
     };
     if (isLms && body.title) fields.title = body.title.slice(0, 44);
 
-    let res: Response;
-    const proxyUrl = env("PROXY_URL");
-    const proxySecret = env("PROXY_SECRET");
-    if (proxyUrl) {
-      console.log("send-sms proxy request", {
-        proxy_host: new URL(proxyUrl).host,
-        proxy_secret_configured: Boolean(proxySecret),
-        msg_type: msgType,
-        count: phones.length,
-      });
-      res = await fetchViaProxy(proxyUrl, proxySecret, fields);
-    } else {
-      const form = new FormData();
-      for (const [k, v] of Object.entries(fields)) form.append(k, v);
-      res = await fetch(ALIGO_URL, { method: "POST", body: form });
-    }
+    // Direct Aligo call — proxy removed on 2026-06-14
+    const form = new FormData();
+    for (const [k, v] of Object.entries(fields)) form.append(k, v);
+    const res = await fetch(ALIGO_URL, { method: "POST", body: form });
+
     const aligoData = await res.json().catch(() => ({}));
     const success = aligoData?.result_code === "1" || aligoData?.result_code === 1;
     const providerMessage = success ? null : aligoErrorMessage(aligoData as Record<string, unknown>);
