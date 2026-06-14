@@ -30,7 +30,7 @@ const SmsRoute = SmsRouteImport.update({
   id: '/sms',
   path: '/sms',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/sms.lazy').then((d) => d.Route))
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -45,12 +45,12 @@ const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/reports.lazy').then((d) => d.Route))
 const CustomersRoute = CustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/customers.lazy').then((d) => d.Route))
 const CountryPerformanceRoute = CountryPerformanceRouteImport.update({
   id: '/country-performance',
   path: '/country-performance',
