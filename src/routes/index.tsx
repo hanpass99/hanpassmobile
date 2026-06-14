@@ -239,6 +239,12 @@ function Dashboard() {
       </div>
       )}
 
+      {!loading && (
+        <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
+          Debug: callCompletedRpc={callCompletedFromRpc} | statusSum={Object.entries(statusCounts).filter(([s])=>s!=="new").reduce((a,[,n])=>a+Number(n),0)} | activated={statusCounts.activated} | new={statusCounts.new}
+        </div>
+      )}
+
       {/* 상태별 카운트 (10종) */}
       <Card>
         <CardHeader>
