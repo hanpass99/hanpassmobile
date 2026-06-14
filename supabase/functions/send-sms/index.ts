@@ -44,12 +44,6 @@ function aligoErrorMessage(aligoData: Record<string, unknown>): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const ipCheckRes = await fetch("https://api.ipify.org?format=json");
-  const { ip } = await ipCheckRes.json();
-  console.log("Edge Function outbound IP:", ip);
-  // Also return it in error response temporarily:
-  return new Response(JSON.stringify({ debug_ip: ip }), { status: 200 });
-
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "missing auth" }, 401);
