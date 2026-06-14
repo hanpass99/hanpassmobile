@@ -1757,8 +1757,11 @@ function CustomerDetailSheet({
               {STATUS_LABEL[customer.status]}
             </span>
           </SheetTitle>
-          <SheetDescription>
-            {customer.phone}{country ? ` · ${country.code} ${country.name_ko}` : ""}
+          <SheetDescription asChild>
+            <div className="flex items-center gap-2 text-sm">
+              <PhoneLink phone={customer.phone} onCall={() => onCall(customer)} />
+              {country ? <span className="text-muted-foreground">· {country.code} {country.name_ko}</span> : null}
+            </div>
           </SheetDescription>
         </SheetHeader>
 
