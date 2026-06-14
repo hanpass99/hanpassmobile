@@ -1941,3 +1941,77 @@ function AddCustomerDialog({
     </Dialog>
   );
 }
+
+function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | null; onClose: () => void }) {
+  const { user } = useAuth();
+  const [result, setResult] = useState<CallResult>("no_answer");
+  const [notes, setNotes] = useState("");
+  const [duration, setDuration] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (customer) {
+      setResult("no_answer");
+      setNotes("");
+      setDuration("");
+    }
+  }, [customer?.id]);
+
+  if (!customer) return null;
+
+  const save = async () => {
+    if (!user) return toast.error("로그인이 필요합니다");
+    setSaving(true);
+    const { error } = await supabase.from("call_logs").insert({
+      customer_id: customer.id,
+      staff_id: user.id,
+      call_date: new Date().toISOString(),
+      result,
+      notes: notes.trim() || null,
+      duration_sec: duration ? Math.max(0, parseInt(duration, 10) || 0) : 0,
+      is_activation: result === "activated",
+    });
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("콜 기록 저장됨");
+    onClose();
+  };
+
+  const QUICK_RESULTS: CallResult[] = ["no_answer", "callback", "not_interested", "interested", "activated", "wrong_number"];
+
+  return (
+    <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>콜 결과 입력 — {customer.name}</DialogTitle>
+          <DialogDescription className="font-mono">{customer.phone}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>결과</Label>
+            <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {QUICK_RESULTS.map((r) => (
+                  <SelectItem key={r} value={r}>{CALL_RESULT_LABEL[r]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>메모</Label>
+            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="통화 내용..." />
+          </div>
+          <div className="space-y-2">
+            <Label>통화 시간(초)</Label>
+            <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>저장 안함</Button>
+          <Button onClick={save} disabled={saving}>저장</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
