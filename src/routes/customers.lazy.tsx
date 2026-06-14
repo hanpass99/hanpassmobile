@@ -844,7 +844,7 @@ function CustomersPage() {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
@@ -888,7 +888,7 @@ function CustomersPage() {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
@@ -930,7 +930,7 @@ function CustomersPage() {
     return (
       <Table aria-label="Customer list">
         <TableHeader>
-          <TableRow className="bg-muted/40">
+          <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
             {CheckHead}
             <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
             <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
