@@ -1248,41 +1248,73 @@ function CustomersPage() {
                 </div>
                 {total > PAGE_SIZE && (
                   <div className="flex flex-col items-center gap-2 pt-3">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious
-                            href="#"
-                            aria-disabled={loadingMore || page <= 1}
-                            className={page <= 1 || loadingMore ? "pointer-events-none opacity-50" : ""}
-                            onClick={(e) => { e.preventDefault(); if (page > 1 && !loadingMore) loadPrevious(); }}
+                    <div className="flex items-center gap-3">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href="#"
+                              aria-disabled={loadingMore || page <= 1}
+                              className={page <= 1 || loadingMore ? "pointer-events-none opacity-50" : ""}
+                              onClick={(e) => { e.preventDefault(); if (page > 1 && !loadingMore) loadPrevious(); }}
+                            />
+                          </PaginationItem>
+                          {getPageNumbers(page, totalPages).map((p, i) =>
+                            p === "..." ? (
+                              <PaginationItem key={`e${i}`}><PaginationEllipsis /></PaginationItem>
+                            ) : (
+                              <PaginationItem key={p}>
+                                <PaginationLink
+                                  href="#"
+                                  isActive={p === page}
+                                  onClick={(e) => { e.preventDefault(); if (!loadingMore) setPage(p as number); }}
+                                >
+                                  {p}
+                                </PaginationLink>
+                              </PaginationItem>
+                            )
+                          )}
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              aria-disabled={loadingMore || page >= totalPages}
+                              className={page >= totalPages || loadingMore ? "pointer-events-none opacity-50" : ""}
+                              onClick={(e) => { e.preventDefault(); if (page < totalPages && !loadingMore) loadMore(); }}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                      {totalPages > 5 && (
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <span className="text-muted-foreground whitespace-nowrap">페이지로 이동:</span>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={totalPages}
+                            value={jumpPage}
+                            onChange={(e) => setJumpPage(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                const n = parseInt(jumpPage, 10);
+                                if (!isNaN(n) && n >= 1 && n <= totalPages) {
+                                  setPage(n);
+                                }
+                                setJumpPage("");
+                              }
+                            }}
+                            onBlur={() => {
+                              const n = parseInt(jumpPage, 10);
+                              if (!isNaN(n) && n >= 1 && n <= totalPages) {
+                                setPage(n);
+                              }
+                              setJumpPage("");
+                            }}
+                            className="h-8 w-[60px] px-1.5 text-center text-sm"
                           />
-                        </PaginationItem>
-                        {getPageNumbers(page, totalPages).map((p, i) =>
-                          p === "..." ? (
-                            <PaginationItem key={`e${i}`}><PaginationEllipsis /></PaginationItem>
-                          ) : (
-                            <PaginationItem key={p}>
-                              <PaginationLink
-                                href="#"
-                                isActive={p === page}
-                                onClick={(e) => { e.preventDefault(); if (!loadingMore) setPage(p as number); }}
-                              >
-                                {p}
-                              </PaginationLink>
-                            </PaginationItem>
-                          )
-                        )}
-                        <PaginationItem>
-                          <PaginationNext
-                            href="#"
-                            aria-disabled={loadingMore || page >= totalPages}
-                            className={page >= totalPages || loadingMore ? "pointer-events-none opacity-50" : ""}
-                            onClick={(e) => { e.preventDefault(); if (page < totalPages && !loadingMore) loadMore(); }}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
+                          <span className="text-muted-foreground">/ {totalPages.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {loadingMore ? "불러오는 중..." : `${page.toLocaleString()} / ${totalPages.toLocaleString()} 페이지 · 총 ${total.toLocaleString()}건 (페이지당 ${PAGE_SIZE}건)`}
                     </div>
