@@ -1358,6 +1358,11 @@ function CustomersPage() {
         onSaved={(patch) => {
           if (detailTarget) cache.patchRow(detailTarget.id, patch);
         }}
+        onCall={(c) => setCallLogTarget(c)}
+      />
+      <QuickCallLogDialog
+        customer={callLogTarget}
+        onClose={() => setCallLogTarget(null)}
       />
       <AddCustomerDialog
         open={showAdd}
