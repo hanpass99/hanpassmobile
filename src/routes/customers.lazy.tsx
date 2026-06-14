@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
-  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon,
+  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -1090,6 +1090,71 @@ function CustomersPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {(() => {
+                  const chips: { key: string; label: string; onRemove: () => void }[] = [];
+                  if (debouncedSearch.trim()) {
+                    chips.push({ key: "search", label: `검색: ${debouncedSearch.trim()}`, onRemove: () => setSearchInput("") });
+                  }
+                  if (countryIds.length > 0) {
+                    const codes = countryIds.map((id) => countryById.get(id)?.code ?? id).join(", ");
+                    chips.push({ key: "country", label: `국적: ${codes}`, onRemove: () => setCountryIds([]) });
+                  }
+                  if (statusF !== "all") {
+                    const statusLabel = statusF === "__call_completed__" ? t("dashboard.callCompleted") : STATUS_LABEL[statusF as CustomerStatus];
+                    chips.push({ key: "status", label: `상태: ${statusLabel}`, onRemove: () => setStatusF("all") });
+                  }
+                  if (staffF !== "all") {
+                    const name = staffF === "__none__" ? t("common.unassigned") : (staffById.get(staffF) ?? staffF);
+                    chips.push({ key: "staff", label: `담당자: ${name}`, onRemove: () => setStaffF("all") });
+                  }
+                  if (callRoundF !== "all") {
+                    const roundLabel = callRoundF === "none" ? t("dashboard.roundNone") : `${callRoundF}차`;
+                    chips.push({ key: "callRound", label: `콜 라운드: ${roundLabel}`, onRemove: () => setCallRoundF("all") });
+                  }
+                  if (dateFrom) {
+                    chips.push({ key: "dateFrom", label: `등록일 시작: ${format(dateFrom, "yyyy-MM-dd")}`, onRemove: () => setDateFrom(undefined) });
+                  }
+                  if (dateTo) {
+                    chips.push({ key: "dateTo", label: `등록일 종료: ${format(dateTo, "yyyy-MM-dd")}`, onRemove: () => setDateTo(undefined) });
+                  }
+                  if (!chips.length) return null;
+                  return (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {chips.map((chip) => (
+                        <span
+                          key={chip.key}
+                          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
+                        >
+                          {chip.label}
+                          <button
+                            type="button"
+                            onClick={chip.onRemove}
+                            className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                            aria-label={`${chip.label} 제거`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchInput("");
+                          setCountryIds([]);
+                          setStatusF("all");
+                          setStaffF("all");
+                          setCallRoundF("all");
+                          setDateFrom(undefined);
+                          setDateTo(undefined);
+                        }}
+                        className="rounded-full border border-dashed px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground"
+                      >
+                        전체 초기화
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground">{t("common.registeredDate")}</span>
