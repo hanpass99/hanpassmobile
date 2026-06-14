@@ -471,6 +471,42 @@ function CustomersPage() {
     load();
   };
 
+  const bulkChangeStatus = async () => {
+    const visibleIds = new Set(filtered.map((r) => r.id));
+    const ids = Array.from(selected).filter((id) => visibleIds.has(id));
+    if (!ids.length) {
+      setBulkStatusOpen(false);
+      setSelected(new Set());
+      return;
+    }
+    setBulkStatusRunning(true);
+    const patch: { status: CustomerStatus; activation_date?: string } = { status: bulkStatus };
+    if (bulkStatus === "activated") patch.activation_date = new Date().toISOString().slice(0, 10);
+    const chunkSize = 100;
+    const total = ids.length;
+    let done = 0;
+    const toastId = toast.loading(`상태 변경 중... (0/${total})`);
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { error } = await supabase.from("customers").update(patch).in("id", chunk);
+      if (error) {
+        toast.dismiss(toastId);
+        setBulkStatusRunning(false);
+        setBulkStatusOpen(false);
+        return toast.error(error.message);
+      }
+      done += chunk.length;
+      toast.loading(`상태 변경 중... (${done}/${total})`, { id: toastId });
+    }
+    toast.dismiss(toastId);
+    setBulkStatusRunning(false);
+    setBulkStatusOpen(false);
+    toast.success(t("status.changed", { label: STATUS_LABEL[bulkStatus] }) + ` (${total})`);
+    setSelected(new Set());
+    load();
+    refetchPoolCounts();
+  };
+
   const toggleOne = (id: string) => {
     setSelected((prev) => {
       const n = new Set(prev);
