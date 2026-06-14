@@ -1001,9 +1001,9 @@ function CustomersPage() {
 
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
           {visiblePools.map((p) => (
-            <TabsTrigger key={p} value={p} className="text-xs md:text-sm">
+            <TabsTrigger key={p} value={p} className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
