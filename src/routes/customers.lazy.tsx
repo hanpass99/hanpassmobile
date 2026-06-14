@@ -1514,7 +1514,155 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
   );
 }
 
+type CallResult = "no_answer" | "wrong_number" | "callback" | "not_interested" | "interested" | "activated" | "failed";
+const CALL_RESULT_LABEL: Record<CallResult, string> = {
+  no_answer: "부재중",
+  wrong_number: "번호오류",
+  callback: "재연락",
+  not_interested: "관심없음",
+  interested: "관심있음",
+  activated: "개통완료",
+  failed: "실패",
+};
+const CALL_RESULT_CLASS: Record<CallResult, string> = {
+  no_answer: "bg-gray-100 text-gray-700 border-gray-300",
+  wrong_number: "bg-red-100 text-red-700 border-red-300",
+  callback: "bg-blue-100 text-blue-700 border-blue-300",
+  not_interested: "bg-orange-100 text-orange-700 border-orange-300",
+  interested: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  activated: "bg-green-100 text-green-700 border-green-300",
+  failed: "bg-rose-100 text-rose-700 border-rose-300",
+};
+
+type CallLog = {
+  id: string;
+  customer_id: string;
+  staff_id: string;
+  call_date: string;
+  duration_sec: number;
+  result: CallResult;
+  notes: string | null;
+  is_activation: boolean;
+  created_at: string;
+};
+
+function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffById: Map<string, string> }) {
+  const { user } = useAuth();
+  const [logs, setLogs] = useState<CallLog[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<CallResult>("no_answer");
+  const [notes, setNotes] = useState("");
+  const [duration, setDuration] = useState<string>("");
+  const [isActivation, setIsActivation] = useState(false);
+
+  const load = async (id: string) => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("call_logs")
+      .select("*")
+      .eq("customer_id", id)
+      .order("call_date", { ascending: false })
+      .limit(20);
+    setLogs((data ?? []) as CallLog[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    setResult("no_answer");
+    setNotes("");
+    setDuration("");
+    setIsActivation(false);
+    load(customer.id);
+  }, [customer.id]);
+
+  const save = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase.from("call_logs").insert({
+      customer_id: customer.id,
+      staff_id: user.id,
+      call_date: new Date().toISOString(),
+      result,
+      notes: notes.trim() || null,
+      duration_sec: duration ? Math.max(0, parseInt(duration, 10) || 0) : 0,
+      is_activation: isActivation,
+    });
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("콜 기록 저장됨");
+    setNotes("");
+    setDuration("");
+    setIsActivation(false);
+    load(customer.id);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-3 rounded border border-border/60 p-3">
+        <div className="space-y-2">
+          <Label>결과</Label>
+          <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {(Object.keys(CALL_RESULT_LABEL) as CallResult[]).map((r) => (
+                <SelectItem key={r} value={r}>{CALL_RESULT_LABEL[r]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>메모</Label>
+          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="통화 내용 메모..." />
+        </div>
+        <div className="space-y-2">
+          <Label>통화 시간(초)</Label>
+          <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox id="is_activation" checked={isActivation} onCheckedChange={(c) => setIsActivation(!!c)} />
+          <Label htmlFor="is_activation" className="cursor-pointer">개통 연결</Label>
+        </div>
+        <div className="flex justify-end">
+          <Button size="sm" onClick={save} disabled={saving}>
+            {saving ? "저장 중..." : "콜 기록 저장"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>최근 기록</Label>
+        <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
+          {loading && <div className="text-center text-xs text-muted-foreground py-4">불러오는 중...</div>}
+          {!loading && logs.length === 0 && (
+            <div className="text-center text-xs text-muted-foreground py-4">기록 없음</div>
+          )}
+          {logs.map((l) => (
+            <div key={l.id} className="rounded bg-muted/40 p-2 text-sm">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", CALL_RESULT_CLASS[l.result])}>
+                    {CALL_RESULT_LABEL[l.result]}
+                  </span>
+                  {l.is_activation && (
+                    <span className="rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-xs text-green-700">개통</span>
+                  )}
+                  {l.duration_sec > 0 && <span>{l.duration_sec}초</span>}
+                </div>
+                <span>{new Date(l.call_date).toLocaleString("ko-KR")}</span>
+              </div>
+              {l.notes && <div className="mt-1 whitespace-pre-wrap">{l.notes}</div>}
+              <div className="mt-1 text-xs text-muted-foreground">{staffById.get(l.staff_id) ?? "—"}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | null; onClose: () => void; staffById: Map<string, string> }) {
+
   if (!customer) return null;
   return (
     <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
