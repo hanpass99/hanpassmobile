@@ -207,6 +207,7 @@ function CustomersPage() {
   })();
   const [tab, setTab] = useState<TabValue>(initialTab);
   const [page, setPage] = useState(1);
+  const [jumpPage, setJumpPage] = useState("");
 
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput, 250);
