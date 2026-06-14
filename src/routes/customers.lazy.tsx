@@ -98,7 +98,7 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
 }
 
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 25;
 
 
 function SortHead({ k, children, className = "", sortKey, sortDir, onSort }: { k: string; children: React.ReactNode; className?: string; sortKey: string; sortDir: SortDir; onSort: (key: string) => void }) {
