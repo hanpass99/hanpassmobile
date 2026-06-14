@@ -1345,7 +1345,7 @@ function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; poo
 // === 메모 다이얼로그 ===
 type Note = { id: string; content: string; created_at: string; author_id: string };
 
-function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | null; onClose: () => void; staffById: Map<string, string> }) {
+function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: Map<string, string> }) {
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [content, setContent] = useState("");
@@ -1360,11 +1360,12 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
   };
 
   useEffect(() => {
-    if (customer) { setContent(""); load(customer.id); }
-  }, [customer]);
+    setContent("");
+    load(customer.id);
+  }, [customer.id]);
 
   const save = async () => {
-    if (!customer || !user || !content.trim()) return;
+    if (!user || !content.trim()) return;
     setSaving(true);
     const { error } = await supabase.from("customer_notes").insert({
       customer_id: customer.id,
@@ -1378,8 +1379,41 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
     load(customer.id);
   };
 
-  if (!customer) return null;
+  return (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <Label>새 메모</Label>
+        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder="고객 관련 메모를 입력하세요" />
+        <div className="flex justify-end">
+          <Button size="sm" onClick={save} disabled={saving || !content.trim()}>
+            {saving ? "저장 중..." : "메모 추가"}
+          </Button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>히스토리</Label>
+        <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
+          {loading && <div className="text-center text-xs text-muted-foreground py-4">불러오는 중...</div>}
+          {!loading && notes.length === 0 && (
+            <div className="text-center text-xs text-muted-foreground py-4">메모 기록이 없습니다.</div>
+          )}
+          {notes.map((n) => (
+            <div key={n.id} className="rounded bg-muted/40 p-2 text-sm">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-medium">{staffById.get(n.author_id) ?? "—"}</span>
+                <span>{new Date(n.created_at).toLocaleString("ko-KR")}</span>
+              </div>
+              <div className="mt-1 whitespace-pre-wrap">{n.content}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
+function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | null; onClose: () => void; staffById: Map<string, string> }) {
+  if (!customer) return null;
   return (
     <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
@@ -1387,37 +1421,145 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
           <DialogTitle>{customer.name} · 메모</DialogTitle>
           <DialogDescription>{customer.phone}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <Label>새 메모</Label>
-            <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder="고객 관련 메모를 입력하세요" />
-            <div className="flex justify-end">
-              <Button size="sm" onClick={save} disabled={saving || !content.trim()}>
-                {saving ? "저장 중..." : "메모 추가"}
-              </Button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>히스토리</Label>
-            <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
-              {loading && <div className="text-center text-xs text-muted-foreground py-4">불러오는 중...</div>}
-              {!loading && notes.length === 0 && (
-                <div className="text-center text-xs text-muted-foreground py-4">메모 기록이 없습니다.</div>
-              )}
-              {notes.map((n) => (
-                <div key={n.id} className="rounded bg-muted/40 p-2 text-sm">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-medium">{staffById.get(n.author_id) ?? "—"}</span>
-                    <span>{new Date(n.created_at).toLocaleString("ko-KR")}</span>
-                  </div>
-                  <div className="mt-1 whitespace-pre-wrap">{n.content}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <MemoPanel customer={customer} staffById={staffById} />
       </DialogContent>
     </Dialog>
+  );
+}
+
+type CustomerPatch = Partial<Pick<CustomerRow, "name" | "phone" | "email" | "country_id" | "channel_id" | "pool" | "notes" | "status" | "activation_date" | "assigned_to">>;
+
+function CustomerDetailSheet({
+  customer, onClose, staffById, countries, channels, visiblePools, onChangeStatus, onSaved,
+}: {
+  customer: CustomerRow | null;
+  onClose: () => void;
+  staffById: Map<string, string>;
+  countries: Country[];
+  channels: Channel[];
+  visiblePools: readonly CustomerPool[];
+  onChangeStatus: (id: string, status: CustomerStatus) => void;
+  onSaved: (patch: CustomerPatch) => void;
+}) {
+  const [form, setForm] = useState<CustomerPatch>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (customer) {
+      setForm({
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        country_id: customer.country_id,
+        channel_id: customer.channel_id,
+        pool: customer.pool,
+        notes: customer.notes,
+      });
+    }
+  }, [customer]);
+
+  if (!customer) return null;
+
+  const countryById = new Map(countries.map((c) => [c.id, c]));
+  const country = customer.country_id ? countryById.get(customer.country_id) : null;
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("customers").update(form).eq("id", customer.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    onSaved(form);
+    toast.success("저장됨");
+  };
+
+  return (
+    <Sheet open={!!customer} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="right" className="w-full sm:max-w-[480px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            {customer.name}
+            <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", STATUS_CLASS[customer.status])}>
+              {STATUS_LABEL[customer.status]}
+            </span>
+          </SheetTitle>
+          <SheetDescription>
+            {customer.phone}{country ? ` · ${country.code} ${country.name_ko}` : ""}
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-4 space-y-2">
+          <Label>상태 변경</Label>
+          <Select value={customer.status} onValueChange={(v) => onChangeStatus(customer.id, v as CustomerStatus)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CUSTOMER_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Tabs defaultValue="info" className="mt-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="info">정보</TabsTrigger>
+            <TabsTrigger value="memo">메모</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info" className="space-y-3 pt-3">
+            <div className="space-y-2">
+              <Label>이름</Label>
+              <Input value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>전화번호</Label>
+              <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>이메일</Label>
+              <Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value || null })} />
+            </div>
+            <div className="space-y-2">
+              <Label>국가</Label>
+              <Select value={form.country_id ?? ""} onValueChange={(v) => setForm({ ...form, country_id: v || null })}>
+                <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+                <SelectContent>
+                  {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>채널</Label>
+              <Select value={form.channel_id ?? ""} onValueChange={(v) => setForm({ ...form, channel_id: v || null })}>
+                <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+                <SelectContent>
+                  {channels.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Pool</Label>
+              <Select value={form.pool ?? customer.pool} onValueChange={(v) => setForm({ ...form, pool: v as CustomerPool })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {visiblePools.map((p) => <SelectItem key={p} value={p}>{POOL_LABEL[p]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>메모(notes)</Label>
+              <Textarea rows={3} value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value || null })} />
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button onClick={save} disabled={saving}>{saving ? "저장 중..." : "저장"}</Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="memo" className="pt-3">
+            <MemoPanel customer={customer} staffById={staffById} />
+          </TabsContent>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
   );
 }
 
