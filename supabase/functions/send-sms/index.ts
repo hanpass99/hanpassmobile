@@ -38,7 +38,19 @@ function aligoErrorMessage(aligoData: Record<string, unknown>): string {
   return String(aligoData?.message || `code ${aligoData?.result_code ?? "unknown"}`);
 }
 
-// Direct Aligo call — proxy removed on 2026-06-14
+async function fetchViaProxy(proxyUrl: string, proxySecret: string, fields: Record<string, string>) {
+  const url = `${proxyUrl.replace(/\/$/, "")}/send`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-proxy-secret": proxySecret,
+    },
+    body: JSON.stringify(fields),
+  });
+  return res;
+}
+
 
 
 Deno.serve(async (req) => {
@@ -90,10 +102,12 @@ Deno.serve(async (req) => {
     };
     if (isLms && body.title) fields.title = body.title.slice(0, 44);
 
-    // Direct Aligo call — proxy removed on 2026-06-14
-    const form = new FormData();
-    for (const [k, v] of Object.entries(fields)) form.append(k, v);
-    const res = await fetch(ALIGO_URL, { method: "POST", body: form });
+    const PROXY_URL = env("PROXY_URL");
+    const PROXY_SECRET = env("PROXY_SECRET");
+    if (!PROXY_URL || !PROXY_SECRET) {
+      return json({ error: "프록시 환경 변수가 설정되지 않았습니다" }, 500);
+    }
+    const res = await fetchViaProxy(PROXY_URL, PROXY_SECRET, fields);
 
     const aligoData = await res.json().catch(() => ({}));
     const success = aligoData?.result_code === "1" || aligoData?.result_code === 1;
