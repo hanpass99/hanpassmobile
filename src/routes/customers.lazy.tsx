@@ -232,6 +232,9 @@ function CustomersPage() {
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState<CustomerStatus>("new");
+  const [bulkStatusRunning, setBulkStatusRunning] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const importingRef = useRef(false);
