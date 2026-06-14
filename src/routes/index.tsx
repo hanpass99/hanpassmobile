@@ -22,10 +22,22 @@ import { cn } from "@/lib/utils";
 import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
 import { useDashboardCountries, useDashboardSummary, type DashboardSummary } from "@/hooks/use-dashboard";
-
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "대시보드 — Hanpass Mobile OB Call CRM" }] }),
+  loader: ({ context: { queryClient } }) => {
+    const today = new Date();
+    const from = new Date(today.getFullYear(), today.getMonth(), 1);
+    queryClient.prefetchQuery({
+      queryKey: ["dashboard", "countries"],
+      staleTime: Infinity,
+      queryFn: async () => {
+        const { data } = await supabase.from("countries").select("id, code").eq("is_active", true);
+        return data ?? [];
+      },
+    });
+  },
   component: Dashboard,
 });
 

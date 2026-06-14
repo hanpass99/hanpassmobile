@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 
 type CustomersSearch = {
   status?: string;
@@ -18,6 +19,24 @@ export const Route = createFileRoute("/customers")({
     to: typeof search.to === "string" ? search.to : undefined,
     pool: typeof search.pool === "string" ? search.pool : undefined,
   }),
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery({
+      queryKey: ["customers", "lookups"],
+      staleTime: Infinity,
+      queryFn: async () => {
+        const [co, ch, sf] = await Promise.all([
+          supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
+          supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
+          supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true).order("display_name"),
+        ]);
+        return {
+          countries: co.data ?? [],
+          channels: ch.data ?? [],
+          staff: sf.data ?? [],
+        };
+      },
+    });
+  },
   pendingComponent: CustomersPending,
 });
 
