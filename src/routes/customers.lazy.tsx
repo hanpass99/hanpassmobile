@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
-  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X,
+  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X, Phone,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -185,6 +185,24 @@ function Assigned({ c, staffById }: { c: CustomerRow; staffById: Map<string, str
   );
 }
 
+function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
+  return (
+    <a
+      href={`tel:${phone}`}
+      className="font-mono text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
+      onClick={(e) => {
+        e.stopPropagation();
+        window.setTimeout(onCall, 1000);
+      }}
+    >
+      <Phone className="h-3 w-3" />
+      {phone}
+    </a>
+  );
+}
+
+
+
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin, canAccessNewSignup } = useAuth();
@@ -223,6 +241,7 @@ function CustomersPage() {
 
   const [memoTarget, setMemoTarget] = useState<CustomerRow | null>(null);
   const [detailTarget, setDetailTarget] = useState<CustomerRow | null>(null);
+  const [callLogTarget, setCallLogTarget] = useState<CustomerRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(
@@ -865,7 +884,7 @@ function CustomersPage() {
               <TableRow key={c.id} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-                <TableCell className="font-mono text-xs">{c.phone}</TableCell>
+                <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
                 <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
@@ -908,7 +927,7 @@ function CustomersPage() {
               <TableRow key={c.id} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-                <TableCell className="font-mono text-xs">{c.phone}</TableCell>
+                <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
                 <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
                 <TableCell className="text-xs">{fmtDate(c.signup_date)}</TableCell>
                 <Assigned c={c} staffById={staffById} />
@@ -951,7 +970,7 @@ function CustomersPage() {
             <TableRow key={c.id} className="hover:bg-muted/30">
               <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
               <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-              <TableCell className="font-mono text-xs">{c.phone}</TableCell>
+              <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
               <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
               <TableCell className="text-xs">{fmtDate(c.application_date)}</TableCell>
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
@@ -1339,6 +1358,11 @@ function CustomersPage() {
         onSaved={(patch) => {
           if (detailTarget) cache.patchRow(detailTarget.id, patch);
         }}
+        onCall={(c) => setCallLogTarget(c)}
+      />
+      <QuickCallLogDialog
+        customer={callLogTarget}
+        onClose={() => setCallLogTarget(null)}
       />
       <AddCustomerDialog
         open={showAdd}
@@ -1680,7 +1704,7 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
 type CustomerPatch = Partial<Pick<CustomerRow, "name" | "phone" | "email" | "country_id" | "channel_id" | "pool" | "notes" | "status" | "activation_date" | "assigned_to">>;
 
 function CustomerDetailSheet({
-  customer, onClose, staffById, countries, channels, visiblePools, onChangeStatus, onSaved,
+  customer, onClose, staffById, countries, channels, visiblePools, onChangeStatus, onSaved, onCall,
 }: {
   customer: CustomerRow | null;
   onClose: () => void;
@@ -1690,6 +1714,7 @@ function CustomerDetailSheet({
   visiblePools: readonly CustomerPool[];
   onChangeStatus: (id: string, status: CustomerStatus) => void;
   onSaved: (patch: CustomerPatch) => void;
+  onCall: (c: CustomerRow) => void;
 }) {
   const [form, setForm] = useState<CustomerPatch>({});
   const [saving, setSaving] = useState(false);
@@ -1732,8 +1757,11 @@ function CustomerDetailSheet({
               {STATUS_LABEL[customer.status]}
             </span>
           </SheetTitle>
-          <SheetDescription>
-            {customer.phone}{country ? ` · ${country.code} ${country.name_ko}` : ""}
+          <SheetDescription asChild>
+            <div className="flex items-center gap-2 text-sm">
+              <PhoneLink phone={customer.phone} onCall={() => onCall(customer)} />
+              {country ? <span className="text-muted-foreground">· {country.code} {country.name_ko}</span> : null}
+            </div>
           </SheetDescription>
         </SheetHeader>
 
@@ -1908,6 +1936,80 @@ function AddCustomerDialog({
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
           <Button onClick={save} disabled={saving}>{saving ? "저장 중..." : "저장"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | null; onClose: () => void }) {
+  const { user } = useAuth();
+  const [result, setResult] = useState<CallResult>("no_answer");
+  const [notes, setNotes] = useState("");
+  const [duration, setDuration] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (customer) {
+      setResult("no_answer");
+      setNotes("");
+      setDuration("");
+    }
+  }, [customer?.id]);
+
+  if (!customer) return null;
+
+  const save = async () => {
+    if (!user) return toast.error("로그인이 필요합니다");
+    setSaving(true);
+    const { error } = await supabase.from("call_logs").insert({
+      customer_id: customer.id,
+      staff_id: user.id,
+      call_date: new Date().toISOString(),
+      result,
+      notes: notes.trim() || null,
+      duration_sec: duration ? Math.max(0, parseInt(duration, 10) || 0) : 0,
+      is_activation: result === "activated",
+    });
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("콜 기록 저장됨");
+    onClose();
+  };
+
+  const QUICK_RESULTS: CallResult[] = ["no_answer", "callback", "not_interested", "interested", "activated", "wrong_number"];
+
+  return (
+    <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>콜 결과 입력 — {customer.name}</DialogTitle>
+          <DialogDescription className="font-mono">{customer.phone}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>결과</Label>
+            <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {QUICK_RESULTS.map((r) => (
+                  <SelectItem key={r} value={r}>{CALL_RESULT_LABEL[r]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>메모</Label>
+            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="통화 내용..." />
+          </div>
+          <div className="space-y-2">
+            <Label>통화 시간(초)</Label>
+            <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>저장 안함</Button>
+          <Button onClick={save} disabled={saving}>저장</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
