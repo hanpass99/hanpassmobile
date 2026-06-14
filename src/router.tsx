@@ -27,6 +27,12 @@ export const getRouter = () => {
     defaultPreloadStaleTime: 0,
     // 링크 hover 시 라우트 미리 로드 → 클릭 즉시 전환
     defaultPreload: "intent",
+    defaultPendingMs: 200,
+    defaultPendingComponent: () => (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    ),
   });
 
   return router;
