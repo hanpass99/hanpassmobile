@@ -20,6 +20,7 @@ export function useCallGoal() {
   useEffect(() => {
     if (!user || isAdmin) return;
     let active = true;
+    const controller = new AbortController();
 
     const storageKey = `callGoalNotified:${user.id}:${todayKey()}`;
     lastNotifiedRef.current = Number(sessionStorage.getItem(storageKey) || "0");
@@ -43,7 +44,7 @@ export function useCallGoal() {
       }
     };
 
-    const fetchCount = async () => {
+    const fetchCount = async (signal: AbortSignal) => {
       const today = new Date();
       const { count } = await supabase
         .from("customer_call_rounds")
@@ -51,22 +52,23 @@ export function useCallGoal() {
         .eq("staff_id", user.id)
         .gte("call_date", dayStartIso(today).slice(0, 10))
         .lte("call_date", dayEndIso(today).slice(0, 10));
-      if (active) fireIfNeeded(count ?? 0);
+      if (active && !signal.aborted) fireIfNeeded(count ?? 0);
     };
 
-    fetchCount();
+    fetchCount(controller.signal);
 
     const channel = supabase
       .channel(`call-goal-${user.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "customer_call_rounds", filter: `staff_id=eq.${user.id}` },
-        () => fetchCount(),
+        () => fetchCount(controller.signal),
       )
       .subscribe();
 
     return () => {
       active = false;
+      controller.abort();
       supabase.removeChannel(channel);
     };
   }, [user, isAdmin]);
