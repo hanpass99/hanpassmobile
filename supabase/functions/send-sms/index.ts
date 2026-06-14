@@ -38,25 +38,8 @@ function aligoErrorMessage(aligoData: Record<string, unknown>): string {
   return String(aligoData?.message || `code ${aligoData?.result_code ?? "unknown"}`);
 }
 
-async function fetchViaProxy(proxyUrl: string, proxySecret: string, fields: Record<string, string>) {
-  const url = `${proxyUrl.replace(/\/$/, "")}/send`;
-  const attempts = [
-    { headers: { "x-proxy-secret": proxySecret }, body: fields },
-    { headers: { authorization: `Bearer ${proxySecret}`, "x-proxy-secret": proxySecret }, body: fields },
-    { headers: { "x-proxy-secret": proxySecret }, body: { ...fields, proxy_secret: proxySecret, secret: proxySecret } },
-  ];
+// Direct Aligo call — proxy removed on 2026-06-14
 
-  let lastResponse: Response | null = null;
-  for (const attempt of attempts) {
-    lastResponse = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json", ...attempt.headers },
-      body: JSON.stringify(attempt.body),
-    });
-    if (lastResponse.status !== 401) return lastResponse;
-  }
-  return lastResponse!;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -107,22 +90,11 @@ Deno.serve(async (req) => {
     };
     if (isLms && body.title) fields.title = body.title.slice(0, 44);
 
-    let res: Response;
-    const proxyUrl = env("PROXY_URL");
-    const proxySecret = env("PROXY_SECRET");
-    if (proxyUrl) {
-      console.log("send-sms proxy request", {
-        proxy_host: new URL(proxyUrl).host,
-        proxy_secret_configured: Boolean(proxySecret),
-        msg_type: msgType,
-        count: phones.length,
-      });
-      res = await fetchViaProxy(proxyUrl, proxySecret, fields);
-    } else {
-      const form = new FormData();
-      for (const [k, v] of Object.entries(fields)) form.append(k, v);
-      res = await fetch(ALIGO_URL, { method: "POST", body: form });
-    }
+    // Direct Aligo call — proxy removed on 2026-06-14
+    const form = new FormData();
+    for (const [k, v] of Object.entries(fields)) form.append(k, v);
+    const res = await fetch(ALIGO_URL, { method: "POST", body: form });
+
     const aligoData = await res.json().catch(() => ({}));
     const success = aligoData?.result_code === "1" || aligoData?.result_code === 1;
     const providerMessage = success ? null : aligoErrorMessage(aligoData as Record<string, unknown>);
