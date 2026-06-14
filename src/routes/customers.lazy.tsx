@@ -1602,10 +1602,12 @@ function CustomerDetailSheet({
         </div>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="info">정보</TabsTrigger>
             <TabsTrigger value="memo">메모</TabsTrigger>
+            <TabsTrigger value="calls">📞 콜 기록</TabsTrigger>
           </TabsList>
+
 
           <TabsContent value="info" className="space-y-3 pt-3">
             <div className="space-y-2">
