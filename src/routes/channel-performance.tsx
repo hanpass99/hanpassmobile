@@ -7,14 +7,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, type CustomerStatus } from "@/lib/labels";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from "recharts";
 
 export const Route = createFileRoute("/channel-performance")({
   head: () => ({ meta: [{ title: "채널별 성과 — Hanpass OB CRM" }] }),
