@@ -231,7 +231,7 @@ export default {
     deleteKeepData: "Customer data, notes, and call/SMS history are preserved",
     deleteUnassign: "Customers assigned to this staff become unassigned",
     deleteIrreversible: "The staff login account is permanently deleted",
-    deleteTypeName: "Type the staff name "{{name}}" to confirm",
+    deleteTypeName: "Type the staff name “{{name}}” to confirm",
     deleteConfirm: "Permanently delete",
     deleteNameMismatch: "Name does not match",
     deleteFailed: "Delete failed: {{msg}}",
