@@ -1,5 +1,4 @@
 import { QueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
