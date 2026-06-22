@@ -52,6 +52,7 @@ import {
   type Country, type Channel, type CustomerRow,
   SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
+import { FriendReferralsView } from "@/components/FriendReferralsView";
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
   get: (_t, p: string) => i18n.t(`status.${p}`),
@@ -67,7 +68,7 @@ export const Route = createLazyFileRoute("/customers")({
   component: CustomersPage,
 });
 
-type TabValue = CustomerPool | "all";
+type TabValue = CustomerPool | "all" | "friend_referral";
 
 type Profile = { id: string; display_name: string; country_id: string | null };
 
