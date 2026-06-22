@@ -106,10 +106,12 @@ export default {
     existing: "한패스 모바일 기존 고객",
     activation_request: "개통 신청자",
     new_signup: "한패스 신규 가입자",
+    friend_referral: "친구 추천",
     short: {
       existing: "기존 고객",
       activation_request: "개통 신청자",
       new_signup: "한패스 신규 가입자",
+      friend_referral: "친구 추천",
     },
     emptyPool: "{{name}} Pool에 고객이 없습니다.",
   },
