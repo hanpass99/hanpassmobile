@@ -52,6 +52,7 @@ import {
   type Country, type Channel, type CustomerRow,
   SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
+import { FriendReferralsView } from "@/components/FriendReferralsView";
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
   get: (_t, p: string) => i18n.t(`status.${p}`),
@@ -67,7 +68,7 @@ export const Route = createLazyFileRoute("/customers")({
   component: CustomersPage,
 });
 
-type TabValue = CustomerPool | "all";
+type TabValue = CustomerPool | "all" | "friend_referral";
 
 type Profile = { id: string; display_name: string; country_id: string | null };
 
@@ -292,10 +293,14 @@ function CustomersPage() {
   const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
   const toIso = dateTo ? dayEndIso(dateTo) : null;
 
+  // When the friend_referral tab is active, the main customers queries are
+  // not used — fall back to "existing" so the typed RPC contracts hold.
+  const effectiveTab: CustomerPool | "all" = tab === "friend_referral" ? "existing" : tab;
+
   const {
     rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
   } = useCustomersList({
-    pool: tab,
+    pool: effectiveTab,
     search: debouncedSearch,
     countryIds,
     assignedCountry,
@@ -308,10 +313,10 @@ function CustomersPage() {
     pageSize: PAGE_SIZE,
     dateFromIso: fromIso,
     dateToIso: toIso,
-  });
+  }, { enabled: tab !== "friend_referral" });
 
   const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
-    pool: tab,
+    pool: effectiveTab,
     countryIds,
     dateFromIso: fromIso,
     dateToIso: toIso,
@@ -718,7 +723,7 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
-    const effPool: CustomerPool = tab === "all" ? "existing" : tab;
+    const effPool: CustomerPool = (tab === "all" || tab === "friend_referral") ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
@@ -755,7 +760,7 @@ function CustomersPage() {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         const { data, error } = await supabase.rpc("search_customers", {
-          _pool: tab === "all" ? undefined : tab,
+          _pool: (tab === "all" || tab === "friend_referral") ? undefined : tab,
           _search: debouncedSearch?.trim() || undefined,
           _country_ids: countryIds.length ? countryIds : undefined,
           _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
@@ -1032,16 +1037,23 @@ function CustomersPage() {
 
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
-        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length + 1}, minmax(0, 1fr))` }}>
           {visiblePools.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
+          <TabsTrigger value="friend_referral" className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
+            친구 추천
+          </TabsTrigger>
         </TabsList>
 
-        {([tab] as TabValue[]).map((tv) => {
-          const p: CustomerPool = tv === "all" ? "existing" : tv;
+        <TabsContent value="friend_referral" className="mt-4">
+          <FriendReferralsView />
+        </TabsContent>
+
+        {(tab === "friend_referral" ? [] : [tab] as TabValue[]).map((tv) => {
+          const p: CustomerPool = (tv === "all" || tv === "friend_referral") ? "existing" : tv;
           return (
           <TabsContent key={tv} value={tv} className="mt-4">
             <Card>
