@@ -1036,23 +1036,16 @@ function CustomersPage() {
 
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
-        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length + 1}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
           {visiblePools.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
-          <TabsTrigger value="friend_referral" className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
-            친구 추천
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="friend_referral" className="mt-4">
-          <FriendReferralsView />
-        </TabsContent>
-
-        {(tab === "friend_referral" ? [] : [tab] as TabValue[]).map((tv) => {
-          const p: CustomerPool = (tv === "all" || tv === "friend_referral") ? "existing" : tv;
+        {([tab] as TabValue[]).map((tv) => {
+          const p: CustomerPool = (tv === "all") ? "existing" : tv;
           return (
           <TabsContent key={tv} value={tv} className="mt-4">
             <Card>
