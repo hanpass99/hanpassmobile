@@ -275,6 +275,45 @@ export type Database = {
           },
         ]
       }
+      friend_referrals: {
+        Row: {
+          channel: string | null
+          country_code: string | null
+          created_at: string
+          id: string
+          imported_at: string
+          member_no: string
+          name: string
+          phone: string
+          signup_date: string | null
+          signup_ym: string | null
+        }
+        Insert: {
+          channel?: string | null
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          imported_at?: string
+          member_no: string
+          name: string
+          phone: string
+          signup_date?: string | null
+          signup_ym?: string | null
+        }
+        Update: {
+          channel?: string | null
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          imported_at?: string
+          member_no?: string
+          name?: string
+          phone?: string
+          signup_date?: string | null
+          signup_ym?: string | null
+        }
+        Relationships: []
+      }
       profile_countries: {
         Row: {
           country_id: string
