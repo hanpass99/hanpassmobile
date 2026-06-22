@@ -293,10 +293,14 @@ function CustomersPage() {
   const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
   const toIso = dateTo ? dayEndIso(dateTo) : null;
 
+  // When the friend_referral tab is active, the main customers queries are
+  // not used — fall back to "existing" so the typed RPC contracts hold.
+  const effectiveTab: CustomerPool | "all" = tab === "friend_referral" ? "existing" : tab;
+
   const {
     rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
   } = useCustomersList({
-    pool: tab,
+    pool: effectiveTab,
     search: debouncedSearch,
     countryIds,
     assignedCountry,
@@ -309,10 +313,10 @@ function CustomersPage() {
     pageSize: PAGE_SIZE,
     dateFromIso: fromIso,
     dateToIso: toIso,
-  });
+  }, { enabled: tab !== "friend_referral" });
 
   const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
-    pool: tab,
+    pool: effectiveTab,
     countryIds,
     dateFromIso: fromIso,
     dateToIso: toIso,
@@ -719,7 +723,7 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
-    const effPool: CustomerPool = tab === "all" ? "existing" : tab;
+    const effPool: CustomerPool = (tab === "all" || tab === "friend_referral") ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
@@ -756,7 +760,7 @@ function CustomersPage() {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         const { data, error } = await supabase.rpc("search_customers", {
-          _pool: tab === "all" ? undefined : tab,
+          _pool: (tab === "all" || tab === "friend_referral") ? undefined : tab,
           _search: debouncedSearch?.trim() || undefined,
           _country_ids: countryIds.length ? countryIds : undefined,
           _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
