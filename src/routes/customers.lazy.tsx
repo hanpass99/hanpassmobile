@@ -919,7 +919,7 @@ function CustomersPage() {
       );
     }
 
-    if (p === "new_signup") {
+    if (p === "new_signup" || p === "friend_referral") {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
