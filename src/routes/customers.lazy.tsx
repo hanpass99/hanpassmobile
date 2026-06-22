@@ -719,7 +719,7 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
-    const effPool: CustomerPool = (tab === "all" || tab === "friend_referral") ? "existing" : tab;
+    const effPool: CustomerPool = (tab === "all") ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
@@ -728,6 +728,9 @@ function CustomersPage() {
     } else if (effPool === "activation_request") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
+    } else if (effPool === "friend_referral") {
+      header = ["고객명", "전화번호", "국적", "가입일", "메모"];
+      sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
     } else {
       // new_signup
       header = ["고객명", "전화번호", "국적", "가입일", "담당자", "상태", "콜 라운드", "데이터 등록일", "메모"];
