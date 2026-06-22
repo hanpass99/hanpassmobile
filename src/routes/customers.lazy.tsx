@@ -68,7 +68,7 @@ export const Route = createLazyFileRoute("/customers")({
   component: CustomersPage,
 });
 
-type TabValue = CustomerPool | "all" | "friend_referral";
+type TabValue = CustomerPool | "all";
 
 type Profile = { id: string; display_name: string; country_id: string | null };
 
