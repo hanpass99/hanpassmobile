@@ -293,14 +293,10 @@ function CustomersPage() {
   const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
   const toIso = dateTo ? dayEndIso(dateTo) : null;
 
-  // When the friend_referral tab is active, the main customers queries are
-  // not used — fall back to "existing" so the typed RPC contracts hold.
-  const effectiveTab: CustomerPool | "all" = tab === "friend_referral" ? "existing" : tab;
-
   const {
     rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
   } = useCustomersList({
-    pool: effectiveTab,
+    pool: tab,
     search: debouncedSearch,
     countryIds,
     assignedCountry,
@@ -313,10 +309,10 @@ function CustomersPage() {
     pageSize: PAGE_SIZE,
     dateFromIso: fromIso,
     dateToIso: toIso,
-  }, { enabled: tab !== "friend_referral" });
+  });
 
   const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
-    pool: effectiveTab,
+    pool: tab,
     countryIds,
     dateFromIso: fromIso,
     dateToIso: toIso,
