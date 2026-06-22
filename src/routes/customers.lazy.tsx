@@ -343,7 +343,7 @@ function CustomersPage() {
 
   // 권한 변경/로드 시 비허용 풀이 선택돼 있으면 안전한 탭으로 리셋
   useEffect(() => {
-    if (tab !== "all" && !visiblePools.includes(tab as CustomerPool)) {
+    if (tab !== "all" && tab !== "friend_referral" && !visiblePools.includes(tab as CustomerPool)) {
       setTab(visiblePools[0] ?? "existing");
     }
   }, [visiblePools, tab]);
