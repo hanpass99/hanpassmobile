@@ -52,7 +52,7 @@ import {
   type Country, type Channel, type CustomerRow,
   SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
-import { FriendReferralsView } from "@/components/FriendReferralsView";
+
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
   get: (_t, p: string) => i18n.t(`status.${p}`),
