@@ -52,7 +52,7 @@ import {
   type Country, type Channel, type CustomerRow,
   SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
-import { FriendReferralsView } from "@/components/FriendReferralsView";
+
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
   get: (_t, p: string) => i18n.t(`status.${p}`),
@@ -68,7 +68,7 @@ export const Route = createLazyFileRoute("/customers")({
   component: CustomersPage,
 });
 
-type TabValue = CustomerPool | "all" | "friend_referral";
+type TabValue = CustomerPool | "all";
 
 type Profile = { id: string; display_name: string; country_id: string | null };
 
@@ -293,14 +293,10 @@ function CustomersPage() {
   const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
   const toIso = dateTo ? dayEndIso(dateTo) : null;
 
-  // When the friend_referral tab is active, the main customers queries are
-  // not used — fall back to "existing" so the typed RPC contracts hold.
-  const effectiveTab: CustomerPool | "all" = tab === "friend_referral" ? "existing" : tab;
-
   const {
     rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
   } = useCustomersList({
-    pool: effectiveTab,
+    pool: tab,
     search: debouncedSearch,
     countryIds,
     assignedCountry,
@@ -313,10 +309,10 @@ function CustomersPage() {
     pageSize: PAGE_SIZE,
     dateFromIso: fromIso,
     dateToIso: toIso,
-  }, { enabled: tab !== "friend_referral" });
+  });
 
   const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
-    pool: effectiveTab,
+    pool: tab,
     countryIds,
     dateFromIso: fromIso,
     dateToIso: toIso,
@@ -343,7 +339,7 @@ function CustomersPage() {
 
   // 권한 변경/로드 시 비허용 풀이 선택돼 있으면 안전한 탭으로 리셋
   useEffect(() => {
-    if (tab !== "all" && tab !== "friend_referral" && !visiblePools.includes(tab as CustomerPool)) {
+    if (tab !== "all" && !visiblePools.includes(tab as CustomerPool)) {
       setTab(visiblePools[0] ?? "existing");
     }
   }, [visiblePools, tab]);
@@ -723,7 +719,7 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
-    const effPool: CustomerPool = (tab === "all" || tab === "friend_referral") ? "existing" : tab;
+    const effPool: CustomerPool = (tab === "all") ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
@@ -732,6 +728,9 @@ function CustomersPage() {
     } else if (effPool === "activation_request") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
+    } else if (effPool === "friend_referral") {
+      header = ["고객명", "전화번호", "국적", "가입일", "메모"];
+      sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
     } else {
       // new_signup
       header = ["고객명", "전화번호", "국적", "가입일", "담당자", "상태", "콜 라운드", "데이터 등록일", "메모"];
@@ -760,7 +759,7 @@ function CustomersPage() {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         const { data, error } = await supabase.rpc("search_customers", {
-          _pool: (tab === "all" || tab === "friend_referral") ? undefined : tab,
+          _pool: tab === "all" ? undefined : tab,
           _search: debouncedSearch?.trim() || undefined,
           _country_ids: countryIds.length ? countryIds : undefined,
           _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
@@ -920,7 +919,7 @@ function CustomersPage() {
       );
     }
 
-    if (p === "new_signup") {
+    if (p === "new_signup" || p === "friend_referral") {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
@@ -1037,23 +1036,16 @@ function CustomersPage() {
 
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
-        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length + 1}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
           {visiblePools.map((p) => (
             <TabsTrigger key={p} value={p} className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
-          <TabsTrigger value="friend_referral" className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
-            친구 추천
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="friend_referral" className="mt-4">
-          <FriendReferralsView />
-        </TabsContent>
-
-        {(tab === "friend_referral" ? [] : [tab] as TabValue[]).map((tv) => {
-          const p: CustomerPool = (tv === "all" || tv === "friend_referral") ? "existing" : tv;
+        {([tab] as TabValue[]).map((tv) => {
+          const p: CustomerPool = (tv === "all") ? "existing" : tv;
           return (
           <TabsContent key={tv} value={tv} className="mt-4">
             <Card>

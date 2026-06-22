@@ -90,6 +90,7 @@ export const POOLS = [
   "existing",
   "activation_request",
   "new_signup",
+  "friend_referral",
 ] as const;
 export type CustomerPool = (typeof POOLS)[number];
 
@@ -97,12 +98,14 @@ export const POOL_LABEL: Record<CustomerPool, string> = {
   existing: "한패스 모바일 기존 고객",
   activation_request: "개통 신청자",
   new_signup: "한패스 신규 가입자",
+  friend_referral: "친구 추천",
 };
 
 export const POOL_SHORT: Record<CustomerPool, string> = {
   existing: "기존 고객",
   activation_request: "개통 신청자",
   new_signup: "한패스 신규 가입자",
+  friend_referral: "친구 추천",
 };
 
 // === 직원 출근 상태 ===
