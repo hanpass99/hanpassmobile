@@ -106,10 +106,12 @@ export default {
     existing: "Hanpass Mobile existing customers",
     activation_request: "Activation requests",
     new_signup: "Hanpass new signups",
+    friend_referral: "Friend referrals",
     short: {
       existing: "Existing",
       activation_request: "Activation",
       new_signup: "New signup",
+      friend_referral: "Friend referral",
     },
     emptyPool: "No customers in {{name}} pool.",
   },
