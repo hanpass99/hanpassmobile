@@ -759,7 +759,7 @@ function CustomersPage() {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         const { data, error } = await supabase.rpc("search_customers", {
-          _pool: (tab === "all" || tab === "friend_referral") ? undefined : tab,
+          _pool: tab === "all" ? undefined : tab,
           _search: debouncedSearch?.trim() || undefined,
           _country_ids: countryIds.length ? countryIds : undefined,
           _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
