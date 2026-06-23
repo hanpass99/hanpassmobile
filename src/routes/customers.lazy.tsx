@@ -507,6 +507,31 @@ function CustomersPage() {
     load();
   };
 
+  const deleteAllInTab = async () => {
+    if (!isAdmin) return;
+    const p: CustomerPool = (tab === "all" ? "existing" : tab) as CustomerPool;
+    setDeleteAllRunning(true);
+    const toastId = toast.loading(`${POOL_LABEL[p]} 전체 삭제 중...`);
+    try {
+      const { error } = await supabase.from("customers").delete().eq("pool", p);
+      if (error) {
+        toast.error(`삭제 실패: ${error.message}`, { id: toastId });
+        return;
+      }
+      toast.success(`${POOL_LABEL[p]} 전체 삭제 완료`, { id: toastId });
+      setDeleteAllOpen(false);
+      setDeleteAllConfirm("");
+      setSelected(new Set());
+      setPage(1);
+      await refetchPoolCounts();
+      await refetchList();
+    } finally {
+      setDeleteAllRunning(false);
+    }
+  };
+
+
+
   const bulkChangeStatus = async () => {
     const visibleIds = new Set(filtered.map((r) => r.id));
     const ids = Array.from(selected).filter((id) => visibleIds.has(id));
