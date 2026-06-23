@@ -265,6 +265,9 @@ function CustomersPage() {
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState("");
+  const [deleteAllRunning, setDeleteAllRunning] = useState(false);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<CustomerStatus>("new");
   const [bulkStatusRunning, setBulkStatusRunning] = useState(false);
@@ -504,6 +507,31 @@ function CustomersPage() {
     load();
   };
 
+  const deleteAllInTab = async () => {
+    if (!isAdmin) return;
+    const p: CustomerPool = (tab === "all" ? "existing" : tab) as CustomerPool;
+    setDeleteAllRunning(true);
+    const toastId = toast.loading(`${POOL_LABEL[p]} 전체 삭제 중...`);
+    try {
+      const { error } = await supabase.from("customers").delete().eq("pool", p);
+      if (error) {
+        toast.error(`삭제 실패: ${error.message}`, { id: toastId });
+        return;
+      }
+      toast.success(`${POOL_LABEL[p]} 전체 삭제 완료`, { id: toastId });
+      setDeleteAllOpen(false);
+      setDeleteAllConfirm("");
+      setSelected(new Set());
+      setPage(1);
+      await refetchPoolCounts();
+      await refetchList();
+    } finally {
+      setDeleteAllRunning(false);
+    }
+  };
+
+
+
   const bulkChangeStatus = async () => {
     const visibleIds = new Set(filtered.map((r) => r.id));
     const ids = Array.from(selected).filter((id) => visibleIds.has(id));
@@ -662,30 +690,10 @@ function CustomersPage() {
         return;
       }
 
-      // 2차: DB 측 전체 중복 체크 (chunk 1000개씩)
-      toast.loading("DB 중복 체크 중...", { id: toastId });
-      const dbDupSet = new Set<string>();
-      const phoneList = parsed.map((p) => p.phone);
-      const dupChunkSize = 1000;
-      for (let i = 0; i < phoneList.length; i += dupChunkSize) {
-        const chunk = phoneList.slice(i, i + dupChunkSize);
-        const { data: dupes, error: dupErr } = await supabase
-          .rpc("customers_existing_phones", { _pool: (tab === "all" ? "existing" : tab) as CustomerPool, _phones: chunk });
-        if (dupErr) {
-          toast.error(`중복 체크 실패: ${dupErr.message}`, { id: toastId });
-          return;
-        }
-        (dupes ?? []).forEach((d: { phone: string }) => dbDupSet.add(d.phone));
-      }
-      const finalPayload = parsed.filter((p) => !dbDupSet.has(p.phone));
-      const dupInDb = parsed.length - finalPayload.length;
+      // DB 측 중복 체크는 수행하지 않음: 같은 번호도 다른 날짜로 재등록 허용
+      const finalPayload = parsed;
 
-      if (!finalPayload.length) {
-        toast.error(`업로드할 데이터가 없습니다. (DB 중복 ${dupInDb}건, 파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
-        return;
-      }
-
-      // 3차: 청크 단위 INSERT (500건씩)
+      // 청크 단위 INSERT (500건씩)
       const insertChunkSize = 500;
       let inserted = 0;
       const totalToInsert = finalPayload.length;
@@ -703,7 +711,7 @@ function CustomersPage() {
         toast.loading(`업로드 중 ${inserted.toLocaleString()}/${totalToInsert.toLocaleString()}`, { id: toastId });
       }
       toast.success(
-        `${inserted.toLocaleString()}명 추가 / DB중복 ${dupInDb}건 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
+        `${inserted.toLocaleString()}명 추가 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
         { id: toastId }
       );
       await refetchPoolCounts();
@@ -1072,6 +1080,9 @@ function CustomersPage() {
                           <Button variant="outline" size="sm" onClick={downloadFiltered} disabled={downloading} aria-busy={downloading}>
                             <FileSpreadsheet className="mr-2 h-4 w-4" /> {downloading ? "다운로드 중..." : "엑셀 다운로드"}
                           </Button>
+                          <Button variant="destructive" size="sm" onClick={() => { setDeleteAllConfirm(""); setDeleteAllOpen(true); }}>
+                            <Trash2 className="mr-2 h-4 w-4" /> 탭 전체 삭제
+                          </Button>
                         </>
                       )}
                       <Button size="sm" onClick={() => setShowAdd(true)}>
@@ -1410,6 +1421,34 @@ function CustomersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkOpen(false)}>취소</Button>
             <Button variant="destructive" onClick={bulkDelete}>{selected.size}명 삭제</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={deleteAllOpen} onOpenChange={(o) => !deleteAllRunning && setDeleteAllOpen(o)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>탭 전체 삭제</DialogTitle>
+            <DialogDescription>
+              <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> 탭의 모든 고객 데이터({poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}건)를 영구히 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+              <br /><br />
+              계속하려면 아래에 <strong>DELETE</strong> 를 입력하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={deleteAllConfirm}
+            onChange={(e) => setDeleteAllConfirm(e.target.value)}
+            placeholder="DELETE"
+            disabled={deleteAllRunning}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deleteAllRunning}>취소</Button>
+            <Button
+              variant="destructive"
+              onClick={deleteAllInTab}
+              disabled={deleteAllConfirm !== "DELETE" || deleteAllRunning}
+            >
+              {deleteAllRunning ? "삭제 중..." : "전체 삭제"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
