@@ -1080,6 +1080,9 @@ function CustomersPage() {
                           <Button variant="outline" size="sm" onClick={downloadFiltered} disabled={downloading} aria-busy={downloading}>
                             <FileSpreadsheet className="mr-2 h-4 w-4" /> {downloading ? "다운로드 중..." : "엑셀 다운로드"}
                           </Button>
+                          <Button variant="destructive" size="sm" onClick={() => { setDeleteAllConfirm(""); setDeleteAllOpen(true); }}>
+                            <Trash2 className="mr-2 h-4 w-4" /> 탭 전체 삭제
+                          </Button>
                         </>
                       )}
                       <Button size="sm" onClick={() => setShowAdd(true)}>
