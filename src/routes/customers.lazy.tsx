@@ -662,30 +662,10 @@ function CustomersPage() {
         return;
       }
 
-      // 2차: DB 측 전체 중복 체크 (chunk 1000개씩)
-      toast.loading("DB 중복 체크 중...", { id: toastId });
-      const dbDupSet = new Set<string>();
-      const phoneList = parsed.map((p) => p.phone);
-      const dupChunkSize = 1000;
-      for (let i = 0; i < phoneList.length; i += dupChunkSize) {
-        const chunk = phoneList.slice(i, i + dupChunkSize);
-        const { data: dupes, error: dupErr } = await supabase
-          .rpc("customers_existing_phones", { _pool: (tab === "all" ? "existing" : tab) as CustomerPool, _phones: chunk });
-        if (dupErr) {
-          toast.error(`중복 체크 실패: ${dupErr.message}`, { id: toastId });
-          return;
-        }
-        (dupes ?? []).forEach((d: { phone: string }) => dbDupSet.add(d.phone));
-      }
-      const finalPayload = parsed.filter((p) => !dbDupSet.has(p.phone));
-      const dupInDb = parsed.length - finalPayload.length;
+      // DB 측 중복 체크는 수행하지 않음: 같은 번호도 다른 날짜로 재등록 허용
+      const finalPayload = parsed;
 
-      if (!finalPayload.length) {
-        toast.error(`업로드할 데이터가 없습니다. (DB 중복 ${dupInDb}건, 파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
-        return;
-      }
-
-      // 3차: 청크 단위 INSERT (500건씩)
+      // 청크 단위 INSERT (500건씩)
       const insertChunkSize = 500;
       let inserted = 0;
       const totalToInsert = finalPayload.length;
