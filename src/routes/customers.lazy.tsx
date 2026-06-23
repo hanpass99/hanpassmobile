@@ -352,6 +352,8 @@ function CustomersPage() {
 
   const refresh = async () => {
     setPage(1);
+    cache.invalidateList();
+    cache.invalidatePoolCounts();
     await Promise.all([refetchList(), refetchPoolCounts()]);
   };
   const load = refresh;
