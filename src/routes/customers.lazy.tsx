@@ -683,7 +683,7 @@ function CustomersPage() {
         toast.loading(`업로드 중 ${inserted.toLocaleString()}/${totalToInsert.toLocaleString()}`, { id: toastId });
       }
       toast.success(
-        `${inserted.toLocaleString()}명 추가 / DB중복 ${dupInDb}건 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
+        `${inserted.toLocaleString()}명 추가 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
         { id: toastId }
       );
       await refetchPoolCounts();
