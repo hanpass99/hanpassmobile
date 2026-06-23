@@ -1424,6 +1424,34 @@ function CustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={deleteAllOpen} onOpenChange={(o) => !deleteAllRunning && setDeleteAllOpen(o)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>탭 전체 삭제</DialogTitle>
+            <DialogDescription>
+              <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> 탭의 모든 고객 데이터({poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}건)를 영구히 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+              <br /><br />
+              계속하려면 아래에 <strong>DELETE</strong> 를 입력하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={deleteAllConfirm}
+            onChange={(e) => setDeleteAllConfirm(e.target.value)}
+            placeholder="DELETE"
+            disabled={deleteAllRunning}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deleteAllRunning}>취소</Button>
+            <Button
+              variant="destructive"
+              onClick={deleteAllInTab}
+              disabled={deleteAllConfirm !== "DELETE" || deleteAllRunning}
+            >
+              {deleteAllRunning ? "삭제 중..." : "전체 삭제"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={bulkStatusOpen} onOpenChange={(o) => !bulkStatusRunning && setBulkStatusOpen(o)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
