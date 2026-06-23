@@ -265,6 +265,9 @@ function CustomersPage() {
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState("");
+  const [deleteAllRunning, setDeleteAllRunning] = useState(false);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<CustomerStatus>("new");
   const [bulkStatusRunning, setBulkStatusRunning] = useState(false);
