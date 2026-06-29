@@ -741,6 +741,9 @@ function CustomersPage() {
     } else if (effPool === "friend_referral") {
       header = ["고객명", "전화번호", "국적", "가입일", "메모"];
       sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
+    } else if (effPool === "prepaid_charge") {
+      header = ["고객명", "전화번호", "국적", "충전일", "메모"];
+      sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 충전일: "2026-06-18", 메모: "" }];
     } else {
       // new_signup
       header = ["고객명", "전화번호", "국적", "가입일", "담당자", "상태", "콜 라운드", "데이터 등록일", "메모"];
