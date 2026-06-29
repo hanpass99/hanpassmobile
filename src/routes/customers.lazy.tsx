@@ -613,7 +613,7 @@ function CustomersPage() {
         carrierPlan: pickHeader("요금제", "plan", "carrier_plan"),
         activationDate: pickHeader("개통일", "activation_date"),
         applicationDate: pickHeader("신청일", "application_date"),
-        chargeDate: pickHeader("충전일", "charge_date"),
+        chargeDate: pickHeader("충전일", "충전 일", "charge_date"),
         signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일", "충전일", "charge_date"),
         requestedPlan: pickHeader("신청요금제", "requested_plan"),
         chargeAmount: pickHeader("충전요금", "충전금액", "charge_amount", "amount"),
@@ -760,10 +760,10 @@ function CustomersPage() {
       header = ["고객명", "전화번호", "국적", "가입일", "메모"];
       sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
     } else if (effPool === "prepaid_charge") {
-      header = ["국적", "충전번호", "충전요금", "충전일", "담당 국가", "메모"];
+      header = ["전화번호", "국적", "충전 일", "담당자", "상태", "콜 라운드", "메모"];
       sample = [
-        { 국적: "러시아", 충전번호: "01059464992", 충전요금: 36000, 충전일: "2026-04-25", "담당 국가": "CIS", 메모: "" },
-        { 국적: "미얀마", 충전번호: "01065939433", 충전요금: 10000, 충전일: "2026-04-25", "담당 국가": "미얀마", 메모: "" },
+        { 전화번호: "010-5946-4992", 국적: "CIS", "충전 일": "2026-04-25", 담당자: "", 상태: "", "콜 라운드": "", 메모: "" },
+        { 전화번호: "010-6593-9433", 국적: "미얀마", "충전 일": "2026-04-25", 담당자: "", 상태: "", "콜 라운드": "", 메모: "" },
       ];
     } else {
       // new_signup
