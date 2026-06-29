@@ -929,7 +929,7 @@ function CustomersPage() {
       );
     }
 
-    if (p === "new_signup" || p === "friend_referral") {
+    if (p === "new_signup" || p === "friend_referral" || p === "prepaid_charge") {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
