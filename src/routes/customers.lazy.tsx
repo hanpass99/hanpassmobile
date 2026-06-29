@@ -608,6 +608,7 @@ function CustomersPage() {
         phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"),
         name: pickHeader("name", "이름", "고객명", "성명"),
         country: pickHeader("country", "국가", "국적", "고객국적", "고객 국적", "nationality"),
+        assignedCountry: pickHeader("담당국가", "담당 국가", "담당팀", "팀"),
         notes: pickHeader("notes", "메모", "비고", "note"),
         carrierPlan: pickHeader("요금제", "plan", "carrier_plan"),
         activationDate: pickHeader("개통일", "activation_date"),
@@ -615,6 +616,7 @@ function CustomersPage() {
         chargeDate: pickHeader("충전일", "charge_date"),
         signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일", "충전일", "charge_date"),
         requestedPlan: pickHeader("신청요금제", "requested_plan"),
+        chargeAmount: pickHeader("충전요금", "충전금액", "charge_amount", "amount"),
       };
       const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
       // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
