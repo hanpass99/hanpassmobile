@@ -220,11 +220,8 @@ function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
 
 function CustomersPage() {
   const { t } = useTranslation();
-  const { isAdmin, canAccessNewSignup } = useAuth();
-  const visiblePools = useMemo<readonly CustomerPool[]>(
-    () => POOLS.filter((p) => p !== "new_signup" || isAdmin || canAccessNewSignup),
-    [isAdmin, canAccessNewSignup]
-  );
+  const { isAdmin } = useAuth();
+  const visiblePools = useMemo<readonly CustomerPool[]>(() => POOLS, []);
   const initialSearch = Route.useSearch();
   const initialStatus = (() => {
     const s = initialSearch.status;
@@ -953,7 +950,7 @@ function CustomersPage() {
       );
     }
 
-    if (p === "new_signup" || p === "friend_referral" || p === "prepaid_charge") {
+    if (p === "friend_referral" || p === "prepaid_charge") {
       return (
         <Table aria-label="Customer list">
           <TableHeader>

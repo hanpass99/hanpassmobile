@@ -97,7 +97,6 @@ export type CustomerPool = (typeof POOLS)[number];
 export const POOL_LABEL: Record<CustomerPool, string> = {
   existing: "한패스 모바일 기존 고객",
   activation_request: "개통 신청자",
-  new_signup: "한패스 신규 가입자",
   friend_referral: "친구 추천",
   prepaid_charge: "한패스 앱으로 선불 충전자",
 };
@@ -105,7 +104,6 @@ export const POOL_LABEL: Record<CustomerPool, string> = {
 export const POOL_SHORT: Record<CustomerPool, string> = {
   existing: "기존 고객",
   activation_request: "개통 신청자",
-  new_signup: "한패스 신규 가입자",
   friend_referral: "친구 추천",
   prepaid_charge: "선불 충전자",
 };
