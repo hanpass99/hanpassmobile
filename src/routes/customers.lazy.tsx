@@ -84,6 +84,8 @@ type ImportCustomer = {
   requested_plan: string | null;
   charge_date?: string;
   signup_date?: string;
+  charge_phone?: string | null;
+  charge_amount?: number | null;
 };
 
 type SortDir = "asc" | "desc" | null;
@@ -606,6 +608,7 @@ function CustomersPage() {
         phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"),
         name: pickHeader("name", "이름", "고객명", "성명"),
         country: pickHeader("country", "국가", "국적", "고객국적", "고객 국적", "nationality"),
+        assignedCountry: pickHeader("담당국가", "담당 국가", "담당팀", "팀"),
         notes: pickHeader("notes", "메모", "비고", "note"),
         carrierPlan: pickHeader("요금제", "plan", "carrier_plan"),
         activationDate: pickHeader("개통일", "activation_date"),
@@ -613,6 +616,7 @@ function CustomersPage() {
         chargeDate: pickHeader("충전일", "charge_date"),
         signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일", "충전일", "charge_date"),
         requestedPlan: pickHeader("신청요금제", "requested_plan"),
+        chargeAmount: pickHeader("충전요금", "충전금액", "charge_amount", "amount"),
       };
       const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
       // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
@@ -662,28 +666,42 @@ function CustomersPage() {
 
       // 1차: 파일 파싱 + 파일 내 중복 제거
       const parsed: ImportCustomer[] = json
-        .map((row) => {
-          const phone = norm(valueOf(row, headers.phone));
-          const name = norm(valueOf(row, headers.name));
+        .map((row): ImportCustomer | null => {
+          const phoneRaw = norm(valueOf(row, headers.phone));
+          const nameRaw = norm(valueOf(row, headers.name));
+          const phone = phoneRaw;
+          const name = nameRaw || (tab === "prepaid_charge" ? phoneRaw : "");
           if (!name || !phone) { invalid++; return null; }
           if (seenPhones.has(phone)) { dupInFile++; return null; }
           seenPhones.add(phone);
-          const cc = norm(valueOf(row, headers.country));
-          const country_id = countryByCode.get(cc.toUpperCase()) ?? countryByName.get(cc) ?? null;
-          const notes = norm(valueOf(row, headers.notes)) || null;
+          const ccRaw = norm(valueOf(row, headers.country));
+          const assignedRaw = norm(valueOf(row, headers.assignedCountry));
+          const ccForId = assignedRaw || ccRaw;
+          const country_id = countryByCode.get(ccForId.toUpperCase()) ?? countryByName.get(ccForId) ?? null;
+          const memoBase = norm(valueOf(row, headers.notes));
+          const nationalityNote = (ccRaw && ccRaw !== assignedRaw) ? `국적:${ccRaw}` : "";
+          const notes = [nationalityNote, memoBase].filter(Boolean).join(" / ") || null;
           const carrier_plan = norm(valueOf(row, headers.carrierPlan)) || null;
           const activation_date = toDateStr(valueOf(row, headers.activationDate));
           const application_date = toDateStr(valueOf(row, headers.applicationDate));
           const charge_date = toDateStr(valueOf(row, headers.chargeDate));
           const signup_date = toDateStr(valueOf(row, headers.signupDate));
           const requested_plan = norm(valueOf(row, headers.requestedPlan)) || null;
-          return {
-            name, phone, country_id, notes, pool: tab,
+          const chargeAmountRaw = norm(valueOf(row, headers.chargeAmount));
+          const chargeAmtNum = chargeAmountRaw ? Number(chargeAmountRaw.replace(/[, ]/g, "")) : NaN;
+          const charge_amount = isFinite(chargeAmtNum) ? chargeAmtNum : null;
+          const base: ImportCustomer = {
+            name, phone, country_id, notes, pool: tab as CustomerPool,
             carrier_plan, activation_date,
             application_date, requested_plan,
-            ...(charge_date ? { charge_date } : {}),
-            ...(signup_date ? { signup_date } : {}),
           };
+          if (charge_date) base.charge_date = charge_date;
+          if (signup_date) base.signup_date = signup_date;
+          if (tab === "prepaid_charge") {
+            base.charge_phone = phoneRaw;
+            base.charge_amount = charge_amount;
+          }
+          return base;
         })
         .filter((x): x is ImportCustomer => x !== null);
 
@@ -742,8 +760,11 @@ function CustomersPage() {
       header = ["고객명", "전화번호", "국적", "가입일", "메모"];
       sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
     } else if (effPool === "prepaid_charge") {
-      header = ["고객명", "전화번호", "국적", "충전일", "메모"];
-      sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 충전일: "2026-06-18", 메모: "" }];
+      header = ["국적", "충전번호", "충전요금", "충전일", "담당 국가", "메모"];
+      sample = [
+        { 국적: "러시아", 충전번호: "01059464992", 충전요금: 36000, 충전일: "2026-04-25", "담당 국가": "CIS", 메모: "" },
+        { 국적: "미얀마", 충전번호: "01065939433", 충전요금: 10000, 충전일: "2026-04-25", "담당 국가": "미얀마", 메모: "" },
+      ];
     } else {
       // new_signup
       header = ["고객명", "전화번호", "국적", "가입일", "담당자", "상태", "콜 라운드", "데이터 등록일", "메모"];
