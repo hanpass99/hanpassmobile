@@ -107,11 +107,13 @@ export default {
     activation_request: "개통 신청자",
     new_signup: "한패스 신규 가입자",
     friend_referral: "친구 추천",
+    prepaid_charge: "한패스 앱으로 선불 충전자",
     short: {
       existing: "기존 고객",
       activation_request: "개통 신청자",
       new_signup: "한패스 신규 가입자",
       friend_referral: "친구 추천",
+      prepaid_charge: "선불 충전자",
     },
     emptyPool: "{{name}} Pool에 고객이 없습니다.",
   },
