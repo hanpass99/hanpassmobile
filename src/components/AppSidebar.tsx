@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Users, UserCog, Globe2, Radio, FileBarChart,
+  LayoutDashboard, Users, UserCog, Radio,
   Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -27,9 +27,7 @@ export function AppSidebar() {
   ];
   const analyticsItems = [
     { title: t("nav.staff"), url: "/staff-performance", icon: UserCog },
-    { title: t("nav.country"), url: "/country-performance", icon: Globe2 },
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
-    { title: t("nav.reports"), url: "/reports", icon: FileBarChart },
   ];
   const systemItems = [{ title: t("nav.settings"), url: "/settings", icon: Settings }];
 
