@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as StaffPerformanceRouteImport } from './routes/staff-performance'
 import { Route as SmsRouteImport } from './routes/sms'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -19,11 +18,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
 
-const StaffPerformanceRoute = StaffPerformanceRouteImport.update({
-  id: '/staff-performance',
-  path: '/staff-performance',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SmsRoute = SmsRouteImport.update({
   id: '/sms',
   path: '/sms',
@@ -74,7 +68,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sms': typeof SmsRoute
-  '/staff-performance': typeof StaffPerformanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,7 +78,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sms': typeof SmsRoute
-  '/staff-performance': typeof StaffPerformanceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,7 +89,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sms': typeof SmsRoute
-  '/staff-performance': typeof StaffPerformanceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -110,7 +101,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/sms'
-    | '/staff-performance'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -121,7 +111,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/sms'
-    | '/staff-performance'
   id:
     | '__root__'
     | '/'
@@ -132,7 +121,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/sms'
-    | '/staff-performance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -144,18 +132,10 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SmsRoute: typeof SmsRoute
-  StaffPerformanceRoute: typeof StaffPerformanceRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/staff-performance': {
-      id: '/staff-performance'
-      path: '/staff-performance'
-      fullPath: '/staff-performance'
-      preLoaderRoute: typeof StaffPerformanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sms': {
       id: '/sms'
       path: '/sms'
@@ -224,7 +204,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SmsRoute: SmsRoute,
-  StaffPerformanceRoute: StaffPerformanceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
