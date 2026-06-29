@@ -611,7 +611,7 @@ function CustomersPage() {
         activationDate: pickHeader("개통일", "activation_date"),
         applicationDate: pickHeader("신청일", "application_date"),
         chargeDate: pickHeader("충전일", "charge_date"),
-        signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일"),
+        signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일", "충전일", "charge_date"),
         requestedPlan: pickHeader("신청요금제", "requested_plan"),
       };
       const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
@@ -741,6 +741,9 @@ function CustomersPage() {
     } else if (effPool === "friend_referral") {
       header = ["고객명", "전화번호", "국적", "가입일", "메모"];
       sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
+    } else if (effPool === "prepaid_charge") {
+      header = ["고객명", "전화번호", "국적", "충전일", "메모"];
+      sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 충전일: "2026-06-18", 메모: "" }];
     } else {
       // new_signup
       header = ["고객명", "전화번호", "국적", "가입일", "담당자", "상태", "콜 라운드", "데이터 등록일", "메모"];
@@ -929,7 +932,7 @@ function CustomersPage() {
       );
     }
 
-    if (p === "new_signup" || p === "friend_referral") {
+    if (p === "new_signup" || p === "friend_referral" || p === "prepaid_charge") {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
