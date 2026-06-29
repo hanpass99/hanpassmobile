@@ -105,7 +105,7 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
 const PAGE_SIZE = 25;
 
 
-function SortHead({ k, children, className = "", sortKey, sortDir, onSort }: { k: string; children: React.ReactNode; className?: string; sortKey: string; sortDir: SortDir; onSort: (key: string) => void }) {
+function SortHead({ k, children, className = "", sortKey, sortDir, onSort }: { k: string; children?: React.ReactNode; className?: string; sortKey: string; sortDir: SortDir; onSort: (key: string) => void }) {
   const isActive = sortKey === k;
   const Icon = isActive ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
   const ariaSort: "ascending" | "descending" | "none" =
