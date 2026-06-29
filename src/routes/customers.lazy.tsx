@@ -84,6 +84,8 @@ type ImportCustomer = {
   requested_plan: string | null;
   charge_date?: string;
   signup_date?: string;
+  charge_phone?: string | null;
+  charge_amount?: number | null;
 };
 
 type SortDir = "asc" | "desc" | null;
