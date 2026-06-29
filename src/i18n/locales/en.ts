@@ -107,11 +107,13 @@ export default {
     activation_request: "Activation requests",
     new_signup: "Hanpass new signups",
     friend_referral: "Friend referrals",
+    prepaid_charge: "Hanpass App prepaid chargers",
     short: {
       existing: "Existing",
       activation_request: "Activation",
       new_signup: "New signup",
       friend_referral: "Friend referral",
+      prepaid_charge: "Prepaid charge",
     },
     emptyPool: "No customers in {{name}} pool.",
   },
