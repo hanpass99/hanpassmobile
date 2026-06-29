@@ -894,7 +894,7 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
-              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
               <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
               <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>요금제</SortHead>
@@ -938,7 +938,7 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
-              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
               <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
               <SortHead k={p === "prepaid_charge" ? "charge_date" : "signup_date"} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{p === "prepaid_charge" ? "충전 일" : "가입일"}</SortHead>
@@ -980,7 +980,7 @@ function CustomersPage() {
         <TableHeader>
           <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
             {CheckHead}
-            <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
+            <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
             <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
             <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
             <SortHead k="application_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>신청일</SortHead>
