@@ -666,10 +666,9 @@ function CustomersPage() {
 
       // 1차: 파일 파싱 + 파일 내 중복 제거
       const parsed: ImportCustomer[] = json
-        .map((row) => {
+        .map((row): ImportCustomer | null => {
           const phoneRaw = norm(valueOf(row, headers.phone));
           const nameRaw = norm(valueOf(row, headers.name));
-          // 선불 충전자 풀: 고객명 없으면 전화번호로 대체 허용
           const phone = phoneRaw;
           const name = nameRaw || (tab === "prepaid_charge" ? phoneRaw : "");
           if (!name || !phone) { invalid++; return null; }
@@ -677,11 +676,9 @@ function CustomersPage() {
           seenPhones.add(phone);
           const ccRaw = norm(valueOf(row, headers.country));
           const assignedRaw = norm(valueOf(row, headers.assignedCountry));
-          // 담당 국가가 있으면 우선 매핑(팀 구분), 없으면 국적 사용
           const ccForId = assignedRaw || ccRaw;
           const country_id = countryByCode.get(ccForId.toUpperCase()) ?? countryByName.get(ccForId) ?? null;
           const memoBase = norm(valueOf(row, headers.notes));
-          // 국적이 담당 국가와 다르면 메모에 보존
           const nationalityNote = (ccRaw && ccRaw !== assignedRaw) ? `국적:${ccRaw}` : "";
           const notes = [nationalityNote, memoBase].filter(Boolean).join(" / ") || null;
           const carrier_plan = norm(valueOf(row, headers.carrierPlan)) || null;
@@ -691,15 +688,20 @@ function CustomersPage() {
           const signup_date = toDateStr(valueOf(row, headers.signupDate));
           const requested_plan = norm(valueOf(row, headers.requestedPlan)) || null;
           const chargeAmountRaw = norm(valueOf(row, headers.chargeAmount));
-          const charge_amount = chargeAmountRaw ? Number(chargeAmountRaw.replace(/[, ]/g, "")) : null;
-          return {
-            name, phone, country_id, notes, pool: tab,
+          const chargeAmtNum = chargeAmountRaw ? Number(chargeAmountRaw.replace(/[, ]/g, "")) : NaN;
+          const charge_amount = isFinite(chargeAmtNum) ? chargeAmtNum : null;
+          const base: ImportCustomer = {
+            name, phone, country_id, notes, pool: tab as CustomerPool,
             carrier_plan, activation_date,
             application_date, requested_plan,
-            ...(charge_date ? { charge_date } : {}),
-            ...(signup_date ? { signup_date } : {}),
-            ...(tab === "prepaid_charge" ? { charge_phone: phoneRaw, charge_amount: isFinite(charge_amount as number) ? charge_amount : null } : {}),
           };
+          if (charge_date) base.charge_date = charge_date;
+          if (signup_date) base.signup_date = signup_date;
+          if (tab === "prepaid_charge") {
+            base.charge_phone = phoneRaw;
+            base.charge_amount = charge_amount;
+          }
+          return base;
         })
         .filter((x): x is ImportCustomer => x !== null);
 
