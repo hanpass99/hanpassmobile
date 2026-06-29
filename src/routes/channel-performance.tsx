@@ -203,14 +203,6 @@ function ChannelPerf() {
   );
 }
 
-function SummaryStat({ label, value, accent }: { label: string; value: string; accent?: string }) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("text-2xl font-bold", accent)}>{value}</span>
-    </div>
-  );
-}
 
 function DateBtn({ value, onChange, placeholder }: { value?: Date; onChange: (d?: Date) => void; placeholder: string }) {
   return (
