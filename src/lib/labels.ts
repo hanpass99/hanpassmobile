@@ -89,7 +89,6 @@ export function statusForResult(r: CallResult): CustomerStatus {
 export const POOLS = [
   "existing",
   "activation_request",
-  "new_signup",
   "friend_referral",
   "prepaid_charge",
 ] as const;
