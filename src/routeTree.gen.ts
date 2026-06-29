@@ -13,9 +13,7 @@ import { Route as StaffPerformanceRouteImport } from './routes/staff-performance
 import { Route as SmsRouteImport } from './routes/sms'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as CustomersRouteImport } from './routes/customers'
-import { Route as CountryPerformanceRouteImport } from './routes/country-performance'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AttendanceRouteImport } from './routes/attendance'
@@ -41,21 +39,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/reports.lazy').then((d) => d.Route))
 const CustomersRoute = CustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/customers.lazy').then((d) => d.Route))
-const CountryPerformanceRoute = CountryPerformanceRouteImport.update({
-  id: '/country-performance',
-  path: '/country-performance',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ChannelPerformanceRoute = ChannelPerformanceRouteImport.update({
   id: '/channel-performance',
   path: '/channel-performance',
@@ -82,9 +70,7 @@ export interface FileRoutesByFullPath {
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
-  '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
-  '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sms': typeof SmsRoute
@@ -95,9 +81,7 @@ export interface FileRoutesByTo {
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
-  '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
-  '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sms': typeof SmsRoute
@@ -109,9 +93,7 @@ export interface FileRoutesById {
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
-  '/country-performance': typeof CountryPerformanceRoute
   '/customers': typeof CustomersRoute
-  '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sms': typeof SmsRoute
@@ -124,9 +106,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/auth'
     | '/channel-performance'
-    | '/country-performance'
     | '/customers'
-    | '/reports'
     | '/reset-password'
     | '/settings'
     | '/sms'
@@ -137,9 +117,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/auth'
     | '/channel-performance'
-    | '/country-performance'
     | '/customers'
-    | '/reports'
     | '/reset-password'
     | '/settings'
     | '/sms'
@@ -150,9 +128,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/auth'
     | '/channel-performance'
-    | '/country-performance'
     | '/customers'
-    | '/reports'
     | '/reset-password'
     | '/settings'
     | '/sms'
@@ -164,9 +140,7 @@ export interface RootRouteChildren {
   AttendanceRoute: typeof AttendanceRoute
   AuthRoute: typeof AuthRoute
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
-  CountryPerformanceRoute: typeof CountryPerformanceRoute
   CustomersRoute: typeof CustomersRoute
-  ReportsRoute: typeof ReportsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SmsRoute: typeof SmsRoute
@@ -203,25 +177,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/customers': {
       id: '/customers'
       path: '/customers'
       fullPath: '/customers'
       preLoaderRoute: typeof CustomersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/country-performance': {
-      id: '/country-performance'
-      path: '/country-performance'
-      fullPath: '/country-performance'
-      preLoaderRoute: typeof CountryPerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/channel-performance': {
@@ -260,9 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   AttendanceRoute: AttendanceRoute,
   AuthRoute: AuthRoute,
   ChannelPerformanceRoute: ChannelPerformanceRoute,
-  CountryPerformanceRoute: CountryPerformanceRoute,
   CustomersRoute: CustomersRoute,
-  ReportsRoute: ReportsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SmsRoute: SmsRoute,
