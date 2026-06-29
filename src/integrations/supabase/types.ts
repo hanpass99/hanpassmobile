@@ -849,6 +849,7 @@ export type Database = {
         | "prepaid"
         | "activation_request"
         | "friend_referral"
+        | "prepaid_charge"
       customer_status:
         | "new"
         | "in_progress"
@@ -1014,6 +1015,7 @@ export const Constants = {
         "prepaid",
         "activation_request",
         "friend_referral",
+        "prepaid_charge",
       ],
       customer_status: [
         "new",
