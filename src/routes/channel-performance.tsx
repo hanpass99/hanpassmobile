@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
+import { StatCard } from "@/components/StatCard";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -9,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, Users, CheckCircle2, TrendingUp, PhoneCall } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -130,13 +131,12 @@ function ChannelPerf() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
-          <SummaryStat label="전체 고객" value={totals.total.toLocaleString()} />
-          <SummaryStat label="개통 성공" value={totals.activated.toLocaleString()} accent="text-primary" />
-          <SummaryStat label="전체 개통 성공률" value={`${totals.rate.toFixed(1)}%`} accent="text-emerald-600" />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard label="전체 고객" value={totals.total.toLocaleString()} icon={Users} tone="muted" />
+        <StatCard label="콜 완료" value={totals.callCompleted.toLocaleString()} icon={PhoneCall} tone="info" />
+        <StatCard label="개통 성공" value={totals.activated.toLocaleString()} icon={CheckCircle2} tone="primary" />
+        <StatCard label="전체 개통 성공률" value={`${totals.rate.toFixed(1)}%`} icon={TrendingUp} tone="success" />
+      </div>
 
       {chartData.length > 0 && (
         <Card>
