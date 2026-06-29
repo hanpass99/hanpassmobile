@@ -134,7 +134,7 @@ export default {
     deleteTitle: "고객 삭제",
     deleteDesc: "이 고객과 관련된 모든 데이터가 삭제됩니다.",
     name: "고객명", chargePhone: "충전번호", chargeAmount: "충전 요금",
-    chargeDate: "충전일", activationDate: "개통일", carrierPlan: "요금제",
+    chargeDate: "충전 일", activationDate: "개통일", carrierPlan: "요금제",
     nationality: "국적", signupDate: "가입일",
     applicationDate: "신청일", requestedPlan: "신청 요금제",
     importedAt: "데이터 등록일", actions: "액션", memo: "메모",
