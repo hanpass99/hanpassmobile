@@ -812,7 +812,7 @@ function CustomersPage() {
         요금제: c.carrier_plan ?? "",
         신청일: c.application_date ?? "",
         신청요금제: c.requested_plan ?? "",
-        가입일: c.signup_date ?? "",
+        ...(tab === "prepaid_charge" ? { "충전 일": c.charge_date ?? "" } : { "가입일": c.signup_date ?? "" }),
         이메일: c.email ?? "",
         충전번호: c.charge_phone ?? "",
         "데이터 등록일": c.imported_at ? new Date(c.imported_at).toLocaleString("ko-KR") : "",
@@ -941,7 +941,7 @@ function CustomersPage() {
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
               <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
-              <SortHead k="signup_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>가입일</SortHead>
+              <SortHead k={p === "prepaid_charge" ? "charge_date" : "signup_date"} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{p === "prepaid_charge" ? "충전 일" : "가입일"}</SortHead>
               <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
               <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
               {CallRoundHead}
@@ -958,7 +958,7 @@ function CustomersPage() {
                 <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                 <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
                 <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
-                <TableCell className="text-xs">{fmtDate(c.signup_date)}</TableCell>
+                <TableCell className="text-xs">{fmtDate(p === "prepaid_charge" ? c.charge_date : c.signup_date)}</TableCell>
                 <Assigned c={c} staffById={staffById} />
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
