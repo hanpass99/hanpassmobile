@@ -611,7 +611,7 @@ function CustomersPage() {
         activationDate: pickHeader("개통일", "activation_date"),
         applicationDate: pickHeader("신청일", "application_date"),
         chargeDate: pickHeader("충전일", "charge_date"),
-        signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일"),
+        signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일", "충전일", "charge_date"),
         requestedPlan: pickHeader("신청요금제", "requested_plan"),
       };
       const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
