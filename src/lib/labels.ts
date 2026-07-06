@@ -26,6 +26,7 @@ export const CUSTOMER_STATUSES = [
   "new",
   "in_progress",
   "no_answer",
+  "unreachable",
   "not_interested",
   "callback",
   "activated",
