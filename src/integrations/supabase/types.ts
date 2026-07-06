@@ -371,6 +371,91 @@ export type Database = {
         }
         Relationships: []
       }
+      sla_audit_log: {
+        Row: {
+          action: string
+          adjustment_id: string | null
+          admin_id: string | null
+          country_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+        }
+        Insert: {
+          action: string
+          adjustment_id?: string | null
+          admin_id?: string | null
+          country_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          adjustment_id?: string | null
+          admin_id?: string | null
+          country_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_audit_log_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sla_fine_adjustments: {
+        Row: {
+          adjustment_type: string
+          admin_id: string | null
+          amount: number
+          country_id: string | null
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          adjustment_type: string
+          admin_id?: string | null
+          amount?: number
+          country_id?: string | null
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adjustment_type?: string
+          admin_id?: string | null
+          amount?: number
+          country_id?: string | null
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_fine_adjustments_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sms_logs: {
         Row: {
           aligo_msg_id: string | null
@@ -578,6 +663,35 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_sla_override_fine: {
+        Args: {
+          _amount: number
+          _country_id: string
+          _period_end: string
+          _period_start: string
+          _reason?: string
+        }
+        Returns: string
+      }
+      admin_sla_reset_fine: {
+        Args: {
+          _country_id: string
+          _period_end: string
+          _period_start: string
+          _reason?: string
+        }
+        Returns: string
+      }
+      admin_sla_waive_fine: {
+        Args: {
+          _amount: number
+          _country_id: string
+          _period_end: string
+          _period_start: string
+          _reason?: string
+        }
+        Returns: string
+      }
       can_access_new_signup: { Args: { _user_id: string }; Returns: boolean }
       current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
@@ -635,6 +749,40 @@ export type Database = {
         }
         Returns: undefined
       }
+      sla_team_summary: {
+        Args: { _period_end: string; _period_start: string }
+        Returns: {
+          adjustments: number
+          country_code: string
+          country_id: string
+          country_name: string
+          gross_fine: number
+          net_fine: number
+          violations_absent: number
+          violations_in_progress: number
+          violations_new: number
+          violations_total: number
+        }[]
+      }
+      sla_violations: {
+        Args: { _country_ids?: string[] }
+        Returns: {
+          assigned_to: string
+          country_code: string
+          country_id: string
+          customer_id: string
+          customer_name: string
+          daily_fine: number
+          deadline: string
+          fine_total: number
+          overdue_days: number
+          overdue_hours: number
+          phone: string
+          since: string
+          status: string
+        }[]
+      }
+      sla_violations_count: { Args: never; Returns: number }
       stats_attendance_summary: {
         Args: { _date?: string }
         Returns: {
