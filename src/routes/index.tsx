@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  PhoneCall, TrendingUp, Award, CalendarIcon, Globe2, Inbox,
+  PhoneCall, TrendingUp, Award, CalendarIcon, Globe2, Inbox, AlertTriangle,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend,
@@ -23,6 +23,7 @@ import { dateKey, dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
 import { useDashboardCountries, useDashboardSummary, type DashboardSummary } from "@/hooks/use-dashboard";
 import { supabase } from "@/integrations/supabase/client";
+import { useSlaViolationCount } from "@/hooks/use-sla";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "대시보드 — Hanpass Mobile OB Call CRM" }] }),
