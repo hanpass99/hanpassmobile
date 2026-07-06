@@ -244,6 +244,28 @@ function Dashboard() {
       </div>
       )}
 
+      {/* SLA 위반 카드 (개통 신청자) */}
+      <Link to="/sla" className="block transition hover:scale-[1.005]">
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="flex items-center justify-between gap-4 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-destructive/15 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold">⚠ SLA 위반 (개통 신청자)</div>
+                <div className="text-xs text-muted-foreground">클릭하여 SLA 초과 고객 및 팀 벌금 확인</div>
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-destructive">
+              {slaCountQ.isLoading ? "…" : (slaCountQ.data ?? 0).toLocaleString()}
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+
+
+
 
       {/* 상태별 카운트 (10종) */}
       <Card>
