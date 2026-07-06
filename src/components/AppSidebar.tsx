@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Users, Radio,
+  LayoutDashboard, Users, Radio, AlertTriangle,
   Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -27,6 +27,7 @@ export function AppSidebar() {
   ];
   const analyticsItems = [
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
+    { title: "SLA 관리", url: "/sla", icon: AlertTriangle },
   ];
   const systemItems = [{ title: t("nav.settings"), url: "/settings", icon: Settings }];
 
