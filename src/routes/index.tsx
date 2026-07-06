@@ -75,6 +75,7 @@ function Dashboard() {
   const [countryF, setCountryF] = useState<string>("all");
 
   const { data: countries = [] } = useDashboardCountries();
+  const slaCountQ = useSlaViolationCount();
   const summaryQ = useDashboardSummary({
     from, to, countryId: countryF === "all" ? null : countryF,
   });
