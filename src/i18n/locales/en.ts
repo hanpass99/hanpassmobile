@@ -70,7 +70,7 @@ export default {
     achieved: "🎉 50-call daily goal reached. Great work!",
   },
   status: {
-    new: "Not started", in_progress: "In progress", no_answer: "No answer",
+    new: "Not started", in_progress: "In progress", no_answer: "No answer", unreachable: "Unreachable",
     not_interested: "Not interested", callback: "Callback requested",
     activated: "Activated", stay_expired: "Stay expired",
     delinquent: "Delinquent", line_exceeded: "Line exceeded", minor: "Minor",
