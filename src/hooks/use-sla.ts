@@ -130,7 +130,7 @@ export function useSlaAdminActions() {
         _country_id: v.countryId,
         _period_start: v.periodStart,
         _period_end: v.periodEnd,
-        _reason: v.reason ?? null,
+        _reason: v.reason ?? undefined,
       });
       if (error) throw new Error(error.message);
     },
@@ -144,7 +144,7 @@ export function useSlaAdminActions() {
         _period_start: v.periodStart,
         _period_end: v.periodEnd,
         _amount: v.amount,
-        _reason: v.reason ?? null,
+        _reason: v.reason ?? undefined,
       });
       if (error) throw new Error(error.message);
     },
@@ -158,7 +158,7 @@ export function useSlaAdminActions() {
         _period_start: v.periodStart,
         _period_end: v.periodEnd,
         _amount: v.amount,
-        _reason: v.reason ?? null,
+        _reason: v.reason ?? undefined,
       });
       if (error) throw new Error(error.message);
     },
