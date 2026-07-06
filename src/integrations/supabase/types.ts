@@ -749,6 +749,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      sla_policy_start: { Args: never; Returns: string }
       sla_team_summary: {
         Args: { _period_end: string; _period_start: string }
         Returns: {
