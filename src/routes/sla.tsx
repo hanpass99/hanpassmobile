@@ -44,6 +44,7 @@ function SlaPage() {
 
   const violationsQ = useSlaViolations();
   const adjustmentsQ = useSlaAdjustments(30);
+  const upcomingQ = useSlaUpcoming(24);
 
   const totalToday = useMemo(() => sumFine(todayQ.data), [todayQ.data]);
   const totalWeek = useMemo(() => sumFine(weekQ.data), [weekQ.data]);
