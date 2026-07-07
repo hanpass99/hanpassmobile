@@ -72,6 +72,22 @@ export function useSlaViolations(countryIds?: string[]) {
   });
 }
 
+export function useSlaUpcoming(withinHours = 24, countryIds?: string[]) {
+  const idsKey = (countryIds ?? []).slice().sort().join(",");
+  return useQuery({
+    queryKey: ["sla", "upcoming", withinHours, idsKey],
+    staleTime: 15_000,
+    queryFn: async (): Promise<SlaUpcomingRow[]> => {
+      const { data, error } = await supabase.rpc("sla_upcoming_violations", {
+        _country_ids: countryIds && countryIds.length ? countryIds : undefined,
+        _within_hours: withinHours,
+      });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as SlaUpcomingRow[];
+    },
+  });
+}
+
 export function useSlaTeamSummary(periodStart: string, periodEnd: string) {
   return useQuery({
     queryKey: ["sla", "team", periodStart, periodEnd],
