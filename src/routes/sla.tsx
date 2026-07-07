@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, RotateCcw, Pencil, Ban, History } from "lucide-react";
+import { AlertTriangle, RotateCcw, Pencil, Ban, History, Clock } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
   useSlaAdjustments, useSlaAdminActions, useSlaRealtime,
-  useSlaTeamSummary, useSlaViolations,
+  useSlaTeamSummary, useSlaViolations, useSlaUpcoming,
   monthStartKstIso, todayKstIso, weekStartKstIso,
   type SlaTeamRow,
 } from "@/hooks/use-sla";
