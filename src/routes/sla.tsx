@@ -199,7 +199,81 @@ function SlaPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-amber-300 bg-amber-50/40 dark:bg-amber-950/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+            <Clock className="h-4 w-4" />
+            벌금 부과 예정 (24시간 이내)
+          </CardTitle>
+          <CardDescription>
+            아래 고객들은 아직 SLA 마감 전이지만, 남은 시간 이후 벌금이 부과됩니다. 지금 조치하세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          {upcomingQ.isLoading ? (
+            <Skeleton className="h-32 w-full" />
+          ) : (upcomingQ.data?.length ?? 0) === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              24시간 이내 벌금 부과 예정 고객이 없습니다.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>팀</TableHead>
+                  <TableHead>고객</TableHead>
+                  <TableHead>상태</TableHead>
+                  <TableHead>마감시각</TableHead>
+                  <TableHead>남은 시간</TableHead>
+                  <TableHead className="text-right">부과 예정</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(upcomingQ.data ?? []).slice(0, 200).map((r) => {
+                  const h = Math.max(0, Number(r.hours_remaining) || 0);
+                  const urgent = h <= 6;
+                  return (
+                    <TableRow key={r.customer_id}>
+                      <TableCell>
+                        <Badge variant="outline">{r.country_code ?? "—"}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{r.customer_name}</div>
+                        <div className="text-xs text-muted-foreground">{r.phone}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {STATUS_LABEL[r.status as keyof typeof STATUS_LABEL] ?? r.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(r.deadline).toLocaleString("ko-KR")}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={
+                            urgent
+                              ? "font-semibold text-destructive"
+                              : "font-semibold text-amber-600 dark:text-amber-400"
+                          }
+                        >
+                          {h < 1
+                            ? `${Math.round(h * 60)}분 후`
+                            : `${Math.floor(h)}시간 ${Math.round((h % 1) * 60)}분 후`}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {won(r.fine_amount)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="h-4 w-4" />
