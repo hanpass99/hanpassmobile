@@ -765,6 +765,22 @@ export type Database = {
           violations_total: number
         }[]
       }
+      sla_upcoming_violations: {
+        Args: { _country_ids?: string[]; _within_hours?: number }
+        Returns: {
+          assigned_to: string
+          country_code: string
+          country_id: string
+          customer_id: string
+          customer_name: string
+          deadline: string
+          fine_amount: number
+          hours_remaining: number
+          phone: string
+          since: string
+          status: string
+        }[]
+      }
       sla_violations: {
         Args: { _country_ids?: string[] }
         Returns: {

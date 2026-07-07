@@ -18,6 +18,20 @@ export type SlaViolationRow = {
   assigned_to: string | null;
 };
 
+export type SlaUpcomingRow = {
+  customer_id: string;
+  customer_name: string;
+  phone: string;
+  country_id: string | null;
+  country_code: string | null;
+  status: "new" | "in_progress" | "no_answer" | "unreachable";
+  since: string;
+  deadline: string;
+  hours_remaining: number;
+  fine_amount: number;
+  assigned_to: string | null;
+};
+
 export type SlaTeamRow = {
   country_id: string;
   country_code: string;
@@ -54,6 +68,22 @@ export function useSlaViolations(countryIds?: string[]) {
       });
       if (error) throw new Error(error.message);
       return (data ?? []) as SlaViolationRow[];
+    },
+  });
+}
+
+export function useSlaUpcoming(withinHours = 24, countryIds?: string[]) {
+  const idsKey = (countryIds ?? []).slice().sort().join(",");
+  return useQuery({
+    queryKey: ["sla", "upcoming", withinHours, idsKey],
+    staleTime: 15_000,
+    queryFn: async (): Promise<SlaUpcomingRow[]> => {
+      const { data, error } = await supabase.rpc("sla_upcoming_violations", {
+        _country_ids: countryIds && countryIds.length ? countryIds : undefined,
+        _within_hours: withinHours,
+      });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as SlaUpcomingRow[];
     },
   });
 }
