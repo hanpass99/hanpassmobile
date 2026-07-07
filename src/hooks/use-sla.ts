@@ -18,6 +18,20 @@ export type SlaViolationRow = {
   assigned_to: string | null;
 };
 
+export type SlaUpcomingRow = {
+  customer_id: string;
+  customer_name: string;
+  phone: string;
+  country_id: string | null;
+  country_code: string | null;
+  status: "new" | "in_progress" | "no_answer" | "unreachable";
+  since: string;
+  deadline: string;
+  hours_remaining: number;
+  fine_amount: number;
+  assigned_to: string | null;
+};
+
 export type SlaTeamRow = {
   country_id: string;
   country_code: string;
