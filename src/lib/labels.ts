@@ -94,6 +94,7 @@ export const POOLS = [
   "activation_request",
   "friend_referral",
   "prepaid_charge",
+  "one_year_activation",
 ] as const;
 export type CustomerPool = (typeof POOLS)[number];
 
@@ -102,6 +103,7 @@ export const POOL_LABEL: Record<CustomerPool, string> = {
   activation_request: "개통 신청자",
   friend_referral: "친구 추천",
   prepaid_charge: "한패스 앱으로 선불 충전자",
+  one_year_activation: "1년 개통자",
 };
 
 export const POOL_SHORT: Record<CustomerPool, string> = {
@@ -109,6 +111,7 @@ export const POOL_SHORT: Record<CustomerPool, string> = {
   activation_request: "개통 신청자",
   friend_referral: "친구 추천",
   prepaid_charge: "선불 충전자",
+  one_year_activation: "1년 개통자",
 };
 
 // === 직원 출근 상태 ===
