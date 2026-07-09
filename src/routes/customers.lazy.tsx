@@ -1098,17 +1098,24 @@ function CustomersPage() {
         anniv.setHours(0, 0, 0, 0);
         return Math.round((anniv.getTime() - today.getTime()) / 86400000);
       };
+      const isNearMaturity = (n: number | null) => n !== null && n >= -3 && n < 3;
       const ddayBadge = (n: number | null) => {
         if (n === null) return <span className="text-muted-foreground">-</span>;
-        if (n < 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">만기 {Math.abs(n)}일 경과</span>;
-        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">D-DAY</span>;
-        const cls = n <= 30
+        const near = isNearMaturity(n);
+        if (n < 0) {
+          return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${near ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>만기 {Math.abs(n)}일 경과</span>;
+        }
+        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">D-DAY</span>;
+        const cls = near
+          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
+          : n <= 30
           ? "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200"
           : n <= 60
           ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
           : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
         return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${cls}`}>D-{n}</span>;
       };
+
       return (
         <Table aria-label="Customer list">
           <TableHeader>
@@ -1135,7 +1142,8 @@ function CustomersPage() {
             {filtered.map((c) => {
               const dday = daysToAnniversary(c.activation_date);
               return (
-                <TableRow key={c.id} className="hover:bg-muted/30">
+                <TableRow key={c.id} className={cn("hover:bg-muted/30", isNearMaturity(dday) && "bg-emerald-50/50 dark:bg-emerald-950/20")}>
+
                   <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                   <TableCell className="text-xs">{c.store_name ?? "-"}</TableCell>
                   <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
