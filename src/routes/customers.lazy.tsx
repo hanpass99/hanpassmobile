@@ -1142,7 +1142,8 @@ function CustomersPage() {
             {filtered.map((c) => {
               const dday = daysToAnniversary(c.activation_date);
               return (
-                <TableRow key={c.id} className="hover:bg-muted/30">
+                <TableRow key={c.id} className={cn("hover:bg-muted/30", isNearMaturity(dday) && "bg-emerald-50/50 dark:bg-emerald-950/20")}>
+
                   <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                   <TableCell className="text-xs">{c.store_name ?? "-"}</TableCell>
                   <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
