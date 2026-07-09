@@ -1124,6 +1124,7 @@ function CustomersPage() {
                   <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                   <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
                   <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                  <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
                   <TableCell className="text-xs">{fmtDate(c.birth_date)}</TableCell>
                   <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                   <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
