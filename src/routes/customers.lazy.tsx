@@ -1138,7 +1138,7 @@ function CustomersPage() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <EmptyRow cols={14 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={15 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
