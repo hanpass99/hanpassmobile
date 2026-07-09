@@ -695,6 +695,12 @@ function CustomersPage() {
           const chargeAmountRaw = norm(valueOf(row, headers.chargeAmount));
           const chargeAmtNum = chargeAmountRaw ? Number(chargeAmountRaw.replace(/[, ]/g, "")) : NaN;
           const charge_amount = isFinite(chargeAmtNum) ? chargeAmtNum : null;
+          const store_name = norm(valueOf(row, headers.storeName)) || null;
+          const birth_date = toDateStr(valueOf(row, headers.birthDate));
+          const monthlyFeeRaw = norm(valueOf(row, headers.monthlyFee));
+          const monthlyFeeNum = monthlyFeeRaw ? Number(monthlyFeeRaw.replace(/[, ₩원]/g, "")) : NaN;
+          const monthly_fee = isFinite(monthlyFeeNum) ? monthlyFeeNum : null;
+          const customer_type = norm(valueOf(row, headers.customerType)) || null;
           const base: ImportCustomer = {
             name, phone, country_id, notes, pool: tab as CustomerPool,
             carrier_plan, activation_date,
@@ -706,6 +712,10 @@ function CustomersPage() {
             base.charge_phone = phoneRaw;
             base.charge_amount = charge_amount;
           }
+          if (store_name) base.store_name = store_name;
+          if (birth_date) base.birth_date = birth_date;
+          if (monthly_fee !== null) base.monthly_fee = monthly_fee;
+          if (customer_type) base.customer_type = customer_type;
           return base;
         })
         .filter((x): x is ImportCustomer => x !== null);
