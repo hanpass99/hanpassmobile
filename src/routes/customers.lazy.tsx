@@ -653,10 +653,26 @@ function CustomersPage() {
         }
         const s = String(v).trim();
         if (!s) return null;
-        // 순수 숫자 문자열 → serial
+        // YYYYMMDD (8자리) — 예: 19870512
+        if (/^\d{8}$/.test(s)) {
+          const y = +s.slice(0, 4), mo = +s.slice(4, 6), da = +s.slice(6, 8);
+          const d = new Date(Date.UTC(y, mo - 1, da));
+          if (!isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da) return fmtYmd(d);
+        }
+        // YYMMDD (6자리, 한국 주민번호 앞자리 형식) — 예: 870512
+        if (/^\d{6}$/.test(s)) {
+          let y = +s.slice(0, 2), mo = +s.slice(2, 4), da = +s.slice(4, 6);
+          y += y <= new Date().getFullYear() % 100 ? 2000 : 1900;
+          const d = new Date(Date.UTC(y, mo - 1, da));
+          if (!isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da) return fmtYmd(d);
+        }
+        // 순수 숫자 문자열 → Excel serial (합리적 범위에서만)
         if (/^\d+(\.\d+)?$/.test(s)) {
-          const d = serialToDate(parseFloat(s));
-          if (d) return fmtYmd(d);
+          const n = parseFloat(s);
+          if (n >= 1 && n <= 80000) {
+            const d = serialToDate(n);
+            if (d) return fmtYmd(d);
+          }
         }
         // ISO YYYY-MM-DD
         let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
