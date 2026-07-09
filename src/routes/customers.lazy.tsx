@@ -606,7 +606,7 @@ function CustomersPage() {
       Object.keys(json[0] ?? {}).forEach((k) => headerMap.set(normKey(k), k));
       const pickHeader = (...keys: string[]) => keys.map((k) => headerMap.get(normKey(k))).find(Boolean);
       const headers = {
-        phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"),
+        phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호", "개통번호", "개통 번호"),
         name: pickHeader("name", "이름", "고객명", "성명"),
         country: pickHeader("country", "국가", "국적", "고객국적", "고객 국적", "nationality"),
         assignedCountry: pickHeader("담당국가", "담당 국가", "담당팀", "팀"),
@@ -618,6 +618,10 @@ function CustomersPage() {
         signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일", "충전일", "charge_date"),
         requestedPlan: pickHeader("신청요금제", "requested_plan"),
         chargeAmount: pickHeader("충전요금", "충전금액", "charge_amount", "amount"),
+        storeName: pickHeader("판매점", "매장", "store", "store_name"),
+        birthDate: pickHeader("생년월일", "생일", "birth", "birth_date", "dob"),
+        monthlyFee: pickHeader("월요금", "월 요금", "monthly_fee", "월납금"),
+        customerType: pickHeader("구분", "고객유형", "고객 유형", "유형", "customer_type", "type"),
       };
       const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
       // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
