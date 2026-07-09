@@ -1101,6 +1101,7 @@ function CustomersPage() {
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
               <TableHead>구분</TableHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통번호</SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
               <TableHead>생년월일</TableHead>
               <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
               <TableHead className="whitespace-nowrap">1년 만기</TableHead>
