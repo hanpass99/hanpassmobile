@@ -1096,7 +1096,7 @@ function CustomersPage() {
         if (isNaN(d.getTime())) return null;
         const anniv = new Date(d.getFullYear() + 1, d.getMonth(), d.getDate());
         anniv.setHours(0, 0, 0, 0);
-        return Math.round((anniv.getTime() - today.getTime())) / 86400000);
+        return Math.round((anniv.getTime() - today.getTime()) / 86400000);
       };
       const isNearMaturity = (n: number | null) => n !== null && n >= -3 && n < 3;
       const ddayBadge = (n: number | null) => {
