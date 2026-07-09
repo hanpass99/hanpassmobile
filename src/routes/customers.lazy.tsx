@@ -297,6 +297,15 @@ function CustomersPage() {
     setPage(1);
   }, [tab, debouncedSearch, countryIds, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
 
+  // 탭 전환 시 기본 정렬: 1년 개통자는 개통일 오름차순(만기 임박 우선)
+  useEffect(() => {
+    if (tab === "one_year_activation") {
+      setSortKey("activation_date");
+      setSortDir("asc");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
   const toIso = dateTo ? dayEndIso(dateTo) : null;
 
