@@ -297,6 +297,15 @@ function CustomersPage() {
     setPage(1);
   }, [tab, debouncedSearch, countryIds, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
 
+  // 탭 전환 시 기본 정렬: 1년 개통자는 개통일 오름차순(만기 임박 우선)
+  useEffect(() => {
+    if (tab === "one_year_activation") {
+      setSortKey("activation_date");
+      setSortDir("asc");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
   const toIso = dateTo ? dayEndIso(dateTo) : null;
 
@@ -1092,6 +1101,7 @@ function CustomersPage() {
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
               <TableHead>구분</TableHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통번호</SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
               <TableHead>생년월일</TableHead>
               <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
               <TableHead className="whitespace-nowrap">1년 만기</TableHead>
@@ -1114,6 +1124,7 @@ function CustomersPage() {
                   <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                   <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
                   <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                  <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
                   <TableCell className="text-xs">{fmtDate(c.birth_date)}</TableCell>
                   <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                   <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
@@ -1127,7 +1138,7 @@ function CustomersPage() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <EmptyRow cols={14 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={15 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
