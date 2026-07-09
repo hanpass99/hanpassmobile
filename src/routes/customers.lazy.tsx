@@ -86,6 +86,10 @@ type ImportCustomer = {
   signup_date?: string;
   charge_phone?: string | null;
   charge_amount?: number | null;
+  store_name?: string | null;
+  birth_date?: string | null;
+  monthly_fee?: number | null;
+  customer_type?: string | null;
 };
 
 type SortDir = "asc" | "desc" | null;
