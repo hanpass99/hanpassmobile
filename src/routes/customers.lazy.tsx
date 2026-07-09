@@ -39,6 +39,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import i18n from "@/i18n";
@@ -86,6 +87,10 @@ type ImportCustomer = {
   signup_date?: string;
   charge_phone?: string | null;
   charge_amount?: number | null;
+  store_name?: string | null;
+  birth_date?: string | null;
+  monthly_fee?: number | null;
+  customer_type?: string | null;
 };
 
 type SortDir = "asc" | "desc" | null;
@@ -602,7 +607,7 @@ function CustomersPage() {
       Object.keys(json[0] ?? {}).forEach((k) => headerMap.set(normKey(k), k));
       const pickHeader = (...keys: string[]) => keys.map((k) => headerMap.get(normKey(k))).find(Boolean);
       const headers = {
-        phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호"),
+        phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호", "개통번호", "개통 번호"),
         name: pickHeader("name", "이름", "고객명", "성명"),
         country: pickHeader("country", "국가", "국적", "고객국적", "고객 국적", "nationality"),
         assignedCountry: pickHeader("담당국가", "담당 국가", "담당팀", "팀"),
@@ -614,6 +619,10 @@ function CustomersPage() {
         signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일", "충전일", "charge_date"),
         requestedPlan: pickHeader("신청요금제", "requested_plan"),
         chargeAmount: pickHeader("충전요금", "충전금액", "charge_amount", "amount"),
+        storeName: pickHeader("판매점", "매장", "store", "store_name"),
+        birthDate: pickHeader("생년월일", "생일", "birth", "birth_date", "dob"),
+        monthlyFee: pickHeader("월요금", "월 요금", "monthly_fee", "월납금"),
+        customerType: pickHeader("구분", "고객유형", "고객 유형", "유형", "customer_type", "type"),
       };
       const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
       // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
@@ -687,6 +696,12 @@ function CustomersPage() {
           const chargeAmountRaw = norm(valueOf(row, headers.chargeAmount));
           const chargeAmtNum = chargeAmountRaw ? Number(chargeAmountRaw.replace(/[, ]/g, "")) : NaN;
           const charge_amount = isFinite(chargeAmtNum) ? chargeAmtNum : null;
+          const store_name = norm(valueOf(row, headers.storeName)) || null;
+          const birth_date = toDateStr(valueOf(row, headers.birthDate));
+          const monthlyFeeRaw = norm(valueOf(row, headers.monthlyFee));
+          const monthlyFeeNum = monthlyFeeRaw ? Number(monthlyFeeRaw.replace(/[, ₩원]/g, "")) : NaN;
+          const monthly_fee = isFinite(monthlyFeeNum) ? monthlyFeeNum : null;
+          const customer_type = norm(valueOf(row, headers.customerType)) || null;
           const base: ImportCustomer = {
             name, phone, country_id, notes, pool: tab as CustomerPool,
             carrier_plan, activation_date,
@@ -698,6 +713,10 @@ function CustomersPage() {
             base.charge_phone = phoneRaw;
             base.charge_amount = charge_amount;
           }
+          if (store_name) base.store_name = store_name;
+          if (birth_date) base.birth_date = birth_date;
+          if (monthly_fee !== null) base.monthly_fee = monthly_fee;
+          if (customer_type) base.customer_type = customer_type;
           return base;
         })
         .filter((x): x is ImportCustomer => x !== null);
@@ -709,6 +728,50 @@ function CustomersPage() {
 
       // DB 측 중복 체크는 수행하지 않음: 같은 번호도 다른 날짜로 재등록 허용
       const finalPayload = parsed;
+
+      // === 1년 개통자 pool: 기존 고객 있으면 pool/필드 업데이트, 없으면 insert ===
+      if (tab === "one_year_activation") {
+        const phones = finalPayload.map((r) => r.phone);
+        const { data: existingRows } = await supabase
+          .from("customers")
+          .select("id, phone")
+          .in("phone", phones);
+        const idByPhone = new Map<string, string>();
+        (existingRows ?? []).forEach((r: any) => { idByPhone.set(r.phone, r.id); });
+
+        let updated = 0, insertedCnt = 0;
+        for (let i = 0; i < finalPayload.length; i++) {
+          const r = finalPayload[i];
+          const eid = idByPhone.get(r.phone);
+          if (eid) {
+            const patch: Database["public"]["Tables"]["customers"]["Update"] = { pool: "one_year_activation" };
+            if (r.name) patch.name = r.name;
+            if (r.country_id) patch.country_id = r.country_id;
+            if (r.carrier_plan) patch.carrier_plan = r.carrier_plan;
+            if (r.activation_date) patch.activation_date = r.activation_date;
+            if (r.store_name) patch.store_name = r.store_name;
+            if (r.birth_date) patch.birth_date = r.birth_date;
+            if (r.monthly_fee !== undefined && r.monthly_fee !== null) patch.monthly_fee = r.monthly_fee;
+            if (r.customer_type) patch.customer_type = r.customer_type;
+            const { error } = await supabase.from("customers").update(patch).eq("id", eid);
+            if (!error) updated++;
+          } else {
+            const { error } = await supabase.from("customers").insert(r);
+            if (!error) insertedCnt++;
+          }
+          if ((i + 1) % 25 === 0) {
+            toast.loading(`처리 중 ${i + 1}/${finalPayload.length}`, { id: toastId });
+          }
+        }
+        toast.success(
+          `기존 ${updated.toLocaleString()}건 pool 변경 / 신규 ${insertedCnt.toLocaleString()}건 추가${dupInFile ? ` / 파일내중복 ${dupInFile}건` : ""}${invalid ? ` / 누락 ${invalid}건` : ""}`,
+          { id: toastId }
+        );
+        await refetchPoolCounts();
+        setPage(1);
+        await refetchList();
+        return;
+      }
 
       // 청크 단위 INSERT (500건씩)
       const insertChunkSize = 500;
@@ -761,6 +824,11 @@ function CustomersPage() {
       sample = [
         { 전화번호: "010-5946-4992", 국적: "CIS", "충전 일": "2026-04-25", 담당자: "", 상태: "", "콜 라운드": "", 메모: "" },
         { 전화번호: "010-6593-9433", 국적: "미얀마", "충전 일": "2026-04-25", 담당자: "", 상태: "", "콜 라운드": "", 메모: "" },
+      ];
+    } else if (effPool === "one_year_activation") {
+      header = ["판매점", "고객명", "구분", "개통번호", "생년월일", "개통일", "요금제", "월요금"];
+      sample = [
+        { 판매점: "강남점", 고객명: "홍길동", 구분: "일반", 개통번호: "010-1234-5678", 생년월일: "1990-05-12", 개통일: "2025-07-15", 요금제: "LTE 5G 무제한", 월요금: 55000 },
       ];
     } else {
       // new_signup
@@ -992,6 +1060,78 @@ function CustomersPage() {
       );
     }
 
+
+    if (p === "one_year_activation") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const daysToAnniversary = (activationIso: string | null) => {
+        if (!activationIso) return null;
+        const d = new Date(activationIso);
+        if (isNaN(d.getTime())) return null;
+        const anniv = new Date(d.getFullYear() + 1, d.getMonth(), d.getDate());
+        anniv.setHours(0, 0, 0, 0);
+        return Math.round((anniv.getTime() - today.getTime()) / 86400000);
+      };
+      const ddayBadge = (n: number | null) => {
+        if (n === null) return <span className="text-muted-foreground">-</span>;
+        if (n < 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">만기 {Math.abs(n)}일 경과</span>;
+        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">D-DAY</span>;
+        const cls = n <= 30
+          ? "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200"
+          : n <= 60
+          ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
+          : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
+        return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${cls}`}>D-{n}</span>;
+      };
+      return (
+        <Table aria-label="Customer list">
+          <TableHeader>
+            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
+              {CheckHead}
+              <TableHead>판매점</TableHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
+              <TableHead>구분</TableHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통번호</SortHead>
+              <TableHead>생년월일</TableHead>
+              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
+              <TableHead className="whitespace-nowrap">1년 만기</TableHead>
+              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>요금제</SortHead>
+              <TableHead>월요금</TableHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
+              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
+              {CallRoundHead}
+              <TableHead>메모</TableHead>
+              <TableHead className="text-right">액션</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((c) => {
+              const dday = daysToAnniversary(c.activation_date);
+              return (
+                <TableRow key={c.id} className="hover:bg-muted/30">
+                  <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
+                  <TableCell className="text-xs">{c.store_name ?? "-"}</TableCell>
+                  <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
+                  <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
+                  <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                  <TableCell className="text-xs">{fmtDate(c.birth_date)}</TableCell>
+                  <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
+                  <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
+                  <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
+                  <TableCell className="text-xs text-right tabular-nums">{c.monthly_fee != null ? Number(c.monthly_fee).toLocaleString() : "-"}</TableCell>
+                  <Assigned c={c} staffById={staffById} />
+                  <StatusCell c={c} onChangeStatus={changeStatus} />
+                  <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
+                  <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                  {renderActions(c)}
+                </TableRow>
+              );
+            })}
+            {filtered.length === 0 && <EmptyRow cols={14 + extraCols} loading={loading} pool={p} />}
+          </TableBody>
+        </Table>
+      );
+    }
 
     return (
       <Table aria-label="Customer list">

@@ -184,6 +184,7 @@ export type Database = {
           activation_date: string | null
           application_date: string | null
           assigned_to: string | null
+          birth_date: string | null
           call_round: number | null
           carrier_plan: string | null
           channel_id: string | null
@@ -192,9 +193,11 @@ export type Database = {
           charge_phone: string | null
           country_id: string | null
           created_at: string
+          customer_type: string | null
           email: string | null
           id: string
           imported_at: string
+          monthly_fee: number | null
           name: string
           notes: string | null
           phone: string
@@ -204,12 +207,14 @@ export type Database = {
           status: Database["public"]["Enums"]["customer_status"]
           status_changed_at: string | null
           status_changed_by: string | null
+          store_name: string | null
           updated_at: string
         }
         Insert: {
           activation_date?: string | null
           application_date?: string | null
           assigned_to?: string | null
+          birth_date?: string | null
           call_round?: number | null
           carrier_plan?: string | null
           channel_id?: string | null
@@ -218,9 +223,11 @@ export type Database = {
           charge_phone?: string | null
           country_id?: string | null
           created_at?: string
+          customer_type?: string | null
           email?: string | null
           id?: string
           imported_at?: string
+          monthly_fee?: number | null
           name: string
           notes?: string | null
           phone: string
@@ -230,12 +237,14 @@ export type Database = {
           status?: Database["public"]["Enums"]["customer_status"]
           status_changed_at?: string | null
           status_changed_by?: string | null
+          store_name?: string | null
           updated_at?: string
         }
         Update: {
           activation_date?: string | null
           application_date?: string | null
           assigned_to?: string | null
+          birth_date?: string | null
           call_round?: number | null
           carrier_plan?: string | null
           channel_id?: string | null
@@ -244,9 +253,11 @@ export type Database = {
           charge_phone?: string | null
           country_id?: string | null
           created_at?: string
+          customer_type?: string | null
           email?: string | null
           id?: string
           imported_at?: string
+          monthly_fee?: number | null
           name?: string
           notes?: string | null
           phone?: string
@@ -256,6 +267,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["customer_status"]
           status_changed_at?: string | null
           status_changed_by?: string | null
+          store_name?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1015,6 +1027,7 @@ export type Database = {
         | "activation_request"
         | "friend_referral"
         | "prepaid_charge"
+        | "one_year_activation"
       customer_status:
         | "new"
         | "in_progress"
@@ -1182,6 +1195,7 @@ export const Constants = {
         "activation_request",
         "friend_referral",
         "prepaid_charge",
+        "one_year_activation",
       ],
       customer_status: [
         "new",

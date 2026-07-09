@@ -42,6 +42,10 @@ export type CustomerRow = {
   call_round: number | null;
   status_changed_at: string | null;
   status_changed_by: string | null;
+  store_name: string | null;
+  birth_date: string | null;
+  monthly_fee: number | null;
+  customer_type: string | null;
 };
 
 export type CustomersSearchParams = {
