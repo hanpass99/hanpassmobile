@@ -743,7 +743,7 @@ function CustomersPage() {
           const r = finalPayload[i];
           const eid = idByPhone.get(r.phone);
           if (eid) {
-            const patch: Record<string, any> = { pool: "one_year_activation" };
+            const patch: Database["public"]["Tables"]["customers"]["Update"] = { pool: "one_year_activation" };
             if (r.name) patch.name = r.name;
             if (r.country_id) patch.country_id = r.country_id;
             if (r.carrier_plan) patch.carrier_plan = r.carrier_plan;
