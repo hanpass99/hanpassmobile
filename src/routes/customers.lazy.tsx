@@ -728,6 +728,50 @@ function CustomersPage() {
       // DB 측 중복 체크는 수행하지 않음: 같은 번호도 다른 날짜로 재등록 허용
       const finalPayload = parsed;
 
+      // === 1년 개통자 pool: 기존 고객 있으면 pool/필드 업데이트, 없으면 insert ===
+      if (tab === "one_year_activation") {
+        const phones = finalPayload.map((r) => r.phone);
+        const { data: existingRows } = await supabase
+          .from("customers")
+          .select("id, phone")
+          .in("phone", phones);
+        const idByPhone = new Map<string, string>();
+        (existingRows ?? []).forEach((r: any) => { idByPhone.set(r.phone, r.id); });
+
+        let updated = 0, insertedCnt = 0;
+        for (let i = 0; i < finalPayload.length; i++) {
+          const r = finalPayload[i];
+          const eid = idByPhone.get(r.phone);
+          if (eid) {
+            const patch: Record<string, any> = { pool: "one_year_activation" };
+            if (r.name) patch.name = r.name;
+            if (r.country_id) patch.country_id = r.country_id;
+            if (r.carrier_plan) patch.carrier_plan = r.carrier_plan;
+            if (r.activation_date) patch.activation_date = r.activation_date;
+            if (r.store_name) patch.store_name = r.store_name;
+            if (r.birth_date) patch.birth_date = r.birth_date;
+            if (r.monthly_fee !== undefined && r.monthly_fee !== null) patch.monthly_fee = r.monthly_fee;
+            if (r.customer_type) patch.customer_type = r.customer_type;
+            const { error } = await supabase.from("customers").update(patch).eq("id", eid);
+            if (!error) updated++;
+          } else {
+            const { error } = await supabase.from("customers").insert(r);
+            if (!error) insertedCnt++;
+          }
+          if ((i + 1) % 25 === 0) {
+            toast.loading(`처리 중 ${i + 1}/${finalPayload.length}`, { id: toastId });
+          }
+        }
+        toast.success(
+          `기존 ${updated.toLocaleString()}건 pool 변경 / 신규 ${insertedCnt.toLocaleString()}건 추가${dupInFile ? ` / 파일내중복 ${dupInFile}건` : ""}${invalid ? ` / 누락 ${invalid}건` : ""}`,
+          { id: toastId }
+        );
+        await refetchPoolCounts();
+        setPage(1);
+        await refetchList();
+        return;
+      }
+
       // 청크 단위 INSERT (500건씩)
       const insertChunkSize = 500;
       let inserted = 0;
