@@ -1061,6 +1061,78 @@ function CustomersPage() {
     }
 
 
+    if (p === "one_year_activation") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const daysToAnniversary = (activationIso: string | null) => {
+        if (!activationIso) return null;
+        const d = new Date(activationIso);
+        if (isNaN(d.getTime())) return null;
+        const anniv = new Date(d.getFullYear() + 1, d.getMonth(), d.getDate());
+        anniv.setHours(0, 0, 0, 0);
+        return Math.round((anniv.getTime() - today.getTime()) / 86400000);
+      };
+      const ddayBadge = (n: number | null) => {
+        if (n === null) return <span className="text-muted-foreground">-</span>;
+        if (n < 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">만기 {Math.abs(n)}일 경과</span>;
+        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">D-DAY</span>;
+        const cls = n <= 30
+          ? "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200"
+          : n <= 60
+          ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
+          : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
+        return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${cls}`}>D-{n}</span>;
+      };
+      return (
+        <Table aria-label="Customer list">
+          <TableHeader>
+            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
+              {CheckHead}
+              <TableHead>판매점</TableHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
+              <TableHead>구분</TableHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통번호</SortHead>
+              <TableHead>생년월일</TableHead>
+              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
+              <TableHead className="whitespace-nowrap">1년 만기</TableHead>
+              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>요금제</SortHead>
+              <TableHead>월요금</TableHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
+              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
+              {CallRoundHead}
+              <TableHead>메모</TableHead>
+              <TableHead className="text-right">액션</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((c) => {
+              const dday = daysToAnniversary(c.activation_date);
+              return (
+                <TableRow key={c.id} className="hover:bg-muted/30">
+                  <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
+                  <TableCell className="text-xs">{c.store_name ?? "-"}</TableCell>
+                  <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
+                  <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
+                  <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                  <TableCell className="text-xs">{fmtDate(c.birth_date)}</TableCell>
+                  <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
+                  <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
+                  <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
+                  <TableCell className="text-xs text-right tabular-nums">{c.monthly_fee != null ? Number(c.monthly_fee).toLocaleString() : "-"}</TableCell>
+                  <Assigned c={c} staffById={staffById} />
+                  <StatusCell c={c} onChangeStatus={changeStatus} />
+                  <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
+                  <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                  {renderActions(c)}
+                </TableRow>
+              );
+            })}
+            {filtered.length === 0 && <EmptyRow cols={14 + extraCols} loading={loading} pool={p} />}
+          </TableBody>
+        </Table>
+      );
+    }
+
     return (
       <Table aria-label="Customer list">
         <TableHeader>
