@@ -39,6 +39,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import i18n from "@/i18n";
