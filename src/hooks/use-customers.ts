@@ -17,7 +17,7 @@ export function useDebouncedValue<T>(value: T, delay = 250): T {
 // === Types ===
 export type Country = { id: string; code: string; name_ko: string };
 export type Channel = { id: string; name: string };
-export type Profile = { id: string; display_name: string; country_id: string | null };
+export type Profile = { id: string; display_name: string; country_id: string | null; is_active: boolean };
 
 export type CustomerRow = {
   id: string;
@@ -79,7 +79,7 @@ export function useCustomersLookups() {
       const [co, ch, sf] = await Promise.all([
         supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
         supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-        supabase.from("profiles").select("id, display_name, country_id").eq("is_active", true).order("sort_order").order("display_name"),
+        supabase.from("profiles").select("id, display_name, country_id, is_active").order("sort_order").order("display_name"),
       ]);
       return {
         countries: (co.data ?? []) as Country[],
