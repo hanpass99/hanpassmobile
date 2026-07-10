@@ -2119,22 +2119,32 @@ function AddCustomerDialog({
   const [countryId, setCountryId] = useState<string>("");
   const [channelId, setChannelId] = useState<string>("");
   const [pool, setPool] = useState<CustomerPool>(defaultPool);
+  const [applicationDate, setApplicationDate] = useState("");
+  const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const requiresApplication = pool === "activation_request";
 
   useEffect(() => {
     if (open) {
       setName(""); setPhone(""); setEmail(""); setCountryId(""); setChannelId(""); setPool(defaultPool);
+      setApplicationDate(""); setRequestedPlan("");
     }
   }, [open, defaultPool]);
 
   const save = async () => {
     if (!name || !phone) return toast.error("이름과 전화번호는 필수입니다");
+    if (requiresApplication && (!applicationDate || !requestedPlan.trim())) {
+      return toast.error("신청일과 신청 요금제는 필수입니다");
+    }
     setSaving(true);
     const { error } = await supabase.from("customers").insert({
       name, phone, pool,
       email: email || null,
       country_id: countryId || null,
       channel_id: channelId || null,
+      application_date: applicationDate || null,
+      requested_plan: requestedPlan.trim() || null,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
