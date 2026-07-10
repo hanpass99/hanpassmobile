@@ -34,14 +34,15 @@ Deno.serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // Unassign customers (preserve data + notes + call/sms logs)
-    await admin.from("customers").update({ assigned_to: null }).eq("assigned_to", user_id);
-    // Clean up role/country mapping/profile rows
+    // Soft-delete: preserve customers.assigned_to and profile row so historical
+    // performance (past activations, call logs, notes) stays attributed to this
+    // staff. Revoke access by removing role and banning the auth user.
     await admin.from("user_roles").delete().eq("user_id", user_id);
     await admin.from("profile_countries").delete().eq("user_id", user_id);
     await admin.from("targets").delete().eq("user_id", user_id);
-    await admin.from("profiles").delete().eq("id", user_id);
-    // Delete auth user (cascades to nothing else thanks to no FK refs we keep)
+    await admin.from("profiles").update({ is_active: false }).eq("id", user_id);
+    // Delete the auth user to revoke sign-in. FK from profiles.id to auth.users
+    // was dropped, so the profile row (with is_active=false) remains for history.
     const { error: delErr } = await admin.auth.admin.deleteUser(user_id);
     if (delErr) return json({ error: delErr.message }, 400);
 
