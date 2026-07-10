@@ -184,13 +184,69 @@ function CallRoundCell({ c, onChangeCallRound }: { c: CustomerRow; onChangeCallR
   );
 }
 
-function Assigned({ c, staffById }: { c: CustomerRow; staffById: Map<string, string> }) {
+function Assigned({
+  c, staffById, isAdmin, staff, onChangeAssigned,
+}: {
+  c: CustomerRow;
+  staffById: Map<string, string>;
+  isAdmin?: boolean;
+  staff?: Profile[];
+  onChangeAssigned?: (id: string, userId: string | null) => void;
+}) {
   const { t } = useTranslation();
+  if (isAdmin && staff && onChangeAssigned) {
+    return (
+      <TableCell>
+        <Select
+          value={c.assigned_to ?? "__none__"}
+          onValueChange={(v) => onChangeAssigned(c.id, v === "__none__" ? null : v)}
+        >
+          <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
+            {staff.filter((s) => s.is_active).map((s) => (
+              <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+    );
+  }
   return (
     <TableCell className="text-xs">
       {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">{t("common.unassigned")}</span>}
     </TableCell>
   );
+}
+
+function CountryCell({
+  c, countryById, isAdmin, countries, onChangeCountry,
+}: {
+  c: CustomerRow;
+  countryById: Map<string, Country>;
+  isAdmin?: boolean;
+  countries?: Country[];
+  onChangeCountry?: (id: string, countryId: string | null) => void;
+}) {
+  if (isAdmin && countries && onChangeCountry) {
+    return (
+      <TableCell>
+        <Select
+          value={c.country_id ?? "__none__"}
+          onValueChange={(v) => onChangeCountry(c.id, v === "__none__" ? null : v)}
+        >
+          <SelectTrigger className="h-8 w-[100px] text-xs"><SelectValue placeholder="-" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">-</SelectItem>
+            {countries.map((co) => (
+              <SelectItem key={co.id} value={co.id}>{co.code}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+    );
+  }
+  return <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>;
 }
 
 function formatPhone(phone: string): string {
