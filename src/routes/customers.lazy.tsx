@@ -544,6 +544,30 @@ function CustomersPage() {
     toast.success(t("dashboard.callRound") + " " + (value ? `${value}차` : t("dashboard.roundNone")));
   };
 
+  const changeCountry = async (id: string, countryId: string | null) => {
+    if (!isAdmin) return;
+    cache.patchRow(id, { country_id: countryId });
+    const { error } = await supabase.from("customers").update({ country_id: countryId }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+      return;
+    }
+    toast.success("국적 변경됨");
+  };
+
+  const changeAssigned = async (id: string, userId: string | null) => {
+    if (!isAdmin) return;
+    cache.patchRow(id, { assigned_to: userId });
+    const { error } = await supabase.from("customers").update({ assigned_to: userId }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+      return;
+    }
+    toast.success("담당자 변경됨");
+  };
+
   const deleteCustomer = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from("customers").delete().eq("id", deleteId);
