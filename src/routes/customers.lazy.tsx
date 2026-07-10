@@ -246,7 +246,7 @@ function CountryCell({
       </TableCell>
     );
   }
-  return <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />;
+  return <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>;
 }
 
 function formatPhone(phone: string): string {
