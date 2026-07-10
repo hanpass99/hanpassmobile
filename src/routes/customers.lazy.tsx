@@ -2196,6 +2196,14 @@ function AddCustomerDialog({
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>신청일 {requiresApplication && "*"}</Label>
+            <Input type="date" value={applicationDate} onChange={(e) => setApplicationDate(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>신청 요금제 {requiresApplication && "*"}</Label>
+            <Input value={requestedPlan} onChange={(e) => setRequestedPlan(e.target.value)} placeholder="예: 유쓰 5G 스탠다드에센셜" />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
