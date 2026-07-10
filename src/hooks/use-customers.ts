@@ -17,7 +17,7 @@ export function useDebouncedValue<T>(value: T, delay = 250): T {
 // === Types ===
 export type Country = { id: string; code: string; name_ko: string };
 export type Channel = { id: string; name: string };
-export type Profile = { id: string; display_name: string; country_id: string | null };
+export type Profile = { id: string; display_name: string; country_id: string | null; is_active: boolean };
 
 export type CustomerRow = {
   id: string;
