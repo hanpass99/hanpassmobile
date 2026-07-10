@@ -246,7 +246,7 @@ function CountryCell({
       </TableCell>
     );
   }
-  return <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>;
+  return <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />;
 }
 
 function formatPhone(phone: string): string {
@@ -1108,8 +1108,8 @@ function CustomersPage() {
                 <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
-                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
-                <Assigned c={c} staffById={staffById} />
+                <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
+                <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                 <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
@@ -1149,9 +1149,9 @@ function CustomersPage() {
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                 <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
-                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
                 <TableCell className="text-xs">{fmtDate(p === "prepaid_charge" ? c.charge_date : c.signup_date)}</TableCell>
-                <Assigned c={c} staffById={staffById} />
+                <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                 <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
@@ -1229,13 +1229,13 @@ function CustomersPage() {
                   <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                   <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
                   <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
-                  <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                  <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
                   <TableCell className="text-xs">{fmtDate(c.birth_date)}</TableCell>
                   <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                   <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
                   <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
                   <TableCell className="text-xs text-right tabular-nums">{c.monthly_fee != null ? Number(c.monthly_fee).toLocaleString() : "-"}</TableCell>
-                  <Assigned c={c} staffById={staffById} />
+                  <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
                   <StatusCell c={c} onChangeStatus={changeStatus} />
                   <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                   <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
@@ -1274,10 +1274,10 @@ function CustomersPage() {
               <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
               <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
               <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
-              <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+              <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
               <TableCell className="text-xs">{fmtDate(c.application_date)}</TableCell>
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
-              <Assigned c={c} staffById={staffById} />
+              <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
               <StatusCell c={c} onChangeStatus={changeStatus} />
               <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
               <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
