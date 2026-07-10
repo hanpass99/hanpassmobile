@@ -71,7 +71,7 @@ export const Route = createLazyFileRoute("/customers")({
 
 type TabValue = CustomerPool | "all";
 
-type Profile = { id: string; display_name: string; country_id: string | null };
+type Profile = { id: string; display_name: string; country_id: string | null; is_active: boolean };
 
 type ImportCustomer = {
   name: string;
