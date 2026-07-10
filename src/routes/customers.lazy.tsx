@@ -71,7 +71,7 @@ export const Route = createLazyFileRoute("/customers")({
 
 type TabValue = CustomerPool | "all";
 
-type Profile = { id: string; display_name: string; country_id: string | null };
+type Profile = { id: string; display_name: string; country_id: string | null; is_active: boolean };
 
 type ImportCustomer = {
   name: string;
@@ -184,13 +184,69 @@ function CallRoundCell({ c, onChangeCallRound }: { c: CustomerRow; onChangeCallR
   );
 }
 
-function Assigned({ c, staffById }: { c: CustomerRow; staffById: Map<string, string> }) {
+function Assigned({
+  c, staffById, isAdmin, staff, onChangeAssigned,
+}: {
+  c: CustomerRow;
+  staffById: Map<string, string>;
+  isAdmin?: boolean;
+  staff?: Profile[];
+  onChangeAssigned?: (id: string, userId: string | null) => void;
+}) {
   const { t } = useTranslation();
+  if (isAdmin && staff && onChangeAssigned) {
+    return (
+      <TableCell>
+        <Select
+          value={c.assigned_to ?? "__none__"}
+          onValueChange={(v) => onChangeAssigned(c.id, v === "__none__" ? null : v)}
+        >
+          <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
+            {staff.filter((s) => s.is_active).map((s) => (
+              <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+    );
+  }
   return (
     <TableCell className="text-xs">
       {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">{t("common.unassigned")}</span>}
     </TableCell>
   );
+}
+
+function CountryCell({
+  c, countryById, isAdmin, countries, onChangeCountry,
+}: {
+  c: CustomerRow;
+  countryById: Map<string, Country>;
+  isAdmin?: boolean;
+  countries?: Country[];
+  onChangeCountry?: (id: string, countryId: string | null) => void;
+}) {
+  if (isAdmin && countries && onChangeCountry) {
+    return (
+      <TableCell>
+        <Select
+          value={c.country_id ?? "__none__"}
+          onValueChange={(v) => onChangeCountry(c.id, v === "__none__" ? null : v)}
+        >
+          <SelectTrigger className="h-8 w-[100px] text-xs"><SelectValue placeholder="-" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">-</SelectItem>
+            {countries.map((co) => (
+              <SelectItem key={co.id} value={co.id}>{co.code}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+    );
+  }
+  return <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>;
 }
 
 function formatPhone(phone: string): string {
@@ -486,6 +542,30 @@ function CustomersPage() {
       return;
     }
     toast.success(t("dashboard.callRound") + " " + (value ? `${value}차` : t("dashboard.roundNone")));
+  };
+
+  const changeCountry = async (id: string, countryId: string | null) => {
+    if (!isAdmin) return;
+    cache.patchRow(id, { country_id: countryId });
+    const { error } = await supabase.from("customers").update({ country_id: countryId }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+      return;
+    }
+    toast.success("국적 변경됨");
+  };
+
+  const changeAssigned = async (id: string, userId: string | null) => {
+    if (!isAdmin) return;
+    cache.patchRow(id, { assigned_to: userId });
+    const { error } = await supabase.from("customers").update({ assigned_to: userId }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+      return;
+    }
+    toast.success("담당자 변경됨");
   };
 
   const deleteCustomer = async () => {
@@ -1028,8 +1108,8 @@ function CustomersPage() {
                 <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
-                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
-                <Assigned c={c} staffById={staffById} />
+                <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
+                <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                 <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
@@ -1069,9 +1149,9 @@ function CustomersPage() {
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                 <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
-                <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
                 <TableCell className="text-xs">{fmtDate(p === "prepaid_charge" ? c.charge_date : c.signup_date)}</TableCell>
-                <Assigned c={c} staffById={staffById} />
+                <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                 <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
@@ -1149,13 +1229,13 @@ function CustomersPage() {
                   <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                   <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
                   <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
-                  <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+                  <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
                   <TableCell className="text-xs">{fmtDate(c.birth_date)}</TableCell>
                   <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                   <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
                   <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
                   <TableCell className="text-xs text-right tabular-nums">{c.monthly_fee != null ? Number(c.monthly_fee).toLocaleString() : "-"}</TableCell>
-                  <Assigned c={c} staffById={staffById} />
+                  <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
                   <StatusCell c={c} onChangeStatus={changeStatus} />
                   <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                   <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
@@ -1194,10 +1274,10 @@ function CustomersPage() {
               <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
               <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
               <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
-              <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+              <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
               <TableCell className="text-xs">{fmtDate(c.application_date)}</TableCell>
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
-              <Assigned c={c} staffById={staffById} />
+              <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
               <StatusCell c={c} onChangeStatus={changeStatus} />
               <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
               <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
