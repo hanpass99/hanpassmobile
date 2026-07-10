@@ -1365,7 +1365,7 @@ function CustomersPage() {
                     <SelectContent>
                       <SelectItem value="all">{t("customers.allAssigned")}</SelectItem>
                       <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
-                      {staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                      {staff.filter((s) => s.is_active).map((s) => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={callRoundF} onValueChange={(v) => setCallRoundF(v as typeof callRoundF)}>
