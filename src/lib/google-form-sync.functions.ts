@@ -6,39 +6,34 @@ const SHEET_NAME = "설문지 응답 시트1";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
 
 // Country string (from form) → country code in our DB
-// Uzbekistan은 DB에 UZ 없음 → CIS(독립국가연합)로 매핑
+// 매핑 대상: CIS, NP, VN, LK (그 외는 매핑하지 않음)
 const COUNTRY_MAP: Record<string, string> = {
-  VIETNAM: "VN", VN: "VN", "VIET NAM": "VN",
-  MONGOLIA: "MN", MN: "MN",
-  PHILIPPINES: "PH", PH: "PH", PHILIPPINE: "PH",
-  UZBEKISTAN: "CIS", UZ: "CIS", UZB: "CIS",
-  KAZAKHSTAN: "CIS", KZ: "CIS",
-  KYRGYZSTAN: "CIS", KG: "CIS",
-  TAJIKISTAN: "CIS", TJ: "CIS",
-  RUSSIA: "CIS", RU: "CIS",
-  CHINA: "CN", CN: "CN",
-  NEPAL: "NP", NP: "NP",
-  CAMBODIA: "KH", KH: "KH",
-  THAILAND: "TH", TH: "TH",
-  INDONESIA: "ID", ID: "ID",
-  INDIA: "IN", IN: "IN",
-  MYANMAR: "MM", MM: "MM",
-  "SRI LANKA": "LK", LK: "LK",
-  BANGLADESH: "BD", BD: "BD",
-  PAKISTAN: "PK", PK: "PK",
-  GHANA: "GH", GH: "GH",
-  EGYPT: "EG", EG: "EG",
-  JORDAN: "JO", JO: "JO",
-  USA: "US", US: "US", "UNITED STATES": "US",
-  CANADA: "CA", CA: "CA",
-  UK: "GB", GB: "GB", ENGLAND: "GB", "UNITED KINGDOM": "GB",
+  // Vietnam
+  VIETNAM: "VN", VN: "VN", "VIET NAM": "VN", 베트남: "VN",
+  // Nepal
+  NEPAL: "NP", NP: "NP", 네팔: "NP",
+  // Sri Lanka
+  "SRI LANKA": "LK", SRILANKA: "LK", LK: "LK", 스리랑카: "LK",
+  // CIS (독립국가연합) — 우즈베키스탄/카자흐스탄/키르기스스탄/타지키스탄/러시아 등
+  CIS: "CIS",
+  UZBEKISTAN: "CIS", UZ: "CIS", UZB: "CIS", 우즈베키스탄: "CIS",
+  KAZAKHSTAN: "CIS", KZ: "CIS", 카자흐스탄: "CIS",
+  KYRGYZSTAN: "CIS", KG: "CIS", 키르기스스탄: "CIS",
+  TAJIKISTAN: "CIS", TJ: "CIS", 타지키스탄: "CIS",
+  TURKMENISTAN: "CIS", TM: "CIS", 투르크메니스탄: "CIS",
+  RUSSIA: "CIS", RU: "CIS", 러시아: "CIS",
+  BELARUS: "CIS", BY: "CIS", 벨라루스: "CIS",
+  ARMENIA: "CIS", AM: "CIS", 아르메니아: "CIS",
+  AZERBAIJAN: "CIS", AZ: "CIS", 아제르바이잔: "CIS",
+  MOLDOVA: "CIS", MD: "CIS", 몰도바: "CIS",
 };
 
 function mapCountry(raw: string | null | undefined): string | null {
   if (!raw) return null;
   const key = raw.trim().toUpperCase();
-  return COUNTRY_MAP[key] ?? null;
+  return COUNTRY_MAP[key] ?? COUNTRY_MAP[raw.trim()] ?? null;
 }
+
 
 function normalizePhone(raw: string): string {
   return (raw || "").toString().trim();
