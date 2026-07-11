@@ -76,6 +76,9 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
     const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
 
     const { supabase } = context;
+    // Use admin client for writes so DB triggers don't auto-assign the customer
+    // to the currently signed-in staff (구글폼 신규 유입은 미배정으로 두어야 함).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 기존 응답 로드 (dedupe key)
     const { data: existing, error: exErr } = await supabase
