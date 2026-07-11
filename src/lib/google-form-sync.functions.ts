@@ -175,10 +175,6 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
         }
       }
 
-        result.errors.push(`${name}: ${custErr.message}`);
-        continue;
-      }
-
       const { error: subErr } = await supabase
         .from("google_form_submissions")
         .insert({
@@ -187,8 +183,9 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
           phone,
           country_raw,
           country_id,
-          customer_id: cust.id,
+          customer_id: customerId,
         });
+
 
       if (subErr) {
         result.errors.push(`${name} (기록): ${subErr.message}`);
