@@ -76,6 +76,9 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
     const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
 
     const { supabase } = context;
+    // Use admin client for writes so DB triggers don't auto-assign the customer
+    // to the currently signed-in staff (구글폼 신규 유입은 미배정으로 두어야 함).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 기존 응답 로드 (dedupe key)
     const { data: existing, error: exErr } = await supabase
@@ -135,7 +138,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       const country_id = code ? codeToId.get(code) ?? null : null;
 
       // customers upsert (DB-level unique index on (name, phone) WHERE pool='google_form_activation')
-      const { data: cust, error: custErr } = await supabase
+      const { data: cust, error: custErr } = await supabaseAdmin
         .from("customers")
         .upsert(
           {
@@ -145,6 +148,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
             signup_date: today,
             application_date: today,
             status: "new",
+            assigned_to: null,
             pool: "google_form_activation",
             notes: "구글폼 자동 등록",
           },
@@ -161,7 +165,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       // If ignored (duplicate), fetch existing id
       let customerId = cust?.id ?? null;
       if (!customerId) {
-        const { data: existingRow } = await supabase
+        const { data: existingRow } = await supabaseAdmin
           .from("customers")
           .select("id")
           .eq("pool", "google_form_activation")
@@ -175,7 +179,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
         }
       }
 
-      const { error: subErr } = await supabase
+      const { error: subErr } = await supabaseAdmin
         .from("google_form_submissions")
         .insert({
           timestamp_raw,

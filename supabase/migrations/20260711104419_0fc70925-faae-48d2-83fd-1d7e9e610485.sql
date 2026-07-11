@@ -1,0 +1,1 @@
+UPDATE public.customers SET assigned_to = NULL WHERE pool = 'google_form_activation' AND status = 'new' AND assigned_to IS NOT NULL;
