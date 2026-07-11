@@ -105,6 +105,7 @@ export default {
   pool: {
     existing: "Hanpass Mobile existing customers",
     activation_request: "Activation requests",
+    google_form_activation: "Google Form activation requests",
     new_signup: "Hanpass new signups",
     friend_referral: "Friend referrals",
     prepaid_charge: "Hanpass App prepaid chargers",
@@ -112,12 +113,14 @@ export default {
     short: {
       existing: "Existing",
       activation_request: "Activation",
+      google_form_activation: "Google Form Activation",
       new_signup: "New signup",
       friend_referral: "Friend referral",
       prepaid_charge: "Prepaid charge",
       one_year_activation: "1Y activated",
     },
     emptyPool: "No customers in {{name}} pool.",
+
   },
   customers: {
     title: "Customers",

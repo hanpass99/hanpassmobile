@@ -125,7 +125,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
           signup_date: today,
           application_date: today,
           status: "new",
-          pool: "activation_request",
+          pool: "google_form_activation",
           notes: "구글폼 자동 등록",
         })
         .select("id")
