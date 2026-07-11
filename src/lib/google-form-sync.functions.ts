@@ -122,6 +122,12 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
         result.skipped++;
         continue;
       }
+      const custKey = `${name}|${phone}`;
+      if (existingCustKeys.has(custKey)) {
+        result.skipped++;
+        continue;
+      }
+
 
       const code = mapCountry(country_raw);
       const country_id = code ? codeToId.get(code) ?? null : null;
