@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle,
-  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, FileText,
+  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,7 +23,6 @@ export function AppSidebar() {
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("nav.customers"), url: "/customers", icon: Users },
-    { title: "구글폼으로 개통 신청", url: "/google-form-applications", icon: FileText },
     { title: "문자 발송", url: "/sms", icon: MessageSquare },
   ];
   const analyticsItems = [
