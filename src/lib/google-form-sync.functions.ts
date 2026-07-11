@@ -138,7 +138,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       const country_id = code ? codeToId.get(code) ?? null : null;
 
       // customers upsert (DB-level unique index on (name, phone) WHERE pool='google_form_activation')
-      const { data: cust, error: custErr } = await supabase
+      const { data: cust, error: custErr } = await supabaseAdmin
         .from("customers")
         .upsert(
           {
@@ -148,6 +148,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
             signup_date: today,
             application_date: today,
             status: "new",
+            assigned_to: null,
             pool: "google_form_activation",
             notes: "구글폼 자동 등록",
           },
