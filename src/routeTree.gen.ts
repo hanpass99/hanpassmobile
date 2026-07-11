@@ -13,6 +13,7 @@ import { Route as SmsRouteImport } from './routes/sms'
 import { Route as SlaRouteImport } from './routes/sla'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as GoogleFormApplicationsRouteImport } from './routes/google-form-applications'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -37,6 +38,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoogleFormApplicationsRoute = GoogleFormApplicationsRouteImport.update({
+  id: '/google-form-applications',
+  path: '/google-form-applications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomersRoute = CustomersRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
+  '/google-form-applications': typeof GoogleFormApplicationsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
+  '/google-form-applications': typeof GoogleFormApplicationsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
+  '/google-form-applications': typeof GoogleFormApplicationsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/channel-performance'
     | '/customers'
+    | '/google-form-applications'
     | '/reset-password'
     | '/settings'
     | '/sla'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/channel-performance'
     | '/customers'
+    | '/google-form-applications'
     | '/reset-password'
     | '/settings'
     | '/sla'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/channel-performance'
     | '/customers'
+    | '/google-form-applications'
     | '/reset-password'
     | '/settings'
     | '/sla'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CustomersRoute: typeof CustomersRoute
+  GoogleFormApplicationsRoute: typeof GoogleFormApplicationsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SlaRoute: typeof SlaRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/google-form-applications': {
+      id: '/google-form-applications'
+      path: '/google-form-applications'
+      fullPath: '/google-form-applications'
+      preLoaderRoute: typeof GoogleFormApplicationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/customers': {
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CustomersRoute: CustomersRoute,
+  GoogleFormApplicationsRoute: GoogleFormApplicationsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SlaRoute: SlaRoute,
@@ -229,13 +250,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
