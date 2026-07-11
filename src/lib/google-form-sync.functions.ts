@@ -165,7 +165,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       // If ignored (duplicate), fetch existing id
       let customerId = cust?.id ?? null;
       if (!customerId) {
-        const { data: existingRow } = await supabase
+        const { data: existingRow } = await supabaseAdmin
           .from("customers")
           .select("id")
           .eq("pool", "google_form_activation")
@@ -179,7 +179,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
         }
       }
 
-      const { error: subErr } = await supabase
+      const { error: subErr } = await supabaseAdmin
         .from("google_form_submissions")
         .insert({
           timestamp_raw,
