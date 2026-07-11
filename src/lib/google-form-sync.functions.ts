@@ -127,6 +127,8 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
         result.skipped++;
         continue;
       }
+      existingCustKeys.add(custKey);
+
 
 
       const code = mapCountry(country_raw);
