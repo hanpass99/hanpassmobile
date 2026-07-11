@@ -23,7 +23,6 @@ export function AppSidebar() {
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("nav.customers"), url: "/customers", icon: Users },
-    { title: "구글폼으로 개통 신청", url: "/google-form-applications", icon: FileText },
     { title: "문자 발송", url: "/sms", icon: MessageSquare },
   ];
   const analyticsItems = [
