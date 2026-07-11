@@ -1295,6 +1295,31 @@ function CustomersPage() {
     );
   };
 
+  // === 구글폼 개통 신청 자동 동기화 (활성화: activation_request 탭) ===
+  const syncGoogleFormFn = useServerFn(syncGoogleFormApplications);
+  const syncGoogleFormMut = useMutation({
+    mutationFn: () => syncGoogleFormFn(),
+    onSuccess: (r) => {
+      if (r.inserted > 0) {
+        toast.success(`구글폼: ${r.inserted}건 새로 등록되었습니다.`);
+        void refetchList();
+        void refetchPoolCounts();
+      }
+      if (r.errors && r.errors.length > 0) {
+        toast.error(`구글폼 동기화 오류: ${r.errors[0]}`);
+      }
+    },
+    onError: (e: Error) => toast.error(`구글폼 동기화 실패: ${e.message}`),
+  });
+  const syncMutRef = useRef(syncGoogleFormMut);
+  syncMutRef.current = syncGoogleFormMut;
+  useEffect(() => {
+    if (tab !== "activation_request") return;
+    syncMutRef.current.mutate();
+    const timer = setInterval(() => syncMutRef.current.mutate(), 30_000);
+    return () => clearInterval(timer);
+  }, [tab]);
+
   if (listError) {
     return (
       <div className="space-y-5">
@@ -1312,17 +1337,42 @@ function CustomersPage() {
     );
   }
 
+  const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
+
   return (
     <div className="space-y-5">
       <PageHeader
         title="고객 관리"
         description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · 표시 ${rows.length.toLocaleString()}건${loading?" · "+t("common.loading"):""}`}
         actions={
-          <Button variant="outline" size="sm" onClick={load} aria-busy={loading || loadingMore}>
-            <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
-          </Button>
+          <div className="flex items-center gap-2">
+            {tab === "activation_request" && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={SHEET_URL} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-1 h-4 w-4" /> 구글폼 시트
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncGoogleFormMut.mutate()}
+                  disabled={syncGoogleFormMut.isPending}
+                  aria-busy={syncGoogleFormMut.isPending}
+                  title="구글폼 응답을 지금 동기화합니다 (30초마다 자동 동기화)"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending ? "animate-spin" : ""}`} />
+                  구글폼 동기화
+                </Button>
+              </>
+            )}
+            <Button variant="outline" size="sm" onClick={load} aria-busy={loading || loadingMore}>
+              <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
+            </Button>
+          </div>
         }
       />
+
 
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
