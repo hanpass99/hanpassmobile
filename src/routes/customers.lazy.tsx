@@ -921,9 +921,10 @@ function CustomersPage() {
     if (effPool === "existing") {
       header = ["고객명", "전화번호", "개통일", "요금제", "국적", "메모"];
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
-    } else if (effPool === "activation_request") {
+    } else if (effPool === "activation_request" || effPool === "google_form_activation") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
+
     } else if (effPool === "friend_referral") {
       header = ["고객명", "전화번호", "국적", "가입일", "메모"];
       sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
@@ -1295,7 +1296,7 @@ function CustomersPage() {
     );
   };
 
-  // === 구글폼 개통 신청 자동 동기화 (활성화: activation_request 탭) ===
+  // === 구글폼 개통 신청 자동 동기화 (활성화: google_form_activation 탭) ===
   const syncGoogleFormFn = useServerFn(syncGoogleFormApplications);
   const syncGoogleFormMut = useMutation({
     mutationFn: () => syncGoogleFormFn(),
@@ -1314,11 +1315,12 @@ function CustomersPage() {
   const syncMutRef = useRef(syncGoogleFormMut);
   syncMutRef.current = syncGoogleFormMut;
   useEffect(() => {
-    if (tab !== "activation_request") return;
+    if (tab !== "google_form_activation") return;
     syncMutRef.current.mutate();
     const timer = setInterval(() => syncMutRef.current.mutate(), 30_000);
     return () => clearInterval(timer);
   }, [tab]);
+
 
   if (listError) {
     return (
@@ -1346,7 +1348,7 @@ function CustomersPage() {
         description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · 표시 ${rows.length.toLocaleString()}건${loading?" · "+t("common.loading"):""}`}
         actions={
           <div className="flex items-center gap-2">
-            {tab === "activation_request" && (
+            {tab === "google_form_activation" && (
               <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL} target="_blank" rel="noopener noreferrer">
@@ -2256,7 +2258,7 @@ function AddCustomerDialog({
   const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const requiresApplication = pool === "activation_request";
+  const requiresApplication = pool === "activation_request" || pool === "google_form_activation";
 
   useEffect(() => {
     if (open) {
