@@ -86,6 +86,17 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       (existing ?? []).map((r) => `${r.timestamp_raw}|${r.name}|${r.phone}`),
     );
 
+    // 기존 고객(name+phone) 로드 → 중복 방지 (submissions 기록이 유실된 경우 대비)
+    const { data: existingCust, error: ecErr } = await supabase
+      .from("customers")
+      .select("name, phone")
+      .eq("pool", "google_form_activation");
+    if (ecErr) throw ecErr;
+    const existingCustKeys = new Set(
+      (existingCust ?? []).map((r) => `${r.name}|${r.phone}`),
+    );
+
+
     // 국가 매핑
     const { data: countries, error: coErr } = await supabase
       .from("countries")
