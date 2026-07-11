@@ -134,23 +134,47 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       const code = mapCountry(country_raw);
       const country_id = code ? codeToId.get(code) ?? null : null;
 
-      // customers 삽입
+      // customers upsert (DB-level unique index on (name, phone) WHERE pool='google_form_activation')
       const { data: cust, error: custErr } = await supabase
         .from("customers")
-        .insert({
-          name,
-          phone,
-          country_id,
-          signup_date: today,
-          application_date: today,
-          status: "new",
-          pool: "google_form_activation",
-          notes: "구글폼 자동 등록",
-        })
+        .upsert(
+          {
+            name,
+            phone,
+            country_id,
+            signup_date: today,
+            application_date: today,
+            status: "new",
+            pool: "google_form_activation",
+            notes: "구글폼 자동 등록",
+          },
+          { onConflict: "name,phone", ignoreDuplicates: true },
+        )
         .select("id")
-        .single();
+        .maybeSingle();
 
       if (custErr) {
+        result.errors.push(`${name}: ${custErr.message}`);
+        continue;
+      }
+
+      // If ignored (duplicate), fetch existing id
+      let customerId = cust?.id ?? null;
+      if (!customerId) {
+        const { data: existingRow } = await supabase
+          .from("customers")
+          .select("id")
+          .eq("pool", "google_form_activation")
+          .eq("name", name)
+          .eq("phone", phone)
+          .maybeSingle();
+        customerId = existingRow?.id ?? null;
+        if (!customerId) {
+          result.skipped++;
+          continue;
+        }
+      }
+
         result.errors.push(`${name}: ${custErr.message}`);
         continue;
       }
