@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { RefreshCw, ExternalLink, CheckCircle2 } from "lucide-react";
@@ -148,20 +149,11 @@ function GoogleFormApplicationsPage() {
 }
 
 function useAutoSync(cb: () => void) {
-  // 첫 진입 시 1회 + 30초마다 백그라운드 동기화
-  if (typeof window !== "undefined") {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useOnMountAndInterval(cb, 30_000);
-  }
-}
-
-function useOnMountAndInterval(cb: () => void, ms: number) {
-  const { useEffect, useRef } = require("react") as typeof import("react");
   const ref = useRef(cb);
   ref.current = cb;
   useEffect(() => {
     ref.current();
-    const t = setInterval(() => ref.current(), ms);
+    const t = setInterval(() => ref.current(), 30_000);
     return () => clearInterval(t);
-  }, [ms]);
+  }, []);
 }
