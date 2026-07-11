@@ -92,6 +92,7 @@ export function statusForResult(r: CallResult): CustomerStatus {
 export const POOLS = [
   "existing",
   "activation_request",
+  "google_form_activation",
   "friend_referral",
   "prepaid_charge",
   "one_year_activation",
@@ -101,6 +102,7 @@ export type CustomerPool = (typeof POOLS)[number];
 export const POOL_LABEL: Record<CustomerPool, string> = {
   existing: "한패스 모바일 기존 고객",
   activation_request: "개통 신청자",
+  google_form_activation: "구글폼 개통 신청자",
   friend_referral: "친구 추천",
   prepaid_charge: "한패스 앱으로 선불 충전자",
   one_year_activation: "1년 개통자",
@@ -109,10 +111,12 @@ export const POOL_LABEL: Record<CustomerPool, string> = {
 export const POOL_SHORT: Record<CustomerPool, string> = {
   existing: "기존 고객",
   activation_request: "개통 신청자",
+  google_form_activation: "구글폼 개통 신청자",
   friend_referral: "친구 추천",
   prepaid_charge: "선불 충전자",
   one_year_activation: "1년 개통자",
 };
+
 
 // === 직원 출근 상태 ===
 export const ATTENDANCE_STATUSES = [
