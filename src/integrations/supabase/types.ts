@@ -326,6 +326,57 @@ export type Database = {
         }
         Relationships: []
       }
+      google_form_submissions: {
+        Row: {
+          country_id: string | null
+          country_raw: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          name: string
+          phone: string
+          synced_at: string
+          timestamp_raw: string
+        }
+        Insert: {
+          country_id?: string | null
+          country_raw?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          name: string
+          phone: string
+          synced_at?: string
+          timestamp_raw: string
+        }
+        Update: {
+          country_id?: string | null
+          country_raw?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          synced_at?: string
+          timestamp_raw?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_form_submissions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_form_submissions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_countries: {
         Row: {
           country_id: string
