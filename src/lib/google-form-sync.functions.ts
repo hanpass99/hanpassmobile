@@ -40,8 +40,19 @@ function mapCountry(raw: string | null | undefined): string | null {
   return COUNTRY_MAP[key] ?? null;
 }
 
-function normalizePhone(raw: string): string {
-  return (raw || "").toString().trim();
+// 유효 전화번호만 통과 + 자동 하이픈 포맷.
+// - 010XXXXXXXX (11자리) → 010-XXXX-XXXX
+// - 8210XXXXXXXX (12자리, +82 10) → 8210-XXXX-XXXX
+// 그 외는 null 반환 → 스킵.
+function normalizePhone(raw: string): string | null {
+  const digits = (raw || "").toString().replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("010")) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 12 && digits.startsWith("8210")) {
+    return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8)}`;
+  }
+  return null;
 }
 
 type SyncResult = {
