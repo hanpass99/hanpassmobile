@@ -137,46 +137,44 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       const code = mapCountry(country_raw);
       const country_id = code ? codeToId.get(code) ?? null : null;
 
-      // customers upsert (DB-level unique index on (name, phone) WHERE pool='google_form_activation')
+      // customers insert (부분 유니크 인덱스는 upsert onConflict가 매치되지 않아 plain insert 사용)
       const { data: cust, error: custErr } = await supabaseAdmin
         .from("customers")
-        .upsert(
-          {
-            name,
-            phone,
-            country_id,
-            signup_date: today,
-            application_date: today,
-            status: "new",
-            assigned_to: null,
-            pool: "google_form_activation",
-            notes: "구글폼 자동 등록",
-          },
-          { onConflict: "name,phone", ignoreDuplicates: true },
-        )
+        .insert({
+          name,
+          phone,
+          country_id,
+          signup_date: today,
+          application_date: today,
+          status: "new",
+          assigned_to: null,
+          pool: "google_form_activation",
+          notes: "구글폼 자동 등록",
+        })
         .select("id")
         .maybeSingle();
 
-      if (custErr) {
-        result.errors.push(`${name}: ${custErr.message}`);
-        continue;
-      }
-
-      // If ignored (duplicate), fetch existing id
       let customerId = cust?.id ?? null;
-      if (!customerId) {
-        const { data: existingRow } = await supabaseAdmin
-          .from("customers")
-          .select("id")
-          .eq("pool", "google_form_activation")
-          .eq("name", name)
-          .eq("phone", phone)
-          .maybeSingle();
-        customerId = existingRow?.id ?? null;
+      if (custErr) {
+        // 유니크 위반(23505) → 기존 고객 재조회 (경합 방지)
+        if ((custErr as { code?: string }).code === "23505") {
+          const { data: existingRow } = await supabaseAdmin
+            .from("customers")
+            .select("id")
+            .eq("pool", "google_form_activation")
+            .eq("name", name)
+            .eq("phone", phone)
+            .maybeSingle();
+          customerId = existingRow?.id ?? null;
+        }
         if (!customerId) {
-          result.skipped++;
+          result.errors.push(`${name}: ${custErr.message}`);
           continue;
         }
+      }
+      if (!customerId) {
+        result.skipped++;
+        continue;
       }
 
       const { error: subErr } = await supabaseAdmin
