@@ -86,13 +86,12 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
     const data = (await res.json()) as { values?: string[][] };
     const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
 
-    const { supabase } = context;
     // Use admin client for writes so DB triggers don't auto-assign the customer
     // to the currently signed-in staff (구글폼 신규 유입은 미배정으로 두어야 함).
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 기존 응답 로드 (dedupe key)
-    const { data: existing, error: exErr } = await supabase
+    const { data: existing, error: exErr } = await supabaseAdmin
       .from("google_form_submissions")
       .select("timestamp_raw, name, phone");
     if (exErr) throw exErr;
@@ -106,7 +105,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
     );
 
     // 기존 고객(name+phone) 로드 → 중복 방지 (submissions 기록이 유실된 경우 대비)
-    const { data: existingCust, error: ecErr } = await supabase
+    const { data: existingCust, error: ecErr } = await supabaseAdmin
       .from("customers")
       .select("name, phone")
       .eq("pool", "google_form_activation");
@@ -122,7 +121,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
 
 
     // 국가 매핑
-    const { data: countries, error: coErr } = await supabase
+    const { data: countries, error: coErr } = await supabaseAdmin
       .from("countries")
       .select("id, code");
     if (coErr) throw coErr;
