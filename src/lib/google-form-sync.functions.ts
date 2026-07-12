@@ -186,6 +186,11 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
             .eq("phone", phone)
             .maybeSingle();
           customerId = existingRow?.id ?? null;
+          if (!customerId) {
+            existingKeys.add(key);
+            result.skipped++;
+            continue;
+          }
         }
         if (!customerId) {
           result.errors.push(`${name}: ${custErr.message}`);
