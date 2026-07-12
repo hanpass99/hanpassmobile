@@ -176,8 +176,14 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
 
       let customerId = cust?.id ?? null;
       if (custErr) {
-        // 유니크 위반(23505) → 기존 고객 재조회 (경합 방지)
-        if ((custErr as { code?: string }).code === "23505") {
+        const code = (custErr as { code?: string }).code;
+        const msg = (custErr.message ?? "").toLowerCase();
+        const isDuplicate =
+          code === "23505" ||
+          msg.includes("duplicate key") ||
+          msg.includes("customers_google_form_dedup");
+        if (isDuplicate) {
+          // 기존 고객 재조회 (있으면 submission만 기록, 없어도 조용히 스킵)
           const { data: existingRow } = await supabaseAdmin
             .from("customers")
             .select("id")
@@ -191,8 +197,7 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
             result.skipped++;
             continue;
           }
-        }
-        if (!customerId) {
+        } else {
           result.errors.push(`${name}: ${custErr.message}`);
           continue;
         }
