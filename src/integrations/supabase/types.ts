@@ -781,6 +781,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      normalize_google_form_phone: { Args: { _phone: string }; Returns: string }
       search_customers: {
         Args: {
           _assigned_country?: string
