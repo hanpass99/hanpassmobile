@@ -97,7 +97,12 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       .select("timestamp_raw, name, phone");
     if (exErr) throw exErr;
     const existingKeys = new Set(
-      (existing ?? []).map((r) => `${r.timestamp_raw}|${r.name}|${r.phone}`),
+      (existing ?? [])
+        .map((r) => {
+          const normalized = normalizePhone(r.phone ?? "");
+          return normalized ? `${r.timestamp_raw}|${r.name}|${normalized}` : null;
+        })
+        .filter((key): key is string => Boolean(key)),
     );
 
     // 기존 고객(name+phone) 로드 → 중복 방지 (submissions 기록이 유실된 경우 대비)
@@ -107,7 +112,12 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
       .eq("pool", "google_form_activation");
     if (ecErr) throw ecErr;
     const existingCustKeys = new Set(
-      (existingCust ?? []).map((r) => `${r.name}|${r.phone}`),
+      (existingCust ?? [])
+        .map((r) => {
+          const normalized = normalizePhone(r.phone ?? "");
+          return normalized ? `${r.name}|${normalized}` : null;
+        })
+        .filter((key): key is string => Boolean(key)),
     );
 
 
@@ -201,6 +211,11 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
 
 
       if (subErr) {
+        if ((subErr as { code?: string }).code === "23505") {
+          existingKeys.add(key);
+          result.skipped++;
+          continue;
+        }
         result.errors.push(`${name} (기록): ${subErr.message}`);
         continue;
       }
