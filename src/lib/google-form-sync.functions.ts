@@ -73,16 +73,35 @@ export const syncGoogleFormApplications = createServerFn({ method: "POST" })
 
     const range = `'${SHEET_NAME}'!A2:D`;
     const url = `${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}/values/${range}`;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": sheetsKey,
-      },
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${body}`);
+
+    // 429/5xx 재시도 (지수 백오프). Google Sheets 분당 쿼터 초과 시 잠깐 대기 후 재시도.
+    let res: Response | null = null;
+    let lastBody = "";
+    const delays = [1000, 3000, 7000]; // 최대 3회 재시도
+    for (let attempt = 0; attempt <= delays.length; attempt++) {
+      res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": sheetsKey,
+        },
+      });
+      if (res.ok) break;
+      lastBody = await res.text();
+      const retriable = res.status === 429 || res.status >= 500;
+      if (!retriable || attempt === delays.length) {
+        if (res.status === 429) {
+          throw new Error(
+            "구글 시트 분당 요청 한도(1,500/min)를 초과했습니다. 1~2분 후 다시 시도해 주세요.",
+          );
+        }
+        throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
+      }
+      await new Promise((r) => setTimeout(r, delays[attempt]));
     }
+    if (!res || !res.ok) {
+      throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
+    }
+
     const data = (await res.json()) as { values?: string[][] };
     const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
 
