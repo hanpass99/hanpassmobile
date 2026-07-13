@@ -46,11 +46,15 @@ function mapCountry(raw: string | null | undefined): string | null {
 // 그 외는 null 반환 → 스킵.
 function normalizePhone(raw: string): string | null {
   const digits = (raw || "").toString().replace(/\D/g, "");
-  if (digits.length === 11 && digits.startsWith("010")) {
-    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  const normalizedDigits =
+    digits.length === 13 && digits.startsWith("82010")
+      ? `8210${digits.slice(5)}`
+      : digits;
+  if (normalizedDigits.length === 11 && normalizedDigits.startsWith("010")) {
+    return `${normalizedDigits.slice(0, 3)}-${normalizedDigits.slice(3, 7)}-${normalizedDigits.slice(7)}`;
   }
-  if (digits.length === 12 && digits.startsWith("8210")) {
-    return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8)}`;
+  if (normalizedDigits.length === 12 && normalizedDigits.startsWith("8210")) {
+    return `${normalizedDigits.slice(0, 4)}-${normalizedDigits.slice(4, 8)}-${normalizedDigits.slice(8)}`;
   }
   return null;
 }
