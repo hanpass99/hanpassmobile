@@ -179,6 +179,44 @@ export type Database = {
           },
         ]
       }
+      customer_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          customer_id: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          status: Database["public"]["Enums"]["customer_status"]
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          customer_id: string
+          ended_at?: string | null
+          id?: string
+          started_at: string
+          status: Database["public"]["Enums"]["customer_status"]
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          customer_id?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["customer_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_status_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           activation_date: string | null
