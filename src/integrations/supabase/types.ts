@@ -1119,6 +1119,7 @@ export type Database = {
         | "prepaid_charge"
         | "one_year_activation"
         | "google_form_activation"
+        | "google_form_activation_inter"
       customer_status:
         | "new"
         | "in_progress"
@@ -1288,6 +1289,7 @@ export const Constants = {
         "prepaid_charge",
         "one_year_activation",
         "google_form_activation",
+        "google_form_activation_inter",
       ],
       customer_status: [
         "new",
