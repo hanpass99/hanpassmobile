@@ -373,6 +373,7 @@ export type Database = {
           id: string
           name: string
           phone: string
+          source: string
           synced_at: string
           timestamp_raw: string
         }
@@ -384,6 +385,7 @@ export type Database = {
           id?: string
           name: string
           phone: string
+          source?: string
           synced_at?: string
           timestamp_raw: string
         }
@@ -395,6 +397,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string
+          source?: string
           synced_at?: string
           timestamp_raw?: string
         }
@@ -1119,6 +1122,7 @@ export type Database = {
         | "prepaid_charge"
         | "one_year_activation"
         | "google_form_activation"
+        | "google_form_activation_inter"
       customer_status:
         | "new"
         | "in_progress"
@@ -1288,6 +1292,7 @@ export const Constants = {
         "prepaid_charge",
         "one_year_activation",
         "google_form_activation",
+        "google_form_activation_inter",
       ],
       customer_status: [
         "new",

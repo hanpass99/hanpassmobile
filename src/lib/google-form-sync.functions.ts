@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const SPREADSHEET_ID = "1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU";
+const DEFAULT_SPREADSHEET_ID = "1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU";
+const INTER_SPREADSHEET_ID = "1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM";
 const SHEET_NAME = "설문지 응답 시트1";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
 
@@ -66,197 +67,215 @@ type SyncResult = {
   errors: string[];
 };
 
-export const syncGoogleFormApplications = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<SyncResult> => {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
-    if (!lovableKey || !sheetsKey) {
-      throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
-    }
+type SyncConfig = {
+  spreadsheetId: string;
+  pool: "google_form_activation" | "google_form_activation_inter";
+  source: string;
+  notesLabel: string;
+};
 
-    const range = `'${SHEET_NAME}'!A2:D`;
-    const url = `${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}/values/${range}`;
+async function runSync(cfg: SyncConfig): Promise<SyncResult> {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
+  if (!lovableKey || !sheetsKey) {
+    throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
+  }
 
-    // 429/5xx 재시도 (지수 백오프). Google Sheets 분당 쿼터 초과 시 잠깐 대기 후 재시도.
-    let res: Response | null = null;
-    let lastBody = "";
-    const delays = [1000, 3000, 7000]; // 최대 3회 재시도
-    for (let attempt = 0; attempt <= delays.length; attempt++) {
-      res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": sheetsKey,
-        },
-      });
-      if (res.ok) break;
-      lastBody = await res.text();
-      const retriable = res.status === 429 || res.status >= 500;
-      if (!retriable || attempt === delays.length) {
-        if (res.status === 429) {
-          throw new Error(
-            "구글 시트 분당 요청 한도(1,500/min)를 초과했습니다. 1~2분 후 다시 시도해 주세요.",
-          );
-        }
-        throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
+  const range = `'${SHEET_NAME}'!A2:D`;
+  const url = `${GATEWAY_URL}/spreadsheets/${cfg.spreadsheetId}/values/${range}`;
+
+  let res: Response | null = null;
+  let lastBody = "";
+  const delays = [1000, 3000, 7000];
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": sheetsKey,
+      },
+    });
+    if (res.ok) break;
+    lastBody = await res.text();
+    const retriable = res.status === 429 || res.status >= 500;
+    if (!retriable || attempt === delays.length) {
+      if (res.status === 429) {
+        throw new Error(
+          "구글 시트 분당 요청 한도(1,500/min)를 초과했습니다. 1~2분 후 다시 시도해 주세요.",
+        );
       }
-      await new Promise((r) => setTimeout(r, delays[attempt]));
+      throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
     }
-    if (!res || !res.ok) {
-      throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
+    await new Promise((r) => setTimeout(r, delays[attempt]));
+  }
+  if (!res || !res.ok) {
+    throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
+  }
+
+  const data = (await res.json()) as { values?: string[][] };
+  const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  // dedupe key: submissions filtered by source so each sheet has its own log
+  const { data: existing, error: exErr } = await supabaseAdmin
+    .from("google_form_submissions")
+    .select("timestamp_raw, name, phone")
+    .eq("source", cfg.source);
+  if (exErr) throw exErr;
+  const existingKeys = new Set(
+    (existing ?? [])
+      .map((r) => {
+        const normalized = normalizePhone(r.phone ?? "");
+        return normalized ? `${r.timestamp_raw}|${r.name}|${normalized}` : null;
+      })
+      .filter((key): key is string => Boolean(key)),
+  );
+
+  const { data: existingCust, error: ecErr } = await supabaseAdmin
+    .from("customers")
+    .select("name, phone")
+    .eq("pool", cfg.pool);
+  if (ecErr) throw ecErr;
+  const existingCustKeys = new Set(
+    (existingCust ?? [])
+      .map((r) => {
+        const normalized = normalizePhone(r.phone ?? "");
+        return normalized ? `${r.name}|${normalized}` : null;
+      })
+      .filter((key): key is string => Boolean(key)),
+  );
+
+  const { data: countries, error: coErr } = await supabaseAdmin
+    .from("countries")
+    .select("id, code");
+  if (coErr) throw coErr;
+  const codeToId = new Map((countries ?? []).map((c) => [c.code, c.id]));
+
+  const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
+  const today = new Date().toISOString().slice(0, 10);
+
+  for (const row of rows) {
+    const timestamp_raw = (row[0] ?? "").toString().trim();
+    const name = (row[1] ?? "").toString().trim();
+    const phone = normalizePhone(row[2] ?? "");
+    const country_raw = (row[3] ?? "").toString().trim();
+
+    if (!name || !phone) {
+      result.skipped++;
+      continue;
     }
+    const key = `${timestamp_raw}|${name}|${phone}`;
+    if (existingKeys.has(key)) {
+      result.skipped++;
+      continue;
+    }
+    const custKey = `${name}|${phone}`;
+    if (existingCustKeys.has(custKey)) {
+      result.skipped++;
+      continue;
+    }
+    existingCustKeys.add(custKey);
 
-    const data = (await res.json()) as { values?: string[][] };
-    const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
+    const code = mapCountry(country_raw);
+    const country_id = code ? codeToId.get(code) ?? null : null;
 
-    // Use admin client for writes so DB triggers don't auto-assign the customer
-    // to the currently signed-in staff (구글폼 신규 유입은 미배정으로 두어야 함).
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // 기존 응답 로드 (dedupe key)
-    const { data: existing, error: exErr } = await supabaseAdmin
-      .from("google_form_submissions")
-      .select("timestamp_raw, name, phone");
-    if (exErr) throw exErr;
-    const existingKeys = new Set(
-      (existing ?? [])
-        .map((r) => {
-          const normalized = normalizePhone(r.phone ?? "");
-          return normalized ? `${r.timestamp_raw}|${r.name}|${normalized}` : null;
-        })
-        .filter((key): key is string => Boolean(key)),
-    );
-
-    // 기존 고객(name+phone) 로드 → 중복 방지 (submissions 기록이 유실된 경우 대비)
-    const { data: existingCust, error: ecErr } = await supabaseAdmin
+    const { data: cust, error: custErr } = await supabaseAdmin
       .from("customers")
-      .select("name, phone")
-      .eq("pool", "google_form_activation");
-    if (ecErr) throw ecErr;
-    const existingCustKeys = new Set(
-      (existingCust ?? [])
-        .map((r) => {
-          const normalized = normalizePhone(r.phone ?? "");
-          return normalized ? `${r.name}|${normalized}` : null;
-        })
-        .filter((key): key is string => Boolean(key)),
-    );
+      .insert({
+        name,
+        phone,
+        country_id,
+        signup_date: today,
+        application_date: today,
+        status: "new",
+        assigned_to: null,
+        pool: cfg.pool,
+        notes: cfg.notesLabel,
+      })
+      .select("id")
+      .maybeSingle();
 
-
-    // 국가 매핑
-    const { data: countries, error: coErr } = await supabaseAdmin
-      .from("countries")
-      .select("id, code");
-    if (coErr) throw coErr;
-    const codeToId = new Map((countries ?? []).map((c) => [c.code, c.id]));
-
-    const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
-    const today = new Date().toISOString().slice(0, 10);
-
-    for (const row of rows) {
-      const timestamp_raw = (row[0] ?? "").toString().trim();
-      const name = (row[1] ?? "").toString().trim();
-      const phone = normalizePhone(row[2] ?? "");
-      const country_raw = (row[3] ?? "").toString().trim();
-
-      if (!name || !phone) {
-        result.skipped++;
-        continue;
-      }
-      const key = `${timestamp_raw}|${name}|${phone}`;
-      if (existingKeys.has(key)) {
-        result.skipped++;
-        continue;
-      }
-      const custKey = `${name}|${phone}`;
-      if (existingCustKeys.has(custKey)) {
-        result.skipped++;
-        continue;
-      }
-      existingCustKeys.add(custKey);
-
-
-
-      const code = mapCountry(country_raw);
-      const country_id = code ? codeToId.get(code) ?? null : null;
-
-      // customers insert (부분 유니크 인덱스는 upsert onConflict가 매치되지 않아 plain insert 사용)
-      const { data: cust, error: custErr } = await supabaseAdmin
-        .from("customers")
-        .insert({
-          name,
-          phone,
-          country_id,
-          signup_date: today,
-          application_date: today,
-          status: "new",
-          assigned_to: null,
-          pool: "google_form_activation",
-          notes: "구글폼 자동 등록",
-        })
-        .select("id")
-        .maybeSingle();
-
-      let customerId = cust?.id ?? null;
-      if (custErr) {
-        const code = (custErr as { code?: string }).code;
-        const msg = (custErr.message ?? "").toLowerCase();
-        const isDuplicate =
-          code === "23505" ||
-          msg.includes("duplicate key") ||
-          msg.includes("customers_google_form_dedup");
-        if (isDuplicate) {
-          // 기존 고객 재조회 (있으면 submission만 기록, 없어도 조용히 스킵)
-          const { data: existingRow } = await supabaseAdmin
-            .from("customers")
-            .select("id")
-            .eq("pool", "google_form_activation")
-            .eq("name", name)
-            .eq("phone", phone)
-            .maybeSingle();
-          customerId = existingRow?.id ?? null;
-          if (!customerId) {
-            existingKeys.add(key);
-            result.skipped++;
-            continue;
-          }
-        } else {
-          result.errors.push(`${name}: ${custErr.message}`);
-          continue;
-        }
-      }
-      if (!customerId) {
-        result.skipped++;
-        continue;
-      }
-
-      const { error: subErr } = await supabaseAdmin
-        .from("google_form_submissions")
-        .insert({
-          timestamp_raw,
-          name,
-          phone,
-          country_raw,
-          country_id,
-          customer_id: customerId,
-        });
-
-
-      if (subErr) {
-        if ((subErr as { code?: string }).code === "23505") {
+    let customerId = cust?.id ?? null;
+    if (custErr) {
+      const code2 = (custErr as { code?: string }).code;
+      const msg = (custErr.message ?? "").toLowerCase();
+      const isDuplicate =
+        code2 === "23505" ||
+        msg.includes("duplicate key") ||
+        msg.includes("customers_google_form");
+      if (isDuplicate) {
+        const { data: existingRow } = await supabaseAdmin
+          .from("customers")
+          .select("id")
+          .eq("pool", cfg.pool)
+          .eq("name", name)
+          .eq("phone", phone)
+          .maybeSingle();
+        customerId = existingRow?.id ?? null;
+        if (!customerId) {
           existingKeys.add(key);
           result.skipped++;
           continue;
         }
-        result.errors.push(`${name} (기록): ${subErr.message}`);
+      } else {
+        result.errors.push(`${name}: ${custErr.message}`);
         continue;
       }
-
-      existingKeys.add(key);
-      result.inserted++;
+    }
+    if (!customerId) {
+      result.skipped++;
+      continue;
     }
 
-    return result;
+    const { error: subErr } = await supabaseAdmin
+      .from("google_form_submissions")
+      .insert({
+        timestamp_raw,
+        name,
+        phone,
+        country_raw,
+        country_id,
+        customer_id: customerId,
+        source: cfg.source,
+      });
+
+    if (subErr) {
+      if ((subErr as { code?: string }).code === "23505") {
+        existingKeys.add(key);
+        result.skipped++;
+        continue;
+      }
+      result.errors.push(`${name} (기록): ${subErr.message}`);
+      continue;
+    }
+
+    existingKeys.add(key);
+    result.inserted++;
+  }
+
+  return result;
+}
+
+export const syncGoogleFormApplications = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<SyncResult> => {
+    return runSync({
+      spreadsheetId: DEFAULT_SPREADSHEET_ID,
+      pool: "google_form_activation",
+      source: "default",
+      notesLabel: "구글폼 자동 등록",
+    });
+  });
+
+export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<SyncResult> => {
+    return runSync({
+      spreadsheetId: INTER_SPREADSHEET_ID,
+      pool: "google_form_activation_inter",
+      source: "inter",
+      notesLabel: "구글폼 인터 자동 등록",
+    });
   });
 
 export type GoogleFormSubmissionRow = {

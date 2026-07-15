@@ -7,7 +7,7 @@ import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
   StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X, Phone, ExternalLink,
 } from "lucide-react";
-import { syncGoogleFormApplications } from "@/lib/google-form-sync.functions";
+import { syncGoogleFormApplications, syncGoogleFormApplicationsInter } from "@/lib/google-form-sync.functions";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -921,7 +921,7 @@ function CustomersPage() {
     if (effPool === "existing") {
       header = ["고객명", "전화번호", "개통일", "요금제", "국적", "메모"];
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
-    } else if (effPool === "activation_request" || effPool === "google_form_activation") {
+    } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "google_form_activation_inter") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
 
@@ -1321,6 +1321,31 @@ function CustomersPage() {
     return () => clearInterval(timer);
   }, [tab]);
 
+  // === 구글폼 인터 자동 동기화 (활성화: google_form_activation_inter 탭) ===
+  const syncGoogleFormInterFn = useServerFn(syncGoogleFormApplicationsInter);
+  const syncGoogleFormInterMut = useMutation({
+    mutationFn: () => syncGoogleFormInterFn(),
+    onSuccess: (r) => {
+      if (r.inserted > 0) {
+        toast.success(`구글폼 인터: ${r.inserted}건 새로 등록되었습니다.`);
+        void refetchList();
+        void refetchPoolCounts();
+      }
+      if (r.errors && r.errors.length > 0) {
+        toast.error(`구글폼 인터 동기화 오류: ${r.errors[0]}`);
+      }
+    },
+    onError: (e: Error) => toast.error(`구글폼 인터 동기화 실패: ${e.message}`),
+  });
+  const syncInterMutRef = useRef(syncGoogleFormInterMut);
+  syncInterMutRef.current = syncGoogleFormInterMut;
+  useEffect(() => {
+    if (tab !== "google_form_activation_inter") return;
+    syncInterMutRef.current.mutate();
+    const timer = setInterval(() => syncInterMutRef.current.mutate(), 30_000);
+    return () => clearInterval(timer);
+  }, [tab]);
+
 
   if (listError) {
     return (
@@ -1340,6 +1365,7 @@ function CustomersPage() {
   }
 
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
+  const SHEET_URL_INTER = "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
 
   return (
     <div className="space-y-5">
@@ -1365,6 +1391,26 @@ function CustomersPage() {
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending ? "animate-spin" : ""}`} />
                   구글폼 동기화
+                </Button>
+              </>
+            )}
+            {tab === "google_form_activation_inter" && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={SHEET_URL_INTER} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-1 h-4 w-4" /> 구글폼 인터 시트
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncGoogleFormInterMut.mutate()}
+                  disabled={syncGoogleFormInterMut.isPending}
+                  aria-busy={syncGoogleFormInterMut.isPending}
+                  title="구글폼 인터 응답을 지금 동기화합니다 (30초마다 자동 동기화)"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
+                  구글폼 인터 동기화
                 </Button>
               </>
             )}
@@ -2258,7 +2304,7 @@ function AddCustomerDialog({
   const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const requiresApplication = pool === "activation_request" || pool === "google_form_activation";
+  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "google_form_activation_inter";
 
   useEffect(() => {
     if (open) {
