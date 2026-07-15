@@ -23,11 +23,11 @@ export function AppSidebar() {
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("nav.customers"), url: "/customers", icon: Users },
-    { title: "문자 발송", url: "/sms", icon: MessageSquare },
+    { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
   ];
   const analyticsItems = [
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
-    { title: "SLA 관리", url: "/sla", icon: AlertTriangle },
+    { title: t("nav.sla"), url: "/sla", icon: AlertTriangle },
   ];
   const systemItems = [{ title: t("nav.settings"), url: "/settings", icon: Settings }];
 
