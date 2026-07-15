@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";

@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   PhoneCall, TrendingUp, Award, CalendarIcon, Globe2, Inbox, AlertTriangle,

@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
