@@ -23,7 +23,7 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/channel-performance")({
-  head: () => ({ meta: [{ title: "채널별 성과 — Hanpass OB CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.channel") }] }),
   component: ChannelPerf,
 });
 

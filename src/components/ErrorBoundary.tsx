@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import i18n from "@/i18n";
 
 type Props = { children: React.ReactNode; fallback?: React.ReactNode };
 type State = { hasError: boolean; error: Error | null };
@@ -27,13 +28,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
       >
         <div className="max-w-md text-center">
           <h1 className="text-xl font-semibold text-foreground">
-            문제가 발생했습니다
+            {i18n.t("errors.title")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {this.state.error?.message ?? "예기치 못한 오류가 발생했습니다."}
+            {this.state.error?.message ?? i18n.t("errors.unknown")}
           </p>
           <Button onClick={this.reset} className="mt-6">
-            다시 시도
+            {i18n.t("errors.retry")}
           </Button>
         </div>
       </div>

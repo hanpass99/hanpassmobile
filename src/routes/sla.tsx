@@ -24,7 +24,7 @@ import {
 import { STATUS_LABEL } from "@/lib/labels";
 
 export const Route = createFileRoute("/sla")({
-  head: () => ({ meta: [{ title: "SLA 관리 — Hanpass OB CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.sla") }] }),
   component: SlaPage,
 });
 

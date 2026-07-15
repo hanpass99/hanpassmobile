@@ -11,7 +11,7 @@ type CustomersSearch = {
 };
 
 export const Route = createFileRoute("/customers")({
-  head: () => ({ meta: [{ title: "고객 관리 — Hanpass OB CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.customers") }] }),
   validateSearch: (search: Record<string, unknown>): CustomersSearch => ({
     status: typeof search.status === "string" ? search.status : undefined,
     country: typeof search.country === "string" ? search.country : undefined,

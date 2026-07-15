@@ -31,7 +31,7 @@ import type {
 } from "@/types/rpc";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "설정 — Hanpass OB CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.settings") }] }),
   component: Settings,
 });
 

@@ -22,7 +22,7 @@ import { ATTENDANCE_STATUSES, ATTENDANCE_CLASS, type AttendanceStatus } from "@/
 import { useAttendance } from "@/hooks/use-attendance";
 
 export const Route = createFileRoute("/attendance")({
-  head: () => ({ meta: [{ title: "출근 관리 — Hanpass OB CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.attendance") }] }),
   component: AttendancePage,
 });
 
