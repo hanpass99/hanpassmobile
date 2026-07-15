@@ -1321,6 +1321,31 @@ function CustomersPage() {
     return () => clearInterval(timer);
   }, [tab]);
 
+  // === 구글폼 인터 자동 동기화 (활성화: google_form_activation_inter 탭) ===
+  const syncGoogleFormInterFn = useServerFn(syncGoogleFormApplicationsInter);
+  const syncGoogleFormInterMut = useMutation({
+    mutationFn: () => syncGoogleFormInterFn(),
+    onSuccess: (r) => {
+      if (r.inserted > 0) {
+        toast.success(`구글폼 인터: ${r.inserted}건 새로 등록되었습니다.`);
+        void refetchList();
+        void refetchPoolCounts();
+      }
+      if (r.errors && r.errors.length > 0) {
+        toast.error(`구글폼 인터 동기화 오류: ${r.errors[0]}`);
+      }
+    },
+    onError: (e: Error) => toast.error(`구글폼 인터 동기화 실패: ${e.message}`),
+  });
+  const syncInterMutRef = useRef(syncGoogleFormInterMut);
+  syncInterMutRef.current = syncGoogleFormInterMut;
+  useEffect(() => {
+    if (tab !== "google_form_activation_inter") return;
+    syncInterMutRef.current.mutate();
+    const timer = setInterval(() => syncInterMutRef.current.mutate(), 30_000);
+    return () => clearInterval(timer);
+  }, [tab]);
+
 
   if (listError) {
     return (
