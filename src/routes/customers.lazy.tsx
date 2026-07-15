@@ -1365,6 +1365,7 @@ function CustomersPage() {
   }
 
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
+  const SHEET_URL_INTER = "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
 
   return (
     <div className="space-y-5">
@@ -1390,6 +1391,26 @@ function CustomersPage() {
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending ? "animate-spin" : ""}`} />
                   구글폼 동기화
+                </Button>
+              </>
+            )}
+            {tab === "google_form_activation_inter" && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={SHEET_URL_INTER} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-1 h-4 w-4" /> 구글폼 인터 시트
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncGoogleFormInterMut.mutate()}
+                  disabled={syncGoogleFormInterMut.isPending}
+                  aria-busy={syncGoogleFormInterMut.isPending}
+                  title="구글폼 인터 응답을 지금 동기화합니다 (30초마다 자동 동기화)"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
+                  구글폼 인터 동기화
                 </Button>
               </>
             )}
