@@ -373,6 +373,7 @@ export type Database = {
           id: string
           name: string
           phone: string
+          source: string
           synced_at: string
           timestamp_raw: string
         }
@@ -384,6 +385,7 @@ export type Database = {
           id?: string
           name: string
           phone: string
+          source?: string
           synced_at?: string
           timestamp_raw: string
         }
@@ -395,6 +397,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string
+          source?: string
           synced_at?: string
           timestamp_raw?: string
         }
