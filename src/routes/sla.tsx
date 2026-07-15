@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, RotateCcw, Pencil, Ban, History, Clock } from "lucide-react";
@@ -24,7 +25,7 @@ import {
 import { STATUS_LABEL } from "@/lib/labels";
 
 export const Route = createFileRoute("/sla")({
-  head: () => ({ meta: [{ title: "SLA 관리 — Hanpass OB CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.sla") }] }),
   component: SlaPage,
 });
 

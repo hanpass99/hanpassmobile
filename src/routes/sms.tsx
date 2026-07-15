@@ -1,8 +1,9 @@
+import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/sms")({
-  head: () => ({ meta: [{ title: "문자 발송 — Hanpass OB CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.sms") }] }),
   pendingComponent: SmsPending,
 });
 

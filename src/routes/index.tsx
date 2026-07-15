@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   PhoneCall, TrendingUp, Award, CalendarIcon, Globe2, Inbox, AlertTriangle,
@@ -26,7 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSlaViolationCount } from "@/hooks/use-sla";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "대시보드 — Hanpass Mobile OB Call CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.dashboard") }] }),
   loader: ({ context: { queryClient } }) => {
     const today = new Date();
     const from = new Date(today.getFullYear(), today.getMonth(), 1);

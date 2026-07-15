@@ -1,4 +1,16 @@
-// 한패스 OB CRM — DB enum과 한국어 라벨 매핑
+// 한패스 OB CRM — DB enum ↔ i18n 라벨 매핑
+// 라벨 문자열은 i18n(ko/en)에서 동적으로 조회합니다.
+// Proxy를 사용해 기존 호출 패턴(LABEL[key])을 그대로 유지하면서 언어 전환에 반응합니다.
+import i18n from "@/i18n";
+
+function i18nMap<K extends string>(prefix: string) {
+  return new Proxy({} as Record<K, string>, {
+    get: (_t, key: string) => i18n.t(`${prefix}.${key}`),
+    // 배열/객체 순회용 (Object.keys 등)
+    ownKeys: () => [],
+    getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true }),
+  });
+}
 
 export const CALL_RESULTS = [
   "no_answer",
@@ -11,15 +23,7 @@ export const CALL_RESULTS = [
 ] as const;
 export type CallResult = (typeof CALL_RESULTS)[number];
 
-export const CALL_RESULT_LABEL: Record<CallResult, string> = {
-  no_answer: "부재중",
-  wrong_number: "번호 오류",
-  callback: "재연락 예정",
-  not_interested: "관심 없음",
-  interested: "성공(관심)",
-  activated: "개통 완료",
-  failed: "실패",
-};
+export const CALL_RESULT_LABEL = i18nMap<CallResult>("callResult");
 
 // 새 10종 상태값 (사용자 요청 순서)
 export const CUSTOMER_STATUSES = [
@@ -40,22 +44,7 @@ export const CUSTOMER_STATUSES = [
 ] as const;
 export type CustomerStatus = (typeof CUSTOMER_STATUSES)[number];
 
-export const STATUS_LABEL: Record<CustomerStatus, string> = {
-  new: "미처리",
-  in_progress: "진행중",
-  no_answer: "부재",
-  unreachable: "전화 안 받음",
-  not_interested: "관심 없음",
-  callback: "재연락 요청",
-  activated: "개통 완료",
-  stay_expired: "체류 기간 만료",
-  delinquent: "체납자",
-  line_exceeded: "회선 초과",
-  minor: "미성년자",
-  wrong_application: "오신청",
-  seasonal_worker: "계절 근로자",
-  suspended_number: "정지 번호",
-};
+export const STATUS_LABEL = i18nMap<CustomerStatus>("status");
 
 // 상태별 색상 — 파스텔톤, 13종 시각적 구분, 라이트/다크 모두 가독성 확보
 export const STATUS_CLASS: Record<CustomerStatus, string> = {
@@ -100,26 +89,8 @@ export const POOLS = [
 ] as const;
 export type CustomerPool = (typeof POOLS)[number];
 
-export const POOL_LABEL: Record<CustomerPool, string> = {
-  existing: "한패스 모바일 기존 고객",
-  activation_request: "개통 신청자",
-  google_form_activation: "구글폼 개통 신청자",
-  google_form_activation_inter: "구글폼 신청자 인터",
-  friend_referral: "친구 추천",
-  prepaid_charge: "한패스 앱으로 선불 충전자",
-  one_year_activation: "1년 개통자",
-};
-
-export const POOL_SHORT: Record<CustomerPool, string> = {
-  existing: "기존 고객",
-  activation_request: "개통 신청자",
-  google_form_activation: "구글폼 개통 신청자",
-  google_form_activation_inter: "구글폼 신청자 인터",
-  friend_referral: "친구 추천",
-  prepaid_charge: "선불 충전자",
-  one_year_activation: "1년 개통자",
-};
-
+export const POOL_LABEL = i18nMap<CustomerPool>("pool");
+export const POOL_SHORT = i18nMap<CustomerPool>("pool.short");
 
 // === 직원 출근 상태 ===
 export const ATTENDANCE_STATUSES = [
@@ -132,14 +103,7 @@ export const ATTENDANCE_STATUSES = [
 ] as const;
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 
-export const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
-  present: "출근",
-  day_off: "휴무",
-  annual_leave: "연차",
-  half_day: "반차",
-  training: "교육",
-  sick_leave: "병가",
-};
+export const ATTENDANCE_LABEL = i18nMap<AttendanceStatus>("attendance.status");
 
 export const ATTENDANCE_CLASS: Record<AttendanceStatus, string> = {
   present:      "bg-emerald-100 text-emerald-800 border-transparent dark:bg-emerald-900/40 dark:text-emerald-200",

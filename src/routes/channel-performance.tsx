@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
@@ -23,7 +24,7 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/channel-performance")({
-  head: () => ({ meta: [{ title: "채널별 성과 — Hanpass OB CRM" }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.channel") }] }),
   component: ChannelPerf,
 });
 

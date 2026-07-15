@@ -1,67 +1,59 @@
+# 전체 이중언어(ko/en) 전환 계획
 
-# 개통 신청자 SLA 관리 및 팀 벌금 시스템
+현재 앱은 i18n 스캐폴딩(`react-i18next` + `ko.ts`/`en.ts`)이 있지만, UI의 상당 부분이 파일 내에 한국어 문자열로 하드코딩되어 있어 언어를 바꿔도 그대로 한국어로 남습니다. 이번 작업으로 모든 사용자 노출 문자열을 번역 키로 옮깁니다.
 
-**적용 범위**: 고객 관리 > 개통 신청자 (`pool = 'activation_request'`) 탭 전용. 기존 고객/신규 가입자에는 미적용.
-**팀 단위**: 국가(country_id) 기준. 팀 = 고객의 국가(CIS, VN 등).
+## 대상 범위
 
----
+**공용 (전 페이지에 영향)**
+- `src/lib/labels.ts` — 상태/풀/출근 라벨 (지금은 한국어 상수). `t()`를 쓸 수 있는 함수 형태로 리팩터.
+- `src/components/AppSidebar.tsx` — `"문자 발송"`, `"SLA 관리"` 하드코딩 제거.
+- `src/components/ErrorBoundary.tsx` — 오류 화면 문구.
+- 각 라우트의 `head()` meta title (탭/공유 제목).
 
-## 1. SLA 규칙
+**페이지 (거의 전체 하드코딩)**
+- `routes/sla.tsx` — SLA 관리 (탭·컬럼·다이얼로그·토스트 100%)
+- `routes/settings.tsx` — 설정
+- `routes/attendance.tsx` — 출근 관리
+- `routes/channel-performance.tsx` — 채널 성과
+- `routes/index.tsx` — 대시보드 잔여
+- `routes/customers.tsx` + `routes/customers.lazy.tsx` — 고객 관리 (가장 큼, 2400줄)
+- `routes/sms.tsx` + `routes/sms.lazy.tsx` — 문자 발송
+- `routes/auth.tsx`, `routes/reset-password.tsx` — 인증 잔여
 
-| 상태 | 기준 시간 | 일 벌금 |
-|---|---|---|
-| 미처리 (new) | 고객 등록 후 24h | ₩5,000 |
-| 진행중 (in_progress) | 상태 변경 후 48h | ₩3,000 |
-| 부재 (absent) | 상태 변경 후 48h | ₩5,000 |
+**메시지**
+- 모든 `toast.success/error("...")` 문자열
+- confirm/alert 다이얼로그 문구
 
-- 기준 시점: `new`는 `imported_at`, 나머지는 `status_changed_at`.
-- 초과 후 매일 자동 누적 (경과 일수 × 일 벌금).
+## 진행 순서
 
-## 2. DB 변경 (migration)
+크기 때문에 이 대화에서 **여러 턴**에 나눠 커밋하겠습니다. 순서:
 
-- `sla_config` 테이블: 상태별 SLA 시간/일 벌금 (관리자가 수정 가능하도록 확장 대비).
-- `sla_fine_adjustments` 테이블: 팀별·기간별 관리자 조정 (초기화/수정/면제) 기록.
-  - `country_id`, `period_start`, `period_end`, `adjustment_type` (`reset`|`override`|`waive`), `amount`, `reason`, `admin_id`, `created_at`.
-- `sla_audit_log` 테이블: 모든 조정 이력.
-- View `activation_request_sla_status`: 개통 신청자 중 SLA 대상 상태(new/in_progress/absent)의 현재 위반 여부 + 초과 일수 + 누적 벌금.
-- RPC 함수:
-  - `sla_violations_list(_country_ids uuid[], _date_from, _date_to)` — 개별 고객 위반 목록.
-  - `sla_team_summary(_date_from, _date_to)` — 팀별 위반 건수 + 기간 벌금 (오늘/주/월).
-  - `sla_dashboard_total()` — 현재 SLA 위반 총 건수 (대시보드 카드용).
-  - `admin_sla_reset_fine`, `admin_sla_override_fine`, `admin_sla_waive_fine` (SECURITY DEFINER + has_role admin 체크, 이력 자동 기록).
-- Realtime: `customers`, `sla_fine_adjustments` 테이블 publication에 추가.
+1. **1턴 (기반):** `ko.ts`/`en.ts`에 새 네임스페이스(`sla`, `errors`, `head`, `labels`, 페이지별 확장) 대량 추가. `labels.ts`를 `t()` 기반 함수로 전환. `AppSidebar`, `ErrorBoundary`, 각 라우트 `head()` 수정.
+2. **2턴:** `sla.tsx` 전체 번역.
+3. **3턴:** `settings.tsx` 전체 번역.
+4. **4턴:** `attendance.tsx` + `channel-performance.tsx` + `index.tsx` 잔여.
+5. **5턴:** `customers.tsx` + `customers.lazy.tsx` 전체 번역 (가장 큼).
+6. **6턴:** `sms.tsx` + `sms.lazy.tsx` + `auth.tsx` + `reset-password.tsx` 잔여.
+7. **7턴 (검증):** `rg '[가-힣]'`로 UI 코드에서 한국어 잔여 없는지 확인 + 프리뷰에서 언어 스위치 스모크 테스트.
 
-## 3. 프론트엔드
+## 기술 세부사항
 
-**신규 라우트**: `/sla`
-- 사이드바에 "SLA 관리" 메뉴 추가 (개통 신청자 접근 권한 있는 사용자에게 표시).
-- 페이지 구성:
-  1. 상단 요약: 오늘/이번 주/이번 달 팀별 벌금 카드
-  2. 팀별 테이블: 팀 | 미처리 SLA 초과 | 진행중 초과 | 부재 초과 | 총 위반 | 오늘 벌금 | 이번주 벌금 | 이번달 벌금
-  3. 위반 고객 상세 리스트 (팀 클릭 시 필터링, 고객 클릭 시 편집 다이얼로그 열림)
-  4. 관리자 전용: 벌금 초기화/수정/면제 액션 다이얼로그 + 이력 표시
+- `labels.ts`는 지금 `STATUS_LABELS: Record<Status, string>` 형태의 정적 맵인데, i18n 키를 반환하는 함수(`statusLabel(status, t)`) 또는 컴포넌트에서 `t('status.'+key)`를 직접 부르는 방식으로 바꿉니다. 후자가 렌더러가 언어 변경 시 자동 재렌더링되어 더 안전.
+- `head()` meta 값은 라우트 로드 시점에 계산되어 언어 변경에 반응하지 않습니다. 이건 정상 한계이며, 초기 로드 시의 언어(`localStorage.lang`)를 기준으로 결정되도록 `i18n.t()`를 사용합니다.
+- 토스트 문자열의 동적 값(`${msg}`)은 `t('key', { msg })` 보간으로 옮깁니다.
+- 새 키는 페이지별 네임스페이스(`sla.*`, `settings.*` 확장 등)로 정리해 유지보수하기 쉽게 합니다.
 
-**대시보드 카드 추가** (`routes/index.tsx`):
-- "⚠ SLA 위반" 카드 → 클릭 시 `/customers?pool=activation_request&sla=violated`로 이동.
-- `customers` 페이지에 `sla` search param 추가 → SLA 위반 고객만 필터링.
+## 검증
 
-**실시간**: `/sla` 페이지에서 `customers` 및 `sla_fine_adjustments` 채널 구독 → 관련 쿼리 invalidate.
+- 각 턴 종료 시 빌드 통과 확인.
+- 마지막에 `rg -n '[가-힣]' src/ -g '!i18n/**' -g '!integrations/**' -g '!*.gen.ts' -g '!lib/google-form-sync*'` 결과가 주석/개발자 로그만 남는지 확인.
+- 프리뷰에서 언어 토글 시 사이드바·SLA·설정·고객 페이지가 즉시 영어로 바뀌는지 시각 확인.
 
-**훅**: `src/hooks/use-sla.ts`
-- `useSlaTeamSummary`, `useSlaViolations`, `useSlaDashboardTotal`, admin mutation 훅.
+## 안 하는 것
 
-## 4. 표시 UI
+- 서버(supabase functions, migrations) 내 한국어 로그/주석은 UI에 노출되지 않으므로 건드리지 않음.
+- 소스코드 주석의 한국어는 그대로 둠.
+- `google-form-sync.functions.ts`의 서버 로그 문자열은 건드리지 않음.
+- 이메일 템플릿·PDF 등 별도 채널은 이번 범위 밖.
 
-- 개통 신청자 리스트에서 SLA 위반 행에 경고 배지(빨강/노랑) 표시.
-- 상태 뱃지 옆 경과 시간 툴팁.
-
-## 5. 관리자 기능
-
-- role='admin'만 벌금 초기화/수정/면제 버튼 노출.
-- 모든 조정은 `sla_audit_log`에 기록되어 `/sla` 하단 "변경 이력" 섹션에 표시.
-
-## 기술 요약
-
-- SQL migration으로 테이블/함수/publication 생성 후 승인.
-- 이후 프론트엔드 코드(routes, hooks, sidebar, dashboard card, customers filter) 작성.
-- 벌금 계산은 서버측 SQL에서 수행 (프론트 계산 없음).
+이 계획으로 진행할까요? 승인해주시면 1턴부터 커밋합니다.
