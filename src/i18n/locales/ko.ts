@@ -19,6 +19,11 @@ export default {
     title: "문제가 발생했습니다",
     unknown: "예기치 못한 오류가 발생했습니다.",
     retry: "다시 시도",
+    notFoundTitle: "페이지를 찾을 수 없습니다",
+    notFoundDesc: "요청하신 페이지가 존재하지 않습니다.",
+    home: "홈으로",
+    errorTitle: "오류가 발생했습니다",
+    loading: "불러오는 중...",
   },
   callResult: {
     no_answer: "부재중",

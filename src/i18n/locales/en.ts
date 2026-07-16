@@ -19,6 +19,11 @@ export default {
     title: "Something went wrong",
     unknown: "An unexpected error occurred.",
     retry: "Try again",
+    notFoundTitle: "Page not found",
+    notFoundDesc: "The page you requested does not exist.",
+    home: "Home",
+    errorTitle: "Something went wrong",
+    loading: "Loading...",
   },
   callResult: {
     no_answer: "No answer",
