@@ -1208,21 +1208,21 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
-              <TableHead>판매점</TableHead>
-              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
-              <TableHead>구분</TableHead>
-              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통번호</SortHead>
-              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
-              <TableHead>생년월일</TableHead>
-              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
-              <TableHead className="whitespace-nowrap">1년 만기</TableHead>
-              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>요금제</SortHead>
-              <TableHead>월요금</TableHead>
-              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
-              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
+              <TableHead>{t("customers.col.storeName")}</TableHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.customerName")}</SortHead>
+              <TableHead>{t("customers.col.customerType")}</TableHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationNumber")}</SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
+              <TableHead>{t("customers.col.birthDate")}</TableHead>
+              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationDate")}</SortHead>
+              <TableHead className="whitespace-nowrap">{t("customers.col.oneYearMaturity")}</TableHead>
+              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.carrierPlan")}</SortHead>
+              <TableHead>{t("customers.col.monthlyFee")}</TableHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
+              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
               {CallRoundHead}
-              <TableHead>메모</TableHead>
-              <TableHead className="text-right">액션</TableHead>
+              <TableHead>{t("customers.col.memo")}</TableHead>
+              <TableHead className="text-right">{t("customers.col.action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
