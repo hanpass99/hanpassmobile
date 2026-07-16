@@ -644,7 +644,7 @@ function CustomersPage() {
     const chunkSize = 100;
     const total = ids.length;
     let done = 0;
-    const toastId = toast.loading(`상태 변경 중... (0/${total})`);
+    const toastId = toast.loading(t("customers.toastStatusChangeLoading", { done: 0, total }));
     for (let i = 0; i < ids.length; i += chunkSize) {
       const chunk = ids.slice(i, i + chunkSize);
       const { error } = await supabase.from("customers").update(patch).in("id", chunk);
@@ -655,7 +655,7 @@ function CustomersPage() {
         return toast.error(error.message);
       }
       done += chunk.length;
-      toast.loading(`상태 변경 중... (${done}/${total})`, { id: toastId });
+      toast.loading(t("customers.toastStatusChangeLoading", { done, total }), { id: toastId });
     }
     toast.dismiss(toastId);
     setBulkStatusRunning(false);
@@ -686,7 +686,7 @@ function CustomersPage() {
   const onUpload = async (file: File) => {
     importingRef.current = true;
     setImporting(true);
-    const toastId = toast.loading("엑셀 파싱 중...");
+    const toastId = toast.loading(t("customers.toastExcelParsing"));
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array", cellDates: true });
@@ -830,7 +830,7 @@ function CustomersPage() {
         .filter((x): x is ImportCustomer => x !== null);
 
       if (!parsed.length) {
-        toast.error(`업로드할 데이터가 없습니다. (파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
+        toast.error(t("customers.toastNoUploadDataDetail", { dup: dupInFile, n: invalid }), { id: toastId });
         return;
       }
 
@@ -868,11 +868,13 @@ function CustomersPage() {
             if (!error) insertedCnt++;
           }
           if ((i + 1) % 25 === 0) {
-            toast.loading(`처리 중 ${i + 1}/${finalPayload.length}`, { id: toastId });
+            toast.loading(t("customers.toastProcessing", { i: i + 1, total: finalPayload.length }), { id: toastId });
           }
         }
         toast.success(
-          `기존 ${updated.toLocaleString()}건 pool 변경 / 신규 ${insertedCnt.toLocaleString()}건 추가${dupInFile ? ` / 파일내중복 ${dupInFile}건` : ""}${invalid ? ` / 누락 ${invalid}건` : ""}`,
+          t("customers.toastPoolUpdated", { updated: updated.toLocaleString(), new: insertedCnt.toLocaleString() })
+            + (dupInFile ? t("customers.toastFileDup", { n: dupInFile }) : "")
+            + (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
           { id: toastId }
         );
         await refetchPoolCounts();
@@ -889,24 +891,25 @@ function CustomersPage() {
         const chunk = finalPayload.slice(i, i + insertChunkSize);
         const { error } = await supabase.from("customers").insert(chunk);
         if (error) {
-          toast.error(`업로드 중단 (${inserted}/${totalToInsert} 완료): ${error.message}`, { id: toastId });
+          toast.error(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: error.message }), { id: toastId });
           await refetchPoolCounts();
           setPage(1);
           await refetchList();
           return;
         }
         inserted += chunk.length;
-        toast.loading(`업로드 중 ${inserted.toLocaleString()}/${totalToInsert.toLocaleString()}`, { id: toastId });
+        toast.loading(t("customers.toastUploading", { done: inserted.toLocaleString(), total: totalToInsert.toLocaleString() }), { id: toastId });
       }
       toast.success(
-        `${inserted.toLocaleString()}명 추가 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
+        t("customers.toastAddedFileDup", { n: inserted.toLocaleString(), dup: dupInFile })
+          + (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
         { id: toastId }
       );
       await refetchPoolCounts();
       setPage(1);
       await refetchList();
     } catch (e: any) {
-      toast.error(`엑셀 파싱 실패: ${e.message}`, { id: toastId });
+      toast.error(t("customers.toastExcelParseFail", { msg: e.message }), { id: toastId });
     } finally {
       importingRef.current = false;
       setImporting(false);
