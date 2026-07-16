@@ -394,7 +394,7 @@ function CustomersPage() {
   });
 
   useEffect(() => {
-    if (listError) toast.error(`고객 로드 실패: ${(listError as Error).message}`);
+    if (listError) toast.error(t("customers.loadFailed", { msg: (listError as Error).message }));
   }, [listError]);
 
   // 페이지 전환 시 선택 초기화
@@ -544,7 +544,7 @@ function CustomersPage() {
       load();
       return;
     }
-    toast.success(t("dashboard.callRound") + " " + (value ? `${value}차` : t("dashboard.roundNone")));
+    toast.success(t("dashboard.callRound") + " " + (value ? t("customers.orderNth", { n: value }) : t("dashboard.roundNone")));
   };
 
   const changeCountry = async (id: string, countryId: string | null) => {
@@ -556,7 +556,7 @@ function CustomersPage() {
       load();
       return;
     }
-    toast.success("국적 변경됨");
+    toast.success(t("customers.toastCountryChanged"));
   };
 
   const changeAssigned = async (id: string, userId: string | null) => {
@@ -568,7 +568,7 @@ function CustomersPage() {
       load();
       return;
     }
-    toast.success("담당자 변경됨");
+    toast.success(t("customers.toastAssignedChanged"));
   };
 
   const deleteCustomer = async () => {
@@ -609,14 +609,14 @@ function CustomersPage() {
     if (!isAdmin) return;
     const p: CustomerPool = (tab === "all" ? "existing" : tab) as CustomerPool;
     setDeleteAllRunning(true);
-    const toastId = toast.loading(`${POOL_LABEL[p]} 전체 삭제 중...`);
+    const toastId = toast.loading(t("customers.toastPoolDeleteLoading", { pool: POOL_LABEL[p] }));
     try {
       const { error } = await supabase.from("customers").delete().eq("pool", p);
       if (error) {
-        toast.error(`삭제 실패: ${error.message}`, { id: toastId });
+        toast.error(t("customers.toastDeleteFail", { msg: error.message }), { id: toastId });
         return;
       }
-      toast.success(`${POOL_LABEL[p]} 전체 삭제 완료`, { id: toastId });
+      toast.success(t("customers.toastPoolDeleteDone", { pool: POOL_LABEL[p] }), { id: toastId });
       setDeleteAllOpen(false);
       setDeleteAllConfirm("");
       setSelected(new Set());
