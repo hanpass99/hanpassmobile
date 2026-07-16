@@ -1305,15 +1305,15 @@ function CustomersPage() {
     mutationFn: () => syncGoogleFormFn(),
     onSuccess: (r) => {
       if (r.inserted > 0) {
-        toast.success(`구글폼: ${r.inserted}건 새로 등록되었습니다.`);
+        toast.success(t("customers.googleFormSynced", { n: r.inserted }));
         void refetchList();
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(`구글폼 동기화 오류: ${r.errors[0]}`);
+        toast.error(t("customers.googleFormSyncErr", { msg: r.errors[0] }));
       }
     },
-    onError: (e: Error) => toast.error(`구글폼 동기화 실패: ${e.message}`),
+    onError: (e: Error) => toast.error(t("customers.googleFormSyncFail", { msg: e.message })),
   });
   const syncMutRef = useRef(syncGoogleFormMut);
   syncMutRef.current = syncGoogleFormMut;
@@ -1330,15 +1330,15 @@ function CustomersPage() {
     mutationFn: () => syncGoogleFormInterFn(),
     onSuccess: (r) => {
       if (r.inserted > 0) {
-        toast.success(`구글폼 인터: ${r.inserted}건 새로 등록되었습니다.`);
+        toast.success(t("customers.googleFormInterSynced", { n: r.inserted }));
         void refetchList();
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(`구글폼 인터 동기화 오류: ${r.errors[0]}`);
+        toast.error(t("customers.googleFormInterSyncErr", { msg: r.errors[0] }));
       }
     },
-    onError: (e: Error) => toast.error(`구글폼 인터 동기화 실패: ${e.message}`),
+    onError: (e: Error) => toast.error(t("customers.googleFormInterSyncFail", { msg: e.message })),
   });
   const syncInterMutRef = useRef(syncGoogleFormInterMut);
   syncInterMutRef.current = syncGoogleFormInterMut;
@@ -1353,13 +1353,13 @@ function CustomersPage() {
   if (listError) {
     return (
       <div className="space-y-5">
-        <PageHeader title="고객 관리" description="" />
+        <PageHeader title={t("customers.title")} description="" />
         <Card role="alert">
           <CardContent className="space-y-3 p-6 text-center">
-            <div className="text-sm font-semibold">고객 데이터를 불러오지 못했습니다</div>
+            <div className="text-sm font-semibold">{t("customers.loadFailedTitle")}</div>
             <div className="text-xs text-muted-foreground">{(listError as Error).message}</div>
             <Button onClick={() => void refetchList()} size="sm" aria-busy={listFetching}>
-              <RefreshCw className="mr-2 h-4 w-4" /> 다시 시도
+              <RefreshCw className="mr-2 h-4 w-4" /> {t("customers.retry")}
             </Button>
           </CardContent>
         </Card>
@@ -1373,15 +1373,15 @@ function CustomersPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="고객 관리"
-        description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · 표시 ${rows.length.toLocaleString()}건${loading?" · "+t("common.loading"):""}`}
+        title={t("customers.title")}
+        description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · ${t("customers.displayed",{n:rows.length.toLocaleString()})}${loading?" · "+t("common.loading"):""}`}
         actions={
           <div className="flex items-center gap-2">
             {tab === "google_form_activation" && (
               <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-1 h-4 w-4" /> 구글폼 시트
+                    <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.googleFormSheet")}
                   </a>
                 </Button>
                 <Button
@@ -1390,10 +1390,10 @@ function CustomersPage() {
                   onClick={() => syncGoogleFormMut.mutate()}
                   disabled={syncGoogleFormMut.isPending}
                   aria-busy={syncGoogleFormMut.isPending}
-                  title="구글폼 응답을 지금 동기화합니다 (30초마다 자동 동기화)"
+                  title={t("customers.googleFormSyncTitle")}
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending ? "animate-spin" : ""}`} />
-                  구글폼 동기화
+                  {t("customers.googleFormSync")}
                 </Button>
               </>
             )}
@@ -1401,7 +1401,7 @@ function CustomersPage() {
               <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL_INTER} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-1 h-4 w-4" /> 구글폼 인터 시트
+                    <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.googleFormInterSheet")}
                   </a>
                 </Button>
                 <Button
@@ -1410,10 +1410,10 @@ function CustomersPage() {
                   onClick={() => syncGoogleFormInterMut.mutate()}
                   disabled={syncGoogleFormInterMut.isPending}
                   aria-busy={syncGoogleFormInterMut.isPending}
-                  title="구글폼 인터 응답을 지금 동기화합니다 (30초마다 자동 동기화)"
+                  title={t("customers.googleFormInterSyncTitle")}
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
-                  구글폼 인터 동기화
+                  {t("customers.googleFormInterSync")}
                 </Button>
               </>
             )}
