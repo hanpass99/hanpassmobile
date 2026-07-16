@@ -87,6 +87,12 @@ export default {
     calls: "Calls",
     target: "Target",
     achievement: "Achievement",
+    loadError: "Failed to load dashboard data",
+    retry: "Try again",
+    basisDate: "basis",
+    slaViolationTitle: "⚠ SLA violations (activation requests)",
+    slaViolationHint: "Click to see customers over SLA and team fines",
+    pick: "Pick",
   },
   goal: {
     title: "Today's call goal",
@@ -210,6 +216,14 @@ export default {
   channelPerf: {
     title: "Channel performance", subtitle: "Customer status by acquisition channel",
     channel: "Channel", noChannel: "No channels yet.", unassigned: "Direct (no channel)",
+    showEmpty: "Show empty channels",
+    totalCustomers: "Total customers",
+    callCompleted: "Calls completed",
+    activationSuccess: "Activated",
+    overallActivationRate: "Overall activation rate",
+    chartTitle: "Customers vs activated by channel",
+    barCustomers: "Customers",
+    barActivated: "Activated",
   },
   reports: {
     title: "Reports",

@@ -87,6 +87,12 @@ export default {
     calls: "콜수",
     target: "목표",
     achievement: "달성률",
+    loadError: "대시보드 데이터를 불러오지 못했습니다",
+    retry: "다시 시도",
+    basisDate: "기준",
+    slaViolationTitle: "⚠ SLA 위반 (개통 신청자)",
+    slaViolationHint: "클릭하여 SLA 초과 고객 및 팀 벌금 확인",
+    pick: "선택",
   },
   goal: {
     title: "오늘의 콜 목표",
@@ -210,6 +216,14 @@ export default {
   channelPerf: {
     title: "채널별 성과", subtitle: "유입 채널별 고객 상태 통계",
     channel: "채널명", noChannel: "채널이 없습니다.", unassigned: "직접 등록 (채널 미지정)",
+    showEmpty: "빈 채널 표시",
+    totalCustomers: "전체 고객",
+    callCompleted: "콜 완료",
+    activationSuccess: "개통 성공",
+    overallActivationRate: "전체 개통 성공률",
+    chartTitle: "채널별 고객 수 / 개통 성공",
+    barCustomers: "고객 수",
+    barActivated: "개통 성공",
   },
   reports: {
     title: "리포트",
