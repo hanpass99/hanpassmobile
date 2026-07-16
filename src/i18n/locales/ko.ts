@@ -251,7 +251,6 @@ export default {
     chipStatus: "상태: {{value}}",
     chipStaff: "담당자: {{value}}",
     chipCallRound: "콜 라운드: {{value}}",
-    },
   },
   memo: {
     title: "메모",
