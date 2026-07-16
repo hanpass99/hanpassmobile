@@ -1461,10 +1461,10 @@ function CustomersPage() {
                             <Upload className="mr-2 h-4 w-4" /> {importing ? t("customers.uploading") : t("customers.excelUpload")}
                           </Button>
                           <Button variant="outline" size="sm" onClick={downloadFiltered} disabled={downloading} aria-busy={downloading}>
-                            <FileSpreadsheet className="mr-2 h-4 w-4" /> {downloading ? "다운로드 중..." : "엑셀 다운로드"}
+                            <FileSpreadsheet className="mr-2 h-4 w-4" /> {downloading ? t("customers.downloadingLabel") : t("customers.excelDownload")}
                           </Button>
                           <Button variant="destructive" size="sm" onClick={() => { setDeleteAllConfirm(""); setDeleteAllOpen(true); }}>
-                            <Trash2 className="mr-2 h-4 w-4" /> 탭 전체 삭제
+                            <Trash2 className="mr-2 h-4 w-4" /> {t("customers.tabDeleteAll")}
                           </Button>
                         </>
                       )}
@@ -1567,29 +1567,29 @@ function CustomersPage() {
                 {(() => {
                   const chips: { key: string; label: string; onRemove: () => void }[] = [];
                   if (debouncedSearch.trim()) {
-                    chips.push({ key: "search", label: `검색: ${debouncedSearch.trim()}`, onRemove: () => setSearchInput("") });
+                    chips.push({ key: "search", label: t("customers.chipSearch", { value: debouncedSearch.trim() }), onRemove: () => setSearchInput("") });
                   }
                   if (countryIds.length > 0) {
                     const codes = countryIds.map((id) => countryById.get(id)?.code ?? id).join(", ");
-                    chips.push({ key: "country", label: `국적: ${codes}`, onRemove: () => setCountryIds([]) });
+                    chips.push({ key: "country", label: t("customers.chipCountry", { value: codes }), onRemove: () => setCountryIds([]) });
                   }
                   if (statusF !== "all") {
                     const statusLabel = statusF === "__call_completed__" ? t("dashboard.callCompleted") : STATUS_LABEL[statusF as CustomerStatus];
-                    chips.push({ key: "status", label: `상태: ${statusLabel}`, onRemove: () => setStatusF("all") });
+                    chips.push({ key: "status", label: t("customers.chipStatus", { value: statusLabel }), onRemove: () => setStatusF("all") });
                   }
                   if (staffF !== "all") {
                     const name = staffF === "__none__" ? t("common.unassigned") : (staffById.get(staffF) ?? staffF);
-                    chips.push({ key: "staff", label: `담당자: ${name}`, onRemove: () => setStaffF("all") });
+                    chips.push({ key: "staff", label: t("customers.chipStaff", { value: name }), onRemove: () => setStaffF("all") });
                   }
                   if (callRoundF !== "all") {
-                    const roundLabel = callRoundF === "none" ? t("dashboard.roundNone") : `${callRoundF}차`;
-                    chips.push({ key: "callRound", label: `콜 라운드: ${roundLabel}`, onRemove: () => setCallRoundF("all") });
+                    const roundLabel = callRoundF === "none" ? t("dashboard.roundNone") : t("customers.orderNth", { n: callRoundF });
+                    chips.push({ key: "callRound", label: t("customers.chipCallRound", { value: roundLabel }), onRemove: () => setCallRoundF("all") });
                   }
                   if (dateFrom) {
-                    chips.push({ key: "dateFrom", label: `등록일 시작: ${format(dateFrom, "yyyy-MM-dd")}`, onRemove: () => setDateFrom(undefined) });
+                    chips.push({ key: "dateFrom", label: t("customers.chipDateFrom", { value: format(dateFrom, "yyyy-MM-dd") }), onRemove: () => setDateFrom(undefined) });
                   }
                   if (dateTo) {
-                    chips.push({ key: "dateTo", label: `등록일 종료: ${format(dateTo, "yyyy-MM-dd")}`, onRemove: () => setDateTo(undefined) });
+                    chips.push({ key: "dateTo", label: t("customers.chipDateTo", { value: format(dateTo, "yyyy-MM-dd") }), onRemove: () => setDateTo(undefined) });
                   }
                   if (!chips.length) return null;
                   return (
@@ -1604,7 +1604,7 @@ function CustomersPage() {
                             type="button"
                             onClick={chip.onRemove}
                             className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-                            aria-label={`${chip.label} 제거`}
+                            aria-label={t("customers.chipRemove", { label: chip.label })}
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -1623,7 +1623,7 @@ function CustomersPage() {
                         }}
                         className="rounded-full border border-dashed px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground"
                       >
-                        전체 초기화
+                        {t("customers.resetAll")}
                       </button>
                     </div>
                   );
@@ -1631,9 +1631,9 @@ function CustomersPage() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground">{t("common.registeredDate")}</span>
-                  <DateRangePicker label="시작" value={dateFrom} onChange={setDateFrom} />
+                  <DateRangePicker label={t("customers.startLabel")} value={dateFrom} onChange={setDateFrom} />
                   <span className="text-xs text-muted-foreground">~</span>
-                  <DateRangePicker label="종료" value={dateTo} onChange={setDateTo} />
+                  <DateRangePicker label={t("customers.endLabel")} value={dateTo} onChange={setDateTo} />
                   {(dateFrom || dateTo) && (
                     <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
                       {t("common.reset")}
@@ -1642,7 +1642,7 @@ function CustomersPage() {
                   {isAdmin && selected.size > 0 && tab === p && (
                     <div className="ml-auto flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => setBulkStatusOpen(true)}>
-                        {selected.size}건 상태 변경
+                        {t("customers.bulkStatusChangeBtn", { count: selected.size })}
                       </Button>
                       <Button variant="destructive" size="sm" onClick={() => setBulkOpen(true)}>
                         <Trash2 className="mr-2 h-4 w-4" /> {t("customers.bulkDeleteBtn",{count:selected.size})}
@@ -1663,9 +1663,9 @@ function CustomersPage() {
                           className="rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs hover:bg-muted"
                         >
                           <span className="font-medium">{s.name}</span>
-                          <span className="ml-2 text-muted-foreground">총 {s.total}</span>
-                          <span className="ml-1.5 text-success">개통 {s.activated}</span>
-                          <span className="ml-1.5 text-info">진행 {s.in_progress}</span>
+                          <span className="ml-2 text-muted-foreground">{t("customers.staffTotal", { n: s.total })}</span>
+                          <span className="ml-1.5 text-success">{t("customers.staffActivated", { n: s.activated })}</span>
+                          <span className="ml-1.5 text-info">{t("customers.staffProgress", { n: s.in_progress })}</span>
                         </button>
                       ))}
                     </div>
