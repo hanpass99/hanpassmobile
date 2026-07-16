@@ -2181,7 +2181,7 @@ function CustomerDetailSheet({
     setSaving(false);
     if (error) return toast.error(error.message);
     onSaved(form);
-    toast.success("저장됨");
+    toast.success(t("customers.detail.saved"));
   };
 
   return (
@@ -2203,7 +2203,7 @@ function CustomerDetailSheet({
         </SheetHeader>
 
         <div className="mt-4 space-y-2">
-          <Label>상태 변경</Label>
+          <Label>{t("customers.detail.changeStatus")}</Label>
           <Select value={customer.status} onValueChange={(v) => onChangeStatus(customer.id, v as CustomerStatus)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -2216,45 +2216,45 @@ function CustomerDetailSheet({
 
         <Tabs defaultValue="info" className="mt-4">
           <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
-            <TabsTrigger value="info" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">정보</TabsTrigger>
-            <TabsTrigger value="memo" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">메모</TabsTrigger>
-            <TabsTrigger value="calls" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">📞 콜 기록</TabsTrigger>
+            <TabsTrigger value="info" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabInfo")}</TabsTrigger>
+            <TabsTrigger value="memo" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabMemo")}</TabsTrigger>
+            <TabsTrigger value="calls" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabCalls")}</TabsTrigger>
           </TabsList>
 
 
           <TabsContent value="info" className="space-y-3 pt-3">
             <div className="space-y-2">
-              <Label>이름</Label>
+              <Label>{t("customers.detail.name")}</Label>
               <Input value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>전화번호</Label>
+              <Label>{t("customers.detail.phone")}</Label>
               <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>이메일</Label>
+              <Label>{t("customers.detail.email")}</Label>
               <Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value || null })} />
             </div>
             <div className="space-y-2">
-              <Label>국가</Label>
+              <Label>{t("customers.detail.country")}</Label>
               <Select value={form.country_id ?? ""} onValueChange={(v) => setForm({ ...form, country_id: v || null })}>
-                <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
                 <SelectContent>
                   {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>채널</Label>
+              <Label>{t("customers.detail.channel")}</Label>
               <Select value={form.channel_id ?? ""} onValueChange={(v) => setForm({ ...form, channel_id: v || null })}>
-                <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
                 <SelectContent>
                   {channels.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Pool</Label>
+              <Label>{t("customers.detail.pool")}</Label>
               <Select value={form.pool ?? customer.pool} onValueChange={(v) => setForm({ ...form, pool: v as CustomerPool })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -2263,11 +2263,11 @@ function CustomerDetailSheet({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>메모(notes)</Label>
+              <Label>{t("customers.detail.notes")}</Label>
               <Textarea rows={3} value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value || null })} />
             </div>
             <div className="flex justify-end pt-2">
-              <Button onClick={save} disabled={saving}>{saving ? "저장 중..." : "저장"}</Button>
+              <Button onClick={save} disabled={saving}>{saving ? t("customers.detail.saving") : t("customers.detail.save")}</Button>
             </div>
           </TabsContent>
 
