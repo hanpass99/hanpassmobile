@@ -2152,7 +2152,10 @@ function CustomerDetailSheet({
   onCall: (c: CustomerRow) => void;
 }) {
   const { t } = useTranslation();
+  const { t } = useTranslation();
+  const [form, setForm] = useState<CustomerPatch>({});
   const [saving, setSaving] = useState(false);
+
 
   useEffect(() => {
     if (customer) {
