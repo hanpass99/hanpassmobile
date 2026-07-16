@@ -289,6 +289,12 @@ export default {
     photoFailed: "Photo upload failed: {{msg}}",
     photoSizeLimit: "Image must be 5MB or smaller",
     removePhoto: "Remove photo",
+    newSignupAccess: "New signup access",
+    accessAllowedAll: "All allowed",
+    accessAllowed: "Allowed",
+    accessBlocked: "Blocked",
+    newSignupAllowed: "New signup access allowed",
+    newSignupBlocked: "New signup access blocked",
   },
   auth: {
     loginTitle: "Admin sign-in",

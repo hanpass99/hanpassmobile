@@ -289,6 +289,12 @@ export default {
     photoFailed: "사진 업로드 실패: {{msg}}",
     photoSizeLimit: "이미지는 5MB 이하만 업로드 가능합니다",
     removePhoto: "사진 삭제",
+    newSignupAccess: "신규 가입자 접근",
+    accessAllowedAll: "전체 허용",
+    accessAllowed: "허용",
+    accessBlocked: "차단",
+    newSignupAllowed: "신규 가입자 접근 허용",
+    newSignupBlocked: "신규 가입자 접근 차단",
   },
   auth: {
     loginTitle: "관리자 로그인",
