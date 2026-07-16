@@ -127,22 +127,22 @@ function ChannelPerf() {
           )}
           <label className="ml-auto flex items-center gap-2 text-sm cursor-pointer select-none">
             <Checkbox checked={showEmpty} onCheckedChange={(v) => setShowEmpty(v === true)} />
-            빈 채널 표시
+            {t("channelPerf.showEmpty")}
           </label>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="전체 고객" value={totals.total.toLocaleString()} icon={Users} tone="muted" />
-        <StatCard label="콜 완료" value={totals.callCompleted.toLocaleString()} icon={PhoneCall} tone="info" />
-        <StatCard label="개통 성공" value={totals.activated.toLocaleString()} icon={CheckCircle2} tone="primary" />
-        <StatCard label="전체 개통 성공률" value={`${totals.rate.toFixed(1)}%`} icon={TrendingUp} tone="success" />
+        <StatCard label={t("channelPerf.totalCustomers")} value={totals.total.toLocaleString()} icon={Users} tone="muted" />
+        <StatCard label={t("channelPerf.callCompleted")} value={totals.callCompleted.toLocaleString()} icon={PhoneCall} tone="info" />
+        <StatCard label={t("channelPerf.activationSuccess")} value={totals.activated.toLocaleString()} icon={CheckCircle2} tone="primary" />
+        <StatCard label={t("channelPerf.overallActivationRate")} value={`${totals.rate.toFixed(1)}%`} icon={TrendingUp} tone="success" />
       </div>
 
       {chartData.length > 0 && (
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm font-semibold mb-3">채널별 고객 수 / 개통 성공</div>
+            <div className="text-sm font-semibold mb-3">{t("channelPerf.chartTitle")}</div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
@@ -151,8 +151,9 @@ function ChannelPerf() {
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="total" name="고객 수" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="activated" name="개통 성공" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="total" name={t("channelPerf.barCustomers")} fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="activated" name={t("channelPerf.barActivated")} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+
                 </BarChart>
               </ResponsiveContainer>
             </div>
