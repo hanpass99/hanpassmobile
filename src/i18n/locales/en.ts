@@ -312,6 +312,22 @@ export default {
       saving: "Saving...",
       saved: "Saved",
     },
+    add: {
+      title: "Add customer",
+      applicationRequired: "Application date and requested plan are required",
+      planPlaceholder: "e.g. 5G Standard Essential",
+      cancel: "Cancel",
+      save: "Save",
+      saving: "Saving...",
+    },
+    quickCall: {
+      title: "Log call result — {{name}}",
+      loginRequired: "Sign-in required",
+      callNotes: "Call notes...",
+      dontSave: "Don't save",
+      save: "Save",
+    },
+    memoTab: "Memo",
   },
   memo: {
     title: "Memo",

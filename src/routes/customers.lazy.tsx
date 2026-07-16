@@ -2296,6 +2296,7 @@ function AddCustomerDialog({
   defaultPool: CustomerPool;
   visiblePools: readonly CustomerPool[];
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -2316,9 +2317,9 @@ function AddCustomerDialog({
   }, [open, defaultPool]);
 
   const save = async () => {
-    if (!name || !phone) return toast.error("이름과 전화번호는 필수입니다");
+    if (!name || !phone) return toast.error(t("customers.required"));
     if (requiresApplication && (!applicationDate || !requestedPlan.trim())) {
-      return toast.error("신청일과 신청 요금제는 필수입니다");
+      return toast.error(t("customers.add.applicationRequired"));
     }
     setSaving(true);
     const { error } = await supabase.from("customers").insert({
@@ -2331,29 +2332,29 @@ function AddCustomerDialog({
     });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("고객 추가됨");
+    toast.success(t("customers.customerAdded"));
     onAdded(); onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader><DialogTitle>고객 추가</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("customers.add.title")}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3 py-2">
           <div className="space-y-2">
-            <Label>이름 *</Label>
+            <Label>{t("customers.nameRequired")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>전화번호 *</Label>
+            <Label>{t("customers.phoneRequired")}</Label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
           <div className="col-span-2 space-y-2">
-            <Label>이메일</Label>
+            <Label>{t("customers.emailLabel")}</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Pool</Label>
+            <Label>{t("customers.poolLabel")}</Label>
             <Select value={pool} onValueChange={(v) => setPool(v as CustomerPool)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -2362,35 +2363,35 @@ function AddCustomerDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>국가</Label>
+            <Label>{t("customers.detail.country")}</Label>
             <Select value={countryId} onValueChange={setCountryId}>
-              <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
               <SelectContent>
                 {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="col-span-2 space-y-2">
-            <Label>채널</Label>
+            <Label>{t("customers.channelLabel")}</Label>
             <Select value={channelId} onValueChange={setChannelId}>
-              <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
               <SelectContent>
                 {channels.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>신청일 {requiresApplication && "*"}</Label>
+            <Label>{t("customers.applicationDate")} {requiresApplication && "*"}</Label>
             <Input type="date" value={applicationDate} onChange={(e) => setApplicationDate(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>신청 요금제 {requiresApplication && "*"}</Label>
-            <Input value={requestedPlan} onChange={(e) => setRequestedPlan(e.target.value)} placeholder="예: 유쓰 5G 스탠다드에센셜" />
+            <Label>{t("customers.requestedPlan")} {requiresApplication && "*"}</Label>
+            <Input value={requestedPlan} onChange={(e) => setRequestedPlan(e.target.value)} placeholder={t("customers.add.planPlaceholder")} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "저장 중..." : "저장"}</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>{t("customers.add.cancel")}</Button>
+          <Button onClick={save} disabled={saving}>{saving ? t("customers.add.saving") : t("customers.add.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -2398,6 +2399,7 @@ function AddCustomerDialog({
 }
 
 function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | null; onClose: () => void }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [result, setResult] = useState<CallResult>("no_answer");
   const [notes, setNotes] = useState("");
@@ -2415,7 +2417,7 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
   if (!customer) return null;
 
   const save = async () => {
-    if (!user) return toast.error("로그인이 필요합니다");
+    if (!user) return toast.error(t("customers.quickCall.loginRequired"));
     setSaving(true);
     const { error } = await supabase.from("call_logs").insert({
       customer_id: customer.id,
@@ -2428,7 +2430,7 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
     });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("콜 기록 저장됨");
+    toast.success(t("customers.callLog.saved"));
     onClose();
   };
 
@@ -2438,12 +2440,12 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
     <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>콜 결과 입력 — {customer.name}</DialogTitle>
+          <DialogTitle>{t("customers.quickCall.title", { name: customer.name })}</DialogTitle>
           <DialogDescription className="font-mono">{customer.phone}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-2">
-            <Label>결과</Label>
+            <Label>{t("customers.callLog.result")}</Label>
             <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -2454,17 +2456,17 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>메모</Label>
-            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="통화 내용..." />
+            <Label>{t("customers.callLog.memo")}</Label>
+            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("customers.quickCall.callNotes")} />
           </div>
           <div className="space-y-2">
-            <Label>통화 시간(초)</Label>
+            <Label>{t("customers.callLog.duration")}</Label>
             <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>저장 안함</Button>
-          <Button onClick={save} disabled={saving}>저장</Button>
+          <Button variant="outline" onClick={onClose}>{t("customers.quickCall.dontSave")}</Button>
+          <Button onClick={save} disabled={saving}>{t("customers.quickCall.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

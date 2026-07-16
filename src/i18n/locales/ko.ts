@@ -312,6 +312,22 @@ export default {
       saving: "저장 중...",
       saved: "저장됨",
     },
+    add: {
+      title: "고객 추가",
+      applicationRequired: "신청일과 신청 요금제는 필수입니다",
+      planPlaceholder: "예: 유쓰 5G 스탠다드에센셜",
+      cancel: "취소",
+      save: "저장",
+      saving: "저장 중...",
+    },
+    quickCall: {
+      title: "콜 결과 입력 — {{name}}",
+      loginRequired: "로그인이 필요합니다",
+      callNotes: "통화 내용...",
+      dontSave: "저장 안함",
+      save: "저장",
+    },
+    memoTab: "메모",
   },
   memo: {
     title: "메모",
