@@ -1715,7 +1715,7 @@ function CustomersPage() {
                       </Pagination>
                       {totalPages > 5 && (
                         <div className="flex items-center gap-1.5 text-sm">
-                          <span className="text-muted-foreground whitespace-nowrap">페이지로 이동:</span>
+                          <span className="text-muted-foreground whitespace-nowrap">{t("customers.goToPage")}</span>
                           <Input
                             type="number"
                             min={1}
@@ -1745,7 +1745,7 @@ function CustomersPage() {
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {loadingMore ? "불러오는 중..." : `${page.toLocaleString()} / ${totalPages.toLocaleString()} 페이지 · 총 ${total.toLocaleString()}건 (페이지당 ${PAGE_SIZE}건)`}
+                      {loadingMore ? t("customers.loadingLabel") : t("customers.pageOf", { page: page.toLocaleString(), total: totalPages.toLocaleString(), count: total.toLocaleString(), size: PAGE_SIZE })}
                     </div>
                   </div>
                 )}
@@ -1786,35 +1786,35 @@ function CustomersPage() {
       <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>고객 삭제</DialogTitle>
-            <DialogDescription>이 고객과 관련된 모든 데이터가 삭제됩니다.</DialogDescription>
+            <DialogTitle>{t("customers.deleteTitle")}</DialogTitle>
+            <DialogDescription>{t("customers.deleteDesc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>취소</Button>
-            <Button variant="destructive" onClick={deleteCustomer}>삭제</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>{t("common.cancel")}</Button>
+            <Button variant="destructive" onClick={deleteCustomer}>{t("common.delete")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>일괄 삭제</DialogTitle>
-            <DialogDescription>선택한 {selected.size}명의 고객 데이터를 영구히 삭제합니다. 계속하시겠습니까?</DialogDescription>
+            <DialogTitle>{t("customers.bulkDeleteTitle")}</DialogTitle>
+            <DialogDescription>{t("customers.bulkDeleteDesc", { count: selected.size })}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkOpen(false)}>취소</Button>
-            <Button variant="destructive" onClick={bulkDelete}>{selected.size}명 삭제</Button>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>{t("common.cancel")}</Button>
+            <Button variant="destructive" onClick={bulkDelete}>{t("customers.bulkDeleteConfirm", { count: selected.size })}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={deleteAllOpen} onOpenChange={(o) => !deleteAllRunning && setDeleteAllOpen(o)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>탭 전체 삭제</DialogTitle>
+            <DialogTitle>{t("customers.deleteAllTitle")}</DialogTitle>
             <DialogDescription>
-              <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> 탭의 모든 고객 데이터({poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}건)를 영구히 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+              <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> — {t("customers.tabDeleteAll")}: {poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}
               <br /><br />
-              계속하려면 아래에 <strong>DELETE</strong> 를 입력하세요.
+              DELETE
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -1824,13 +1824,13 @@ function CustomersPage() {
             disabled={deleteAllRunning}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deleteAllRunning}>취소</Button>
+            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deleteAllRunning}>{t("common.cancel")}</Button>
             <Button
               variant="destructive"
               onClick={deleteAllInTab}
               disabled={deleteAllConfirm !== "DELETE" || deleteAllRunning}
             >
-              {deleteAllRunning ? "삭제 중..." : "전체 삭제"}
+              {deleteAllRunning ? t("customers.deleteAllRunning") : t("customers.deleteAllConfirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1838,11 +1838,11 @@ function CustomersPage() {
       <Dialog open={bulkStatusOpen} onOpenChange={(o) => !bulkStatusRunning && setBulkStatusOpen(o)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>일괄 상태 변경</DialogTitle>
-            <DialogDescription>선택한 {selected.size}명의 상태를 일괄 변경합니다.</DialogDescription>
+            <DialogTitle>{t("customers.bulkStatusTitle")}</DialogTitle>
+            <DialogDescription>{t("customers.bulkStatusDesc", { count: selected.size })}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
-            <Label>새 상태</Label>
+            <Label>{t("customers.newStatus")}</Label>
             <Select value={bulkStatus} onValueChange={(v) => setBulkStatus(v as CustomerStatus)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -1853,9 +1853,9 @@ function CustomersPage() {
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusRunning}>취소</Button>
+            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusRunning}>{t("common.cancel")}</Button>
             <Button onClick={bulkChangeStatus} disabled={bulkStatusRunning}>
-              {bulkStatusRunning ? "변경 중..." : `${selected.size}명 변경`}
+              {bulkStatusRunning ? t("customers.changing") : t("customers.bulkChangeBtn", { count: selected.size })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1900,7 +1900,7 @@ function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; poo
     <TableRow>
       <TableCell colSpan={cols} className="py-12 text-center text-sm text-muted-foreground">
         <FileSpreadsheet className="mx-auto mb-2 h-8 w-8 opacity-50" />
-        {`${POOL_LABEL[pool]} Pool에 고객이 없습니다.`}
+        {i18n.t("pool.emptyPool", { name: POOL_LABEL[pool] })}
       </TableCell>
     </TableRow>
   );
