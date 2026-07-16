@@ -959,7 +959,7 @@ function CustomersPage() {
   const downloadFiltered = async () => {
     if (!isAdmin) return;
     setDownloading(true);
-    const toastId = toast.loading("엑셀 생성 중...");
+    const toastId = toast.loading(t("customers.toastExcelBuilding"));
     try {
       const EXPORT_LIMIT = 50000;
       const pageSize = 1000;
@@ -991,12 +991,12 @@ function CustomersPage() {
         if (!chunk.length) break;
         totalCount = chunk[0].total_count ?? 0;
         all.push(...chunk.map((r) => r.data));
-        toast.loading(`엑셀 생성 중... ${all.length.toLocaleString()}/${Math.min(totalCount, EXPORT_LIMIT).toLocaleString()}`, { id: toastId });
+        toast.loading(t("customers.toastExcelBuildingProg", { done: all.length.toLocaleString(), total: Math.min(totalCount, EXPORT_LIMIT).toLocaleString() }), { id: toastId });
         if (all.length >= totalCount || all.length >= EXPORT_LIMIT) break;
         p += 1;
       }
       if (!all.length) {
-        toast.error("다운로드할 데이터가 없습니다.", { id: toastId });
+        toast.error(t("customers.toastNoDownloadData"), { id: toastId });
         return;
       }
       const rowsForXlsx = all.map((c) => ({
@@ -1022,9 +1022,9 @@ function CustomersPage() {
       XLSX.utils.book_append_sheet(wb, ws, "Customers");
       const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
       XLSX.writeFile(wb, `고객목록_${POOL_SHORT[(tab === "all" ? "existing" : tab) as CustomerPool]}_${ts}.xlsx`);
-      toast.success(`${all.length.toLocaleString()}건 다운로드 완료`, { id: toastId });
+      toast.success(t("customers.toastDownloadDone", { n: all.length.toLocaleString() }), { id: toastId });
     } catch (e: any) {
-      toast.error(`다운로드 실패: ${e.message}`, { id: toastId });
+      toast.error(t("customers.toastDownloadFail", { msg: e.message }), { id: toastId });
     } finally {
       setDownloading(false);
     }
@@ -1037,7 +1037,7 @@ function CustomersPage() {
     const map = new Map<string, { name: string; total: number; activated: number; in_progress: number; }>();
     filtered.forEach((r) => {
       const id = r.assigned_to ?? "__none__";
-      const name = id === "__none__" ? "미배정" : (staffById.get(id) ?? "—");
+      const name = id === "__none__" ? t("common.unassigned") : (staffById.get(id) ?? "—");
       const cur = map.get(id) ?? { name, total: 0, activated: 0, in_progress: 0 };
       cur.total += 1;
       if (r.status === "activated") cur.activated += 1;
