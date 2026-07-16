@@ -394,7 +394,7 @@ function CustomersPage() {
   });
 
   useEffect(() => {
-    if (listError) toast.error(`고객 로드 실패: ${(listError as Error).message}`);
+    if (listError) toast.error(t("customers.loadFailed", { msg: (listError as Error).message }));
   }, [listError]);
 
   // 페이지 전환 시 선택 초기화
@@ -544,7 +544,7 @@ function CustomersPage() {
       load();
       return;
     }
-    toast.success(t("dashboard.callRound") + " " + (value ? `${value}차` : t("dashboard.roundNone")));
+    toast.success(t("dashboard.callRound") + " " + (value ? t("customers.orderNth", { n: value }) : t("dashboard.roundNone")));
   };
 
   const changeCountry = async (id: string, countryId: string | null) => {
@@ -556,7 +556,7 @@ function CustomersPage() {
       load();
       return;
     }
-    toast.success("국적 변경됨");
+    toast.success(t("customers.toastCountryChanged"));
   };
 
   const changeAssigned = async (id: string, userId: string | null) => {
@@ -568,7 +568,7 @@ function CustomersPage() {
       load();
       return;
     }
-    toast.success("담당자 변경됨");
+    toast.success(t("customers.toastAssignedChanged"));
   };
 
   const deleteCustomer = async () => {
@@ -609,14 +609,14 @@ function CustomersPage() {
     if (!isAdmin) return;
     const p: CustomerPool = (tab === "all" ? "existing" : tab) as CustomerPool;
     setDeleteAllRunning(true);
-    const toastId = toast.loading(`${POOL_LABEL[p]} 전체 삭제 중...`);
+    const toastId = toast.loading(t("customers.toastPoolDeleteLoading", { pool: POOL_LABEL[p] }));
     try {
       const { error } = await supabase.from("customers").delete().eq("pool", p);
       if (error) {
-        toast.error(`삭제 실패: ${error.message}`, { id: toastId });
+        toast.error(t("customers.toastDeleteFail", { msg: error.message }), { id: toastId });
         return;
       }
-      toast.success(`${POOL_LABEL[p]} 전체 삭제 완료`, { id: toastId });
+      toast.success(t("customers.toastPoolDeleteDone", { pool: POOL_LABEL[p] }), { id: toastId });
       setDeleteAllOpen(false);
       setDeleteAllConfirm("");
       setSelected(new Set());
@@ -644,7 +644,7 @@ function CustomersPage() {
     const chunkSize = 100;
     const total = ids.length;
     let done = 0;
-    const toastId = toast.loading(`상태 변경 중... (0/${total})`);
+    const toastId = toast.loading(t("customers.toastStatusChangeLoading", { done: 0, total }));
     for (let i = 0; i < ids.length; i += chunkSize) {
       const chunk = ids.slice(i, i + chunkSize);
       const { error } = await supabase.from("customers").update(patch).in("id", chunk);
@@ -655,7 +655,7 @@ function CustomersPage() {
         return toast.error(error.message);
       }
       done += chunk.length;
-      toast.loading(`상태 변경 중... (${done}/${total})`, { id: toastId });
+      toast.loading(t("customers.toastStatusChangeLoading", { done, total }), { id: toastId });
     }
     toast.dismiss(toastId);
     setBulkStatusRunning(false);
@@ -686,7 +686,7 @@ function CustomersPage() {
   const onUpload = async (file: File) => {
     importingRef.current = true;
     setImporting(true);
-    const toastId = toast.loading("엑셀 파싱 중...");
+    const toastId = toast.loading(t("customers.toastExcelParsing"));
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array", cellDates: true });
@@ -830,7 +830,7 @@ function CustomersPage() {
         .filter((x): x is ImportCustomer => x !== null);
 
       if (!parsed.length) {
-        toast.error(`업로드할 데이터가 없습니다. (파일내 중복 ${dupInFile}건, 누락 ${invalid}건)`, { id: toastId });
+        toast.error(t("customers.toastNoUploadDataDetail", { dup: dupInFile, n: invalid }), { id: toastId });
         return;
       }
 
@@ -868,11 +868,13 @@ function CustomersPage() {
             if (!error) insertedCnt++;
           }
           if ((i + 1) % 25 === 0) {
-            toast.loading(`처리 중 ${i + 1}/${finalPayload.length}`, { id: toastId });
+            toast.loading(t("customers.toastProcessing", { i: i + 1, total: finalPayload.length }), { id: toastId });
           }
         }
         toast.success(
-          `기존 ${updated.toLocaleString()}건 pool 변경 / 신규 ${insertedCnt.toLocaleString()}건 추가${dupInFile ? ` / 파일내중복 ${dupInFile}건` : ""}${invalid ? ` / 누락 ${invalid}건` : ""}`,
+          t("customers.toastPoolUpdated", { updated: updated.toLocaleString(), new: insertedCnt.toLocaleString() })
+            + (dupInFile ? t("customers.toastFileDup", { n: dupInFile }) : "")
+            + (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
           { id: toastId }
         );
         await refetchPoolCounts();
@@ -889,24 +891,25 @@ function CustomersPage() {
         const chunk = finalPayload.slice(i, i + insertChunkSize);
         const { error } = await supabase.from("customers").insert(chunk);
         if (error) {
-          toast.error(`업로드 중단 (${inserted}/${totalToInsert} 완료): ${error.message}`, { id: toastId });
+          toast.error(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: error.message }), { id: toastId });
           await refetchPoolCounts();
           setPage(1);
           await refetchList();
           return;
         }
         inserted += chunk.length;
-        toast.loading(`업로드 중 ${inserted.toLocaleString()}/${totalToInsert.toLocaleString()}`, { id: toastId });
+        toast.loading(t("customers.toastUploading", { done: inserted.toLocaleString(), total: totalToInsert.toLocaleString() }), { id: toastId });
       }
       toast.success(
-        `${inserted.toLocaleString()}명 추가 / 파일내중복 ${dupInFile}건${invalid ? ` / 누락 ${invalid}건` : ""}`,
+        t("customers.toastAddedFileDup", { n: inserted.toLocaleString(), dup: dupInFile })
+          + (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
         { id: toastId }
       );
       await refetchPoolCounts();
       setPage(1);
       await refetchList();
     } catch (e: any) {
-      toast.error(`엑셀 파싱 실패: ${e.message}`, { id: toastId });
+      toast.error(t("customers.toastExcelParseFail", { msg: e.message }), { id: toastId });
     } finally {
       importingRef.current = false;
       setImporting(false);
@@ -956,7 +959,7 @@ function CustomersPage() {
   const downloadFiltered = async () => {
     if (!isAdmin) return;
     setDownloading(true);
-    const toastId = toast.loading("엑셀 생성 중...");
+    const toastId = toast.loading(t("customers.toastExcelBuilding"));
     try {
       const EXPORT_LIMIT = 50000;
       const pageSize = 1000;
@@ -988,12 +991,12 @@ function CustomersPage() {
         if (!chunk.length) break;
         totalCount = chunk[0].total_count ?? 0;
         all.push(...chunk.map((r) => r.data));
-        toast.loading(`엑셀 생성 중... ${all.length.toLocaleString()}/${Math.min(totalCount, EXPORT_LIMIT).toLocaleString()}`, { id: toastId });
+        toast.loading(t("customers.toastExcelBuildingProg", { done: all.length.toLocaleString(), total: Math.min(totalCount, EXPORT_LIMIT).toLocaleString() }), { id: toastId });
         if (all.length >= totalCount || all.length >= EXPORT_LIMIT) break;
         p += 1;
       }
       if (!all.length) {
-        toast.error("다운로드할 데이터가 없습니다.", { id: toastId });
+        toast.error(t("customers.toastNoDownloadData"), { id: toastId });
         return;
       }
       const rowsForXlsx = all.map((c) => ({
@@ -1019,9 +1022,9 @@ function CustomersPage() {
       XLSX.utils.book_append_sheet(wb, ws, "Customers");
       const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
       XLSX.writeFile(wb, `고객목록_${POOL_SHORT[(tab === "all" ? "existing" : tab) as CustomerPool]}_${ts}.xlsx`);
-      toast.success(`${all.length.toLocaleString()}건 다운로드 완료`, { id: toastId });
+      toast.success(t("customers.toastDownloadDone", { n: all.length.toLocaleString() }), { id: toastId });
     } catch (e: any) {
-      toast.error(`다운로드 실패: ${e.message}`, { id: toastId });
+      toast.error(t("customers.toastDownloadFail", { msg: e.message }), { id: toastId });
     } finally {
       setDownloading(false);
     }
@@ -1034,7 +1037,7 @@ function CustomersPage() {
     const map = new Map<string, { name: string; total: number; activated: number; in_progress: number; }>();
     filtered.forEach((r) => {
       const id = r.assigned_to ?? "__none__";
-      const name = id === "__none__" ? "미배정" : (staffById.get(id) ?? "—");
+      const name = id === "__none__" ? t("common.unassigned") : (staffById.get(id) ?? "—");
       const cur = map.get(id) ?? { name, total: 0, activated: 0, in_progress: 0 };
       cur.total += 1;
       if (r.status === "activated") cur.activated += 1;
@@ -1045,13 +1048,13 @@ function CustomersPage() {
   }, [filtered, staffById]);
 
   const fmtDate = (s: string | null | undefined) =>
-    s ? new Date(s).toLocaleDateString("ko-KR") : "-";
+    s ? new Date(s).toLocaleDateString(i18n.language === "en" ? "en-US" : "ko-KR") : "-";
 
   const fmtDateTime = (s: string | null | undefined) =>
-    s ? new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" }) : "-";
+    s ? new Date(s).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR", { dateStyle: "short", timeStyle: "short" }) : "-";
 
 
-  const StatusChangedHead = <TableHead className="whitespace-nowrap">상태 변경일</TableHead>;
+  const StatusChangedHead = <TableHead className="whitespace-nowrap">{t("customers.col.statusChanged")}</TableHead>;
 
   // === 풀별 컬럼 렌더러 ===
   const renderTable = (p: CustomerPool) => {
@@ -1066,7 +1069,7 @@ function CustomersPage() {
     const renderActions = (c: CustomerRow) => (
       <TableCell className="text-right whitespace-nowrap">
         <Button size="sm" variant="ghost" onClick={() => setMemoTarget(c)}>
-          <StickyNote className="mr-1 h-3.5 w-3.5" /> 메모
+          <StickyNote className="mr-1 h-3.5 w-3.5" /> {t("customers.col.memo")}
         </Button>
         {isAdmin && (
           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteId(c.id)}>
@@ -1091,17 +1094,17 @@ function CustomersPage() {
             <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
-              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
-              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>요금제</SortHead>
-              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
-              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
-              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
+              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationDate")}</SortHead>
+              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.carrierPlan")}</SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
+              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
               {CallRoundHead}
               {StatusChangedHead}
               <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
-              <TableHead>메모</TableHead>
-              <TableHead className="text-right">액션</TableHead>
+              <TableHead>{t("customers.col.memo")}</TableHead>
+              <TableHead className="text-right">{t("customers.col.action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -1135,16 +1138,16 @@ function CustomersPage() {
             <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
-              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
-              <SortHead k={p === "prepaid_charge" ? "charge_date" : "signup_date"} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{p === "prepaid_charge" ? "충전 일" : "가입일"}</SortHead>
-              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
-              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
+              <SortHead k={p === "prepaid_charge" ? "charge_date" : "signup_date"} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{p === "prepaid_charge" ? t("customers.col.chargeDate") : t("customers.col.signupDate")}</SortHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
+              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
               {CallRoundHead}
               {StatusChangedHead}
               <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
-              <TableHead>메모</TableHead>
-              <TableHead className="text-right">액션</TableHead>
+              <TableHead>{t("customers.col.memo")}</TableHead>
+              <TableHead className="text-right">{t("customers.col.action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -1187,7 +1190,7 @@ function CustomersPage() {
         if (n === null) return <span className="text-muted-foreground">-</span>;
         const near = isNearMaturity(n);
         if (n < 0) {
-          return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${near ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>만기 {Math.abs(n)}일 경과</span>;
+          return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${near ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{t("customers.matured", { n: Math.abs(n) })}</span>;
         }
         if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">D-DAY</span>;
         const cls = near
@@ -1205,21 +1208,21 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
               {CheckHead}
-              <TableHead>판매점</TableHead>
-              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>고객명</SortHead>
-              <TableHead>구분</TableHead>
-              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통번호</SortHead>
-              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
-              <TableHead>생년월일</TableHead>
-              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>개통일</SortHead>
-              <TableHead className="whitespace-nowrap">1년 만기</TableHead>
-              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>요금제</SortHead>
-              <TableHead>월요금</TableHead>
-              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
-              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
+              <TableHead>{t("customers.col.storeName")}</TableHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.customerName")}</SortHead>
+              <TableHead>{t("customers.col.customerType")}</TableHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationNumber")}</SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
+              <TableHead>{t("customers.col.birthDate")}</TableHead>
+              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationDate")}</SortHead>
+              <TableHead className="whitespace-nowrap">{t("customers.col.oneYearMaturity")}</TableHead>
+              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.carrierPlan")}</SortHead>
+              <TableHead>{t("customers.col.monthlyFee")}</TableHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
+              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
               {CallRoundHead}
-              <TableHead>메모</TableHead>
-              <TableHead className="text-right">액션</TableHead>
+              <TableHead>{t("customers.col.memo")}</TableHead>
+              <TableHead className="text-right">{t("customers.col.action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -1259,17 +1262,17 @@ function CustomersPage() {
           <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
             {CheckHead}
             <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-            <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>전화번호</SortHead>
-            <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>국적</SortHead>
-            <SortHead k="application_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>신청일</SortHead>
-            <SortHead k="requested_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>신청 요금제</SortHead>
-            <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>담당자</SortHead>
-            <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>상태</SortHead>
+            <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
+            <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
+            <SortHead k="application_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.applicationDate")}</SortHead>
+            <SortHead k="requested_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.requestedPlan")}</SortHead>
+            <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
+            <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
             {CallRoundHead}
             {StatusChangedHead}
             <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
-            <TableHead>메모</TableHead>
-            <TableHead className="text-right">액션</TableHead>
+            <TableHead>{t("customers.col.memo")}</TableHead>
+            <TableHead className="text-right">{t("customers.col.action")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -1302,15 +1305,15 @@ function CustomersPage() {
     mutationFn: () => syncGoogleFormFn(),
     onSuccess: (r) => {
       if (r.inserted > 0) {
-        toast.success(`구글폼: ${r.inserted}건 새로 등록되었습니다.`);
+        toast.success(t("customers.googleFormSynced", { n: r.inserted }));
         void refetchList();
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(`구글폼 동기화 오류: ${r.errors[0]}`);
+        toast.error(t("customers.googleFormSyncErr", { msg: r.errors[0] }));
       }
     },
-    onError: (e: Error) => toast.error(`구글폼 동기화 실패: ${e.message}`),
+    onError: (e: Error) => toast.error(t("customers.googleFormSyncFail", { msg: e.message })),
   });
   const syncMutRef = useRef(syncGoogleFormMut);
   syncMutRef.current = syncGoogleFormMut;
@@ -1327,15 +1330,15 @@ function CustomersPage() {
     mutationFn: () => syncGoogleFormInterFn(),
     onSuccess: (r) => {
       if (r.inserted > 0) {
-        toast.success(`구글폼 인터: ${r.inserted}건 새로 등록되었습니다.`);
+        toast.success(t("customers.googleFormInterSynced", { n: r.inserted }));
         void refetchList();
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(`구글폼 인터 동기화 오류: ${r.errors[0]}`);
+        toast.error(t("customers.googleFormInterSyncErr", { msg: r.errors[0] }));
       }
     },
-    onError: (e: Error) => toast.error(`구글폼 인터 동기화 실패: ${e.message}`),
+    onError: (e: Error) => toast.error(t("customers.googleFormInterSyncFail", { msg: e.message })),
   });
   const syncInterMutRef = useRef(syncGoogleFormInterMut);
   syncInterMutRef.current = syncGoogleFormInterMut;
@@ -1350,13 +1353,13 @@ function CustomersPage() {
   if (listError) {
     return (
       <div className="space-y-5">
-        <PageHeader title="고객 관리" description="" />
+        <PageHeader title={t("customers.title")} description="" />
         <Card role="alert">
           <CardContent className="space-y-3 p-6 text-center">
-            <div className="text-sm font-semibold">고객 데이터를 불러오지 못했습니다</div>
+            <div className="text-sm font-semibold">{t("customers.loadFailedTitle")}</div>
             <div className="text-xs text-muted-foreground">{(listError as Error).message}</div>
             <Button onClick={() => void refetchList()} size="sm" aria-busy={listFetching}>
-              <RefreshCw className="mr-2 h-4 w-4" /> 다시 시도
+              <RefreshCw className="mr-2 h-4 w-4" /> {t("customers.retry")}
             </Button>
           </CardContent>
         </Card>
@@ -1370,15 +1373,15 @@ function CustomersPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="고객 관리"
-        description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · 표시 ${rows.length.toLocaleString()}건${loading?" · "+t("common.loading"):""}`}
+        title={t("customers.title")}
+        description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · ${t("customers.displayed",{n:rows.length.toLocaleString()})}${loading?" · "+t("common.loading"):""}`}
         actions={
           <div className="flex items-center gap-2">
             {tab === "google_form_activation" && (
               <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-1 h-4 w-4" /> 구글폼 시트
+                    <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.googleFormSheet")}
                   </a>
                 </Button>
                 <Button
@@ -1387,10 +1390,10 @@ function CustomersPage() {
                   onClick={() => syncGoogleFormMut.mutate()}
                   disabled={syncGoogleFormMut.isPending}
                   aria-busy={syncGoogleFormMut.isPending}
-                  title="구글폼 응답을 지금 동기화합니다 (30초마다 자동 동기화)"
+                  title={t("customers.googleFormSyncTitle")}
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending ? "animate-spin" : ""}`} />
-                  구글폼 동기화
+                  {t("customers.googleFormSync")}
                 </Button>
               </>
             )}
@@ -1398,7 +1401,7 @@ function CustomersPage() {
               <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL_INTER} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-1 h-4 w-4" /> 구글폼 인터 시트
+                    <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.googleFormInterSheet")}
                   </a>
                 </Button>
                 <Button
@@ -1407,10 +1410,10 @@ function CustomersPage() {
                   onClick={() => syncGoogleFormInterMut.mutate()}
                   disabled={syncGoogleFormInterMut.isPending}
                   aria-busy={syncGoogleFormInterMut.isPending}
-                  title="구글폼 인터 응답을 지금 동기화합니다 (30초마다 자동 동기화)"
+                  title={t("customers.googleFormInterSyncTitle")}
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
-                  구글폼 인터 동기화
+                  {t("customers.googleFormInterSync")}
                 </Button>
               </>
             )}
@@ -1458,10 +1461,10 @@ function CustomersPage() {
                             <Upload className="mr-2 h-4 w-4" /> {importing ? t("customers.uploading") : t("customers.excelUpload")}
                           </Button>
                           <Button variant="outline" size="sm" onClick={downloadFiltered} disabled={downloading} aria-busy={downloading}>
-                            <FileSpreadsheet className="mr-2 h-4 w-4" /> {downloading ? "다운로드 중..." : "엑셀 다운로드"}
+                            <FileSpreadsheet className="mr-2 h-4 w-4" /> {downloading ? t("customers.downloadingLabel") : t("customers.excelDownload")}
                           </Button>
                           <Button variant="destructive" size="sm" onClick={() => { setDeleteAllConfirm(""); setDeleteAllOpen(true); }}>
-                            <Trash2 className="mr-2 h-4 w-4" /> 탭 전체 삭제
+                            <Trash2 className="mr-2 h-4 w-4" /> {t("customers.tabDeleteAll")}
                           </Button>
                         </>
                       )}
@@ -1564,29 +1567,29 @@ function CustomersPage() {
                 {(() => {
                   const chips: { key: string; label: string; onRemove: () => void }[] = [];
                   if (debouncedSearch.trim()) {
-                    chips.push({ key: "search", label: `검색: ${debouncedSearch.trim()}`, onRemove: () => setSearchInput("") });
+                    chips.push({ key: "search", label: t("customers.chipSearch", { value: debouncedSearch.trim() }), onRemove: () => setSearchInput("") });
                   }
                   if (countryIds.length > 0) {
                     const codes = countryIds.map((id) => countryById.get(id)?.code ?? id).join(", ");
-                    chips.push({ key: "country", label: `국적: ${codes}`, onRemove: () => setCountryIds([]) });
+                    chips.push({ key: "country", label: t("customers.chipCountry", { value: codes }), onRemove: () => setCountryIds([]) });
                   }
                   if (statusF !== "all") {
                     const statusLabel = statusF === "__call_completed__" ? t("dashboard.callCompleted") : STATUS_LABEL[statusF as CustomerStatus];
-                    chips.push({ key: "status", label: `상태: ${statusLabel}`, onRemove: () => setStatusF("all") });
+                    chips.push({ key: "status", label: t("customers.chipStatus", { value: statusLabel }), onRemove: () => setStatusF("all") });
                   }
                   if (staffF !== "all") {
                     const name = staffF === "__none__" ? t("common.unassigned") : (staffById.get(staffF) ?? staffF);
-                    chips.push({ key: "staff", label: `담당자: ${name}`, onRemove: () => setStaffF("all") });
+                    chips.push({ key: "staff", label: t("customers.chipStaff", { value: name }), onRemove: () => setStaffF("all") });
                   }
                   if (callRoundF !== "all") {
-                    const roundLabel = callRoundF === "none" ? t("dashboard.roundNone") : `${callRoundF}차`;
-                    chips.push({ key: "callRound", label: `콜 라운드: ${roundLabel}`, onRemove: () => setCallRoundF("all") });
+                    const roundLabel = callRoundF === "none" ? t("dashboard.roundNone") : t("customers.orderNth", { n: callRoundF });
+                    chips.push({ key: "callRound", label: t("customers.chipCallRound", { value: roundLabel }), onRemove: () => setCallRoundF("all") });
                   }
                   if (dateFrom) {
-                    chips.push({ key: "dateFrom", label: `등록일 시작: ${format(dateFrom, "yyyy-MM-dd")}`, onRemove: () => setDateFrom(undefined) });
+                    chips.push({ key: "dateFrom", label: t("customers.chipDateFrom", { value: format(dateFrom, "yyyy-MM-dd") }), onRemove: () => setDateFrom(undefined) });
                   }
                   if (dateTo) {
-                    chips.push({ key: "dateTo", label: `등록일 종료: ${format(dateTo, "yyyy-MM-dd")}`, onRemove: () => setDateTo(undefined) });
+                    chips.push({ key: "dateTo", label: t("customers.chipDateTo", { value: format(dateTo, "yyyy-MM-dd") }), onRemove: () => setDateTo(undefined) });
                   }
                   if (!chips.length) return null;
                   return (
@@ -1601,7 +1604,7 @@ function CustomersPage() {
                             type="button"
                             onClick={chip.onRemove}
                             className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-                            aria-label={`${chip.label} 제거`}
+                            aria-label={t("customers.chipRemove", { label: chip.label })}
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -1620,7 +1623,7 @@ function CustomersPage() {
                         }}
                         className="rounded-full border border-dashed px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground"
                       >
-                        전체 초기화
+                        {t("customers.resetAll")}
                       </button>
                     </div>
                   );
@@ -1628,9 +1631,9 @@ function CustomersPage() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground">{t("common.registeredDate")}</span>
-                  <DateRangePicker label="시작" value={dateFrom} onChange={setDateFrom} />
+                  <DateRangePicker label={t("customers.startLabel")} value={dateFrom} onChange={setDateFrom} />
                   <span className="text-xs text-muted-foreground">~</span>
-                  <DateRangePicker label="종료" value={dateTo} onChange={setDateTo} />
+                  <DateRangePicker label={t("customers.endLabel")} value={dateTo} onChange={setDateTo} />
                   {(dateFrom || dateTo) && (
                     <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
                       {t("common.reset")}
@@ -1639,7 +1642,7 @@ function CustomersPage() {
                   {isAdmin && selected.size > 0 && tab === p && (
                     <div className="ml-auto flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => setBulkStatusOpen(true)}>
-                        {selected.size}건 상태 변경
+                        {t("customers.bulkStatusChangeBtn", { count: selected.size })}
                       </Button>
                       <Button variant="destructive" size="sm" onClick={() => setBulkOpen(true)}>
                         <Trash2 className="mr-2 h-4 w-4" /> {t("customers.bulkDeleteBtn",{count:selected.size})}
@@ -1660,9 +1663,9 @@ function CustomersPage() {
                           className="rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs hover:bg-muted"
                         >
                           <span className="font-medium">{s.name}</span>
-                          <span className="ml-2 text-muted-foreground">총 {s.total}</span>
-                          <span className="ml-1.5 text-success">개통 {s.activated}</span>
-                          <span className="ml-1.5 text-info">진행 {s.in_progress}</span>
+                          <span className="ml-2 text-muted-foreground">{t("customers.staffTotal", { n: s.total })}</span>
+                          <span className="ml-1.5 text-success">{t("customers.staffActivated", { n: s.activated })}</span>
+                          <span className="ml-1.5 text-info">{t("customers.staffProgress", { n: s.in_progress })}</span>
                         </button>
                       ))}
                     </div>
@@ -1712,7 +1715,7 @@ function CustomersPage() {
                       </Pagination>
                       {totalPages > 5 && (
                         <div className="flex items-center gap-1.5 text-sm">
-                          <span className="text-muted-foreground whitespace-nowrap">페이지로 이동:</span>
+                          <span className="text-muted-foreground whitespace-nowrap">{t("customers.goToPage")}</span>
                           <Input
                             type="number"
                             min={1}
@@ -1742,7 +1745,7 @@ function CustomersPage() {
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {loadingMore ? "불러오는 중..." : `${page.toLocaleString()} / ${totalPages.toLocaleString()} 페이지 · 총 ${total.toLocaleString()}건 (페이지당 ${PAGE_SIZE}건)`}
+                      {loadingMore ? t("customers.loadingLabel") : t("customers.pageOf", { page: page.toLocaleString(), total: totalPages.toLocaleString(), count: total.toLocaleString(), size: PAGE_SIZE })}
                     </div>
                   </div>
                 )}
@@ -1783,35 +1786,35 @@ function CustomersPage() {
       <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>고객 삭제</DialogTitle>
-            <DialogDescription>이 고객과 관련된 모든 데이터가 삭제됩니다.</DialogDescription>
+            <DialogTitle>{t("customers.deleteTitle")}</DialogTitle>
+            <DialogDescription>{t("customers.deleteDesc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>취소</Button>
-            <Button variant="destructive" onClick={deleteCustomer}>삭제</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>{t("common.cancel")}</Button>
+            <Button variant="destructive" onClick={deleteCustomer}>{t("common.delete")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>일괄 삭제</DialogTitle>
-            <DialogDescription>선택한 {selected.size}명의 고객 데이터를 영구히 삭제합니다. 계속하시겠습니까?</DialogDescription>
+            <DialogTitle>{t("customers.bulkDeleteTitle")}</DialogTitle>
+            <DialogDescription>{t("customers.bulkDeleteDesc", { count: selected.size })}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkOpen(false)}>취소</Button>
-            <Button variant="destructive" onClick={bulkDelete}>{selected.size}명 삭제</Button>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>{t("common.cancel")}</Button>
+            <Button variant="destructive" onClick={bulkDelete}>{t("customers.bulkDeleteConfirm", { count: selected.size })}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={deleteAllOpen} onOpenChange={(o) => !deleteAllRunning && setDeleteAllOpen(o)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>탭 전체 삭제</DialogTitle>
+            <DialogTitle>{t("customers.deleteAllTitle")}</DialogTitle>
             <DialogDescription>
-              <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> 탭의 모든 고객 데이터({poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}건)를 영구히 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+              <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> — {t("customers.tabDeleteAll")}: {poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}
               <br /><br />
-              계속하려면 아래에 <strong>DELETE</strong> 를 입력하세요.
+              DELETE
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -1821,13 +1824,13 @@ function CustomersPage() {
             disabled={deleteAllRunning}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deleteAllRunning}>취소</Button>
+            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deleteAllRunning}>{t("common.cancel")}</Button>
             <Button
               variant="destructive"
               onClick={deleteAllInTab}
               disabled={deleteAllConfirm !== "DELETE" || deleteAllRunning}
             >
-              {deleteAllRunning ? "삭제 중..." : "전체 삭제"}
+              {deleteAllRunning ? t("customers.deleteAllRunning") : t("customers.deleteAllConfirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1835,11 +1838,11 @@ function CustomersPage() {
       <Dialog open={bulkStatusOpen} onOpenChange={(o) => !bulkStatusRunning && setBulkStatusOpen(o)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>일괄 상태 변경</DialogTitle>
-            <DialogDescription>선택한 {selected.size}명의 상태를 일괄 변경합니다.</DialogDescription>
+            <DialogTitle>{t("customers.bulkStatusTitle")}</DialogTitle>
+            <DialogDescription>{t("customers.bulkStatusDesc", { count: selected.size })}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
-            <Label>새 상태</Label>
+            <Label>{t("customers.newStatus")}</Label>
             <Select value={bulkStatus} onValueChange={(v) => setBulkStatus(v as CustomerStatus)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -1850,9 +1853,9 @@ function CustomersPage() {
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusRunning}>취소</Button>
+            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusRunning}>{t("common.cancel")}</Button>
             <Button onClick={bulkChangeStatus} disabled={bulkStatusRunning}>
-              {bulkStatusRunning ? "변경 중..." : `${selected.size}명 변경`}
+              {bulkStatusRunning ? t("customers.changing") : t("customers.bulkChangeBtn", { count: selected.size })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1897,7 +1900,7 @@ function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; poo
     <TableRow>
       <TableCell colSpan={cols} className="py-12 text-center text-sm text-muted-foreground">
         <FileSpreadsheet className="mx-auto mb-2 h-8 w-8 opacity-50" />
-        {`${POOL_LABEL[pool]} Pool에 고객이 없습니다.`}
+        {i18n.t("pool.emptyPool", { name: POOL_LABEL[pool] })}
       </TableCell>
     </TableRow>
   );
@@ -1907,6 +1910,7 @@ function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; poo
 type Note = { id: string; content: string; created_at: string; author_id: string };
 
 function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: Map<string, string> }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [content, setContent] = useState("");
@@ -1936,33 +1940,33 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
     setSaving(false);
     if (error) return toast.error(error.message);
     setContent("");
-    toast.success("메모 저장");
+    toast.success(t("customers.memoSaved"));
     load(customer.id);
   };
 
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <Label>새 메모</Label>
-        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder="고객 관련 메모를 입력하세요" />
+        <Label>{t("memo.newMemo")}</Label>
+        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder={t("customers.memoAddPlaceholder")} />
         <div className="flex justify-end">
           <Button size="sm" onClick={save} disabled={saving || !content.trim()}>
-            {saving ? "저장 중..." : "메모 추가"}
+            {saving ? t("customers.memoSaving") : t("customers.memoAddBtn")}
           </Button>
         </div>
       </div>
       <div className="space-y-2">
-        <Label>히스토리</Label>
+        <Label>{t("customers.memoHistory")}</Label>
         <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
-          {loading && <div className="text-center text-xs text-muted-foreground py-4">불러오는 중...</div>}
+          {loading && <div className="text-center text-xs text-muted-foreground py-4">{t("customers.loadingLabel")}</div>}
           {!loading && notes.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground py-4">메모 기록이 없습니다.</div>
+            <div className="text-center text-xs text-muted-foreground py-4">{t("customers.memoNone")}</div>
           )}
           {notes.map((n) => (
             <div key={n.id} className="rounded bg-muted/40 p-2 text-sm">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="font-medium">{staffById.get(n.author_id) ?? "—"}</span>
-                <span>{new Date(n.created_at).toLocaleString("ko-KR")}</span>
+                <span>{new Date(n.created_at).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR")}</span>
               </div>
               <div className="mt-1 whitespace-pre-wrap">{n.content}</div>
             </div>
@@ -1974,15 +1978,9 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
 }
 
 type CallResult = "no_answer" | "wrong_number" | "callback" | "not_interested" | "interested" | "activated" | "failed";
-const CALL_RESULT_LABEL: Record<CallResult, string> = {
-  no_answer: "부재중",
-  wrong_number: "번호오류",
-  callback: "재연락",
-  not_interested: "관심없음",
-  interested: "관심있음",
-  activated: "개통완료",
-  failed: "실패",
-};
+const CALL_RESULT_LABEL = new Proxy({} as Record<CallResult, string>, {
+  get: (_t, p: string) => i18n.t(`callResult.${p}`),
+});
 const CALL_RESULT_CLASS: Record<CallResult, string> = {
   no_answer: "bg-gray-100 text-gray-700 border-gray-300",
   wrong_number: "bg-red-100 text-red-700 border-red-300",
@@ -1992,6 +1990,7 @@ const CALL_RESULT_CLASS: Record<CallResult, string> = {
   activated: "bg-green-100 text-green-700 border-green-300",
   failed: "bg-rose-100 text-rose-700 border-rose-300",
 };
+const CALL_RESULT_KEYS: CallResult[] = ["no_answer","wrong_number","callback","not_interested","interested","activated","failed"];
 
 type CallLog = {
   id: string;
@@ -2006,6 +2005,7 @@ type CallLog = {
 };
 
 function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffById: Map<string, string> }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [logs, setLogs] = useState<CallLog[]>([]);
   const [loading, setLoading] = useState(false);
@@ -2049,7 +2049,7 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
     });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("콜 기록 저장됨");
+    toast.success(t("customers.callLog.saved"));
     setNotes("");
     setDuration("");
     setIsActivation(false);
@@ -2060,41 +2060,41 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
     <div className="space-y-4">
       <div className="space-y-3 rounded border border-border/60 p-3">
         <div className="space-y-2">
-          <Label>결과</Label>
+          <Label>{t("customers.callLog.result")}</Label>
           <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {(Object.keys(CALL_RESULT_LABEL) as CallResult[]).map((r) => (
+              {CALL_RESULT_KEYS.map((r) => (
                 <SelectItem key={r} value={r}>{CALL_RESULT_LABEL[r]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>메모</Label>
-          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="통화 내용 메모..." />
+          <Label>{t("customers.callLog.memo")}</Label>
+          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("customers.callLog.memoPlaceholder")} />
         </div>
         <div className="space-y-2">
-          <Label>통화 시간(초)</Label>
+          <Label>{t("customers.callLog.duration")}</Label>
           <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
         </div>
         <div className="flex items-center gap-2">
           <Checkbox id="is_activation" checked={isActivation} onCheckedChange={(c) => setIsActivation(!!c)} />
-          <Label htmlFor="is_activation" className="cursor-pointer">개통 연결</Label>
+          <Label htmlFor="is_activation" className="cursor-pointer">{t("customers.callLog.isActivation")}</Label>
         </div>
         <div className="flex justify-end">
           <Button size="sm" onClick={save} disabled={saving}>
-            {saving ? "저장 중..." : "콜 기록 저장"}
+            {saving ? t("customers.callLog.saving") : t("customers.callLog.saveBtn")}
           </Button>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label>최근 기록</Label>
+        <Label>{t("customers.callLog.recent")}</Label>
         <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
-          {loading && <div className="text-center text-xs text-muted-foreground py-4">불러오는 중...</div>}
+          {loading && <div className="text-center text-xs text-muted-foreground py-4">{t("customers.loadingLabel")}</div>}
           {!loading && logs.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground py-4">기록 없음</div>
+            <div className="text-center text-xs text-muted-foreground py-4">{t("customers.callLog.empty")}</div>
           )}
           {logs.map((l) => (
             <div key={l.id} className="rounded bg-muted/40 p-2 text-sm">
@@ -2104,11 +2104,11 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
                     {CALL_RESULT_LABEL[l.result]}
                   </span>
                   {l.is_activation && (
-                    <span className="rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-xs text-green-700">개통</span>
+                    <span className="rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-xs text-green-700">{t("customers.callLog.activated")}</span>
                   )}
-                  {l.duration_sec > 0 && <span>{l.duration_sec}초</span>}
+                  {l.duration_sec > 0 && <span>{t("customers.callLog.seconds", { n: l.duration_sec })}</span>}
                 </div>
-                <span>{new Date(l.call_date).toLocaleString("ko-KR")}</span>
+                <span>{new Date(l.call_date).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR")}</span>
               </div>
               {l.notes && <div className="mt-1 whitespace-pre-wrap">{l.notes}</div>}
               <div className="mt-1 text-xs text-muted-foreground">{staffById.get(l.staff_id) ?? "—"}</div>
@@ -2121,13 +2121,13 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
 }
 
 function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | null; onClose: () => void; staffById: Map<string, string> }) {
-
+  const { t } = useTranslation();
   if (!customer) return null;
   return (
     <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{customer.name} · 메모</DialogTitle>
+          <DialogTitle>{t("customers.memoTitle", { name: customer.name })}</DialogTitle>
           <DialogDescription>{customer.phone}</DialogDescription>
         </DialogHeader>
         <MemoPanel customer={customer} staffById={staffById} />
@@ -2151,8 +2151,10 @@ function CustomerDetailSheet({
   onSaved: (patch: CustomerPatch) => void;
   onCall: (c: CustomerRow) => void;
 }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<CustomerPatch>({});
   const [saving, setSaving] = useState(false);
+
 
   useEffect(() => {
     if (customer) {
@@ -2179,7 +2181,7 @@ function CustomerDetailSheet({
     setSaving(false);
     if (error) return toast.error(error.message);
     onSaved(form);
-    toast.success("저장됨");
+    toast.success(t("customers.detail.saved"));
   };
 
   return (
@@ -2201,7 +2203,7 @@ function CustomerDetailSheet({
         </SheetHeader>
 
         <div className="mt-4 space-y-2">
-          <Label>상태 변경</Label>
+          <Label>{t("customers.detail.changeStatus")}</Label>
           <Select value={customer.status} onValueChange={(v) => onChangeStatus(customer.id, v as CustomerStatus)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -2214,45 +2216,45 @@ function CustomerDetailSheet({
 
         <Tabs defaultValue="info" className="mt-4">
           <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
-            <TabsTrigger value="info" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">정보</TabsTrigger>
-            <TabsTrigger value="memo" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">메모</TabsTrigger>
-            <TabsTrigger value="calls" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">📞 콜 기록</TabsTrigger>
+            <TabsTrigger value="info" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabInfo")}</TabsTrigger>
+            <TabsTrigger value="memo" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabMemo")}</TabsTrigger>
+            <TabsTrigger value="calls" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabCalls")}</TabsTrigger>
           </TabsList>
 
 
           <TabsContent value="info" className="space-y-3 pt-3">
             <div className="space-y-2">
-              <Label>이름</Label>
+              <Label>{t("customers.detail.name")}</Label>
               <Input value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>전화번호</Label>
+              <Label>{t("customers.detail.phone")}</Label>
               <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>이메일</Label>
+              <Label>{t("customers.detail.email")}</Label>
               <Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value || null })} />
             </div>
             <div className="space-y-2">
-              <Label>국가</Label>
+              <Label>{t("customers.detail.country")}</Label>
               <Select value={form.country_id ?? ""} onValueChange={(v) => setForm({ ...form, country_id: v || null })}>
-                <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
                 <SelectContent>
                   {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>채널</Label>
+              <Label>{t("customers.detail.channel")}</Label>
               <Select value={form.channel_id ?? ""} onValueChange={(v) => setForm({ ...form, channel_id: v || null })}>
-                <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
                 <SelectContent>
                   {channels.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Pool</Label>
+              <Label>{t("customers.detail.pool")}</Label>
               <Select value={form.pool ?? customer.pool} onValueChange={(v) => setForm({ ...form, pool: v as CustomerPool })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -2261,11 +2263,11 @@ function CustomerDetailSheet({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>메모(notes)</Label>
+              <Label>{t("customers.detail.notes")}</Label>
               <Textarea rows={3} value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value || null })} />
             </div>
             <div className="flex justify-end pt-2">
-              <Button onClick={save} disabled={saving}>{saving ? "저장 중..." : "저장"}</Button>
+              <Button onClick={save} disabled={saving}>{saving ? t("customers.detail.saving") : t("customers.detail.save")}</Button>
             </div>
           </TabsContent>
 
@@ -2294,6 +2296,7 @@ function AddCustomerDialog({
   defaultPool: CustomerPool;
   visiblePools: readonly CustomerPool[];
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -2314,9 +2317,9 @@ function AddCustomerDialog({
   }, [open, defaultPool]);
 
   const save = async () => {
-    if (!name || !phone) return toast.error("이름과 전화번호는 필수입니다");
+    if (!name || !phone) return toast.error(t("customers.required"));
     if (requiresApplication && (!applicationDate || !requestedPlan.trim())) {
-      return toast.error("신청일과 신청 요금제는 필수입니다");
+      return toast.error(t("customers.add.applicationRequired"));
     }
     setSaving(true);
     const { error } = await supabase.from("customers").insert({
@@ -2329,29 +2332,29 @@ function AddCustomerDialog({
     });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("고객 추가됨");
+    toast.success(t("customers.customerAdded"));
     onAdded(); onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader><DialogTitle>고객 추가</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("customers.add.title")}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3 py-2">
           <div className="space-y-2">
-            <Label>이름 *</Label>
+            <Label>{t("customers.nameRequired")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>전화번호 *</Label>
+            <Label>{t("customers.phoneRequired")}</Label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
           <div className="col-span-2 space-y-2">
-            <Label>이메일</Label>
+            <Label>{t("customers.emailLabel")}</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Pool</Label>
+            <Label>{t("customers.poolLabel")}</Label>
             <Select value={pool} onValueChange={(v) => setPool(v as CustomerPool)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -2360,35 +2363,35 @@ function AddCustomerDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>국가</Label>
+            <Label>{t("customers.detail.country")}</Label>
             <Select value={countryId} onValueChange={setCountryId}>
-              <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
               <SelectContent>
                 {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="col-span-2 space-y-2">
-            <Label>채널</Label>
+            <Label>{t("customers.channelLabel")}</Label>
             <Select value={channelId} onValueChange={setChannelId}>
-              <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
               <SelectContent>
                 {channels.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>신청일 {requiresApplication && "*"}</Label>
+            <Label>{t("customers.applicationDate")} {requiresApplication && "*"}</Label>
             <Input type="date" value={applicationDate} onChange={(e) => setApplicationDate(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>신청 요금제 {requiresApplication && "*"}</Label>
-            <Input value={requestedPlan} onChange={(e) => setRequestedPlan(e.target.value)} placeholder="예: 유쓰 5G 스탠다드에센셜" />
+            <Label>{t("customers.requestedPlan")} {requiresApplication && "*"}</Label>
+            <Input value={requestedPlan} onChange={(e) => setRequestedPlan(e.target.value)} placeholder={t("customers.add.planPlaceholder")} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "저장 중..." : "저장"}</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>{t("customers.add.cancel")}</Button>
+          <Button onClick={save} disabled={saving}>{saving ? t("customers.add.saving") : t("customers.add.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -2396,6 +2399,7 @@ function AddCustomerDialog({
 }
 
 function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | null; onClose: () => void }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [result, setResult] = useState<CallResult>("no_answer");
   const [notes, setNotes] = useState("");
@@ -2413,7 +2417,7 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
   if (!customer) return null;
 
   const save = async () => {
-    if (!user) return toast.error("로그인이 필요합니다");
+    if (!user) return toast.error(t("customers.quickCall.loginRequired"));
     setSaving(true);
     const { error } = await supabase.from("call_logs").insert({
       customer_id: customer.id,
@@ -2426,7 +2430,7 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
     });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("콜 기록 저장됨");
+    toast.success(t("customers.callLog.saved"));
     onClose();
   };
 
@@ -2436,12 +2440,12 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
     <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>콜 결과 입력 — {customer.name}</DialogTitle>
+          <DialogTitle>{t("customers.quickCall.title", { name: customer.name })}</DialogTitle>
           <DialogDescription className="font-mono">{customer.phone}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-2">
-            <Label>결과</Label>
+            <Label>{t("customers.callLog.result")}</Label>
             <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -2452,17 +2456,17 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>메모</Label>
-            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="통화 내용..." />
+            <Label>{t("customers.callLog.memo")}</Label>
+            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("customers.quickCall.callNotes")} />
           </div>
           <div className="space-y-2">
-            <Label>통화 시간(초)</Label>
+            <Label>{t("customers.callLog.duration")}</Label>
             <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>저장 안함</Button>
-          <Button onClick={save} disabled={saving}>저장</Button>
+          <Button variant="outline" onClick={onClose}>{t("customers.quickCall.dontSave")}</Button>
+          <Button onClick={save} disabled={saving}>{t("customers.quickCall.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
+import i18n from "@/i18n";
 
 const DAILY_GOAL = 50;
 const STEP = 10;
@@ -28,7 +29,7 @@ export function useCallGoal() {
     const fireIfNeeded = (count: number) => {
       if (count >= DAILY_GOAL) {
         if (lastNotifiedRef.current < DAILY_GOAL) {
-          toast.success("🎉 오늘 50콜 목표 달성! 수고하셨습니다.");
+          toast.success(i18n.t("goal.achieved"));
           lastNotifiedRef.current = DAILY_GOAL;
           sessionStorage.setItem(storageKey, String(DAILY_GOAL));
         }
@@ -36,8 +37,8 @@ export function useCallGoal() {
       }
       const milestone = Math.floor(count / STEP) * STEP;
       if (milestone > 0 && milestone > lastNotifiedRef.current) {
-        toast(`${milestone}콜 진행 — 오늘 최소 50개 이상 콜 진행해야 합니다.`, {
-          description: `${DAILY_GOAL - count}콜 남음`,
+        toast(i18n.t("goal.progress", { count: milestone }), {
+          description: i18n.t("goal.remaining", { n: DAILY_GOAL - count }),
         });
         lastNotifiedRef.current = milestone;
         sessionStorage.setItem(storageKey, String(milestone));

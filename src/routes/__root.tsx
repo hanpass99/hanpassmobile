@@ -18,20 +18,22 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useCallGoal } from "@/hooks/use-call-goal";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import "@/i18n";
+import i18n from "@/i18n";
+import { useTranslation } from "react-i18next";
 
 function NotFoundComponent() {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold">페이지를 찾을 수 없습니다</h2>
-        <p className="mt-2 text-sm text-muted-foreground">요청하신 페이지가 존재하지 않습니다.</p>
+        <h2 className="mt-4 text-xl font-semibold">{t("errors.notFoundTitle")}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("errors.notFoundDesc")}</p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
         >
-          홈으로
+          {t("errors.home")}
         </Link>
       </div>
     </div>
@@ -41,10 +43,11 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold">오류가 발생했습니다</h1>
+        <h1 className="text-xl font-semibold">{t("errors.errorTitle")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <button
           onClick={() => {
@@ -53,7 +56,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           }}
           className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          다시 시도
+          {t("errors.retry")}
         </button>
       </div>
     </div>
@@ -66,11 +69,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Hanpass Mobile OB Call CRM" },
-      { name: "description", content: "한패스 모바일 아웃바운드 콜 관리 시스템" },
+      { name: "description", content: i18n.t("app.desc") },
       { property: "og:title", content: "Hanpass Mobile OB Call CRM" },
       { name: "twitter:title", content: "Hanpass Mobile OB Call CRM" },
-      { property: "og:description", content: "한패스 모바일 아웃바운드 콜 관리 시스템" },
-      { name: "twitter:description", content: "한패스 모바일 아웃바운드 콜 관리 시스템" },
+      { property: "og:description", content: i18n.t("app.desc") },
+      { name: "twitter:description", content: i18n.t("app.desc") },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/96e0c5b7-82e3-4549-93b5-0c50b870f682/id-preview-eb1cbe12--0aa97a0a-ffc3-4991-bbe0-f78345f76740.lovable.app-1778318358520.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/96e0c5b7-82e3-4549-93b5-0c50b870f682/id-preview-eb1cbe12--0aa97a0a-ffc3-4991-bbe0-f78345f76740.lovable.app-1778318358520.png" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -106,7 +109,7 @@ function AuthGate() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        불러오는 중...
+        {i18n.t("errors.loading")}
       </div>
     );
   }

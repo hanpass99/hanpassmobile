@@ -128,7 +128,7 @@ function Settings() {
       setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_new_signup: !value } : x)));
       return;
     }
-    toast.success(value ? "신규 가입자 접근 허용" : "신규 가입자 접근 차단");
+    toast.success(value ? t("settings.newSignupAllowed") : t("settings.newSignupBlocked"));
   };
 
 
@@ -258,7 +258,7 @@ function Settings() {
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="w-28">{t("settings.callTarget")}</TableHead>
                 <TableHead className="w-28">{t("settings.activationTarget")}</TableHead>
-                {isAdmin && <TableHead className="w-32">신규 가입자 접근</TableHead>}
+                {isAdmin && <TableHead className="w-32">{t("settings.newSignupAccess")}</TableHead>}
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -369,7 +369,7 @@ function Settings() {
                           onCheckedChange={(v) => setNewSignupAccess(r, v)}
                         />
                         <span className="text-xs text-muted-foreground">
-                          {r.role === "admin" ? "전체 허용" : r.can_access_new_signup ? "허용" : "차단"}
+                          {r.role === "admin" ? t("settings.accessAllowedAll") : r.can_access_new_signup ? t("settings.accessAllowed") : t("settings.accessBlocked")}
                         </span>
                       </div>
                     </TableCell>

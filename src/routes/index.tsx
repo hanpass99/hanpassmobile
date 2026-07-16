@@ -158,19 +158,20 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("dashboard.title")} description={loading ? t("common.loading") : `${t("dashboard.subtitle")} · ${format(from, "MM.dd")} ~ ${format(to, "MM.dd")} 기준`} />
+      <PageHeader title={t("dashboard.title")} description={loading ? t("common.loading") : `${t("dashboard.subtitle")} · ${format(from, "MM.dd")} ~ ${format(to, "MM.dd")} ${t("dashboard.basisDate")}`} />
 
       {isError && (
         <Card role="alert">
           <CardContent className="space-y-3 p-6 text-center">
-            <div className="text-sm font-semibold">대시보드 데이터를 불러오지 못했습니다</div>
+            <div className="text-sm font-semibold">{t("dashboard.loadError")}</div>
             <div className="text-xs text-muted-foreground">{(summaryQ.error as Error)?.message}</div>
             <Button onClick={() => void summaryQ.refetch()} size="sm" aria-busy={summaryQ.isFetching}>
-              다시 시도
+              {t("dashboard.retry")}
             </Button>
           </CardContent>
         </Card>
       )}
+
 
 
       <Card>
@@ -254,8 +255,8 @@ function Dashboard() {
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-semibold">⚠ SLA 위반 (개통 신청자)</div>
-                <div className="text-xs text-muted-foreground">클릭하여 SLA 초과 고객 및 팀 벌금 확인</div>
+                <div className="text-sm font-semibold">{t("dashboard.slaViolationTitle")}</div>
+                <div className="text-xs text-muted-foreground">{t("dashboard.slaViolationHint")}</div>
               </div>
             </div>
             <div className="text-3xl font-bold text-destructive">
@@ -402,7 +403,7 @@ function DatePick({ value, onChange }: { value: Date; onChange: (d: Date) => voi
       <PopoverTrigger asChild>
         <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !value && "text-muted-foreground")}>
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "yyyy.MM.dd") : <span>선택</span>}
+          {value ? format(value, "yyyy.MM.dd") : <span>{i18n.t("dashboard.pick")}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
