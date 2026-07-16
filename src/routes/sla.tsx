@@ -1,5 +1,6 @@
 import i18n from "@/i18n";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, RotateCcw, Pencil, Ban, History, Clock } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -32,6 +33,8 @@ export const Route = createFileRoute("/sla")({
 const won = (n: number) => `₩${Number(n || 0).toLocaleString()}`;
 
 function SlaPage() {
+  const { t, i18n: i18nInst } = useTranslation();
+  const locale = i18nInst.language === "en" ? "en-US" : "ko-KR";
   const { isAdmin } = useAuth();
   useSlaRealtime();
 
@@ -66,36 +69,34 @@ function SlaPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="SLA 관리"
-        description="개통 신청자 팀별 SLA 준수 현황과 벌금을 실시간으로 관리합니다."
+        title={t("sla.title")}
+        description={t("sla.subtitle")}
       />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard
-          label="현재 SLA 위반"
+          label={t("sla.currentViolations")}
           value={activeCount.toLocaleString()}
           icon={AlertTriangle}
           tone="destructive"
-          hint="개통 신청자 중 SLA 초과"
+          hint={t("sla.currentViolationsHint")}
         />
-        <StatCard label="오늘 벌금" value={won(totalToday)} icon={AlertTriangle} tone="warning" />
-        <StatCard label="이번 주 벌금" value={won(totalWeek)} icon={AlertTriangle} tone="warning" />
-        <StatCard label="이번 달 벌금" value={won(totalMonth)} icon={AlertTriangle} tone="warning" />
+        <StatCard label={t("sla.todayFine")} value={won(totalToday)} icon={AlertTriangle} tone="warning" />
+        <StatCard label={t("sla.weekFine")} value={won(totalWeek)} icon={AlertTriangle} tone="warning" />
+        <StatCard label={t("sla.monthFine")} value={won(totalMonth)} icon={AlertTriangle} tone="warning" />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>팀별 SLA 현황</CardTitle>
-          <CardDescription>
-            SLA 기준 · 미처리 24h(하루 ₩5,000), 진행중 48h(하루 ₩3,000), 부재 48h(하루 ₩5,000)
-          </CardDescription>
+          <CardTitle>{t("sla.teamStatus")}</CardTitle>
+          <CardDescription>{t("sla.teamStatusDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="month">
             <TabsList>
-              <TabsTrigger value="today">오늘</TabsTrigger>
-              <TabsTrigger value="week">이번 주</TabsTrigger>
-              <TabsTrigger value="month">이번 달</TabsTrigger>
+              <TabsTrigger value="today">{t("sla.tabToday")}</TabsTrigger>
+              <TabsTrigger value="week">{t("sla.tabWeek")}</TabsTrigger>
+              <TabsTrigger value="month">{t("sla.tabMonth")}</TabsTrigger>
             </TabsList>
             <TabsContent value="today">
               <TeamTable
@@ -134,7 +135,7 @@ function SlaPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            SLA 위반 고객
+            {t("sla.violationCustomers")}
             {selectedCountry && (
               <Button
                 variant="ghost"
@@ -142,31 +143,29 @@ function SlaPage() {
                 className="ml-2"
                 onClick={() => setSelectedCountry(null)}
               >
-                필터 해제
+                {t("sla.clearFilter")}
               </Button>
             )}
           </CardTitle>
-          <CardDescription>
-            현재 SLA를 초과한 개통 신청자 목록입니다. 상태를 변경하면 실시간으로 갱신됩니다.
-          </CardDescription>
+          <CardDescription>{t("sla.violationDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {violationsQ.isLoading ? (
             <Skeleton className="h-40 w-full" />
           ) : filteredViolations.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
-              현재 SLA 위반 고객이 없습니다.
+              {t("sla.noViolations")}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>팀</TableHead>
-                  <TableHead>고객</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>기준시각</TableHead>
-                  <TableHead>초과일수</TableHead>
-                  <TableHead className="text-right">누적 벌금</TableHead>
+                  <TableHead>{t("sla.team")}</TableHead>
+                  <TableHead>{t("sla.customer")}</TableHead>
+                  <TableHead>{t("sla.status")}</TableHead>
+                  <TableHead>{t("sla.since")}</TableHead>
+                  <TableHead>{t("sla.overdueDays")}</TableHead>
+                  <TableHead className="text-right">{t("sla.fineTotal")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -183,10 +182,10 @@ function SlaPage() {
                       <Badge>{STATUS_LABEL[r.status as keyof typeof STATUS_LABEL] ?? r.status}</Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {new Date(r.since).toLocaleString("ko-KR")}
+                      {new Date(r.since).toLocaleString(locale)}
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold text-destructive">{r.overdue_days}일</span>
+                      <span className="font-semibold text-destructive">{t("sla.days", { n: r.overdue_days })}</span>
                       <span className="ml-1 text-xs text-muted-foreground">
                         ({Math.round(r.overdue_hours)}h)
                       </span>
@@ -204,29 +203,27 @@ function SlaPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
             <Clock className="h-4 w-4" />
-            벌금 부과 예정 (24시간 이내)
+            {t("sla.upcoming")}
           </CardTitle>
-          <CardDescription>
-            아래 고객들은 아직 SLA 마감 전이지만, 남은 시간 이후 벌금이 부과됩니다. 지금 조치하세요.
-          </CardDescription>
+          <CardDescription>{t("sla.upcomingDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {upcomingQ.isLoading ? (
             <Skeleton className="h-32 w-full" />
           ) : (upcomingQ.data?.length ?? 0) === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              24시간 이내 벌금 부과 예정 고객이 없습니다.
+              {t("sla.noUpcoming")}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>팀</TableHead>
-                  <TableHead>고객</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>마감시각</TableHead>
-                  <TableHead>남은 시간</TableHead>
-                  <TableHead className="text-right">부과 예정</TableHead>
+                  <TableHead>{t("sla.team")}</TableHead>
+                  <TableHead>{t("sla.customer")}</TableHead>
+                  <TableHead>{t("sla.status")}</TableHead>
+                  <TableHead>{t("sla.deadline")}</TableHead>
+                  <TableHead>{t("sla.timeLeft")}</TableHead>
+                  <TableHead className="text-right">{t("sla.upcomingFine")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -248,7 +245,7 @@ function SlaPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {new Date(r.deadline).toLocaleString("ko-KR")}
+                        {new Date(r.deadline).toLocaleString(locale)}
                       </TableCell>
                       <TableCell>
                         <span
@@ -259,8 +256,8 @@ function SlaPage() {
                           }
                         >
                           {h < 1
-                            ? `${Math.round(h * 60)}분 후`
-                            : `${Math.floor(h)}시간 ${Math.round((h % 1) * 60)}분 후`}
+                            ? t("sla.minutesLater", { n: Math.round(h * 60) })
+                            : t("sla.hoursMinutesLater", { h: Math.floor(h), m: Math.round((h % 1) * 60) })}
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-semibold">
@@ -279,33 +276,37 @@ function SlaPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="h-4 w-4" />
-            변경 이력
+            {t("sla.history")}
           </CardTitle>
-          <CardDescription>관리자의 벌금 조정 기록입니다.</CardDescription>
+          <CardDescription>{t("sla.historyDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {adjustmentsQ.isLoading ? (
             <Skeleton className="h-20 w-full" />
           ) : (adjustmentsQ.data?.length ?? 0) === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">기록 없음</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">{t("sla.noHistory")}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>시각</TableHead>
-                  <TableHead>유형</TableHead>
-                  <TableHead>기간</TableHead>
-                  <TableHead className="text-right">금액</TableHead>
-                  <TableHead>사유</TableHead>
+                  <TableHead>{t("sla.time")}</TableHead>
+                  <TableHead>{t("sla.type")}</TableHead>
+                  <TableHead>{t("sla.period")}</TableHead>
+                  <TableHead className="text-right">{t("sla.amount")}</TableHead>
+                  <TableHead>{t("sla.reason")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {adjustmentsQ.data!.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell className="text-xs">{new Date(a.created_at).toLocaleString("ko-KR")}</TableCell>
+                    <TableCell className="text-xs">{new Date(a.created_at).toLocaleString(locale)}</TableCell>
                     <TableCell>
                       <Badge variant={a.adjustment_type === "reset" ? "destructive" : "secondary"}>
-                        {a.adjustment_type === "reset" ? "초기화" : a.adjustment_type === "override" ? "수정" : "면제"}
+                        {a.adjustment_type === "reset"
+                          ? t("sla.typeReset")
+                          : a.adjustment_type === "override"
+                            ? t("sla.typeOverride")
+                            : t("sla.typeWaive")}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs">
@@ -345,22 +346,23 @@ function TeamTable(props: {
   onSelect: (id: string | null) => void;
   onAction: (type: "reset" | "override" | "waive", team: SlaTeamRow) => void;
 }) {
+  const { t } = useTranslation();
   if (props.loading) return <Skeleton className="mt-4 h-40 w-full" />;
   if (!props.data.length) {
-    return <div className="py-8 text-center text-sm text-muted-foreground">SLA 위반 팀이 없습니다.</div>;
+    return <div className="py-8 text-center text-sm text-muted-foreground">{t("sla.noTeamViolations")}</div>;
   }
   return (
     <div className="mt-4 overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>팀</TableHead>
-            <TableHead className="text-right">미처리 초과</TableHead>
-            <TableHead className="text-right">진행중 초과</TableHead>
-            <TableHead className="text-right">부재 초과</TableHead>
-            <TableHead className="text-right">총 위반</TableHead>
-            <TableHead className="text-right">벌금 (기간)</TableHead>
-            {props.isAdmin && <TableHead className="text-right">관리</TableHead>}
+            <TableHead>{t("sla.team")}</TableHead>
+            <TableHead className="text-right">{t("sla.colUnprocessed")}</TableHead>
+            <TableHead className="text-right">{t("sla.colInProgress")}</TableHead>
+            <TableHead className="text-right">{t("sla.colAbsent")}</TableHead>
+            <TableHead className="text-right">{t("sla.colTotal")}</TableHead>
+            <TableHead className="text-right">{t("sla.colFine")}</TableHead>
+            {props.isAdmin && <TableHead className="text-right">{t("sla.colManage")}</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -384,20 +386,20 @@ function TeamTable(props: {
                   {won(r.net_fine)}
                   {r.adjustments !== 0 && (
                     <div className="text-xs font-normal text-muted-foreground">
-                      조정 {won(r.adjustments)}
+                      {t("sla.adjustLabel", { amt: won(r.adjustments) })}
                     </div>
                   )}
                 </TableCell>
                 {props.isAdmin && (
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
-                      <Button size="sm" variant="ghost" title="초기화" onClick={() => props.onAction("reset", r)}>
+                      <Button size="sm" variant="ghost" title={t("sla.typeReset")} onClick={() => props.onAction("reset", r)}>
                         <RotateCcw className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" title="수정" onClick={() => props.onAction("override", r)}>
+                      <Button size="sm" variant="ghost" title={t("sla.typeOverride")} onClick={() => props.onAction("override", r)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" title="면제" onClick={() => props.onAction("waive", r)}>
+                      <Button size="sm" variant="ghost" title={t("sla.typeWaive")} onClick={() => props.onAction("waive", r)}>
                         <Ban className="h-4 w-4" />
                       </Button>
                     </div>
@@ -418,6 +420,7 @@ function AdminActionDialog(props: {
   periodEnd: string;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const { action } = props;
   const { reset, override, waive } = useSlaAdminActions();
   const [amount, setAmount] = useState<string>(String(action.team.net_fine));
@@ -426,9 +429,9 @@ function AdminActionDialog(props: {
   const [periodEnd, setPeriodEnd] = useState(props.periodEnd);
 
   const title =
-    action.type === "reset" ? "벌금 초기화"
-    : action.type === "override" ? "벌금 금액 수정"
-    : "벌금 면제";
+    action.type === "reset" ? t("sla.dlgReset")
+    : action.type === "override" ? t("sla.dlgOverride")
+    : t("sla.dlgWaive");
 
   const busy = reset.isPending || override.isPending || waive.isPending;
 
@@ -437,17 +440,17 @@ function AdminActionDialog(props: {
       const base = { countryId: action.team.country_id, periodStart, periodEnd, reason: reason || undefined };
       if (action.type === "reset") {
         await reset.mutateAsync(base);
-        toast.success("벌금이 초기화되었습니다.");
+        toast.success(t("sla.toastReset"));
       } else if (action.type === "override") {
         await override.mutateAsync({ ...base, amount: Math.max(0, Number(amount) || 0) });
-        toast.success("벌금이 수정되었습니다.");
+        toast.success(t("sla.toastOverride"));
       } else {
         await waive.mutateAsync({ ...base, amount: Math.max(0, Number(amount) || 0) });
-        toast.success("벌금이 면제되었습니다.");
+        toast.success(t("sla.toastWaive"));
       }
       props.onClose();
     } catch (e) {
-      toast.error((e as Error).message || "처리 실패");
+      toast.error((e as Error).message || t("sla.toastFail"));
     }
   };
 
@@ -462,31 +465,31 @@ function AdminActionDialog(props: {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>기간 시작</Label>
+              <Label>{t("sla.periodStart")}</Label>
               <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
             </div>
             <div>
-              <Label>기간 종료</Label>
+              <Label>{t("sla.periodEnd")}</Label>
               <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
             </div>
           </div>
           {action.type !== "reset" && (
             <div>
-              <Label>금액 (₩)</Label>
+              <Label>{t("sla.amountWon")}</Label>
               <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
               <p className="mt-1 text-xs text-muted-foreground">
-                {action.type === "override" ? "이 기간의 팀 벌금을 이 금액으로 확정합니다." : "이 금액만큼 벌금을 감액합니다."}
+                {action.type === "override" ? t("sla.amountHelpOverride") : t("sla.amountHelpWaive")}
               </p>
             </div>
           )}
           <div>
-            <Label>사유 (선택)</Label>
+            <Label>{t("sla.reasonOptional")}</Label>
             <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={props.onClose} disabled={busy}>취소</Button>
-          <Button onClick={submit} disabled={busy}>확인</Button>
+          <Button variant="outline" onClick={props.onClose} disabled={busy}>{t("sla.cancel")}</Button>
+          <Button onClick={submit} disabled={busy}>{t("sla.confirm")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
