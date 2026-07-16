@@ -1,4 +1,5 @@
 export default {
+  app: { desc: "Hanpass Mobile outbound-call CRM" },
   nav: {
     main: "Main", analytics: "Analytics", system: "System",
     dashboard: "Dashboard", customers: "Customers",
@@ -103,6 +104,7 @@ export default {
     title: "Today's call goal",
     progress: "{{count}} calls done — at least 50 calls needed today.",
     achieved: "🎉 50-call daily goal reached. Great work!",
+    remaining: "{{n}} calls left",
   },
   status: {
     new: "Not started", in_progress: "In progress", no_answer: "No answer", unreachable: "Unreachable",

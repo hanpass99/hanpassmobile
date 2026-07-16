@@ -1,4 +1,5 @@
 export default {
+  app: { desc: "한패스 모바일 아웃바운드 콜 관리 시스템" },
   nav: {
     main: "메인", analytics: "분석", system: "시스템",
     dashboard: "대시보드", customers: "고객 관리",
@@ -103,6 +104,7 @@ export default {
     title: "오늘의 콜 목표",
     progress: "{{count}}콜 진행 — 오늘 최소 50개 이상 콜 진행해야 합니다.",
     achieved: "🎉 오늘 50콜 목표 달성! 수고하셨습니다.",
+    remaining: "{{n}}콜 남음",
   },
   status: {
     new: "미처리", in_progress: "진행중", no_answer: "부재", unreachable: "전화 안 받음",
