@@ -1910,6 +1910,7 @@ function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; poo
 type Note = { id: string; content: string; created_at: string; author_id: string };
 
 function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: Map<string, string> }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [content, setContent] = useState("");
@@ -1939,33 +1940,33 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
     setSaving(false);
     if (error) return toast.error(error.message);
     setContent("");
-    toast.success("메모 저장");
+    toast.success(t("customers.memoSaved"));
     load(customer.id);
   };
 
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <Label>새 메모</Label>
-        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder="고객 관련 메모를 입력하세요" />
+        <Label>{t("memo.newMemo")}</Label>
+        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder={t("customers.memoAddPlaceholder")} />
         <div className="flex justify-end">
           <Button size="sm" onClick={save} disabled={saving || !content.trim()}>
-            {saving ? "저장 중..." : "메모 추가"}
+            {saving ? t("customers.memoSaving") : t("customers.memoAddBtn")}
           </Button>
         </div>
       </div>
       <div className="space-y-2">
-        <Label>히스토리</Label>
+        <Label>{t("customers.memoHistory")}</Label>
         <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
-          {loading && <div className="text-center text-xs text-muted-foreground py-4">불러오는 중...</div>}
+          {loading && <div className="text-center text-xs text-muted-foreground py-4">{t("customers.loadingLabel")}</div>}
           {!loading && notes.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground py-4">메모 기록이 없습니다.</div>
+            <div className="text-center text-xs text-muted-foreground py-4">{t("customers.memoNone")}</div>
           )}
           {notes.map((n) => (
             <div key={n.id} className="rounded bg-muted/40 p-2 text-sm">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="font-medium">{staffById.get(n.author_id) ?? "—"}</span>
-                <span>{new Date(n.created_at).toLocaleString("ko-KR")}</span>
+                <span>{new Date(n.created_at).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR")}</span>
               </div>
               <div className="mt-1 whitespace-pre-wrap">{n.content}</div>
             </div>
@@ -1977,15 +1978,9 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
 }
 
 type CallResult = "no_answer" | "wrong_number" | "callback" | "not_interested" | "interested" | "activated" | "failed";
-const CALL_RESULT_LABEL: Record<CallResult, string> = {
-  no_answer: "부재중",
-  wrong_number: "번호오류",
-  callback: "재연락",
-  not_interested: "관심없음",
-  interested: "관심있음",
-  activated: "개통완료",
-  failed: "실패",
-};
+const CALL_RESULT_LABEL = new Proxy({} as Record<CallResult, string>, {
+  get: (_t, p: string) => i18n.t(`callResult.${p}`),
+});
 const CALL_RESULT_CLASS: Record<CallResult, string> = {
   no_answer: "bg-gray-100 text-gray-700 border-gray-300",
   wrong_number: "bg-red-100 text-red-700 border-red-300",
@@ -1995,6 +1990,7 @@ const CALL_RESULT_CLASS: Record<CallResult, string> = {
   activated: "bg-green-100 text-green-700 border-green-300",
   failed: "bg-rose-100 text-rose-700 border-rose-300",
 };
+const CALL_RESULT_KEYS: CallResult[] = ["no_answer","wrong_number","callback","not_interested","interested","activated","failed"];
 
 type CallLog = {
   id: string;
@@ -2009,6 +2005,7 @@ type CallLog = {
 };
 
 function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffById: Map<string, string> }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [logs, setLogs] = useState<CallLog[]>([]);
   const [loading, setLoading] = useState(false);
@@ -2052,7 +2049,7 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
     });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("콜 기록 저장됨");
+    toast.success(t("customers.callLog.saved"));
     setNotes("");
     setDuration("");
     setIsActivation(false);
@@ -2063,41 +2060,41 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
     <div className="space-y-4">
       <div className="space-y-3 rounded border border-border/60 p-3">
         <div className="space-y-2">
-          <Label>결과</Label>
+          <Label>{t("customers.callLog.result")}</Label>
           <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {(Object.keys(CALL_RESULT_LABEL) as CallResult[]).map((r) => (
+              {CALL_RESULT_KEYS.map((r) => (
                 <SelectItem key={r} value={r}>{CALL_RESULT_LABEL[r]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>메모</Label>
-          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="통화 내용 메모..." />
+          <Label>{t("customers.callLog.memo")}</Label>
+          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("customers.callLog.memoPlaceholder")} />
         </div>
         <div className="space-y-2">
-          <Label>통화 시간(초)</Label>
+          <Label>{t("customers.callLog.duration")}</Label>
           <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
         </div>
         <div className="flex items-center gap-2">
           <Checkbox id="is_activation" checked={isActivation} onCheckedChange={(c) => setIsActivation(!!c)} />
-          <Label htmlFor="is_activation" className="cursor-pointer">개통 연결</Label>
+          <Label htmlFor="is_activation" className="cursor-pointer">{t("customers.callLog.isActivation")}</Label>
         </div>
         <div className="flex justify-end">
           <Button size="sm" onClick={save} disabled={saving}>
-            {saving ? "저장 중..." : "콜 기록 저장"}
+            {saving ? t("customers.callLog.saving") : t("customers.callLog.saveBtn")}
           </Button>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label>최근 기록</Label>
+        <Label>{t("customers.callLog.recent")}</Label>
         <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
-          {loading && <div className="text-center text-xs text-muted-foreground py-4">불러오는 중...</div>}
+          {loading && <div className="text-center text-xs text-muted-foreground py-4">{t("customers.loadingLabel")}</div>}
           {!loading && logs.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground py-4">기록 없음</div>
+            <div className="text-center text-xs text-muted-foreground py-4">{t("customers.callLog.empty")}</div>
           )}
           {logs.map((l) => (
             <div key={l.id} className="rounded bg-muted/40 p-2 text-sm">
@@ -2107,11 +2104,11 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
                     {CALL_RESULT_LABEL[l.result]}
                   </span>
                   {l.is_activation && (
-                    <span className="rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-xs text-green-700">개통</span>
+                    <span className="rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-xs text-green-700">{t("customers.callLog.activated")}</span>
                   )}
-                  {l.duration_sec > 0 && <span>{l.duration_sec}초</span>}
+                  {l.duration_sec > 0 && <span>{t("customers.callLog.seconds", { n: l.duration_sec })}</span>}
                 </div>
-                <span>{new Date(l.call_date).toLocaleString("ko-KR")}</span>
+                <span>{new Date(l.call_date).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR")}</span>
               </div>
               {l.notes && <div className="mt-1 whitespace-pre-wrap">{l.notes}</div>}
               <div className="mt-1 text-xs text-muted-foreground">{staffById.get(l.staff_id) ?? "—"}</div>
@@ -2124,13 +2121,13 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
 }
 
 function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | null; onClose: () => void; staffById: Map<string, string> }) {
-
+  const { t } = useTranslation();
   if (!customer) return null;
   return (
     <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{customer.name} · 메모</DialogTitle>
+          <DialogTitle>{t("customers.memoTitle", { name: customer.name })}</DialogTitle>
           <DialogDescription>{customer.phone}</DialogDescription>
         </DialogHeader>
         <MemoPanel customer={customer} staffById={staffById} />
@@ -2154,7 +2151,7 @@ function CustomerDetailSheet({
   onSaved: (patch: CustomerPatch) => void;
   onCall: (c: CustomerRow) => void;
 }) {
-  const [form, setForm] = useState<CustomerPatch>({});
+  const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
