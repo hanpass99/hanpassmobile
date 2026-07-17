@@ -25,10 +25,10 @@ export type CallResult = (typeof CALL_RESULTS)[number];
 
 export const CALL_RESULT_LABEL = i18nMap<CallResult>("callResult");
 
-// 새 10종 상태값 (사용자 요청 순서)
 export const CUSTOMER_STATUSES = [
   "new",
   "in_progress",
+  "certificate_issuing",
   "no_answer",
   "unreachable",
   "not_interested",
@@ -46,22 +46,23 @@ export type CustomerStatus = (typeof CUSTOMER_STATUSES)[number];
 
 export const STATUS_LABEL = i18nMap<CustomerStatus>("status");
 
-// 상태별 색상 — 파스텔톤, 13종 시각적 구분, 라이트/다크 모두 가독성 확보
+// 상태별 색상 — 파스텔톤, 15종 시각적 구분, 라이트/다크 모두 가독성 확보
 export const STATUS_CLASS: Record<CustomerStatus, string> = {
-  new:               "bg-slate-100 text-slate-700 border-transparent dark:bg-slate-800/60 dark:text-slate-200",
-  in_progress:       "bg-sky-100 text-sky-800 border-transparent dark:bg-sky-900/40 dark:text-sky-200",
-  no_answer:         "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-900/40 dark:text-amber-200",
-  unreachable:       "bg-yellow-100 text-yellow-800 border-transparent dark:bg-yellow-900/40 dark:text-yellow-200",
-  not_interested:    "bg-orange-100 text-orange-800 border-transparent dark:bg-orange-900/40 dark:text-orange-200",
-  callback:          "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-900/40 dark:text-blue-200",
-  activated:         "bg-emerald-100 text-emerald-800 border-transparent dark:bg-emerald-900/40 dark:text-emerald-200",
-  stay_expired:      "bg-pink-100 text-pink-800 border-transparent dark:bg-pink-900/40 dark:text-pink-200",
-  delinquent:        "bg-rose-100 text-rose-800 border-transparent dark:bg-rose-900/40 dark:text-rose-200",
-  line_exceeded:     "bg-violet-100 text-violet-800 border-transparent dark:bg-violet-900/40 dark:text-violet-200",
-  minor:             "bg-indigo-100 text-indigo-800 border-transparent dark:bg-indigo-900/40 dark:text-indigo-200",
-  wrong_application: "bg-stone-100 text-stone-800 border-transparent dark:bg-stone-800/60 dark:text-stone-200",
-  seasonal_worker:   "bg-teal-100 text-teal-800 border-transparent dark:bg-teal-900/40 dark:text-teal-200",
-  suspended_number:  "bg-fuchsia-100 text-fuchsia-800 border-transparent dark:bg-fuchsia-900/40 dark:text-fuchsia-200",
+  new:                 "bg-slate-100 text-slate-700 border-transparent dark:bg-slate-800/60 dark:text-slate-200",
+  in_progress:         "bg-sky-100 text-sky-800 border-transparent dark:bg-sky-900/40 dark:text-sky-200",
+  certificate_issuing: "bg-cyan-100 text-cyan-800 border-transparent dark:bg-cyan-900/40 dark:text-cyan-200",
+  no_answer:           "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-900/40 dark:text-amber-200",
+  unreachable:         "bg-yellow-100 text-yellow-800 border-transparent dark:bg-yellow-900/40 dark:text-yellow-200",
+  not_interested:      "bg-orange-100 text-orange-800 border-transparent dark:bg-orange-900/40 dark:text-orange-200",
+  callback:            "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-900/40 dark:text-blue-200",
+  activated:           "bg-emerald-100 text-emerald-800 border-transparent dark:bg-emerald-900/40 dark:text-emerald-200",
+  stay_expired:        "bg-pink-100 text-pink-800 border-transparent dark:bg-pink-900/40 dark:text-pink-200",
+  delinquent:          "bg-rose-100 text-rose-800 border-transparent dark:bg-rose-900/40 dark:text-rose-200",
+  line_exceeded:       "bg-violet-100 text-violet-800 border-transparent dark:bg-violet-900/40 dark:text-violet-200",
+  minor:               "bg-indigo-100 text-indigo-800 border-transparent dark:bg-indigo-900/40 dark:text-indigo-200",
+  wrong_application:   "bg-stone-100 text-stone-800 border-transparent dark:bg-stone-800/60 dark:text-stone-200",
+  seasonal_worker:     "bg-teal-100 text-teal-800 border-transparent dark:bg-teal-900/40 dark:text-teal-200",
+  suspended_number:    "bg-fuchsia-100 text-fuchsia-800 border-transparent dark:bg-fuchsia-900/40 dark:text-fuchsia-200",
 };
 
 // 콜 결과 → 자동 상태 추천
