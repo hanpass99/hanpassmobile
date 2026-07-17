@@ -7,7 +7,7 @@ import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
   StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X, Phone, ExternalLink,
 } from "lucide-react";
-import { syncGoogleFormApplications, syncGoogleFormApplicationsInter } from "@/lib/google-form-sync.functions";
+import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals } from "@/lib/google-form-sync.functions";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
