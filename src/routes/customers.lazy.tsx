@@ -1445,7 +1445,28 @@ function CustomersPage() {
                 </Button>
               </>
             )}
+            {tab === "friend_referral" && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={SHEET_URL_FRIEND} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.friendReferralSheet")}
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncFriendReferralsMut.mutate()}
+                  disabled={syncFriendReferralsMut.isPending}
+                  aria-busy={syncFriendReferralsMut.isPending}
+                  title={t("customers.friendReferralSyncTitle")}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncFriendReferralsMut.isPending ? "animate-spin" : ""}`} />
+                  {t("customers.friendReferralSync")}
+                </Button>
+              </>
+            )}
             <Button variant="outline" size="sm" onClick={load} aria-busy={loading || loadingMore}>
+
               <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
             </Button>
           </div>
