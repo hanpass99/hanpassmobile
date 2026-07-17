@@ -1349,6 +1349,33 @@ function CustomersPage() {
     return () => clearInterval(timer);
   }, [tab]);
 
+  // === 친구 추천 자동 동기화 (활성화: friend_referral 탭) ===
+  const syncFriendReferralsFn = useServerFn(syncFriendReferrals);
+  const syncFriendReferralsMut = useMutation({
+    mutationFn: () => syncFriendReferralsFn(),
+    onSuccess: (r) => {
+      if (r.inserted > 0) {
+        toast.success(t("customers.friendReferralSynced", { n: r.inserted }));
+        void refetchList();
+        void refetchPoolCounts();
+      }
+      if (r.errors && r.errors.length > 0) {
+        toast.error(t("customers.friendReferralSyncErr", { msg: r.errors[0] }));
+      }
+    },
+    onError: (e: Error) => toast.error(t("customers.friendReferralSyncFail", { msg: e.message })),
+  });
+  const syncFriendMutRef = useRef(syncFriendReferralsMut);
+  syncFriendMutRef.current = syncFriendReferralsMut;
+  useEffect(() => {
+    if (tab !== "friend_referral") return;
+    syncFriendMutRef.current.mutate();
+    const timer = setInterval(() => syncFriendMutRef.current.mutate(), 60_000);
+    return () => clearInterval(timer);
+  }, [tab]);
+
+
+
 
   if (listError) {
     return (
