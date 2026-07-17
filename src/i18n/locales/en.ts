@@ -107,7 +107,7 @@ export default {
     remaining: "{{n}} calls left",
   },
   status: {
-    new: "Not started", in_progress: "In progress", no_answer: "No answer", unreachable: "Unreachable",
+    new: "Not started", in_progress: "In progress", certificate_issuing: "Certificate issuing", no_answer: "No answer", unreachable: "Unreachable",
     not_interested: "Not interested", callback: "Callback requested",
     activated: "Activated", stay_expired: "Stay expired",
     delinquent: "Delinquent", line_exceeded: "Line exceeded", minor: "Minor",
