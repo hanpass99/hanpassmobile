@@ -1396,6 +1396,7 @@ function CustomersPage() {
 
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
   const SHEET_URL_INTER = "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
+  const SHEET_URL_FRIEND = "https://docs.google.com/spreadsheets/d/1OwC6pQ2as5VsyDTYVzUSGsNru9ki2jFvScn5kk2zZ1w/edit";
 
   return (
     <div className="space-y-5">
