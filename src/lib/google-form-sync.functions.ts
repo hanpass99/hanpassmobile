@@ -427,7 +427,14 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
 
       const isCis = CIS_CODES.has(country_raw);
       const storedCode = isCis ? "CIS" : (country_raw || null);
-      const country_id = storedCode ? codeToId.get(storedCode) ?? null : null;
+
+      // 허용 국가만 저장: CIS, MM, LK, VN, BD, NP, PH, KH
+      const ALLOWED = new Set(["CIS", "MM", "LK", "VN", "BD", "NP", "PH", "KH"]);
+      if (!storedCode || !ALLOWED.has(storedCode)) {
+        result.skipped++;
+        continue;
+      }
+      const country_id = codeToId.get(storedCode) ?? null;
 
       const notes = isCis
         ? `친구 추천 자동 등록 · 실제 국적: ${NATIONALITY_LABEL[country_raw] ?? country_raw}`
