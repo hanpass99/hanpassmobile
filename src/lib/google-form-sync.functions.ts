@@ -395,28 +395,6 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 기존 member_no 목록 (dedupe)
-    const { data: existingFR, error: exErr } = await supabaseAdmin
-      .from("friend_referrals")
-      .select("member_no");
-    if (exErr) throw exErr;
-    const existingMemberNos = new Set((existingFR ?? []).map((r) => r.member_no));
-
-    // 기존 customers (pool=friend_referral) dedupe (name+phone)
-    const { data: existingCust, error: ecErr } = await supabaseAdmin
-      .from("customers")
-      .select("name, phone")
-      .eq("pool", "friend_referral");
-    if (ecErr) throw ecErr;
-    const existingCustKeys = new Set(
-      (existingCust ?? [])
-        .map((r) => {
-          const p = normalizeFriendPhone(r.phone ?? "");
-          return p ? `${r.name}|${p}` : null;
-        })
-        .filter((k): k is string => Boolean(k)),
-    );
-
     const { data: countries, error: coErr } = await supabaseAdmin
       .from("countries")
       .select("id, code");
@@ -425,6 +403,7 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
 
     const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
     const today = new Date().toISOString().slice(0, 10);
+    const seenMemberNos = new Set<string>();
 
     for (const row of rows) {
       const member_no = (row[1] ?? "").toString().trim();
@@ -439,79 +418,68 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
         result.skipped++;
         continue;
       }
-      if (existingMemberNos.has(member_no)) {
+      // Skip duplicates within the same sheet fetch
+      if (seenMemberNos.has(member_no)) {
         result.skipped++;
         continue;
       }
+      seenMemberNos.add(member_no);
 
-      // 국가 매핑
       const isCis = CIS_CODES.has(country_raw);
       const storedCode = isCis ? "CIS" : (country_raw || null);
       const country_id = storedCode ? codeToId.get(storedCode) ?? null : null;
 
-      // 메모: CIS 국가면 실제 국적 표기
       const notes = isCis
         ? `친구 추천 자동 등록 · 실제 국적: ${NATIONALITY_LABEL[country_raw] ?? country_raw}`
         : "친구 추천 자동 등록";
 
-      // friend_referrals 테이블에 로그 저장 (dedupe key)
-      const { error: frErr } = await supabaseAdmin
+      // Upsert into friend_referrals log (unique on member_no).
+      const { data: frUpsert, error: frErr } = await supabaseAdmin
         .from("friend_referrals")
-        .insert({
-          member_no,
-          name,
-          phone,
-          country_code: storedCode,
-          channel,
-          signup_ym,
-          signup_date,
-        });
+        .upsert(
+          { member_no, name, phone, country_code: storedCode, channel, signup_ym, signup_date },
+          { onConflict: "member_no", ignoreDuplicates: true },
+        )
+        .select("id");
       if (frErr) {
-        const code = (frErr as { code?: string }).code;
-        if (code !== "23505") {
-          result.errors.push(`${name}: ${frErr.message}`);
-          continue;
-        }
-        // duplicate → skip customers insert too
-        existingMemberNos.add(member_no);
+        result.errors.push(`${name}: ${frErr.message}`);
+        continue;
+      }
+      // Already existed → nothing new to insert
+      if (!frUpsert || frUpsert.length === 0) {
         result.skipped++;
         continue;
       }
-      existingMemberNos.add(member_no);
 
-      // customers 테이블에 등록 (친구 추천 풀)
-      const custKey = `${name}|${phone}`;
-      if (existingCustKeys.has(custKey)) {
-        result.skipped++;
-        continue;
-      }
-      existingCustKeys.add(custKey);
-
-      const { error: custErr } = await supabaseAdmin
+      // Upsert customer (unique partial index on (name, phone) for friend_referral)
+      const { data: custUpsert, error: custErr } = await supabaseAdmin
         .from("customers")
-        .insert({
-          name,
-          phone,
-          country_id,
-          signup_date: signup_date ?? today,
-          status: "new",
-          assigned_to: null,
-          pool: "friend_referral",
-          notes,
-        });
+        .upsert(
+          {
+            name,
+            phone,
+            country_id,
+            signup_date: signup_date ?? today,
+            status: "new",
+            assigned_to: null,
+            pool: "friend_referral",
+            notes,
+          },
+          { onConflict: "name,phone", ignoreDuplicates: true },
+        )
+        .select("id");
 
       if (custErr) {
-        const code = (custErr as { code?: string }).code;
-        if (code === "23505") {
-          result.skipped++;
-          continue;
-        }
         result.errors.push(`${name}: ${custErr.message}`);
         continue;
       }
-
+      if (!custUpsert || custUpsert.length === 0) {
+        result.skipped++;
+        continue;
+      }
       result.inserted++;
     }
 
     return result;
   });
+
