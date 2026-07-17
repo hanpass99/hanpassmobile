@@ -7,7 +7,7 @@ import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
   StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X, Phone, ExternalLink,
 } from "lucide-react";
-import { syncGoogleFormApplications, syncGoogleFormApplicationsInter } from "@/lib/google-form-sync.functions";
+import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals } from "@/lib/google-form-sync.functions";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1349,6 +1349,33 @@ function CustomersPage() {
     return () => clearInterval(timer);
   }, [tab]);
 
+  // === 친구 추천 자동 동기화 (활성화: friend_referral 탭) ===
+  const syncFriendReferralsFn = useServerFn(syncFriendReferrals);
+  const syncFriendReferralsMut = useMutation({
+    mutationFn: () => syncFriendReferralsFn(),
+    onSuccess: (r) => {
+      if (r.inserted > 0) {
+        toast.success(t("customers.friendReferralSynced", { n: r.inserted }));
+        void refetchList();
+        void refetchPoolCounts();
+      }
+      if (r.errors && r.errors.length > 0) {
+        toast.error(t("customers.friendReferralSyncErr", { msg: r.errors[0] }));
+      }
+    },
+    onError: (e: Error) => toast.error(t("customers.friendReferralSyncFail", { msg: e.message })),
+  });
+  const syncFriendMutRef = useRef(syncFriendReferralsMut);
+  syncFriendMutRef.current = syncFriendReferralsMut;
+  useEffect(() => {
+    if (tab !== "friend_referral") return;
+    syncFriendMutRef.current.mutate();
+    const timer = setInterval(() => syncFriendMutRef.current.mutate(), 60_000);
+    return () => clearInterval(timer);
+  }, [tab]);
+
+
+
 
   if (listError) {
     return (
@@ -1369,6 +1396,7 @@ function CustomersPage() {
 
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
   const SHEET_URL_INTER = "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
+  const SHEET_URL_FRIEND = "https://docs.google.com/spreadsheets/d/1OwC6pQ2as5VsyDTYVzUSGsNru9ki2jFvScn5kk2zZ1w/edit";
 
   return (
     <div className="space-y-5">
@@ -1417,7 +1445,28 @@ function CustomersPage() {
                 </Button>
               </>
             )}
+            {tab === "friend_referral" && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={SHEET_URL_FRIEND} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.friendReferralSheet")}
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncFriendReferralsMut.mutate()}
+                  disabled={syncFriendReferralsMut.isPending}
+                  aria-busy={syncFriendReferralsMut.isPending}
+                  title={t("customers.friendReferralSyncTitle")}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncFriendReferralsMut.isPending ? "animate-spin" : ""}`} />
+                  {t("customers.friendReferralSync")}
+                </Button>
+              </>
+            )}
             <Button variant="outline" size="sm" onClick={load} aria-busy={loading || loadingMore}>
+
               <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
             </Button>
           </div>

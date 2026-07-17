@@ -311,3 +311,207 @@ export const listGoogleFormApplications = createServerFn({ method: "GET" })
       synced_at: r.synced_at,
     }));
   });
+
+// ============================================================
+// 친구 추천 리스트 자동 동기화
+// 구글 시트: 회원번호 | 이름 | 전화번호 | 국적 | 유입채널 | 가입년월 | 가입일자
+// UZ/KZ/KG/TJ/RU → country_code 'CIS' 로 저장, 실제 국적은 메모에 기록
+// ============================================================
+const FRIEND_REFERRAL_SPREADSHEET_ID = "1OwC6pQ2as5VsyDTYVzUSGsNru9ki2jFvScn5kk2zZ1w";
+const FRIEND_REFERRAL_SHEET_NAME = "시트1";
+
+// 실제 국적 표기 (메모용)
+const NATIONALITY_LABEL: Record<string, string> = {
+  UZ: "우즈베키스탄 (Uzbekistan)",
+  KZ: "카자흐스탄 (Kazakhstan)",
+  KG: "키르기스스탄 (Kyrgyzstan)",
+  TJ: "타지키스탄 (Tajikistan)",
+  RU: "러시아 (Russia)",
+};
+const CIS_CODES = new Set(["UZ", "KZ", "KG", "TJ", "RU"]);
+
+function normalizeFriendPhone(raw: string): string | null {
+  const digits = (raw || "").toString().replace(/\D/g, "");
+  if (!digits) return null;
+  // 010XXXXXXXX (11자리) → 010-XXXX-XXXX
+  if (digits.length === 11 && digits.startsWith("010")) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+  // 8210XXXXXXXX
+  if (digits.length === 12 && digits.startsWith("8210")) {
+    return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8)}`;
+  }
+  // 외국 번호 등 그대로 반환
+  return digits;
+}
+
+// 20260716 → 2026-07-16
+function parseSheetDate(raw: string): string | null {
+  const s = (raw || "").toString().replace(/\D/g, "");
+  if (s.length === 8) {
+    return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  }
+  return null;
+}
+
+export const syncFriendReferrals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<SyncResult> => {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
+    if (!lovableKey || !sheetsKey) {
+      throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
+    }
+
+    const range = `'${FRIEND_REFERRAL_SHEET_NAME}'!A2:H`;
+    const url = `${GATEWAY_URL}/spreadsheets/${FRIEND_REFERRAL_SPREADSHEET_ID}/values/${range}`;
+
+    let res: Response | null = null;
+    let lastBody = "";
+    const delays = [1000, 3000, 7000];
+    for (let attempt = 0; attempt <= delays.length; attempt++) {
+      res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": sheetsKey,
+        },
+      });
+      if (res.ok) break;
+      lastBody = await res.text();
+      const retriable = res.status === 429 || res.status >= 500;
+      if (!retriable || attempt === delays.length) {
+        if (res.status === 429) {
+          throw new Error("구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.");
+        }
+        throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
+      }
+      await new Promise((r) => setTimeout(r, delays[attempt]));
+    }
+    if (!res || !res.ok) throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
+
+    const data = (await res.json()) as { values?: string[][] };
+    // 시트 첫 컬럼은 빈 컬럼 → B부터 데이터. A2:H 로 요청했으므로 [0]=A(빈), [1]=회원번호 ...
+    const rows = (data.values ?? []).filter((r) => r && (r[1] || r[2] || r[3]));
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // 기존 member_no 목록 (dedupe)
+    const { data: existingFR, error: exErr } = await supabaseAdmin
+      .from("friend_referrals")
+      .select("member_no");
+    if (exErr) throw exErr;
+    const existingMemberNos = new Set((existingFR ?? []).map((r) => r.member_no));
+
+    // 기존 customers (pool=friend_referral) dedupe (name+phone)
+    const { data: existingCust, error: ecErr } = await supabaseAdmin
+      .from("customers")
+      .select("name, phone")
+      .eq("pool", "friend_referral");
+    if (ecErr) throw ecErr;
+    const existingCustKeys = new Set(
+      (existingCust ?? [])
+        .map((r) => {
+          const p = normalizeFriendPhone(r.phone ?? "");
+          return p ? `${r.name}|${p}` : null;
+        })
+        .filter((k): k is string => Boolean(k)),
+    );
+
+    const { data: countries, error: coErr } = await supabaseAdmin
+      .from("countries")
+      .select("id, code");
+    if (coErr) throw coErr;
+    const codeToId = new Map((countries ?? []).map((c) => [c.code, c.id]));
+
+    const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
+    const today = new Date().toISOString().slice(0, 10);
+
+    for (const row of rows) {
+      const member_no = (row[1] ?? "").toString().trim();
+      const name = (row[2] ?? "").toString().trim();
+      const phone = normalizeFriendPhone(row[3] ?? "");
+      const country_raw = (row[4] ?? "").toString().trim().toUpperCase();
+      const channel = (row[5] ?? "").toString().trim() || null;
+      const signup_ym = (row[6] ?? "").toString().trim() || null;
+      const signup_date = parseSheetDate(row[7] ?? "");
+
+      if (!member_no || !name || !phone) {
+        result.skipped++;
+        continue;
+      }
+      if (existingMemberNos.has(member_no)) {
+        result.skipped++;
+        continue;
+      }
+
+      // 국가 매핑
+      const isCis = CIS_CODES.has(country_raw);
+      const storedCode = isCis ? "CIS" : (country_raw || null);
+      const country_id = storedCode ? codeToId.get(storedCode) ?? null : null;
+
+      // 메모: CIS 국가면 실제 국적 표기
+      const notes = isCis
+        ? `친구 추천 자동 등록 · 실제 국적: ${NATIONALITY_LABEL[country_raw] ?? country_raw}`
+        : "친구 추천 자동 등록";
+
+      // friend_referrals 테이블에 로그 저장 (dedupe key)
+      const { error: frErr } = await supabaseAdmin
+        .from("friend_referrals")
+        .insert({
+          member_no,
+          name,
+          phone,
+          country_code: storedCode,
+          channel,
+          signup_ym,
+          signup_date,
+        });
+      if (frErr) {
+        const code = (frErr as { code?: string }).code;
+        if (code !== "23505") {
+          result.errors.push(`${name}: ${frErr.message}`);
+          continue;
+        }
+        // duplicate → skip customers insert too
+        existingMemberNos.add(member_no);
+        result.skipped++;
+        continue;
+      }
+      existingMemberNos.add(member_no);
+
+      // customers 테이블에 등록 (친구 추천 풀)
+      const custKey = `${name}|${phone}`;
+      if (existingCustKeys.has(custKey)) {
+        result.skipped++;
+        continue;
+      }
+      existingCustKeys.add(custKey);
+
+      const { error: custErr } = await supabaseAdmin
+        .from("customers")
+        .insert({
+          name,
+          phone,
+          country_id,
+          signup_date: signup_date ?? today,
+          status: "new",
+          assigned_to: null,
+          pool: "friend_referral",
+          notes,
+        });
+
+      if (custErr) {
+        const code = (custErr as { code?: string }).code;
+        if (code === "23505") {
+          result.skipped++;
+          continue;
+        }
+        result.errors.push(`${name}: ${custErr.message}`);
+        continue;
+      }
+
+      result.inserted++;
+    }
+
+    return result;
+  });
