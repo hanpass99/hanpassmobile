@@ -26,7 +26,7 @@ type Row = {
   status: string | null;
   duration_sec: number;
   started_at: string;
-  staff: { full_name: string | null } | null;
+  staff: { display_name: string | null } | null;
   customer: { name: string | null } | null;
 };
 
@@ -59,7 +59,7 @@ function CallLogsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("phone_call_logs")
-        .select("id, employee_phone, customer_phone, direction, status, duration_sec, started_at, staff:profiles!phone_call_logs_staff_id_fkey(full_name), customer:customers(name)")
+        .select("id, employee_phone, customer_phone, direction, status, duration_sec, started_at, staff:profiles!phone_call_logs_staff_id_fkey(display_name), customer:customers(name)")
         .order("started_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -115,7 +115,7 @@ function CallLogsPage() {
                   <TableCell className="whitespace-nowrap text-sm">
                     {format(new Date(row.started_at), "yyyy-MM-dd HH:mm:ss")}
                   </TableCell>
-                  <TableCell className="text-sm">{row.staff?.full_name ?? "—"}</TableCell>
+                  <TableCell className="text-sm">{row.staff?.display_name ?? "—"}</TableCell>
                   <TableCell className="font-mono text-xs">{row.employee_phone}</TableCell>
                   <TableCell><DirectionBadge direction={row.direction} /></TableCell>
                   <TableCell className="text-sm">{row.customer?.name ?? "—"}</TableCell>
