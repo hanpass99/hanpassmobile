@@ -418,6 +418,63 @@ export type Database = {
           },
         ]
       }
+      phone_call_logs: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_phone: string | null
+          direction: string
+          duration_sec: number
+          employee_phone: string
+          id: string
+          raw: Json | null
+          staff_id: string | null
+          started_at: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_phone?: string | null
+          direction: string
+          duration_sec?: number
+          employee_phone: string
+          id?: string
+          raw?: Json | null
+          staff_id?: string | null
+          started_at?: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_phone?: string | null
+          direction?: string
+          duration_sec?: number
+          employee_phone?: string
+          id?: string
+          raw?: Json | null
+          staff_id?: string | null
+          started_at?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_call_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_call_logs_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_countries: {
         Row: {
           country_id: string
@@ -446,6 +503,7 @@ export type Database = {
           display_name: string
           id: string
           is_active: boolean
+          phone: string | null
           sort_order: number
           updated_at: string
         }
@@ -458,6 +516,7 @@ export type Database = {
           display_name: string
           id: string
           is_active?: boolean
+          phone?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -470,6 +529,7 @@ export type Database = {
           display_name?: string
           id?: string
           is_active?: boolean
+          phone?: string | null
           sort_order?: number
           updated_at?: string
         }
