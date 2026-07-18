@@ -3,13 +3,15 @@ export function dateKey(date: Date) {
 }
 
 export function dayStartIso(date: Date) {
-  const key = dateKey(date);
-  // KST is UTC+9, so KST 00:00 = UTC 15:00 previous day
-  return `${key}T15:00:00.000Z`;
+  // KST 00:00 on D = UTC 15:00 on D-1
+  const d = new Date(date);
+  d.setDate(d.getDate() - 1);
+  return `${dateKey(d)}T15:00:00.000Z`;
 }
 
 export function dayEndIso(date: Date) {
-  const key = dateKey(date);
-  // KST 23:59:59 = UTC next day 14:59:59
-  return `${key}T14:59:59.999Z`;
+  // KST 23:59:59.999 on D = UTC 14:59:59.999 on D+1
+  const d = new Date(date);
+  d.setDate(d.getDate() + 1);
+  return `${dateKey(d)}T14:59:59.999Z`;
 }
