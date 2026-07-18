@@ -90,8 +90,12 @@ function Settings() {
       { onConflict: "user_id,year,month" }
     );
     if (error) { toast.error(t("settings.targetSaveFailed", { msg: error.message })); return; }
+    const normalizedPhone = (r.phone ?? "").replace(/[^\d]/g, "") || null;
+    const { error: pErr } = await supabase.from("profiles").update({ phone: normalizedPhone } as any).eq("id", r.id);
+    if (pErr) { toast.error(pErr.message); return; }
     toast.success(t("settings.targetSaved", { name: r.display_name }));
   };
+
 
   const setActive = async (r: Row, active: boolean) => {
     const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: active });
