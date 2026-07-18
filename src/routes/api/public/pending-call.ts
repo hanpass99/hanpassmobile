@@ -73,7 +73,7 @@ export const Route = createFileRoute("/api/public/pending-call")({
           });
         }
 
-        const row = rows?.[0] as { id: string; target_phone: string } | undefined;
+        const row = (rows as any)?.[0] as { id: string; target_phone: string } | undefined;
         if (!row) {
           return new Response(null, { status: 204, headers: corsHeaders });
         }
