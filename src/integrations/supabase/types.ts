@@ -418,44 +418,6 @@ export type Database = {
           },
         ]
       }
-      pending_calls: {
-        Row: {
-          consumed_at: string | null
-          created_at: string
-          customer_id: string | null
-          employee_phone: string
-          id: string
-          requested_by: string | null
-          target_phone: string
-        }
-        Insert: {
-          consumed_at?: string | null
-          created_at?: string
-          customer_id?: string | null
-          employee_phone: string
-          id?: string
-          requested_by?: string | null
-          target_phone: string
-        }
-        Update: {
-          consumed_at?: string | null
-          created_at?: string
-          customer_id?: string | null
-          employee_phone?: string
-          id?: string
-          requested_by?: string | null
-          target_phone?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pending_calls_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       phone_call_logs: {
         Row: {
           call_status: Database["public"]["Enums"]["customer_status"] | null

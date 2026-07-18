@@ -19,7 +19,6 @@ import { Route as CallLogsRouteImport } from './routes/call-logs'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiPublicPendingCallRouteImport } from './routes/api/public/pending-call'
 import { Route as ApiPublicCallLogRouteImport } from './routes/api/public/call-log'
 
 const SmsRoute = SmsRouteImport.update({
@@ -72,11 +71,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPendingCallRoute = ApiPublicPendingCallRouteImport.update({
-  id: '/api/public/pending-call',
-  path: '/api/public/pending-call',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicCallLogRoute = ApiPublicCallLogRouteImport.update({
   id: '/api/public/call-log',
   path: '/api/public/call-log',
@@ -95,7 +89,6 @@ export interface FileRoutesByFullPath {
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
   '/api/public/call-log': typeof ApiPublicCallLogRoute
-  '/api/public/pending-call': typeof ApiPublicPendingCallRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,7 +102,6 @@ export interface FileRoutesByTo {
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
   '/api/public/call-log': typeof ApiPublicCallLogRoute
-  '/api/public/pending-call': typeof ApiPublicPendingCallRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,7 +116,6 @@ export interface FileRoutesById {
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
   '/api/public/call-log': typeof ApiPublicCallLogRoute
-  '/api/public/pending-call': typeof ApiPublicPendingCallRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,7 +131,6 @@ export interface FileRouteTypes {
     | '/sla'
     | '/sms'
     | '/api/public/call-log'
-    | '/api/public/pending-call'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -154,7 +144,6 @@ export interface FileRouteTypes {
     | '/sla'
     | '/sms'
     | '/api/public/call-log'
-    | '/api/public/pending-call'
   id:
     | '__root__'
     | '/'
@@ -168,7 +157,6 @@ export interface FileRouteTypes {
     | '/sla'
     | '/sms'
     | '/api/public/call-log'
-    | '/api/public/pending-call'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -183,7 +171,6 @@ export interface RootRouteChildren {
   SlaRoute: typeof SlaRoute
   SmsRoute: typeof SmsRoute
   ApiPublicCallLogRoute: typeof ApiPublicCallLogRoute
-  ApiPublicPendingCallRoute: typeof ApiPublicPendingCallRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -258,13 +245,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/pending-call': {
-      id: '/api/public/pending-call'
-      path: '/api/public/pending-call'
-      fullPath: '/api/public/pending-call'
-      preLoaderRoute: typeof ApiPublicPendingCallRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/call-log': {
       id: '/api/public/call-log'
       path: '/api/public/call-log'
@@ -287,7 +267,6 @@ const rootRouteChildren: RootRouteChildren = {
   SlaRoute: SlaRoute,
   SmsRoute: SmsRoute,
   ApiPublicCallLogRoute: ApiPublicCallLogRoute,
-  ApiPublicPendingCallRoute: ApiPublicPendingCallRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
