@@ -147,7 +147,13 @@ export function CallLogPopupDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">{t("callLogs.customer", { defaultValue: "고객" })}</Label>
-              <div className="mt-1">{row.customer?.name ?? "—"}</div>
+              <Input
+                className="mt-1 h-8"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                disabled={!row.customer_id}
+                placeholder={row.customer_id ? "" : "—"}
+              />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">{t("callLogs.customerPhone", { defaultValue: "고객 번호" })}</Label>
