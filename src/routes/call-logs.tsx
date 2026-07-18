@@ -1,31 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { PhoneIncoming, PhoneOutgoing, PhoneMissed, RefreshCw } from "lucide-react";
 import i18n from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import {
   CUSTOMER_STATUSES, STATUS_LABEL, STATUS_CLASS, type CustomerStatus,
 } from "@/lib/labels";
+import { CallLogPopupDialog } from "@/components/CallLogPopupProvider";
+import { dayEndIso, dayStartIso } from "@/lib/date-range";
 
 export const Route = createFileRoute("/call-logs")({
   head: () => ({ meta: [{ title: i18n.t("head.callLogs", { defaultValue: "통화 로그 — Hanpass OB CRM" }) }] }),
@@ -72,54 +67,72 @@ function DirectionBadge({ direction }: { direction: string }) {
 
 const SELECT_QUERY = "id, staff_id, employee_phone, customer_phone, customer_id, direction, status, call_status, memo, duration_sec, started_at, staff:profiles!phone_call_logs_staff_id_fkey(display_name), customer:customers(name)";
 
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function daysAgoStr(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function CallLogsPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const qc = useQueryClient();
   const [popupRow, setPopupRow] = useState<Row | null>(null);
+  const [dateFrom, setDateFrom] = useState<string>(daysAgoStr(6));
+  const [dateTo, setDateTo] = useState<string>(todayStr());
+
+  const fromIso = dayStartIso(new Date(dateFrom));
+  const toIso = dayEndIso(new Date(dateTo));
 
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["phone_call_logs"],
+    queryKey: ["phone_call_logs", fromIso, toIso],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("phone_call_logs")
         .select(SELECT_QUERY)
+        .gte("started_at", fromIso)
+        .lte("started_at", toIso)
         .order("started_at", { ascending: false })
-        .limit(500);
+        .limit(1000);
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
     },
   });
 
-  // Realtime: pop up when a new call log for this staff arrives
   useEffect(() => {
-    if (!user?.id) return;
     const channel = supabase
-      .channel(`phone_call_logs:${user.id}`)
+      .channel("phone_call_logs:table")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "phone_call_logs", filter: `staff_id=eq.${user.id}` },
-        async (payload) => {
-          qc.invalidateQueries({ queryKey: ["phone_call_logs"] });
-          const newId = (payload.new as any)?.id;
-          if (!newId) return;
-          const { data: full } = await supabase
-            .from("phone_call_logs")
-            .select(SELECT_QUERY)
-            .eq("id", newId)
-            .maybeSingle();
-          if (full) setPopupRow(full as unknown as Row);
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "phone_call_logs" },
-        () => qc.invalidateQueries({ queryKey: ["phone_call_logs"] })
+        { event: "*", schema: "public", table: "phone_call_logs" },
+        () => qc.invalidateQueries({ queryKey: ["phone_call_logs"] }),
       )
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
-  }, [user?.id, qc]);
+  }, [qc]);
+
+  // Aggregate stats per staff
+  const stats = useMemo(() => {
+    const map = new Map<string, { name: string; total: number; statuses: Record<string, number> }>();
+    (data ?? []).forEach((r) => {
+      const key = r.staff_id ?? "unknown";
+      const name = r.staff?.display_name ?? (r.staff_id ? "—" : "미배정");
+      if (!map.has(key)) map.set(key, { name, total: 0, statuses: {} });
+      const entry = map.get(key)!;
+      entry.total += 1;
+      const s = r.call_status ?? "unset";
+      entry.statuses[s] = (entry.statuses[s] ?? 0) + 1;
+    });
+    return Array.from(map.entries())
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => b.total - a.total);
+  }, [data]);
+
+  const totalCalls = (data ?? []).length;
+  const totalActivated = (data ?? []).filter((r) => r.call_status === "activated").length;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -134,7 +147,96 @@ function CallLogsPage() {
         }
       />
 
+      {/* Date range filter */}
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
+        <div>
+          <Label className="text-xs">{t("common.from", { defaultValue: "시작일" })}</Label>
+          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 w-[160px]" />
+        </div>
+        <div>
+          <Label className="text-xs">{t("common.to", { defaultValue: "종료일" })}</Label>
+          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 w-[160px]" />
+        </div>
+        <div className="ml-auto flex gap-2 text-sm">
+          <Button variant="ghost" size="sm" onClick={() => { setDateFrom(todayStr()); setDateTo(todayStr()); }}>
+            {t("callLogs.today", { defaultValue: "오늘" })}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setDateFrom(daysAgoStr(6)); setDateTo(todayStr()); }}>
+            {t("callLogs.last7", { defaultValue: "최근 7일" })}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setDateFrom(daysAgoStr(29)); setDateTo(todayStr()); }}>
+            {t("callLogs.last30", { defaultValue: "최근 30일" })}
+          </Button>
+        </div>
+      </div>
+
+      {/* Dashboard summary */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("callLogs.totalCalls", { defaultValue: "총 통화 수" })}</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{totalCalls}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("callLogs.totalActivated", { defaultValue: "개통 완료" })}</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold text-emerald-600">{totalActivated}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("callLogs.activeStaff", { defaultValue: "활동 직원" })}</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{stats.length}</div></CardContent>
+        </Card>
+      </div>
+
+      {/* Staff stats table */}
       <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">{t("callLogs.staffStats", { defaultValue: "직원별 통계" })}</h2>
+          <p className="text-xs text-muted-foreground">{t("callLogs.staffStatsDesc", { defaultValue: "선택한 기간 동안의 직원별 통화 건수와 상태별 결과" })}</p>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("callLogs.staff", { defaultValue: "직원" })}</TableHead>
+              <TableHead className="text-right">{t("callLogs.totalCalls", { defaultValue: "총 통화" })}</TableHead>
+              {CUSTOMER_STATUSES.map((s) => (
+                <TableHead key={s} className="text-right whitespace-nowrap">{STATUS_LABEL[s]}</TableHead>
+              ))}
+              <TableHead className="text-right">{t("callLogs.unset", { defaultValue: "미분류" })}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow><TableCell colSpan={CUSTOMER_STATUSES.length + 3}><Skeleton className="h-4 w-full" /></TableCell></TableRow>
+            ) : stats.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={CUSTOMER_STATUSES.length + 3} className="h-24 text-center text-sm text-muted-foreground">
+                  {t("callLogs.empty", { defaultValue: "통화 로그가 없습니다." })}
+                </TableCell>
+              </TableRow>
+            ) : (
+              stats.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">{s.name}</TableCell>
+                  <TableCell className="text-right font-mono">{s.total}</TableCell>
+                  {CUSTOMER_STATUSES.map((st) => (
+                    <TableCell key={st} className="text-right font-mono text-xs">
+                      {s.statuses[st] ?? 0}
+                    </TableCell>
+                  ))}
+                  <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                    {s.statuses["unset"] ?? 0}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Recent calls */}
+      <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">{t("callLogs.recentTitle", { defaultValue: "통화 목록" })}</h2>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -152,7 +254,7 @@ function CallLogsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
+              Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
                   {Array.from({ length: 10 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
@@ -201,141 +303,11 @@ function CallLogsPage() {
         </Table>
       </div>
 
-      <CallLogDialog
-        row={popupRow}
+      <CallLogPopupDialog
+        row={popupRow as any}
         onClose={() => setPopupRow(null)}
-        onSaved={() => {
-          qc.invalidateQueries({ queryKey: ["phone_call_logs"] });
-          setPopupRow(null);
-        }}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["phone_call_logs"] })}
       />
     </div>
-  );
-}
-
-function CallLogDialog({
-  row,
-  onClose,
-  onSaved,
-}: {
-  row: Row | null;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const { t } = useTranslation();
-  const [status, setStatus] = useState<CustomerStatus | "">("");
-  const [memo, setMemo] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (row) {
-      setStatus(row.call_status ?? "");
-      setMemo(row.memo ?? "");
-    }
-  }, [row?.id]);
-
-  if (!row) return null;
-
-  const save = async () => {
-    if (!status) {
-      toast.error(t("callLogs.selectStatus", { defaultValue: "상태를 선택하세요." }));
-      return;
-    }
-    setSaving(true);
-    try {
-      const { error: e1 } = await supabase
-        .from("phone_call_logs")
-        .update({ call_status: status, memo: memo || null })
-        .eq("id", row.id);
-      if (e1) throw e1;
-
-      if (row.customer_id) {
-        const { error: e2 } = await supabase
-          .from("customers")
-          .update({ status })
-          .eq("id", row.customer_id);
-        if (e2) throw e2;
-      }
-      toast.success(t("common.saved", { defaultValue: "저장되었습니다." }));
-      onSaved();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={!!row} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("callLogs.newCall", { defaultValue: "새 통화" })}</DialogTitle>
-          <DialogDescription>
-            {t("callLogs.newCallDesc", { defaultValue: "통화 상태와 메모를 기록하세요." })}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 text-sm">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.customer", { defaultValue: "고객" })}</Label>
-              <div className="mt-1">{row.customer?.name ?? "—"}</div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.customerPhone", { defaultValue: "고객 번호" })}</Label>
-              <div className="mt-1 font-mono text-xs">{row.customer_phone ?? "—"}</div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.startedAt", { defaultValue: "시작 시각" })}</Label>
-              <div className="mt-1">{format(new Date(row.started_at), "yyyy-MM-dd HH:mm:ss")}</div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.duration", { defaultValue: "통화 시간" })}</Label>
-              <div className="mt-1 font-mono">{formatDuration(row.duration_sec)}</div>
-            </div>
-          </div>
-
-          <div>
-            <Label>{t("callLogs.callStatus", { defaultValue: "통화 상태" })}</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as CustomerStatus)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder={t("callLogs.selectStatus", { defaultValue: "상태를 선택하세요." })} />
-              </SelectTrigger>
-              <SelectContent>
-                {CUSTOMER_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>{t("callLogs.memo", { defaultValue: "메모" })}</Label>
-            <Textarea
-              className="mt-1"
-              rows={4}
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              placeholder={t("callLogs.memoPlaceholder", { defaultValue: "통화 내용을 입력하세요." })}
-            />
-          </div>
-
-          {!row.customer_id && (
-            <p className="text-xs text-muted-foreground">
-              {t("callLogs.noCustomerLink", { defaultValue: "이 통화에는 연결된 고객이 없어 고객 상태는 업데이트되지 않습니다." })}
-            </p>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            {t("common.cancel", { defaultValue: "취소" })}
-          </Button>
-          <Button onClick={save} disabled={saving}>
-            {saving ? t("common.saving", { defaultValue: "저장 중..." }) : t("common.save", { defaultValue: "저장" })}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
