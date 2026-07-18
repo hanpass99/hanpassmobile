@@ -59,7 +59,7 @@ function CallLogsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("phone_call_logs")
-        .select("id, employee_phone, customer_phone, direction, status, duration_sec, started_at, staff:profiles!phone_call_logs_staff_id_fkey(full_name), customer:customers(name)")
+        .select("id, employee_phone, customer_phone, direction, status, duration_sec, started_at, staff:profiles!phone_call_logs_staff_id_fkey(display_name), customer:customers(name)")
         .order("started_at", { ascending: false })
         .limit(500);
       if (error) throw error;
