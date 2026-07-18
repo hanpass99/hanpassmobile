@@ -304,6 +304,18 @@ function Settings() {
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.department ?? "-"}</TableCell>
                   <TableCell>
+                    <Input
+                      value={r.phone ?? ""}
+                      disabled={!isAdmin && r.id !== user?.id}
+                      placeholder="01012345678"
+                      onChange={(e) =>
+                        setRows((p) => p.map((x) => (x.id === r.id ? { ...x, phone: e.target.value } : x)))
+                      }
+                      className="h-8 w-36"
+                    />
+                  </TableCell>
+
+                  <TableCell>
                     {isAdmin && r.id !== user?.id ? (
                       <Select value={r.role} onValueChange={(v) => setRole(r, v as "admin" | "staff")}>
                         <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
