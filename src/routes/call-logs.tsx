@@ -81,6 +81,7 @@ function daysAgoStr(n: number) {
 function CallLogsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const { user, isAdmin } = useAuth();
   const [popupRow, setPopupRow] = useState<Row | null>(null);
   const [dateFrom, setDateFrom] = useState<string>(daysAgoStr(6));
   const [dateTo, setDateTo] = useState<string>(todayStr());
@@ -89,15 +90,18 @@ function CallLogsPage() {
   const toIso = dayEndIso(new Date(dateTo));
 
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["phone_call_logs", fromIso, toIso],
+    queryKey: ["phone_call_logs", fromIso, toIso, isAdmin ? "all" : user?.id ?? "me"],
+    enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("phone_call_logs")
         .select(SELECT_QUERY)
         .gte("started_at", fromIso)
         .lte("started_at", toIso)
         .order("started_at", { ascending: false })
         .limit(1000);
+      if (!isAdmin && user) q = q.eq("staff_id", user.id);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
     },
