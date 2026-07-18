@@ -13,6 +13,7 @@ import {
 import appCss from "../styles.css?url";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { CallLogPopupProvider } from "@/components/CallLogPopupProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
@@ -140,6 +141,7 @@ function AuthedShell() {
           </main>
         </div>
       </div>
+      <CallLogPopupProvider />
     </SidebarProvider>
   );
 }
