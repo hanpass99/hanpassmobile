@@ -15,6 +15,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
+import { Route as CallLogsRouteImport } from './routes/call-logs'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
@@ -50,6 +51,11 @@ const ChannelPerformanceRoute = ChannelPerformanceRouteImport.update({
   path: '/channel-performance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallLogsRoute = CallLogsRouteImport.update({
+  id: '/call-logs',
+  path: '/call-logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
+  '/call-logs': typeof CallLogsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
+  '/call-logs': typeof CallLogsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
+  '/call-logs': typeof CallLogsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/auth'
+    | '/call-logs'
     | '/channel-performance'
     | '/customers'
     | '/reset-password'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/auth'
+    | '/call-logs'
     | '/channel-performance'
     | '/customers'
     | '/reset-password'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/auth'
+    | '/call-logs'
     | '/channel-performance'
     | '/customers'
     | '/reset-password'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AttendanceRoute: typeof AttendanceRoute
   AuthRoute: typeof AuthRoute
+  CallLogsRoute: typeof CallLogsRoute
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CustomersRoute: typeof CustomersRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChannelPerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/call-logs': {
+      id: '/call-logs'
+      path: '/call-logs'
+      fullPath: '/call-logs'
+      preLoaderRoute: typeof CallLogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AttendanceRoute: AttendanceRoute,
   AuthRoute: AuthRoute,
+  CallLogsRoute: CallLogsRoute,
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CustomersRoute: CustomersRoute,
   ResetPasswordRoute: ResetPasswordRoute,

@@ -5,7 +5,7 @@ export default {
     dashboard: "Dashboard", customers: "Customers",
     staff: "Staff Performance", country: "Country Performance", channel: "Channel Performance",
     attendance: "Attendance", reports: "Reports", settings: "Settings",
-    sms: "SMS", sla: "SLA",
+    sms: "SMS", sla: "SLA", callLogs: "Call Logs",
   },
   head: {
     dashboard: "Dashboard — Hanpass Mobile OB Call CRM",

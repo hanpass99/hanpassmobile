@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle,
-  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare,
+  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
@@ -24,6 +24,7 @@ export function AppSidebar() {
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("nav.customers"), url: "/customers", icon: Users },
     { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
+    { title: t("nav.callLogs"), url: "/call-logs", icon: PhoneCall },
   ];
   const analyticsItems = [
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
