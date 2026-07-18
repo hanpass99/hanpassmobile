@@ -812,6 +812,10 @@ export type Database = {
         Args: { _user_id: string; _value: boolean }
         Returns: undefined
       }
+      admin_set_profile_phone: {
+        Args: { _phone: string; _user_id: string }
+        Returns: undefined
+      }
       admin_set_profile_sort_order: {
         Args: { _sort_order: number; _user_id: string }
         Returns: undefined
