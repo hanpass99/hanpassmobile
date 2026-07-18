@@ -5,7 +5,7 @@ export default {
     dashboard: "대시보드", customers: "고객 관리",
     staff: "직원 성과", country: "국가별 성과", channel: "채널별 성과",
     attendance: "출근 관리", reports: "리포트", settings: "설정",
-    sms: "문자 발송", sla: "SLA 관리",
+    sms: "문자 발송", sla: "SLA 관리", callLogs: "통화 로그",
   },
   head: {
     dashboard: "대시보드 — Hanpass Mobile OB Call CRM",
