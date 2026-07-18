@@ -18,6 +18,8 @@ export type SettingsRow = {
   last_sign_in_at: string | null;
   sort_order: number;
   can_access_new_signup: boolean;
+  phone: string | null;
+
 };
 
 export type SettingsBundle = {
@@ -40,7 +42,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
       ] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, department, is_active, country_id, avatar_url, sort_order, can_access_new_signup")
+          .select("id, display_name, department, is_active, country_id, avatar_url, sort_order, can_access_new_signup, phone")
           .order("sort_order")
           .order("display_name"),
         supabase.from("user_roles").select("user_id, role"),
@@ -84,6 +86,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           last_sign_in_at: a?.last_sign_in_at ?? null,
           sort_order: p.sort_order ?? 1000,
           can_access_new_signup: !!p.can_access_new_signup,
+          phone: (p as any).phone ?? null,
         };
       });
       rows.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));

@@ -18,6 +18,7 @@ import { Route as ChannelPerformanceRouteImport } from './routes/channel-perform
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicCallLogRouteImport } from './routes/api/public/call-log'
 
 const SmsRoute = SmsRouteImport.update({
   id: '/sms',
@@ -64,6 +65,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCallLogRoute = ApiPublicCallLogRouteImport.update({
+  id: '/api/public/call-log',
+  path: '/api/public/call-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
+  '/api/public/call-log': typeof ApiPublicCallLogRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
+  '/api/public/call-log': typeof ApiPublicCallLogRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
+  '/api/public/call-log': typeof ApiPublicCallLogRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sla'
     | '/sms'
+    | '/api/public/call-log'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sla'
     | '/sms'
+    | '/api/public/call-log'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sla'
     | '/sms'
+    | '/api/public/call-log'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SlaRoute: typeof SlaRoute
   SmsRoute: typeof SmsRoute
+  ApiPublicCallLogRoute: typeof ApiPublicCallLogRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/call-log': {
+      id: '/api/public/call-log'
+      path: '/api/public/call-log'
+      fullPath: '/api/public/call-log'
+      preLoaderRoute: typeof ApiPublicCallLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SlaRoute: SlaRoute,
   SmsRoute: SmsRoute,
+  ApiPublicCallLogRoute: ApiPublicCallLogRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

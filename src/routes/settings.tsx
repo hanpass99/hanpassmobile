@@ -90,8 +90,12 @@ function Settings() {
       { onConflict: "user_id,year,month" }
     );
     if (error) { toast.error(t("settings.targetSaveFailed", { msg: error.message })); return; }
+    const normalizedPhone = (r.phone ?? "").replace(/[^\d]/g, "") || null;
+    const { error: pErr } = await supabase.from("profiles").update({ phone: normalizedPhone } as any).eq("id", r.id);
+    if (pErr) { toast.error(pErr.message); return; }
     toast.success(t("settings.targetSaved", { name: r.display_name }));
   };
+
 
   const setActive = async (r: Row, active: boolean) => {
     const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: active });
@@ -253,6 +257,8 @@ function Settings() {
                 <TableHead>{t("settings.email")}</TableHead>
                 <TableHead>{t("settings.lastAccess")}</TableHead>
                 <TableHead>{t("settings.department")}</TableHead>
+                <TableHead className="w-40">{t("common.phone")}</TableHead>
+
                 <TableHead>{t("settings.role")}</TableHead>
                 <TableHead>{t("settings.assignedCountry")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
@@ -265,7 +271,7 @@ function Settings() {
             <TableBody>
               {loading && !rows.length && Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={`sk-${i}`}>
-                  {Array.from({ length: isAdmin ? 12 : 10 }).map((__, j) => (
+                  {Array.from({ length: isAdmin ? 13 : 11 }).map((__, j) => (
                     <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                   ))}
                 </TableRow>
@@ -297,6 +303,18 @@ function Settings() {
                     )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.department ?? "-"}</TableCell>
+                  <TableCell>
+                    <Input
+                      value={r.phone ?? ""}
+                      disabled={!isAdmin && r.id !== user?.id}
+                      placeholder="01012345678"
+                      onChange={(e) =>
+                        setRows((p) => p.map((x) => (x.id === r.id ? { ...x, phone: e.target.value } : x)))
+                      }
+                      className="h-8 w-36"
+                    />
+                  </TableCell>
+
                   <TableCell>
                     {isAdmin && r.id !== user?.id ? (
                       <Select value={r.role} onValueChange={(v) => setRole(r, v as "admin" | "staff")}>
@@ -405,7 +423,7 @@ function Settings() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={isAdmin ? 12 : 10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isAdmin ? 13 : 11} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
