@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -86,12 +87,14 @@ export function CallLogPopupDialog({
   const { t } = useTranslation();
   const [status, setStatus] = useState<CustomerStatus | "">("");
   const [memo, setMemo] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (row) {
       setStatus(row.call_status ?? "");
       setMemo(row.memo ?? "");
+      setCustomerName(row.customer?.name ?? "");
     }
   }, [row?.id]);
 
@@ -111,9 +114,12 @@ export function CallLogPopupDialog({
       if (e1) throw e1;
 
       if (row.customer_id) {
+        const trimmed = customerName.trim();
+        const patch: { status: CustomerStatus; name?: string } = { status };
+        if (trimmed && trimmed !== (row.customer?.name ?? "")) patch.name = trimmed;
         const { error: e2 } = await supabase
           .from("customers")
-          .update({ status })
+          .update(patch)
           .eq("id", row.customer_id);
         if (e2) throw e2;
       }
@@ -141,7 +147,13 @@ export function CallLogPopupDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">{t("callLogs.customer", { defaultValue: "고객" })}</Label>
-              <div className="mt-1">{row.customer?.name ?? "—"}</div>
+              <Input
+                className="mt-1 h-8"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                disabled={!row.customer_id}
+                placeholder={row.customer_id ? "" : "—"}
+              />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">{t("callLogs.customerPhone", { defaultValue: "고객 번호" })}</Label>
