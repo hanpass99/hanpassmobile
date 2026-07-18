@@ -264,14 +264,26 @@ function formatPhone(phone: string): string {
   return phone;
 }
 
+// Normalize into a dialable tel: value. Handles "+82 10-1234-5678" → "01012345678".
+function toTelHref(phone: string): string {
+  if (!phone) return "";
+  const raw = phone.trim();
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("82") && (raw.startsWith("+") || digits.length >= 11)) {
+    digits = "0" + digits.slice(2);
+  }
+  return `tel:${digits}`;
+}
+
 function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
   return (
     <a
-      href={`tel:${phone}`}
+      href={toTelHref(phone)}
       className="font-mono text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
       onClick={(e) => {
         e.stopPropagation();
-        window.setTimeout(onCall, 1000);
+        // Delay so popup is ready when the user returns from the dialer.
+        window.setTimeout(onCall, 1500);
       }}
     >
       <Phone className="h-3 w-3" />
