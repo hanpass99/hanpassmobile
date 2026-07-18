@@ -115,7 +115,7 @@ function CallLogsPage() {
                   <TableCell className="whitespace-nowrap text-sm">
                     {format(new Date(row.started_at), "yyyy-MM-dd HH:mm:ss")}
                   </TableCell>
-                  <TableCell className="text-sm">{row.staff?.full_name ?? "—"}</TableCell>
+                  <TableCell className="text-sm">{row.staff?.display_name ?? "—"}</TableCell>
                   <TableCell className="font-mono text-xs">{row.employee_phone}</TableCell>
                   <TableCell><DirectionBadge direction={row.direction} /></TableCell>
                   <TableCell className="text-sm">{row.customer?.name ?? "—"}</TableCell>
