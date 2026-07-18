@@ -90,8 +90,7 @@ function Settings() {
       { onConflict: "user_id,year,month" }
     );
     if (error) { toast.error(t("settings.targetSaveFailed", { msg: error.message })); return; }
-    const normalizedPhone = (r.phone ?? "").replace(/[^\d]/g, "") || null;
-    const { error: pErr } = await supabase.from("profiles").update({ phone: normalizedPhone } as any).eq("id", r.id);
+    const { error: pErr } = await supabase.rpc("admin_set_profile_phone" as any, { _user_id: r.id, _phone: r.phone ?? "" });
     if (pErr) { toast.error(pErr.message); return; }
     toast.success(t("settings.targetSaved", { name: r.display_name }));
   };
