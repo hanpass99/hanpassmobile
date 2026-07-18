@@ -66,7 +66,8 @@ export const Route = createFileRoute("/api/public/call-log")({
         const data = parsed.data;
         const empPhone = normalizePhone(data.employee_phone);
         const custPhone = normalizePhone(data.customer_phone ?? null);
-        const duration = Number(data.duration ?? 0) || 0;
+        const durationRaw = Number(data.duration ?? 0);
+        const duration = Number.isFinite(durationRaw) ? Math.round(durationRaw) : 0;
         const startedAt = data.started_at ? new Date(data.started_at) : new Date();
         const startedIso = isNaN(startedAt.getTime()) ? new Date().toISOString() : startedAt.toISOString();
 
