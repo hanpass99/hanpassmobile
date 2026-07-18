@@ -271,7 +271,7 @@ function Settings() {
             <TableBody>
               {loading && !rows.length && Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={`sk-${i}`}>
-                  {Array.from({ length: isAdmin ? 12 : 10 }).map((__, j) => (
+                  {Array.from({ length: isAdmin ? 13 : 11 }).map((__, j) => (
                     <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                   ))}
                 </TableRow>
@@ -423,7 +423,7 @@ function Settings() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={isAdmin ? 12 : 10} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isAdmin ? 13 : 11} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
