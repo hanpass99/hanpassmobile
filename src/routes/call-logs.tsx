@@ -21,6 +21,7 @@ import {
 } from "@/lib/labels";
 import { CallLogPopupDialog } from "@/components/CallLogPopupProvider";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/call-logs")({
   head: () => ({ meta: [{ title: i18n.t("head.callLogs", { defaultValue: "통화 로그 — Hanpass OB CRM" }) }] }),
@@ -80,6 +81,7 @@ function daysAgoStr(n: number) {
 function CallLogsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const { user, isAdmin } = useAuth();
   const [popupRow, setPopupRow] = useState<Row | null>(null);
   const [dateFrom, setDateFrom] = useState<string>(daysAgoStr(6));
   const [dateTo, setDateTo] = useState<string>(todayStr());
@@ -88,15 +90,18 @@ function CallLogsPage() {
   const toIso = dayEndIso(new Date(dateTo));
 
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["phone_call_logs", fromIso, toIso],
+    queryKey: ["phone_call_logs", fromIso, toIso, isAdmin ? "all" : user?.id ?? "me"],
+    enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("phone_call_logs")
         .select(SELECT_QUERY)
         .gte("started_at", fromIso)
         .lte("started_at", toIso)
         .order("started_at", { ascending: false })
         .limit(1000);
+      if (!isAdmin && user) q = q.eq("staff_id", user.id);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
     },
@@ -181,12 +186,29 @@ function CallLogsPage() {
           <CardContent><div className="text-2xl font-bold text-emerald-600">{totalActivated}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("callLogs.activeStaff", { defaultValue: "활동 직원" })}</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{stats.length}</div></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{isAdmin ? t("callLogs.activeStaff", { defaultValue: "활동 직원" }) : t("callLogs.avgDuration", { defaultValue: "평균 통화(초)" })}</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{isAdmin ? stats.length : (totalCalls ? Math.round((data ?? []).reduce((a, r) => a + (r.duration_sec ?? 0), 0) / totalCalls) : 0)}</div></CardContent>
         </Card>
       </div>
 
-      {/* Staff stats table */}
+      {/* Pretty status grid */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold">{t("callLogs.statusOverview", { defaultValue: "상태별 통계" })}</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {CUSTOMER_STATUSES.map((s) => {
+            const count = (data ?? []).filter((r) => r.call_status === s).length;
+            return (
+              <div key={s} className={`rounded-xl px-4 py-3 ${STATUS_CLASS[s]}`}>
+                <div className="text-xs font-medium opacity-80">{STATUS_LABEL[s]}</div>
+                <div className="mt-1 text-2xl font-bold tabular-nums">{count.toLocaleString()}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Staff stats table — admin only */}
+      {isAdmin && (
       <div className="rounded-lg border bg-card overflow-x-auto">
         <div className="border-b px-4 py-3">
           <h2 className="text-sm font-semibold">{t("callLogs.staffStats", { defaultValue: "직원별 통계" })}</h2>
@@ -231,6 +253,7 @@ function CallLogsPage() {
           </TableBody>
         </Table>
       </div>
+      )}
 
       {/* Recent calls */}
       <div className="rounded-lg border bg-card overflow-x-auto">
