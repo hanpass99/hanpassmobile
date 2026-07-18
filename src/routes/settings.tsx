@@ -257,6 +257,8 @@ function Settings() {
                 <TableHead>{t("settings.email")}</TableHead>
                 <TableHead>{t("settings.lastAccess")}</TableHead>
                 <TableHead>{t("settings.department")}</TableHead>
+                <TableHead className="w-40">{t("common.phone")}</TableHead>
+
                 <TableHead>{t("settings.role")}</TableHead>
                 <TableHead>{t("settings.assignedCountry")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
