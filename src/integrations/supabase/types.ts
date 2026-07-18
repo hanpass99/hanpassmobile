@@ -420,6 +420,7 @@ export type Database = {
       }
       phone_call_logs: {
         Row: {
+          call_status: Database["public"]["Enums"]["customer_status"] | null
           created_at: string
           customer_id: string | null
           customer_phone: string | null
@@ -427,12 +428,14 @@ export type Database = {
           duration_sec: number
           employee_phone: string
           id: string
+          memo: string | null
           raw: Json | null
           staff_id: string | null
           started_at: string
           status: string | null
         }
         Insert: {
+          call_status?: Database["public"]["Enums"]["customer_status"] | null
           created_at?: string
           customer_id?: string | null
           customer_phone?: string | null
@@ -440,12 +443,14 @@ export type Database = {
           duration_sec?: number
           employee_phone: string
           id?: string
+          memo?: string | null
           raw?: Json | null
           staff_id?: string | null
           started_at?: string
           status?: string | null
         }
         Update: {
+          call_status?: Database["public"]["Enums"]["customer_status"] | null
           created_at?: string
           customer_id?: string | null
           customer_phone?: string | null
@@ -453,6 +458,7 @@ export type Database = {
           duration_sec?: number
           employee_phone?: string
           id?: string
+          memo?: string | null
           raw?: Json | null
           staff_id?: string | null
           started_at?: string
