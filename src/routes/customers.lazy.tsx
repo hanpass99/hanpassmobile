@@ -1148,7 +1148,7 @@ function CustomersPage() {
               <TableRow key={c.id} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-                <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} customerId={c.id} onCall={() => setCallLogTarget(c)} /></TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
                 <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
@@ -1191,7 +1191,7 @@ function CustomersPage() {
               <TableRow key={c.id} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-                <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} customerId={c.id} onCall={() => setCallLogTarget(c)} /></TableCell>
                 <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
                 <TableCell className="text-xs">{fmtDate(p === "prepaid_charge" ? c.charge_date : c.signup_date)}</TableCell>
                 <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
@@ -1271,7 +1271,7 @@ function CustomersPage() {
                   <TableCell className="text-xs">{c.store_name ?? "-"}</TableCell>
                   <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
                   <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
-                  <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                  <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} customerId={c.id} onCall={() => setCallLogTarget(c)} /></TableCell>
                   <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
                   <TableCell className="text-xs">{fmtDate(c.birth_date)}</TableCell>
                   <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
@@ -1316,7 +1316,7 @@ function CustomersPage() {
             <TableRow key={c.id} className="hover:bg-muted/30">
               <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
               <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-              <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+              <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} customerId={c.id} onCall={() => setCallLogTarget(c)} /></TableCell>
               <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
               <TableCell className="text-xs">{fmtDate(c.application_date)}</TableCell>
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
@@ -2281,7 +2281,7 @@ function CustomerDetailSheet({
           </SheetTitle>
           <SheetDescription asChild>
             <div className="flex items-center gap-2 text-sm">
-              <PhoneLink phone={customer.phone} onCall={() => onCall(customer)} />
+              <PhoneLink phone={customer.phone} customerId={customer.id} onCall={() => onCall(customer)} />
               {country ? <span className="text-muted-foreground">· {country.code} {country.name_ko}</span> : null}
             </div>
           </SheetDescription>
