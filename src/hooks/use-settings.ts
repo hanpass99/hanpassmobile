@@ -86,6 +86,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           last_sign_in_at: a?.last_sign_in_at ?? null,
           sort_order: p.sort_order ?? 1000,
           can_access_new_signup: !!p.can_access_new_signup,
+          phone: (p as any).phone ?? null,
         };
       });
       rows.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
