@@ -21,6 +21,7 @@ import {
 } from "@/lib/labels";
 import { CallLogPopupDialog } from "@/components/CallLogPopupProvider";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/call-logs")({
   head: () => ({ meta: [{ title: i18n.t("head.callLogs", { defaultValue: "통화 로그 — Hanpass OB CRM" }) }] }),
