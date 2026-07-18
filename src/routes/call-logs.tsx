@@ -26,7 +26,7 @@ type Row = {
   status: string | null;
   duration_sec: number;
   started_at: string;
-  staff: { full_name: string | null } | null;
+  staff: { display_name: string | null } | null;
   customer: { name: string | null } | null;
 };
 
