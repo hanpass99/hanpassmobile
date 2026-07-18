@@ -87,12 +87,14 @@ export function CallLogPopupDialog({
   const { t } = useTranslation();
   const [status, setStatus] = useState<CustomerStatus | "">("");
   const [memo, setMemo] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (row) {
       setStatus(row.call_status ?? "");
       setMemo(row.memo ?? "");
+      setCustomerName(row.customer?.name ?? "");
     }
   }, [row?.id]);
 
@@ -112,9 +114,12 @@ export function CallLogPopupDialog({
       if (e1) throw e1;
 
       if (row.customer_id) {
+        const trimmed = customerName.trim();
+        const patch: { status: CustomerStatus; name?: string } = { status };
+        if (trimmed && trimmed !== (row.customer?.name ?? "")) patch.name = trimmed;
         const { error: e2 } = await supabase
           .from("customers")
-          .update({ status })
+          .update(patch)
           .eq("id", row.customer_id);
         if (e2) throw e2;
       }
