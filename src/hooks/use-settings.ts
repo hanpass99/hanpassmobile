@@ -18,6 +18,8 @@ export type SettingsRow = {
   last_sign_in_at: string | null;
   sort_order: number;
   can_access_new_signup: boolean;
+  phone: string | null;
+
 };
 
 export type SettingsBundle = {
