@@ -85,14 +85,34 @@ export const Route = createFileRoute("/api/public/call-log")({
 
         let customerId: string | null = null;
         if (custPhone) {
+          const variants = new Set<string>([custPhone]);
+          // Korean mobile formatted variants
+          if (/^01\d{8,9}$/.test(custPhone)) {
+            const mid = custPhone.length === 11 ? 7 : 6;
+            variants.add(`${custPhone.slice(0, 3)}-${custPhone.slice(3, mid)}-${custPhone.slice(mid)}`);
+            variants.add(`+82 ${custPhone.slice(1, 3)}-${custPhone.slice(3, mid)}-${custPhone.slice(mid)}`);
+            variants.add(`+82${custPhone.slice(1)}`);
+          }
           const { data: cust } = await supabaseAdmin
             .from("customers")
-            .select("id")
-            .eq("phone", custPhone)
+            .select("id, phone")
+            .in("phone", Array.from(variants))
             .limit(1)
             .maybeSingle();
           customerId = cust?.id ?? null;
+          if (!customerId) {
+            // Fallback: fuzzy match by digits-only via ilike patterns
+            const last8 = custPhone.slice(-8);
+            const { data: fuzzy } = await supabaseAdmin
+              .from("customers")
+              .select("id, phone")
+              .ilike("phone", `%${last8.slice(0, 4)}%${last8.slice(4)}%`)
+              .limit(1)
+              .maybeSingle();
+            customerId = fuzzy?.id ?? null;
+          }
         }
+
 
         const { error } = await supabaseAdmin.from("phone_call_logs" as any).insert({
           staff_id: staffId,
