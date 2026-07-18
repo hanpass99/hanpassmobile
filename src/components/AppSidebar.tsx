@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle,
-  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare,
+  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
