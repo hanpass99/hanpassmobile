@@ -186,12 +186,29 @@ function CallLogsPage() {
           <CardContent><div className="text-2xl font-bold text-emerald-600">{totalActivated}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("callLogs.activeStaff", { defaultValue: "활동 직원" })}</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{stats.length}</div></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{isAdmin ? t("callLogs.activeStaff", { defaultValue: "활동 직원" }) : t("callLogs.avgDuration", { defaultValue: "평균 통화(초)" })}</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{isAdmin ? stats.length : (totalCalls ? Math.round((data ?? []).reduce((a, r) => a + (r.duration_sec ?? 0), 0) / totalCalls) : 0)}</div></CardContent>
         </Card>
       </div>
 
-      {/* Staff stats table */}
+      {/* Pretty status grid */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold">{t("callLogs.statusOverview", { defaultValue: "상태별 통계" })}</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {CUSTOMER_STATUSES.map((s) => {
+            const count = (data ?? []).filter((r) => r.call_status === s).length;
+            return (
+              <div key={s} className={`rounded-xl px-4 py-3 ${STATUS_CLASS[s]}`}>
+                <div className="text-xs font-medium opacity-80">{STATUS_LABEL[s]}</div>
+                <div className="mt-1 text-2xl font-bold tabular-nums">{count.toLocaleString()}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Staff stats table — admin only */}
+      {isAdmin && (
       <div className="rounded-lg border bg-card overflow-x-auto">
         <div className="border-b px-4 py-3">
           <h2 className="text-sm font-semibold">{t("callLogs.staffStats", { defaultValue: "직원별 통계" })}</h2>
@@ -236,6 +253,7 @@ function CallLogsPage() {
           </TableBody>
         </Table>
       </div>
+      )}
 
       {/* Recent calls */}
       <div className="rounded-lg border bg-card overflow-x-auto">
