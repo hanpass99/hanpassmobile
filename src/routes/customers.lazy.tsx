@@ -538,7 +538,10 @@ function CustomersPage() {
       ...(status === "activated" ? { activation_date: patch.activation_date! } : {}),
       ...(status === "new" ? { assigned_to: null } : {}),
     });
-    const { error } = await supabase.from("customers").update(patch).eq("id", id);
+    const { error } = await supabase.rpc("staff_update_customer_basic", {
+      _customer_id: id,
+      _status: status,
+    } as never);
     if (error) {
       toast.error(error.message);
       load();
@@ -2238,7 +2241,32 @@ function CustomerDetailSheet({
 
   const save = async () => {
     setSaving(true);
-    const { error } = await supabase.from("customers").update(form).eq("id", customer.id);
+    const basicPatch = {
+      name: form.name,
+      notes: form.notes,
+      status: form.status,
+      activation_date: form.activation_date,
+      assigned_to: form.assigned_to,
+    } satisfies CustomerPatch;
+    const extraPatch = Object.fromEntries(
+      Object.entries(form).filter(([key, value]) => {
+        if (key in basicPatch) return false;
+        return value !== customer[key as keyof CustomerRow];
+      }),
+    ) as CustomerPatch;
+
+    const { error: basicError } = await supabase.rpc("staff_update_customer_basic", {
+      _customer_id: customer.id,
+      _name: form.name,
+      _status: form.status,
+      _notes: form.notes,
+    } as never);
+    const hasExtraPatch = Object.keys(extraPatch).length > 0;
+    const { error } = basicError
+      ? { error: basicError }
+      : hasExtraPatch
+        ? await supabase.from("customers").update(extraPatch).eq("id", customer.id)
+        : { error: null };
     setSaving(false);
     if (error) return toast.error(error.message);
     onSaved(form);
