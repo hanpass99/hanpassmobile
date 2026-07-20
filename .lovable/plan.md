@@ -1,59 +1,46 @@
-# 전체 이중언어(ko/en) 전환 계획
+## 문제
 
-현재 앱은 i18n 스캐폴딩(`react-i18next` + `ko.ts`/`en.ts`)이 있지만, UI의 상당 부분이 파일 내에 한국어 문자열로 하드코딩되어 있어 언어를 바꿔도 그대로 한국어로 남습니다. 이번 작업으로 모든 사용자 노출 문자열을 번역 키로 옮깁니다.
+통화 팝업에서 고객 이름을 수정하면 "이 고객을 수정할 권한이 없습니다" 토스트가 나옵니다.
 
-## 대상 범위
+확인 결과: 해당 고객(`ZOKIROVMUKHAMMADKARIM`, 01076532555)은 `assigned_to`와 `country_id`가 모두 `NULL`입니다. 현재 `customers` 테이블의 UPDATE RLS 정책은 아래 중 하나여야 통과합니다:
+- 관리자, 또는
+- 본인이 담당자(`assigned_to = auth.uid()`), 또는
+- 자신의 국가 접근 권한과 일치(`country_id ∈ current_user_countries()`)
 
-**공용 (전 페이지에 영향)**
-- `src/lib/labels.ts` — 상태/풀/출근 라벨 (지금은 한국어 상수). `t()`를 쓸 수 있는 함수 형태로 리팩터.
-- `src/components/AppSidebar.tsx` — `"문자 발송"`, `"SLA 관리"` 하드코딩 제거.
-- `src/components/ErrorBoundary.tsx` — 오류 화면 문구.
-- 각 라우트의 `head()` meta title (탭/공유 제목).
+이 고객은 세 조건 모두 해당 없음 → 일반 직원이 이름/상태/메모를 저장할 수 없습니다. 구글폼/친구추천 등에서 유입된 미배정·국가 없는 행이 다수라 팝업에서 흔히 재현됩니다.
 
-**페이지 (거의 전체 하드코딩)**
-- `routes/sla.tsx` — SLA 관리 (탭·컬럼·다이얼로그·토스트 100%)
-- `routes/settings.tsx` — 설정
-- `routes/attendance.tsx` — 출근 관리
-- `routes/channel-performance.tsx` — 채널 성과
-- `routes/index.tsx` — 대시보드 잔여
-- `routes/customers.tsx` + `routes/customers.lazy.tsx` — 고객 관리 (가장 큼, 2400줄)
-- `routes/sms.tsx` + `routes/sms.lazy.tsx` — 문자 발송
-- `routes/auth.tsx`, `routes/reset-password.tsx` — 인증 잔여
+## 해결 방향
 
-**메시지**
-- 모든 `toast.success/error("...")` 문자열
-- confirm/alert 다이얼로그 문구
+RLS 정책을 전면 완화하지 않고, 팝업에서 필요한 필드(이름·메모·상태)만 안전하게 수정할 수 있는 **SECURITY DEFINER 함수**를 신설합니다. 이미 직원 전화번호 저장에서 사용한 `admin_set_profile_phone` 패턴과 동일한 방식입니다.
 
-## 진행 순서
+### 1) DB 마이그레이션
 
-크기 때문에 이 대화에서 **여러 턴**에 나눠 커밋하겠습니다. 순서:
+새 함수 `public.staff_update_customer_basic(_customer_id uuid, _name text, _status customer_status, _notes text)`:
+- `SECURITY DEFINER`, `SET search_path = public`
+- 호출자가 인증된 사용자여야 함 (`auth.uid() IS NOT NULL`) — 아니면 예외
+- 전달된 인자 중 NULL이 아닌 필드만 갱신 (`COALESCE(_name, name)` 방식)
+- `status`가 바뀌면 `status_changed_at = now()`, `status_changed_by = auth.uid()` 도 함께 세팅 (기존 트리거와 동일한 컨벤션 유지)
+- 반환: 갱신된 행의 `id`
+- `GRANT EXECUTE ON FUNCTION ... TO authenticated`
 
-1. **1턴 (기반):** `ko.ts`/`en.ts`에 새 네임스페이스(`sla`, `errors`, `head`, `labels`, 페이지별 확장) 대량 추가. `labels.ts`를 `t()` 기반 함수로 전환. `AppSidebar`, `ErrorBoundary`, 각 라우트 `head()` 수정.
-2. **2턴:** `sla.tsx` 전체 번역.
-3. **3턴:** `settings.tsx` 전체 번역.
-4. **4턴:** `attendance.tsx` + `channel-performance.tsx` + `index.tsx` 잔여.
-5. **5턴:** `customers.tsx` + `customers.lazy.tsx` 전체 번역 (가장 큼).
-6. **6턴:** `sms.tsx` + `sms.lazy.tsx` + `auth.tsx` + `reset-password.tsx` 잔여.
-7. **7턴 (검증):** `rg '[가-힣]'`로 UI 코드에서 한국어 잔여 없는지 확인 + 프리뷰에서 언어 스위치 스모크 테스트.
+RLS 자체는 그대로 유지 (조회 정책은 변경 없음 — 조회는 이미 팝업 컨텍스트에서 열어놓은 상태).
 
-## 기술 세부사항
+### 2) 프론트엔드 수정
 
-- `labels.ts`는 지금 `STATUS_LABELS: Record<Status, string>` 형태의 정적 맵인데, i18n 키를 반환하는 함수(`statusLabel(status, t)`) 또는 컴포넌트에서 `t('status.'+key)`를 직접 부르는 방식으로 바꿉니다. 후자가 렌더러가 언어 변경 시 자동 재렌더링되어 더 안전.
-- `head()` meta 값은 라우트 로드 시점에 계산되어 언어 변경에 반응하지 않습니다. 이건 정상 한계이며, 초기 로드 시의 언어(`localStorage.lang`)를 기준으로 결정되도록 `i18n.t()`를 사용합니다.
-- 토스트 문자열의 동적 값(`${msg}`)은 `t('key', { msg })` 보간으로 옮깁니다.
-- 새 키는 페이지별 네임스페이스(`sla.*`, `settings.*` 확장 등)로 정리해 유지보수하기 쉽게 합니다.
+파일: `src/components/CallLogPopupProvider.tsx`
 
-## 검증
+- 저장 시 `customers` 테이블 직접 update 대신 `supabase.rpc('staff_update_customer_basic', { _customer_id, _name, _status, _notes })` 호출로 교체.
+- 에러 처리: RPC가 예외를 던지면 그 메시지를 토스트로 표시.
+- 성공 시 기존과 동일하게 `phone_call_logs`(이름/메모/상태) 업데이트 및 리스트 refetch.
 
-- 각 턴 종료 시 빌드 통과 확인.
-- 마지막에 `rg -n '[가-힣]' src/ -g '!i18n/**' -g '!integrations/**' -g '!*.gen.ts' -g '!lib/google-form-sync*'` 결과가 주석/개발자 로그만 남는지 확인.
-- 프리뷰에서 언어 토글 시 사이드바·SLA·설정·고객 페이지가 즉시 영어로 바뀌는지 시각 확인.
+### 3) 검증
 
-## 안 하는 것
+- 미배정·국가 없는 고객에서 팝업 열어 이름 변경 → 정상 저장
+- 상태 변경 시 담당자 자동 배정 트리거가 계속 작동하는지 확인
+- 관리자가 아닌 일반 직원 계정으로도 재현 테스트
 
-- 서버(supabase functions, migrations) 내 한국어 로그/주석은 UI에 노출되지 않으므로 건드리지 않음.
-- 소스코드 주석의 한국어는 그대로 둠.
-- `google-form-sync.functions.ts`의 서버 로그 문자열은 건드리지 않음.
-- 이메일 템플릿·PDF 등 별도 채널은 이번 범위 밖.
+## 영향 범위
 
-이 계획으로 진행할까요? 승인해주시면 1턴부터 커밋합니다.
+- 신규 SECURITY DEFINER 함수 1개 추가
+- `CallLogPopupProvider.tsx` 저장 로직 소폭 변경
+- 기존 RLS 정책, 다른 화면(고객관리 리스트의 상태 드롭다운 등)은 변경 없음
