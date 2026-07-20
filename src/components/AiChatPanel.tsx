@@ -10,7 +10,7 @@ type Msg = {
   text: string;
 };
 
-export function AiChatPanel({ className }: { className?: string }) {
+export function AiChatPanel({ className, style }: { className?: string; style?: React.CSSProperties }) {
   const { session } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
