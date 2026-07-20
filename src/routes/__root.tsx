@@ -143,6 +143,7 @@ function AuthedShell() {
         </div>
       </div>
       <CallLogPopupProvider />
+      <AiAssistant />
     </SidebarProvider>
   );
 }
