@@ -93,7 +93,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
   };
 
   return (
-    <div className={cn("flex flex-col overflow-hidden rounded-xl border border-border bg-card", className)}>
+    <div style={style} className={cn("flex flex-col overflow-hidden rounded-xl border border-border bg-card", className)}>
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">AI 어시스턴트</span>
