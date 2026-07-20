@@ -237,6 +237,12 @@ export const Route = createFileRoute("/api/chat")({
           }
         }
 
+        const { data: isAdminData } = await sb.rpc("has_role", {
+          _user_id: userId,
+          _role: "admin",
+        } as never);
+        const isAdmin = Boolean(isAdminData);
+
         const gateway = createLovableAiGatewayProvider(LOVABLE_API_KEY);
         const model = gateway("google/gemini-3.5-flash");
 
@@ -245,12 +251,13 @@ export const Route = createFileRoute("/api/chat")({
 Rules:
 - Detect the user's language (Korean, English, Uzbek, or Russian) and always reply in that language.
 - Use the provided tools to look up real CRM data — never invent customers, statuses, or call numbers.
-- Row-level security applies: tools will only return rows the signed-in employee is allowed to see. If a tool returns nothing, tell the user plainly.
+- Row-level security applies automatically. The signed-in user is ${isAdmin ? "an ADMIN — tool results include ALL staff / all customers across the whole company. You CAN answer questions like 'who made the most calls today', 'total calls per staff', or company-wide stats." : "a regular staff member — tool results only include their own customers and their own call logs. Do NOT claim you can compare across staff; you can only report on this user's own data."}
+- If a tool returns nothing, tell the user plainly.
 - Before ANY action that writes data (update_customer_status, add_customer_note), first restate exactly what you are about to do and ask the user to confirm with "네/yes/ha/да". Only call the tool after the user confirms.
 - Format results as short readable summaries with key fields (name, phone, status). Prefer bullet lists over long paragraphs.
 - Keep answers concise and mobile-friendly.
 
-The signed-in employee user id is: ${userId}. Current time (UTC): ${new Date().toISOString()}.`;
+The signed-in employee user id is: ${userId}. Role: ${isAdmin ? "admin" : "staff"}. Current time (UTC): ${new Date().toISOString()}.`;
 
         const modelMessages = await convertToModelMessages(messages);
 

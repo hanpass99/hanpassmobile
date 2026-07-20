@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle,
-  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall,
+  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,7 +30,10 @@ export function AppSidebar() {
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
     { title: t("nav.sla"), url: "/sla", icon: AlertTriangle },
   ];
-  const systemItems = [{ title: t("nav.settings"), url: "/settings", icon: Settings }];
+  const systemItems = [
+    { title: t("nav.settings"), url: "/settings", icon: Settings },
+    { title: "AI 어시스턴트", url: "/ai-assistant", icon: Bot },
+  ];
 
   const renderItems = (items: typeof mainItems) =>
     items.map((item) => {
