@@ -118,10 +118,9 @@ export function CallLogPopupDialog({
         const nameChanged = trimmed.length > 0 && trimmed !== (row.customer?.name ?? "");
         const { error: e2 } = await supabase.rpc("staff_update_customer_basic", {
           _customer_id: row.customer_id,
-          _name: nameChanged ? trimmed : null,
+          _name: nameChanged ? trimmed : (undefined as unknown as string),
           _status: status,
-          _notes: null,
-        });
+        } as never);
         if (e2) throw e2;
       }
       toast.success(t("common.saved", { defaultValue: "저장되었습니다." }));
