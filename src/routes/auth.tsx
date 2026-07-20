@@ -10,7 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/auth")({ component: AuthPage });
+export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : "",
+  }),
+  component: AuthPage,
+});
+
+function safeNext(next: string): string {
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+}
 
 type Mode = "login" | "forgot";
 
@@ -18,11 +27,13 @@ function AuthPage() {
   const { t, i18n: i18nInst } = useTranslation();
   const { session, loading } = useAuth();
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const target = safeNext(next);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
 
   if (loading) return null;
-  if (session) return <Navigate to="/" />;
+  if (session) return <Navigate to={target} />;
 
   const loginSchema = z.object({
     email: z.string().trim().email({ message: t("auth.invalidEmail") }).max(255),
@@ -45,7 +56,8 @@ function AuthPage() {
     setBusy(false);
     if (error) return toast.error(t("auth.loginFailed", { msg: error.message }));
     toast.success(t("auth.welcome"));
-    navigate({ to: "/" });
+    if (target !== "/") window.location.href = target;
+    else navigate({ to: "/" });
   };
 
   const handleForgot = async (e: FormEvent<HTMLFormElement>) => {

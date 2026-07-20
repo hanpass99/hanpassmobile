@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "sdk_version": "0.23.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://ousucdggqkoupfxdkuxw.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "hanpass-ob-crm-mcp",
+      "version": "0.1.0",
+      "title": "Hanpass OB CRM"
+    },
+    "tools": [
+      {
+        "name": "list_customers",
+        "title": "List customers",
+        "description": "List customers visible to the signed-in user, most recently updated first. Supports optional status and pool filters.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Max rows to return (default 20)."
+            },
+            "status": {
+              "type": "string",
+              "description": "Filter by customer status (e.g. activated, no_answer, certificate_issuing)."
+            },
+            "pool": {
+              "type": "string",
+              "description": "Filter by pool (e.g. google_form_activation, friend_referral)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_customer_by_phone",
+        "title": "Search customer by phone",
+        "description": "Look up a customer by phone number. Matches common formats (010..., +82..., digits-only).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "phone": {
+              "type": "string",
+              "minLength": 3,
+              "description": "Phone number in any common format."
+            }
+          },
+          "required": [
+            "phone"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_call_logs",
+        "title": "List my recent call logs",
+        "description": "List the signed-in user's most recent phone call logs (newest first). Admins see all logs their RLS allows.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Max rows (default 50)."
+            },
+            "since_iso": {
+              "type": "string",
+              "description": "Only include calls started at or after this ISO timestamp (e.g. 2026-07-18T00:00:00+09:00)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "add_customer_note",
+        "title": "Add customer note",
+        "description": "Append a note to a customer. The signed-in user is recorded as the author.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "customer_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The customer UUID."
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Note text."
+            }
+          },
+          "required": [
+            "customer_id",
+            "content"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
