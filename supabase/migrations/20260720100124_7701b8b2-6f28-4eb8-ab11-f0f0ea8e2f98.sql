@@ -1,0 +1,3 @@
+CREATE POLICY "Requesters can delete their own pending calls" ON public.pending_calls FOR DELETE TO authenticated USING (auth.uid() = requested_by OR public.has_role(auth.uid(), 'admin'::public.app_role));
+
+CREATE POLICY "Requesters can update their own pending calls" ON public.pending_calls FOR UPDATE TO authenticated USING (auth.uid() = requested_by OR public.has_role(auth.uid(), 'admin'::public.app_role)) WITH CHECK (auth.uid() = requested_by OR public.has_role(auth.uid(), 'admin'::public.app_role));
