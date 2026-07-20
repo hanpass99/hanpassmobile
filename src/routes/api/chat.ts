@@ -87,7 +87,7 @@ function buildTools(sb: Sb, userId: string, sessionId: string) {
         const { data, error } = await sb
           .from("customers")
           .select("id,name,phone,status,pool,country,updated_at")
-          .eq("status", status)
+          .eq("status", status as never)
           .order("updated_at", { ascending: false })
           .limit(limit ?? 20);
         if (error) return { error: error.message };
