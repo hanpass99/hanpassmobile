@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_chat_logs: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          role: string
+          session_id: string | null
+          tool_input: Json | null
+          tool_name: string | null
+          tool_output: Json | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          role: string
+          session_id?: string | null
+          tool_input?: Json | null
+          tool_name?: string | null
+          tool_output?: Json | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string | null
+          tool_input?: Json | null
+          tool_name?: string | null
+          tool_output?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       call_logs: {
         Row: {
           call_date: string
