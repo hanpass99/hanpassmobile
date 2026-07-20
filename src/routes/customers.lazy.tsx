@@ -2249,7 +2249,10 @@ function CustomerDetailSheet({
       assigned_to: form.assigned_to,
     } satisfies CustomerPatch;
     const extraPatch = Object.fromEntries(
-      Object.entries(form).filter(([key]) => !(key in basicPatch)),
+      Object.entries(form).filter(([key, value]) => {
+        if (key in basicPatch) return false;
+        return value !== customer[key as keyof CustomerRow];
+      }),
     ) as CustomerPatch;
 
     const { error: basicError } = await supabase.rpc("staff_update_customer_basic", {
