@@ -116,29 +116,12 @@ export function CallLogPopupDialog({
       if (row.customer_id) {
         const trimmed = customerName.trim();
         const nameChanged = trimmed.length > 0 && trimmed !== (row.customer?.name ?? "");
-        const patch: { status: CustomerStatus; name?: string } = { status };
-        if (nameChanged) patch.name = trimmed;
-        const { data: updated, error: e2 } = await supabase
-          .from("customers")
-          .update(patch)
-          .eq("id", row.customer_id)
-          .select("id, name")
-          .maybeSingle();
+        const { error: e2 } = await supabase.rpc("staff_update_customer_basic", {
+          _customer_id: row.customer_id,
+          _name: nameChanged ? trimmed : (undefined as unknown as string),
+          _status: status,
+        } as never);
         if (e2) throw e2;
-        if (!updated) {
-          toast.error(
-            t("callLogs.updateForbidden", {
-              defaultValue: "이 고객을 수정할 권한이 없습니다.",
-            }),
-          );
-          return;
-        }
-        if (nameChanged && updated.name !== trimmed) {
-          toast.error(
-            t("callLogs.nameNotSaved", { defaultValue: "고객 이름이 저장되지 않았습니다." }),
-          );
-          return;
-        }
       }
       toast.success(t("common.saved", { defaultValue: "저장되었습니다." }));
       onSaved?.();

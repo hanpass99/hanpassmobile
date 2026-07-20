@@ -1013,6 +1013,15 @@ export type Database = {
         }[]
       }
       sla_violations_count: { Args: never; Returns: number }
+      staff_update_customer_basic: {
+        Args: {
+          _customer_id: string
+          _name?: string
+          _notes?: string
+          _status?: Database["public"]["Enums"]["customer_status"]
+        }
+        Returns: string
+      }
       stats_attendance_summary: {
         Args: { _date?: string }
         Returns: {
