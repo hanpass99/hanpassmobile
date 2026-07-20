@@ -111,14 +111,32 @@ function buildTools(sb: Sb, userId: string, sessionId: string) {
         if (error) return { error: error.message };
         const rows = data ?? [];
         const byStatus: Record<string, number> = {};
+        const byStaff: Record<string, { total: number; duration: number }> = {};
         let total = 0;
         let totalDuration = 0;
         for (const r of rows) {
           total++;
           totalDuration += r.duration_sec ?? 0;
           byStatus[r.status ?? "unknown"] = (byStatus[r.status ?? "unknown"] ?? 0) + 1;
+          const sid = r.staff_id ?? "unknown";
+          if (!byStaff[sid]) byStaff[sid] = { total: 0, duration: 0 };
+          byStaff[sid].total++;
+          byStaff[sid].duration += r.duration_sec ?? 0;
         }
-        return { total, totalDuration, byStatus };
+        // Resolve staff names for readability
+        const staffIds = Object.keys(byStaff).filter((s) => s !== "unknown");
+        let names: Record<string, string> = {};
+        if (staffIds.length > 0) {
+          const { data: profs } = await sb
+            .from("profiles")
+            .select("id, display_name")
+            .in("id", staffIds);
+          names = Object.fromEntries((profs ?? []).map((p) => [p.id, p.display_name ?? p.id]));
+        }
+        const perStaff = Object.entries(byStaff)
+          .map(([sid, v]) => ({ staff_id: sid, name: names[sid] ?? sid, total: v.total, totalDuration: v.duration }))
+          .sort((a, b) => b.total - a.total);
+        return { total, totalDuration, byStatus, perStaff };
       }),
     }),
 
