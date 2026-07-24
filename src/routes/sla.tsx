@@ -323,6 +323,8 @@ function SlaPage() {
         </CardContent>
       </Card>
 
+      <StaffCallFinesCard periodStart={monthStart} periodEnd={today} isAdmin={isAdmin} today={today} />
+
       {action && (
         <AdminActionDialog
           action={action}
