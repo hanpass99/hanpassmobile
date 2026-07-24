@@ -330,8 +330,12 @@ function SlaPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
 
-      <StaffCallFinesCard periodStart={monthStart} periodEnd={today} isAdmin={isAdmin} today={today} />
+        <TabsContent value="callfines" className="space-y-6">
+          <StaffCallFinesCard periodStart={monthStart} periodEnd={today} isAdmin={isAdmin} today={today} />
+        </TabsContent>
+      </Tabs>
 
       {action && (
         <AdminActionDialog
@@ -344,6 +348,7 @@ function SlaPage() {
     </div>
   );
 }
+
 
 function sumFine(rows: SlaTeamRow[] | undefined) {
   return (rows ?? []).reduce((s, r) => s + Number(r.net_fine || 0), 0);
