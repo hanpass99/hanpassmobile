@@ -74,6 +74,13 @@ function SlaPage() {
         description={t("sla.subtitle")}
       />
 
+      <Tabs defaultValue="sla" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="sla">{t("sla.title")}</TabsTrigger>
+          <TabsTrigger value="callfines">직원 콜 벌금</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="sla" className="space-y-6">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard
           label={t("sla.currentViolations")}
@@ -86,6 +93,7 @@ function SlaPage() {
         <StatCard label={t("sla.weekFine")} value={won(totalWeek)} icon={AlertTriangle} tone="warning" />
         <StatCard label={t("sla.monthFine")} value={won(totalMonth)} icon={AlertTriangle} tone="warning" />
       </div>
+
 
       <Card>
         <CardHeader>
