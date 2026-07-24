@@ -219,3 +219,51 @@ export function monthStartKstIso(): string {
   const t = todayKstIso();
   return `${t.slice(0, 8)}01`;
 }
+
+export type StaffCallFineRow = {
+  user_id: string;
+  display_name: string;
+  days_evaluated: number;
+  days_absent: number;
+  days_waived: number;
+  days_under: number;
+  days_fined: number;
+  total_calls: number;
+  total_fine: number;
+  today_calls: number;
+  today_fined: boolean;
+  today_waived: boolean;
+  today_absent: boolean;
+};
+
+export function useStaffCallFines(periodStart: string, periodEnd: string) {
+  return useQuery({
+    queryKey: ["sla", "staff-call-fines", periodStart, periodEnd],
+    staleTime: 15_000,
+    queryFn: async (): Promise<StaffCallFineRow[]> => {
+      const { data, error } = await supabase.rpc("sla_staff_call_fines" as never, {
+        _period_start: periodStart,
+        _period_end: periodEnd,
+      } as never);
+      if (error) throw new Error(error.message);
+      return ((data as unknown) ?? []) as StaffCallFineRow[];
+    },
+  });
+}
+
+export function useToggleCallWaiver() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { userId: string; date: string; reason?: string }) => {
+      const { data, error } = await supabase.rpc("admin_sla_toggle_call_waiver" as never, {
+        _user_id: v.userId,
+        _date: v.date,
+        _reason: v.reason ?? undefined,
+      } as never);
+      if (error) throw new Error(error.message);
+      return data as unknown as boolean;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sla"] }),
+  });
+}
+
