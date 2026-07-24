@@ -653,6 +653,33 @@ export type Database = {
           },
         ]
       }
+      sla_call_fine_waivers: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          fine_date: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          fine_date: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          fine_date?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       sla_fine_adjustments: {
         Row: {
           adjustment_type: string
@@ -930,6 +957,10 @@ export type Database = {
         }
         Returns: string
       }
+      admin_sla_toggle_call_waiver: {
+        Args: { _date: string; _reason?: string; _user_id: string }
+        Returns: boolean
+      }
       admin_sla_waive_fine: {
         Args: {
           _amount: number
@@ -999,6 +1030,29 @@ export type Database = {
         Returns: undefined
       }
       sla_policy_start: { Args: never; Returns: string }
+      sla_staff_call_fines: {
+        Args: {
+          _fine?: number
+          _period_end: string
+          _period_start: string
+          _threshold?: number
+        }
+        Returns: {
+          days_absent: number
+          days_evaluated: number
+          days_fined: number
+          days_under: number
+          days_waived: number
+          display_name: string
+          today_absent: boolean
+          today_calls: number
+          today_fined: boolean
+          today_waived: boolean
+          total_calls: number
+          total_fine: number
+          user_id: string
+        }[]
+      }
       sla_team_summary: {
         Args: { _period_end: string; _period_start: string }
         Returns: {

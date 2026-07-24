@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   useSlaAdjustments, useSlaAdminActions, useSlaRealtime,
   useSlaTeamSummary, useSlaViolations, useSlaUpcoming,
+  useStaffCallFines, useToggleCallWaiver,
   monthStartKstIso, todayKstIso, weekStartKstIso,
   type SlaTeamRow,
 } from "@/hooks/use-sla";
@@ -322,6 +323,8 @@ function SlaPage() {
         </CardContent>
       </Card>
 
+      <StaffCallFinesCard periodStart={monthStart} periodEnd={today} isAdmin={isAdmin} today={today} />
+
       {action && (
         <AdminActionDialog
           action={action}
@@ -495,3 +498,118 @@ function AdminActionDialog(props: {
     </Dialog>
   );
 }
+
+function StaffCallFinesCard(props: {
+  periodStart: string;
+  periodEnd: string;
+  isAdmin: boolean;
+  today: string;
+}) {
+  const fines = useStaffCallFines(props.periodStart, props.periodEnd);
+  const toggle = useToggleCallWaiver();
+
+  const rows = fines.data ?? [];
+  const totalMonthFine = rows.reduce((s, r) => s + Number(r.total_fine || 0), 0);
+
+  const onToggle = async (userId: string, name: string, currentlyWaived: boolean) => {
+    try {
+      const nowWaived = await toggle.mutateAsync({
+        userId,
+        date: props.today,
+        reason: currentlyWaived ? undefined : "출근 안 함",
+      });
+      toast.success(
+        nowWaived
+          ? `${name}: 오늘 콜 벌금이 면제되었습니다`
+          : `${name}: 오늘 콜 벌금 면제가 해제되었습니다`
+      );
+    } catch (e) {
+      toast.error((e as Error).message || "처리 실패");
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4" />
+          직원 콜 벌금 (일 50콜 미만 · 3만원/일)
+        </CardTitle>
+        <CardDescription>
+          통화 로그 기준. 이번 달 합계: <span className="font-semibold text-destructive">{won(totalMonthFine)}</span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        {fines.isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : rows.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">직원이 없습니다</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>직원</TableHead>
+                <TableHead className="text-right">오늘 콜</TableHead>
+                <TableHead className="text-right">이달 총콜</TableHead>
+                <TableHead className="text-right">벌금 일수</TableHead>
+                <TableHead className="text-right">결근/면제</TableHead>
+                <TableHead className="text-right">이달 벌금</TableHead>
+                {props.isAdmin && <TableHead className="text-right">오늘 처리</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((r) => {
+                const todayStatus = r.today_absent
+                  ? "결근"
+                  : r.today_waived
+                    ? "면제"
+                    : r.today_fined
+                      ? "벌금 대상"
+                      : r.today_calls >= 50
+                        ? "달성"
+                        : `${r.today_calls}/50`;
+                const badgeTone = r.today_absent || r.today_waived
+                  ? "secondary"
+                  : r.today_fined
+                    ? "destructive"
+                    : r.today_calls >= 50
+                      ? "default"
+                      : "outline";
+                return (
+                  <TableRow key={r.user_id}>
+                    <TableCell className="font-medium">{r.display_name}</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={badgeTone as never}>{todayStatus}</Badge>
+                      <span className="ml-2 text-xs text-muted-foreground">{r.today_calls}</span>
+                    </TableCell>
+                    <TableCell className="text-right">{r.total_calls.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{r.days_fined}일</TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground">
+                      {r.days_absent}/{r.days_waived}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-destructive">
+                      {won(r.total_fine)}
+                    </TableCell>
+                    {props.isAdmin && (
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant={r.today_waived ? "secondary" : "outline"}
+                          disabled={toggle.isPending}
+                          onClick={() => onToggle(r.user_id, r.display_name, r.today_waived)}
+                        >
+                          {r.today_waived ? "면제 해제" : "출근 안 함"}
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
