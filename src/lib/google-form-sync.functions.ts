@@ -173,11 +173,12 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
       result.skipped++;
       continue;
     }
-    const custKey = `${name}|${phone}`;
+    const custKey = `${name}|${phone}|${today}`;
     if (existingCustKeys.has(custKey)) {
       result.skipped++;
       continue;
     }
+
 
     const code = mapCountry(country_raw);
     // 허용 국가만 저장 (CIS, LK, VN, KH, MM, BD, NP, PH)
