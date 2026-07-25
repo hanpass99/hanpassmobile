@@ -197,7 +197,7 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
     }
     const country_id = codeToId.get(code) ?? null;
 
-    existingCustKeys.add(custKey);
+    existingPhones.add(phone);
 
     // CIS 로 매핑된 경우 실제 국적을 메모에 병기
     const nationalityLabel = NATIONALITY_LABEL[country_raw.trim().toUpperCase()];
