@@ -449,7 +449,10 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
           assigned_to: null,
           pool: "activation_request",
           notes,
+          requested_plan: plan || null,
+          carrier_plan: carrier || null,
         });
+
 
       if (custErr) {
         const code = (custErr as { code?: string }).code;
