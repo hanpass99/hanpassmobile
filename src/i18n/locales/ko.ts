@@ -109,7 +109,7 @@ export default {
   status: {
     new: "미처리", in_progress: "진행중", certificate_issuing: "등록증 발급중", no_answer: "부재", unreachable: "전화 안 받음",
     not_interested: "관심 없음", callback: "재연락 요청",
-    activated: "개통 완료", stay_expired: "체류 기간 만료",
+    activated: "개통 완료", contract_active: "약정 기간중", stay_expired: "체류 기간 만료",
     delinquent: "체납자", line_exceeded: "회선 초과", minor: "미성년자",
     wrong_application: "오신청", seasonal_worker: "계절 근로자",
     suspended_number: "정지 번호",
