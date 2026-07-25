@@ -235,10 +235,9 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
           .from("customers")
           .select("id")
           .eq("pool", cfg.pool)
-          .eq("name", name)
           .eq("phone", phone)
-          .eq("signup_date", today)
           .maybeSingle();
+
 
         customerId = existingRow?.id ?? null;
         if (!customerId) {
