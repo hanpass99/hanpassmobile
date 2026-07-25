@@ -1360,7 +1360,7 @@ function CustomersPage() {
     }
     if (tab === "activation_request") {
       syncReceivedMutRef.current.mutate();
-      const timer = setInterval(() => syncReceivedMutRef.current.mutate(), 30_000);
+      const timer = setInterval(() => syncReceivedMutRef.current.mutate(), 10_000);
       return () => clearInterval(timer);
     }
   }, [tab]);
