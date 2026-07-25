@@ -7,7 +7,7 @@ import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
   StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X, Phone, ExternalLink,
 } from "lucide-react";
-import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals } from "@/lib/google-form-sync.functions";
+import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals, syncGoogleFormReceived } from "@/lib/google-form-sync.functions";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1335,12 +1335,34 @@ function CustomersPage() {
   });
   const syncMutRef = useRef(syncGoogleFormMut);
   syncMutRef.current = syncGoogleFormMut;
+  const syncGoogleFormReceivedFn = useServerFn(syncGoogleFormReceived);
+  const syncGoogleFormReceivedMut = useMutation({
+    mutationFn: () => syncGoogleFormReceivedFn(),
+    onSuccess: (r) => {
+      if (r.inserted > 0) {
+        toast.success(t("customers.googleFormSynced", { n: r.inserted }));
+        void refetchList();
+        void refetchPoolCounts();
+      }
+      if (r.errors && r.errors.length > 0) {
+        toast.error(t("customers.googleFormSyncErr", { msg: r.errors[0] }));
+      }
+    },
+    onError: (e: Error) => toast.error(t("customers.googleFormSyncFail", { msg: e.message })),
+  });
+  const syncReceivedMutRef = useRef(syncGoogleFormReceivedMut);
+  syncReceivedMutRef.current = syncGoogleFormReceivedMut;
   useEffect(() => {
     if (tab !== "google_form_activation") return;
     syncMutRef.current.mutate();
-    const timer = setInterval(() => syncMutRef.current.mutate(), 30_000);
+    syncReceivedMutRef.current.mutate();
+    const timer = setInterval(() => {
+      syncMutRef.current.mutate();
+      syncReceivedMutRef.current.mutate();
+    }, 30_000);
     return () => clearInterval(timer);
   }, [tab]);
+
 
   // === 구글폼 인터 자동 동기화 (활성화: google_form_activation_inter 탭) ===
   const syncGoogleFormInterFn = useServerFn(syncGoogleFormApplicationsInter);
