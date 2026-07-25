@@ -435,7 +435,7 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
       const custKey = `${name}|${phone}|${signup_date}`;
       const existing = existingCustByKey.get(custKey);
       if (existing) {
-        const patch: Record<string, string> = {};
+        const patch: { requested_plan?: string; carrier_plan?: string; notes?: string } = {};
         if (plan && !existing.requested_plan) patch.requested_plan = plan;
         if (carrier && !existing.carrier_plan) patch.carrier_plan = carrier;
         if (plan && existing.notes && !existing.notes.includes("요금제:")) {
