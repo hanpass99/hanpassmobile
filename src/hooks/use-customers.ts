@@ -66,7 +66,7 @@ export type CustomersSearchParams = {
 
 export const SERVER_SORT_KEYS = new Set([
   "name", "phone", "status", "imported_at", "activation_date",
-  "application_date", "carrier_plan", "requested_plan",
+  "application_date", "carrier_plan", "requested_plan", "signup_date",
 ]);
 
 // === Lookups (countries / channels / staff) ===
