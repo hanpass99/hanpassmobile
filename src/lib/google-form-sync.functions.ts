@@ -154,6 +154,8 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
   const today = new Date().toISOString().slice(0, 10);
 
+  const ALLOWED_CODES = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH"]);
+
   for (const row of rows) {
     const timestamp_raw = (row[0] ?? "").toString().trim();
     const name = (row[1] ?? "").toString().trim();
@@ -174,10 +176,22 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
       result.skipped++;
       continue;
     }
-    existingCustKeys.add(custKey);
 
     const code = mapCountry(country_raw);
-    const country_id = code ? codeToId.get(code) ?? null : null;
+    // 허용 국가만 저장 (CIS, LK, VN, KH, MM, BD, NP, PH)
+    if (!code || !ALLOWED_CODES.has(code)) {
+      result.skipped++;
+      continue;
+    }
+    const country_id = codeToId.get(code) ?? null;
+
+    existingCustKeys.add(custKey);
+
+    // CIS 로 매핑된 경우 실제 국적을 메모에 병기
+    const nationalityLabel = NATIONALITY_LABEL[country_raw.trim().toUpperCase()];
+    const notes = nationalityLabel
+      ? `${cfg.notesLabel} · 국적: ${nationalityLabel}`
+      : cfg.notesLabel;
 
     const { data: cust, error: custErr } = await supabaseAdmin
       .from("customers")
@@ -190,10 +204,11 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
         status: "new",
         assigned_to: null,
         pool: cfg.pool,
-        notes: cfg.notesLabel,
+        notes,
       })
       .select("id")
       .maybeSingle();
+
 
     let customerId = cust?.id ?? null;
     if (custErr) {
