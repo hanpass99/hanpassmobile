@@ -1,0 +1,1 @@
+DELETE FROM public.customers WHERE pool IN ('google_form_activation','google_form_activation_inter') AND (country_id IS NULL OR country_id IN (SELECT id FROM public.countries WHERE code NOT IN ('CIS','LK','VN','KH','MM','BD','NP','PH')));
