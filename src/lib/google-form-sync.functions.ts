@@ -385,19 +385,28 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
     const codeToId = new Map((countries ?? []).map((c) => [c.code, c.id]));
 
     // 기존 고객 (name|phone|signup_date) 로 중복 판정 → 다른 날짜면 신규 등록
+    // 이미 들어온 고객이라도 요금제/통신사 컬럼이 비어 있으면 시트 값으로 보강
     const { data: existingCust, error: ecErr } = await supabaseAdmin
       .from("customers")
-      .select("name, phone, signup_date")
+      .select("id, name, phone, signup_date, requested_plan, carrier_plan, notes")
       .eq("pool", "activation_request");
     if (ecErr) throw ecErr;
-    const existingCustKeys = new Set(
-      (existingCust ?? [])
-        .map((r) => {
-          const p = normalizeReceivedPhone(r.phone ?? "");
-          return p ? `${r.name}|${p}|${r.signup_date ?? ""}` : null;
-        })
-        .filter((k): k is string => Boolean(k)),
-    );
+    const existingCustByKey = new Map<string, {
+      id: string;
+      requested_plan: string | null;
+      carrier_plan: string | null;
+      notes: string | null;
+    }>();
+    for (const r of existingCust ?? []) {
+      const p = normalizeReceivedPhone(r.phone ?? "");
+      if (!p) continue;
+      existingCustByKey.set(`${r.name}|${p}|${r.signup_date ?? ""}`, {
+        id: r.id,
+        requested_plan: r.requested_plan,
+        carrier_plan: r.carrier_plan,
+        notes: r.notes,
+      });
+    }
 
     const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
     const today = new Date().toISOString().slice(0, 10);
@@ -424,11 +433,24 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
       const signup_date = parseReceivedDate(receivedAt) ?? today;
 
       const custKey = `${name}|${phone}|${signup_date}`;
-      if (existingCustKeys.has(custKey)) {
+      const existing = existingCustByKey.get(custKey);
+      if (existing) {
+        const patch: { requested_plan?: string; carrier_plan?: string; notes?: string } = {};
+        if (plan && !existing.requested_plan) patch.requested_plan = plan;
+        if (carrier && !existing.carrier_plan) patch.carrier_plan = carrier;
+        if (plan && existing.notes && !existing.notes.includes("요금제:")) {
+          patch.notes = `${existing.notes} · 요금제: ${plan}`;
+        }
+        if (Object.keys(patch).length > 0) {
+          const { error: updateErr } = await supabaseAdmin
+            .from("customers")
+            .update(patch)
+            .eq("id", existing.id);
+          if (updateErr) result.errors.push(`${name}: ${updateErr.message}`);
+        }
         result.skipped++;
         continue;
       }
-      existingCustKeys.add(custKey);
 
       const nationalityLabel = NATIONALITY_LABEL[country_raw];
       const parts = ["접수완료 시트 자동 등록"];
@@ -436,6 +458,13 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
       if (carrier) parts.push(`통신사: ${carrier}`);
       if (plan) parts.push(`요금제: ${plan}`);
       const notes = parts.join(" · ");
+
+      existingCustByKey.set(custKey, {
+        id: "",
+        requested_plan: plan || null,
+        carrier_plan: carrier || null,
+        notes,
+      });
 
       const { error: custErr } = await supabaseAdmin
         .from("customers")
