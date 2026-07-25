@@ -131,19 +131,21 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
       .filter((key): key is string => Boolean(key)),
   );
 
+  // 같은 이름+번호라도 접수일이 다르면 별도 고객으로 저장 (당일 중복만 스킵)
   const { data: existingCust, error: ecErr } = await supabaseAdmin
     .from("customers")
-    .select("name, phone")
+    .select("name, phone, signup_date")
     .eq("pool", cfg.pool);
   if (ecErr) throw ecErr;
   const existingCustKeys = new Set(
     (existingCust ?? [])
       .map((r) => {
         const normalized = normalizePhone(r.phone ?? "");
-        return normalized ? `${r.name}|${normalized}` : null;
+        return normalized ? `${r.name}|${normalized}|${r.signup_date ?? ""}` : null;
       })
       .filter((key): key is string => Boolean(key)),
   );
+
 
   const { data: countries, error: coErr } = await supabaseAdmin
     .from("countries")
