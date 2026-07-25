@@ -388,7 +388,7 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
     const { data: existingCust, error: ecErr } = await supabaseAdmin
       .from("customers")
       .select("name, phone, signup_date")
-      .eq("pool", "google_form_activation");
+      .eq("pool", "activation_request");
     if (ecErr) throw ecErr;
     const existingCustKeys = new Set(
       (existingCust ?? [])
@@ -447,7 +447,7 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
           application_date: signup_date,
           status: "new",
           assigned_to: null,
-          pool: "google_form_activation",
+          pool: "activation_request",
           notes,
         });
 
