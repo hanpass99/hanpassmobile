@@ -579,6 +579,7 @@ export type Database = {
           can_access_new_signup: boolean
           country_id: string | null
           created_at: string
+          daily_call_goal: number
           department: string | null
           display_name: string
           id: string
@@ -592,6 +593,7 @@ export type Database = {
           can_access_new_signup?: boolean
           country_id?: string | null
           created_at?: string
+          daily_call_goal?: number
           department?: string | null
           display_name: string
           id: string
@@ -605,6 +607,7 @@ export type Database = {
           can_access_new_signup?: boolean
           country_id?: string | null
           created_at?: string
+          daily_call_goal?: number
           department?: string | null
           display_name?: string
           id?: string
@@ -903,6 +906,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_call_goal: {
+        Args: { _goal: number; _user_id: string }
+        Returns: number
+      }
       admin_set_profile_active: {
         Args: { _active: boolean; _user_id: string }
         Returns: undefined
@@ -1033,17 +1040,23 @@ export type Database = {
       sla_staff_call_fines: {
         Args: {
           _fine?: number
+          _focus_date?: string
           _period_end: string
           _period_start: string
           _threshold?: number
         }
         Returns: {
+          daily_call_goal: number
           days_absent: number
           days_evaluated: number
           days_fined: number
           days_under: number
           days_waived: number
           display_name: string
+          focus_absent: boolean
+          focus_calls: number
+          focus_fined: boolean
+          focus_waived: boolean
           today_absent: boolean
           today_calls: number
           today_fined: boolean

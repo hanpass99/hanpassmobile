@@ -20,11 +20,12 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   useSlaAdjustments, useSlaAdminActions, useSlaRealtime,
   useSlaTeamSummary, useSlaViolations, useSlaUpcoming,
-  useStaffCallFines, useToggleCallWaiver,
+  useStaffCallFines, useToggleCallWaiver, useSetCallGoal,
   monthStartKstIso, todayKstIso, weekStartKstIso,
   type SlaTeamRow,
 } from "@/hooks/use-sla";
 import { STATUS_LABEL } from "@/lib/labels";
+
 
 export const Route = createFileRoute("/sla")({
   head: () => ({ meta: [{ title: i18n.t("head.sla") }] }),
@@ -518,39 +519,75 @@ function StaffCallFinesCard(props: {
   isAdmin: boolean;
   today: string;
 }) {
-  const fines = useStaffCallFines(props.periodStart, props.periodEnd);
+  const [focusDate, setFocusDate] = useState<string>(props.today);
+  const fines = useStaffCallFines(props.periodStart, props.periodEnd, focusDate);
   const toggle = useToggleCallWaiver();
+  const setGoal = useSetCallGoal();
 
   const rows = fines.data ?? [];
   const totalMonthFine = rows.reduce((s, r) => s + Number(r.total_fine || 0), 0);
+  const focusDayFine = rows.reduce(
+    (s, r) => s + (r.focus_fined ? 30000 : 0),
+    0,
+  );
 
   const onToggle = async (userId: string, name: string, currentlyWaived: boolean) => {
     try {
       const nowWaived = await toggle.mutateAsync({
         userId,
-        date: props.today,
-        reason: currentlyWaived ? undefined : "출근 안 함",
+        date: focusDate,
+        reason: currentlyWaived ? undefined : "관리자 면제",
       });
       toast.success(
         nowWaived
-          ? `${name}: 오늘 콜 벌금이 면제되었습니다`
-          : `${name}: 오늘 콜 벌금 면제가 해제되었습니다`
+          ? `${name}: ${focusDate} 벌금이 면제되었습니다`
+          : `${name}: ${focusDate} 벌금 면제가 해제되었습니다`,
       );
     } catch (e) {
       toast.error((e as Error).message || "처리 실패");
     }
   };
 
+  const onGoalBlur = async (userId: string, name: string, current: number, next: number) => {
+    if (!Number.isFinite(next) || next < 0 || next === current) return;
+    try {
+      await setGoal.mutateAsync({ userId, goal: next });
+      toast.success(`${name}: 콜 목표 ${next}로 변경`);
+    } catch (e) {
+      toast.error((e as Error).message || "목표 변경 실패");
+    }
+  };
+
+  const isFocusToday = focusDate === props.today;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" />
-          직원 콜 벌금 (일 50콜 미만 · 3만원/일)
+          직원 콜 벌금 (일 목표 미달 · 3만원/일)
         </CardTitle>
-        <CardDescription>
-          통화 로그 기준. 이번 달 합계: <span className="font-semibold text-destructive">{won(totalMonthFine)}</span>
+        <CardDescription className="flex flex-wrap items-center gap-3">
+          <span>통화 로그 기준. 이번 달 합계: <span className="font-semibold text-destructive">{won(totalMonthFine)}</span></span>
+          <span className="text-xs text-muted-foreground">
+            선택 날짜 벌금: <span className="font-semibold">{won(focusDayFine)}</span>
+          </span>
         </CardDescription>
+        <div className="flex flex-wrap items-center gap-2 pt-2">
+          <Label className="text-xs">날짜별 조회</Label>
+          <Input
+            type="date"
+            value={focusDate}
+            max={props.today}
+            onChange={(e) => setFocusDate(e.target.value)}
+            className="h-8 w-40"
+          />
+          {!isFocusToday && (
+            <Button size="sm" variant="ghost" onClick={() => setFocusDate(props.today)}>
+              오늘로
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         {fines.isLoading ? (
@@ -562,38 +599,55 @@ function StaffCallFinesCard(props: {
             <TableHeader>
               <TableRow>
                 <TableHead>직원</TableHead>
-                <TableHead className="text-right">오늘 콜</TableHead>
+                <TableHead className="text-right">일 목표</TableHead>
+                <TableHead className="text-right">{isFocusToday ? "오늘 콜" : `${focusDate} 콜`}</TableHead>
                 <TableHead className="text-right">이달 총콜</TableHead>
                 <TableHead className="text-right">벌금 일수</TableHead>
                 <TableHead className="text-right">결근/면제</TableHead>
                 <TableHead className="text-right">이달 벌금</TableHead>
-                {props.isAdmin && <TableHead className="text-right">오늘 처리</TableHead>}
+                {props.isAdmin && <TableHead className="text-right">선택일 처리</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((r) => {
-                const todayStatus = r.today_absent
+                const goal = Number(r.daily_call_goal ?? 50);
+                const focusStatus = r.focus_absent
                   ? "결근"
-                  : r.today_waived
+                  : r.focus_waived
                     ? "면제"
-                    : r.today_fined
-                      ? "벌금 대상"
-                      : r.today_calls >= 50
+                    : r.focus_fined
+                      ? "벌금"
+                      : r.focus_calls >= goal
                         ? "달성"
-                        : `${r.today_calls}/50`;
-                const badgeTone = r.today_absent || r.today_waived
+                        : isFocusToday
+                          ? `${r.focus_calls}/${goal}`
+                          : "미달";
+                const badgeTone = r.focus_absent || r.focus_waived
                   ? "secondary"
-                  : r.today_fined
+                  : r.focus_fined
                     ? "destructive"
-                    : r.today_calls >= 50
+                    : r.focus_calls >= goal
                       ? "default"
                       : "outline";
                 return (
                   <TableRow key={r.user_id}>
                     <TableCell className="font-medium">{r.display_name}</TableCell>
                     <TableCell className="text-right">
-                      <Badge variant={badgeTone as never}>{todayStatus}</Badge>
-                      <span className="ml-2 text-xs text-muted-foreground">{r.today_calls}</span>
+                      {props.isAdmin ? (
+                        <Input
+                          type="number"
+                          min={0}
+                          defaultValue={goal}
+                          onBlur={(e) => onGoalBlur(r.user_id, r.display_name, goal, Number(e.target.value))}
+                          className="ml-auto h-8 w-20 text-right"
+                        />
+                      ) : (
+                        <span>{goal}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={badgeTone as never}>{focusStatus}</Badge>
+                      <span className="ml-2 text-xs text-muted-foreground">{r.focus_calls}</span>
                     </TableCell>
                     <TableCell className="text-right">{r.total_calls.toLocaleString()}</TableCell>
                     <TableCell className="text-right">{r.days_fined}일</TableCell>
@@ -607,11 +661,11 @@ function StaffCallFinesCard(props: {
                       <TableCell className="text-right">
                         <Button
                           size="sm"
-                          variant={r.today_waived ? "secondary" : "outline"}
+                          variant={r.focus_waived ? "secondary" : "outline"}
                           disabled={toggle.isPending}
-                          onClick={() => onToggle(r.user_id, r.display_name, r.today_waived)}
+                          onClick={() => onToggle(r.user_id, r.display_name, r.focus_waived)}
                         >
-                          {r.today_waived ? "면제 해제" : "출근 안 함"}
+                          {r.focus_waived ? "면제 해제" : "벌금 면제"}
                         </Button>
                       </TableCell>
                     )}
@@ -625,4 +679,5 @@ function StaffCallFinesCard(props: {
     </Card>
   );
 }
+
 
