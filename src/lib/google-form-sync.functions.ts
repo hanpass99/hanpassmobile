@@ -131,21 +131,29 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
       .filter((key): key is string => Boolean(key)),
   );
 
-  // 같은 이름+번호라도 접수일이 다르면 별도 고객으로 저장 (당일 중복만 스킵)
+  // 같은 pool 안에서는 같은 전화번호가 이미 있으면 무조건 스킵 (이름/날짜 무관)
   const { data: existingCust, error: ecErr } = await supabaseAdmin
     .from("customers")
-    .select("name, phone, signup_date")
+    .select("phone")
     .eq("pool", cfg.pool);
   if (ecErr) throw ecErr;
-  const existingCustKeys = new Set(
+  const existingPhones = new Set(
     (existingCust ?? [])
-      .map((r) => {
-        const normalized = normalizePhone(r.phone ?? "");
-        return normalized ? `${r.name}|${normalized}|${r.signup_date ?? ""}` : null;
-      })
-      .filter((key): key is string => Boolean(key)),
+      .map((r) => normalizePhone(r.phone ?? ""))
+      .filter((p): p is string => Boolean(p)),
   );
 
+  // 개통 신청자(activation_request - 접수완료 시트)에 이미 있는 phone 도 스킵
+  const { data: arCust, error: arErr } = await supabaseAdmin
+    .from("customers")
+    .select("phone")
+    .eq("pool", "activation_request");
+  if (arErr) throw arErr;
+  const arPhones = new Set(
+    (arCust ?? [])
+      .map((r) => normalizePhone(r.phone ?? ""))
+      .filter((p): p is string => Boolean(p)),
+  );
 
   const { data: countries, error: coErr } = await supabaseAdmin
     .from("countries")
@@ -173,11 +181,12 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
       result.skipped++;
       continue;
     }
-    const custKey = `${name}|${phone}|${today}`;
-    if (existingCustKeys.has(custKey)) {
+    // pool 내 phone 중복 or activation_request 에 이미 있음 → 스킵
+    if (existingPhones.has(phone) || arPhones.has(phone)) {
       result.skipped++;
       continue;
     }
+
 
 
     const code = mapCountry(country_raw);
@@ -188,7 +197,7 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
     }
     const country_id = codeToId.get(code) ?? null;
 
-    existingCustKeys.add(custKey);
+    existingPhones.add(phone);
 
     // CIS 로 매핑된 경우 실제 국적을 메모에 병기
     const nationalityLabel = NATIONALITY_LABEL[country_raw.trim().toUpperCase()];
@@ -226,10 +235,9 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
           .from("customers")
           .select("id")
           .eq("pool", cfg.pool)
-          .eq("name", name)
           .eq("phone", phone)
-          .eq("signup_date", today)
           .maybeSingle();
+
 
         customerId = existingRow?.id ?? null;
         if (!customerId) {
