@@ -473,30 +473,40 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
         continue;
       }
 
-      // Upsert customer (unique partial index on (name, phone) for friend_referral)
-      const { data: custUpsert, error: custErr } = await supabaseAdmin
+      // Check existing customer first: multiple partial unique indexes on (name,phone)
+      // prevent Postgres from inferring an ON CONFLICT target, so upsert silently fails.
+      const { data: existingCust } = await supabaseAdmin
         .from("customers")
-        .upsert(
-          {
-            name,
-            phone,
-            country_id,
-            signup_date: signup_date ?? today,
-            status: "new",
-            assigned_to: null,
-            pool: "friend_referral",
-            notes,
-          },
-          { onConflict: "name,phone", ignoreDuplicates: true },
-        )
-        .select("id");
+        .select("id")
+        .eq("pool", "friend_referral")
+        .eq("name", name)
+        .eq("phone", phone)
+        .maybeSingle();
 
-      if (custErr) {
-        result.errors.push(`${name}: ${custErr.message}`);
+      if (existingCust) {
+        result.skipped++;
         continue;
       }
-      if (!custUpsert || custUpsert.length === 0) {
-        result.skipped++;
+
+      const { error: custErr } = await supabaseAdmin
+        .from("customers")
+        .insert({
+          name,
+          phone,
+          country_id,
+          signup_date: signup_date ?? today,
+          status: "new",
+          assigned_to: null,
+          pool: "friend_referral",
+          notes,
+        });
+
+      if (custErr) {
+        if ((custErr as { code?: string }).code === "23505") {
+          result.skipped++;
+          continue;
+        }
+        result.errors.push(`${name}: ${custErr.message}`);
         continue;
       }
       result.inserted++;
