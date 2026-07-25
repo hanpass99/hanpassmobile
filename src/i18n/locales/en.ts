@@ -109,7 +109,7 @@ export default {
   status: {
     new: "Not started", in_progress: "In progress", certificate_issuing: "Certificate issuing", no_answer: "No answer", unreachable: "Unreachable",
     not_interested: "Not interested", callback: "Callback requested",
-    activated: "Activated", stay_expired: "Stay expired",
+    activated: "Activated", contract_active: "Contract active", stay_expired: "Stay expired",
     delinquent: "Delinquent", line_exceeded: "Line exceeded", minor: "Minor",
     wrong_application: "Wrong application", seasonal_worker: "Seasonal worker",
     suspended_number: "Suspended number",
