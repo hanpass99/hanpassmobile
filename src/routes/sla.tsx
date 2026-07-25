@@ -20,11 +20,12 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   useSlaAdjustments, useSlaAdminActions, useSlaRealtime,
   useSlaTeamSummary, useSlaViolations, useSlaUpcoming,
-  useStaffCallFines, useToggleCallWaiver,
+  useStaffCallFines, useToggleCallWaiver, useSetCallGoal,
   monthStartKstIso, todayKstIso, weekStartKstIso,
   type SlaTeamRow,
 } from "@/hooks/use-sla";
 import { STATUS_LABEL } from "@/lib/labels";
+
 
 export const Route = createFileRoute("/sla")({
   head: () => ({ meta: [{ title: i18n.t("head.sla") }] }),
