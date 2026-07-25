@@ -298,6 +298,175 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
     });
   });
 
+// ============================================================
+// 개통 신청자 - 접수완료 시트 자동 동기화 (google_form_activation 풀에 병합)
+// 시트 컬럼: A=NO, B=접수일(YYYY-MM-DD HH:MM), C=처리상태, D=청구기준,
+//           E=가입구분, F=국적, G=통신사, H=요금제, I=고객명, J=전화번호
+// 규칙: 같은 이름+번호가 같은 접수일에 이미 있으면 스킵, 다른 날짜면 별도 등록
+// ============================================================
+const RECEIVED_SPREADSHEET_ID = "1LsuShEg0vq1iiq_EZJ0KuvVvQ8f_YlMr7aJcEVwf-UY";
+const RECEIVED_SHEET_NAME = "접수완료";
+const RECEIVED_ALLOWED = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH"]);
+
+function normalizeReceivedPhone(raw: string): string | null {
+  let digits = (raw || "").toString().replace(/\D/g, "");
+  if (!digits) return null;
+  // 시트에 앞자리 0이 빠진 경우 (예: 1059627155) → 010XXXXXXXX 복원
+  if (digits.length === 10 && digits.startsWith("10")) {
+    digits = `0${digits}`;
+  }
+  if (digits.length === 13 && digits.startsWith("82010")) {
+    digits = `8210${digits.slice(5)}`;
+  }
+  if (digits.length === 11 && digits.startsWith("010")) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 12 && digits.startsWith("8210")) {
+    return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8)}`;
+  }
+  return null;
+}
+
+// "2026-07-25 15:11" 또는 "2026-07-25" → "2026-07-25"
+function parseReceivedDate(raw: string): string | null {
+  const s = (raw || "").toString().trim();
+  const m = s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+  if (!m) return null;
+  const y = m[1];
+  const mm = m[2].padStart(2, "0");
+  const dd = m[3].padStart(2, "0");
+  return `${y}-${mm}-${dd}`;
+}
+
+export const syncGoogleFormReceived = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<SyncResult> => {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
+    if (!lovableKey || !sheetsKey) {
+      throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
+    }
+
+    const range = `'${RECEIVED_SHEET_NAME}'!A2:L`;
+    const url = `${GATEWAY_URL}/spreadsheets/${RECEIVED_SPREADSHEET_ID}/values/${range}`;
+
+    let res: Response | null = null;
+    let lastBody = "";
+    const delays = [1000, 3000, 7000];
+    for (let attempt = 0; attempt <= delays.length; attempt++) {
+      res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": sheetsKey,
+        },
+      });
+      if (res.ok) break;
+      lastBody = await res.text();
+      const retriable = res.status === 429 || res.status >= 500;
+      if (!retriable || attempt === delays.length) {
+        if (res.status === 429) {
+          throw new Error("구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.");
+        }
+        throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
+      }
+      await new Promise((r) => setTimeout(r, delays[attempt]));
+    }
+    if (!res || !res.ok) throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
+
+    const data = (await res.json()) as { values?: string[][] };
+    const rows = (data.values ?? []).filter((r) => r && (r[8] || r[9]));
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: countries, error: coErr } = await supabaseAdmin
+      .from("countries")
+      .select("id, code");
+    if (coErr) throw coErr;
+    const codeToId = new Map((countries ?? []).map((c) => [c.code, c.id]));
+
+    // 기존 고객 (name|phone|signup_date) 로 중복 판정 → 다른 날짜면 신규 등록
+    const { data: existingCust, error: ecErr } = await supabaseAdmin
+      .from("customers")
+      .select("name, phone, signup_date")
+      .eq("pool", "google_form_activation");
+    if (ecErr) throw ecErr;
+    const existingCustKeys = new Set(
+      (existingCust ?? [])
+        .map((r) => {
+          const p = normalizeReceivedPhone(r.phone ?? "");
+          return p ? `${r.name}|${p}|${r.signup_date ?? ""}` : null;
+        })
+        .filter((k): k is string => Boolean(k)),
+    );
+
+    const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
+    const today = new Date().toISOString().slice(0, 10);
+
+    for (const row of rows) {
+      const receivedAt = (row[1] ?? "").toString().trim();
+      const country_raw = (row[5] ?? "").toString().trim().toUpperCase();
+      const carrier = (row[6] ?? "").toString().trim();
+      const plan = (row[7] ?? "").toString().trim();
+      const name = (row[8] ?? "").toString().trim();
+      const phone = normalizeReceivedPhone(row[9] ?? "");
+
+      if (!name || !phone) {
+        result.skipped++;
+        continue;
+      }
+      // CIS 매핑
+      const mapped = CIS_CODES.has(country_raw) ? "CIS" : country_raw;
+      if (!mapped || !RECEIVED_ALLOWED.has(mapped)) {
+        result.skipped++;
+        continue;
+      }
+      const country_id = codeToId.get(mapped) ?? null;
+      const signup_date = parseReceivedDate(receivedAt) ?? today;
+
+      const custKey = `${name}|${phone}|${signup_date}`;
+      if (existingCustKeys.has(custKey)) {
+        result.skipped++;
+        continue;
+      }
+      existingCustKeys.add(custKey);
+
+      const nationalityLabel = NATIONALITY_LABEL[country_raw];
+      const parts = ["접수완료 시트 자동 등록"];
+      if (nationalityLabel) parts.push(`국적: ${nationalityLabel}`);
+      if (carrier) parts.push(`통신사: ${carrier}`);
+      if (plan) parts.push(`요금제: ${plan}`);
+      const notes = parts.join(" · ");
+
+      const { error: custErr } = await supabaseAdmin
+        .from("customers")
+        .insert({
+          name,
+          phone,
+          country_id,
+          signup_date,
+          application_date: signup_date,
+          status: "new",
+          assigned_to: null,
+          pool: "google_form_activation",
+          notes,
+        });
+
+      if (custErr) {
+        const code = (custErr as { code?: string }).code;
+        if (code === "23505") {
+          result.skipped++;
+          continue;
+        }
+        result.errors.push(`${name}: ${custErr.message}`);
+        continue;
+      }
+      result.inserted++;
+    }
+
+    return result;
+  });
+
+
 export type GoogleFormSubmissionRow = {
   id: string;
   timestamp_raw: string;
