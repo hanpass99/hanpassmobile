@@ -34,6 +34,7 @@ export const CUSTOMER_STATUSES = [
   "not_interested",
   "callback",
   "activated",
+  "contract_active",
   "stay_expired",
   "delinquent",
   "line_exceeded",
