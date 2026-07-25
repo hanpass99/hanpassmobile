@@ -1353,14 +1353,16 @@ function CustomersPage() {
   const syncReceivedMutRef = useRef(syncGoogleFormReceivedMut);
   syncReceivedMutRef.current = syncGoogleFormReceivedMut;
   useEffect(() => {
-    if (tab !== "google_form_activation") return;
-    syncMutRef.current.mutate();
-    syncReceivedMutRef.current.mutate();
-    const timer = setInterval(() => {
+    if (tab === "google_form_activation") {
       syncMutRef.current.mutate();
+      const timer = setInterval(() => syncMutRef.current.mutate(), 30_000);
+      return () => clearInterval(timer);
+    }
+    if (tab === "activation_request") {
       syncReceivedMutRef.current.mutate();
-    }, 30_000);
-    return () => clearInterval(timer);
+      const timer = setInterval(() => syncReceivedMutRef.current.mutate(), 30_000);
+      return () => clearInterval(timer);
+    }
   }, [tab]);
 
 
