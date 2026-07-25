@@ -223,6 +223,7 @@ export function monthStartKstIso(): string {
 export type StaffCallFineRow = {
   user_id: string;
   display_name: string;
+  daily_call_goal: number;
   days_evaluated: number;
   days_absent: number;
   days_waived: number;
@@ -230,20 +231,25 @@ export type StaffCallFineRow = {
   days_fined: number;
   total_calls: number;
   total_fine: number;
+  focus_calls: number;
+  focus_fined: boolean;
+  focus_waived: boolean;
+  focus_absent: boolean;
   today_calls: number;
   today_fined: boolean;
   today_waived: boolean;
   today_absent: boolean;
 };
 
-export function useStaffCallFines(periodStart: string, periodEnd: string) {
+export function useStaffCallFines(periodStart: string, periodEnd: string, focusDate?: string) {
   return useQuery({
-    queryKey: ["sla", "staff-call-fines", periodStart, periodEnd],
+    queryKey: ["sla", "staff-call-fines", periodStart, periodEnd, focusDate ?? ""],
     staleTime: 15_000,
     queryFn: async (): Promise<StaffCallFineRow[]> => {
       const { data, error } = await supabase.rpc("sla_staff_call_fines" as never, {
         _period_start: periodStart,
         _period_end: periodEnd,
+        ...(focusDate ? { _focus_date: focusDate } : {}),
       } as never);
       if (error) throw new Error(error.message);
       return ((data as unknown) ?? []) as StaffCallFineRow[];
@@ -266,4 +272,20 @@ export function useToggleCallWaiver() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["sla"] }),
   });
 }
+
+export function useSetCallGoal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { userId: string; goal: number }) => {
+      const { data, error } = await supabase.rpc("admin_set_call_goal" as never, {
+        _user_id: v.userId,
+        _goal: v.goal,
+      } as never);
+      if (error) throw new Error(error.message);
+      return data as unknown as number;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sla"] }),
+  });
+}
+
 
