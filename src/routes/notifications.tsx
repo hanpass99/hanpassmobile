@@ -56,6 +56,7 @@ function NotificationsPage() {
   const [message, setMessage] = useState("");
   const [sendSms, setSendSms] = useState(true);
   const [sending, setSending] = useState(false);
+  const [detailNoti, setDetailNoti] = useState<SentRow | null>(null);
 
   const { data: staff = [] } = useQuery({
     queryKey: ["noti-staff"],
