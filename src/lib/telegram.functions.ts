@@ -100,7 +100,7 @@ export const searchCustomersForTelegram = createServerFn({ method: "POST" })
     const q = data.query.trim();
     const { data: rows, error } = await context.supabase
       .from("customers")
-      .select("id, name, phone, country, status")
+      .select("id, name, phone, country_id, status")
       .or(`name.ilike.%${q}%,phone.ilike.%${q}%`)
       .limit(20);
     if (error) throw new Error(error.message);
@@ -121,6 +121,6 @@ export const registerTelegramWebhook = createServerFn({ method: "POST" })
     const { setWebhook, getMe, getWebhookInfo } = await import("@/lib/telegram.server");
     await setWebhook(data.webhookUrl);
     const me = await getMe();
-    const info = await getWebhookInfo();
-    return { ok: true, bot: me, info };
+    const info = (await getWebhookInfo()) as Record<string, unknown>;
+    return { ok: true as const, bot: me, info: JSON.parse(JSON.stringify(info)) as Record<string, unknown> };
   });

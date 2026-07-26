@@ -317,7 +317,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
     queryFn: async () => {
       const { data } = await supabase
         .from("customers")
-        .select("id, name, phone, status, country")
+        .select("id, name, phone, status, country_id")
         .eq("id", chat.customer_id!)
         .maybeSingle();
       return data;
@@ -531,7 +531,7 @@ function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void
                   <div>
                     <div className="text-sm font-medium">{c.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {c.phone} · {c.country ?? "-"} · {c.status ?? "-"}
+                      {c.phone} · {c.status ?? "-"}
                     </div>
                   </div>
                   <UserPlus className="h-4 w-4 text-muted-foreground" />
