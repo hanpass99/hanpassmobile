@@ -341,24 +341,34 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         // Determine current chat language (default 'uz' until user picks)
         const chatLang: BotLang = (existing?.language === "ru" ? "ru" : "uz");
 
-        // Contact auto-match
+        // Contact auto-match — normalize incoming number and query DB by digits (ignoring formatting)
         if (message.contact?.phone_number) {
-          const normalized = normalizePhone(message.contact.phone_number);
-          if (normalized) {
+          const digits = normalizePhone(message.contact.phone_number);
+          if (digits) {
+            const storedPhone = formatKoreanPhone(digits) ?? digits;
+            // Match against the CRM DB by comparing digits regardless of formatting.
+            // Try both the raw digits and the hyphenated 010-XXXX-XXXX form.
+            const orFilter = [
+              `phone.eq.${digits}`,
+              storedPhone !== digits ? `phone.eq.${storedPhone}` : null,
+            ]
+              .filter(Boolean)
+              .join(",");
             const { data: cust } = await supabaseAdmin
               .from("customers")
               .select("id, name")
-              .eq("phone", normalized)
+              .or(orFilter)
+              .limit(1)
               .maybeSingle();
             if (cust) {
               await supabaseAdmin
                 .from("telegram_chats")
-                .update({ customer_id: cust.id, phone: normalized, is_matched: true })
+                .update({ customer_id: cust.id, phone: storedPhone, is_matched: true })
                 .eq("id", rowId);
             } else {
               await supabaseAdmin
                 .from("telegram_chats")
-                .update({ phone: normalized })
+                .update({ phone: storedPhone })
                 .eq("id", rowId);
             }
             try {
