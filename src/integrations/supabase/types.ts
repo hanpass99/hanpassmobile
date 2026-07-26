@@ -1156,6 +1156,30 @@ export type Database = {
           },
         ]
       }
+      ui_translations: {
+        Row: {
+          created_at: string
+          source_text: string
+          target_lang: string
+          translated_text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          source_text: string
+          target_lang: string
+          translated_text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          source_text?: string
+          target_lang?: string
+          translated_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
