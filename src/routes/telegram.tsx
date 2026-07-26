@@ -67,6 +67,7 @@ type Chat = {
   unread_count: number;
   is_matched: boolean;
   status: ChatStatus;
+  assigned_operator_id: string | null;
 };
 
 type Message = {
