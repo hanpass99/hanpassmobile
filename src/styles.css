@@ -4,6 +4,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes pulse-border {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+.animate-pulse-border {
+  animation: pulse-border 1.2s ease-in-out infinite;
+}
+
 @theme inline {
   --font-sans: "Pretendard", "Inter", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
