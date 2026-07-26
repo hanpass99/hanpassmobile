@@ -13,6 +13,7 @@ import { Route as SmsRouteImport } from './routes/sms'
 import { Route as SlaRouteImport } from './routes/sla'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
@@ -46,6 +47,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/mcp': typeof McpRoute
+  '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/mcp': typeof McpRoute
+  '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/mcp': typeof McpRoute
+  '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sla': typeof SlaRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/channel-performance'
     | '/customers'
     | '/mcp'
+    | '/notifications'
     | '/reset-password'
     | '/settings'
     | '/sla'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/channel-performance'
     | '/customers'
     | '/mcp'
+    | '/notifications'
     | '/reset-password'
     | '/settings'
     | '/sla'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/channel-performance'
     | '/customers'
     | '/mcp'
+    | '/notifications'
     | '/reset-password'
     | '/settings'
     | '/sla'
@@ -255,6 +267,7 @@ export interface RootRouteChildren {
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CustomersRoute: typeof CustomersRoute
   McpRoute: typeof McpRoute
+  NotificationsRoute: typeof NotificationsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SlaRoute: typeof SlaRoute
@@ -295,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -407,6 +427,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CustomersRoute: CustomersRoute,
   McpRoute: McpRoute,
+  NotificationsRoute: NotificationsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SlaRoute: SlaRoute,

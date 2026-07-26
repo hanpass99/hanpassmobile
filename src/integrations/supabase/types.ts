@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notification_recipients: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string
+          id: string
+          notification_id: string
+          sms_error: string | null
+          sms_status: string | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string
+          id?: string
+          notification_id: string
+          sms_error?: string | null
+          sms_status?: string | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string
+          id?: string
+          notification_id?: string
+          sms_error?: string | null
+          sms_status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notification_recipients_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "admin_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          sender_id: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          sender_id: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
       ai_chat_logs: {
         Row: {
           content: string | null
