@@ -91,7 +91,7 @@ type Message = {
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
-type Template = { id: string; title: string; content: string };
+type Template = { id: string; title: string; content: string; shortcut: string | null };
 
 const STATUS_LABEL: Record<ChatStatus, string> = {
   new: "신규",
@@ -483,7 +483,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
     queryFn: async (): Promise<Template[]> => {
       const { data, error } = await supabase
         .from("quick_reply_templates")
-        .select("id, title, content")
+        .select("id, title, content, shortcut")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Template[];
@@ -552,6 +552,51 @@ function ConversationPane({ chat }: { chat: Chat }) {
     setText((prev) => (prev ? `${prev}\n${t.content}` : t.content));
     setTemplatesOpen(false);
     setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  // ---- Slash autocomplete ----
+  const [slashIndex, setSlashIndex] = useState(0);
+  const slashQuery = useMemo(() => {
+    if (!text.startsWith("/")) return null;
+    // Only trigger when the first line begins with "/" and has no whitespace after slash token
+    const firstLine = text.split("\n")[0];
+    if (!firstLine.startsWith("/")) return null;
+    const token = firstLine.slice(1);
+    if (/\s/.test(token)) return null;
+    return token.toLowerCase();
+  }, [text]);
+
+  const slashMatches = useMemo<Template[]>(() => {
+    if (slashQuery === null) return [];
+    const all = templatesQuery.data ?? [];
+    if (slashQuery === "") return all.slice(0, 20);
+    const q = slashQuery;
+    return all
+      .filter((t) => {
+        const sc = (t.shortcut ?? "").toLowerCase();
+        const ti = (t.title ?? "").toLowerCase();
+        return sc.includes(q) || ti.includes(q);
+      })
+      .slice(0, 20);
+  }, [slashQuery, templatesQuery.data]);
+
+  const slashOpen = slashQuery !== null;
+
+  useEffect(() => {
+    setSlashIndex(0);
+  }, [slashQuery]);
+
+  const applySlashTemplate = (t: Template) => {
+    // Replace only the first line's "/token" with the template content, keep any subsequent lines.
+    const lines = text.split("\n");
+    lines[0] = t.content;
+    const next = lines.join("\n");
+    setText(next);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const pos = t.content.length;
+      textareaRef.current?.setSelectionRange(pos, pos);
+    }, 0);
   };
 
   return (
@@ -719,18 +764,88 @@ function ConversationPane({ chat }: { chat: Chat }) {
           </Popover>
         </div>
 
-        <div className="flex items-end gap-2">
+        <div className="relative flex items-end gap-2">
+          {slashOpen && (
+            <div className="absolute bottom-full left-0 right-14 mb-1 z-20 rounded-md border bg-popover shadow-lg">
+              <div className="border-b px-3 py-1.5 text-[11px] text-muted-foreground">
+                템플릿 자동완성 {slashQuery ? `· "/${slashQuery}"` : ""} — ↑/↓ 이동, Enter 삽입, Esc 취소
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {slashMatches.length === 0 ? (
+                  <div className="p-3 text-center text-xs text-muted-foreground">템플릿 없음</div>
+                ) : (
+                  <ul>
+                    {slashMatches.map((t, idx) => (
+                      <li key={t.id}>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applySlashTemplate(t);
+                          }}
+                          onMouseEnter={() => setSlashIndex(idx)}
+                          className={cn(
+                            "block w-full px-3 py-2 text-left text-xs",
+                            idx === slashIndex ? "bg-accent" : "hover:bg-accent/50",
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            {t.shortcut && (
+                              <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                                /{t.shortcut}
+                              </span>
+                            )}
+                            <span className="font-medium">{t.title}</span>
+                          </div>
+                          <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                            {t.content}
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
           <Textarea
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
+              if (slashOpen && slashMatches.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSlashIndex((i) => (i + 1) % slashMatches.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSlashIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
+                  return;
+                }
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  applySlashTemplate(slashMatches[slashIndex]);
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setText("");
+                  return;
+                }
+                if (e.key === "Tab") {
+                  e.preventDefault();
+                  applySlashTemplate(slashMatches[slashIndex]);
+                  return;
+                }
+              }
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 onSubmit();
               }
             }}
-            placeholder="메시지 입력 (Enter 전송, Shift+Enter 줄바꿈)"
+            placeholder="메시지 입력 (Enter 전송, Shift+Enter 줄바꿈, / 로 템플릿 검색)"
             rows={2}
             className="resize-none"
             disabled={sendMut.isPending}
@@ -908,6 +1023,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
   const [editing, setEditing] = useState<Template | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [shortcut, setShortcut] = useState("");
 
   const templatesQuery = useQuery({
     queryKey: ["telegram-templates", user?.id],
@@ -915,7 +1031,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     queryFn: async (): Promise<Template[]> => {
       const { data, error } = await supabase
         .from("quick_reply_templates")
-        .select("id, title, content")
+        .select("id, title, content, shortcut")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Template[];
@@ -926,6 +1042,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     setEditing(null);
     setTitle("");
     setContent("");
+    setShortcut("");
   };
 
   const saveMut = useMutation({
@@ -933,17 +1050,20 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       if (!user?.id) throw new Error("로그인이 필요합니다");
       const t = title.trim();
       const c = content.trim();
+      const sRaw = shortcut.trim().toLowerCase().replace(/^\/+/, "");
+      if (/\s/.test(sRaw)) throw new Error("단축어에 공백을 사용할 수 없습니다");
+      const s = sRaw || null;
       if (!t || !c) throw new Error("제목과 내용을 입력하세요");
       if (editing) {
         const { error } = await supabase
           .from("quick_reply_templates")
-          .update({ title: t, content: c })
+          .update({ title: t, content: c, shortcut: s })
           .eq("id", editing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("quick_reply_templates")
-          .insert({ operator_id: user.id, title: t, content: c });
+          .insert({ operator_id: user.id, title: t, content: c, shortcut: s });
         if (error) throw error;
       }
     },
@@ -972,6 +1092,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     setEditing(t);
     setTitle(t.title);
     setContent(t.content);
+    setShortcut(t.shortcut ?? "");
   };
 
   return (
@@ -1009,7 +1130,14 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                         onClick={() => startEdit(t)}
                         className="min-w-0 flex-1 text-left"
                       >
-                        <div className="text-xs font-medium">{t.title}</div>
+                        <div className="flex items-center gap-1.5">
+                          {t.shortcut && (
+                            <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                              /{t.shortcut}
+                            </span>
+                          )}
+                          <span className="text-xs font-medium">{t.title}</span>
+                        </div>
                         <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
                           {t.content}
                         </div>
@@ -1054,6 +1182,20 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                   placeholder="예: 인사말"
                   maxLength={80}
                 />
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground">
+                  단축어 (선택, 공백 없이 짧은 단어 — 예: salom, tarif)
+                </label>
+                <Input
+                  value={shortcut}
+                  onChange={(e) => setShortcut(e.target.value.replace(/\s/g, ""))}
+                  placeholder="salom"
+                  maxLength={32}
+                />
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  입력창에 "/" 를 치면 자동완성 목록이 나타납니다.
+                </div>
               </div>
               <div>
                 <label className="text-[11px] text-muted-foreground">내용 (실제 전송될 메시지)</label>
