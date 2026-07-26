@@ -67,6 +67,7 @@ type Chat = {
   unread_count: number;
   is_matched: boolean;
   status: ChatStatus;
+  assigned_operator_id: string | null;
 };
 
 type Message = {
@@ -174,6 +175,27 @@ function TelegramPage() {
   }, [qc]);
 
   const chats = chatsQuery.data ?? [];
+
+  // Load display names for all assigned operators referenced by any chat
+  const operatorIds = useMemo(
+    () => Array.from(new Set(chats.map((c) => c.assigned_operator_id).filter((x): x is string => !!x))),
+    [chats],
+  );
+  const operatorsQuery = useQuery({
+    queryKey: ["telegram-operators", operatorIds.join(",")],
+    enabled: operatorIds.length > 0,
+    queryFn: async (): Promise<Record<string, Profile>> => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", operatorIds);
+      const map: Record<string, Profile> = {};
+      for (const p of data ?? []) map[p.id] = p as Profile;
+      return map;
+    },
+  });
+  const operatorMap = operatorsQuery.data ?? {};
+
   const counts = useMemo(() => {
     const c = { all: chats.length, new: 0, in_progress: 0, done: 0 };
     for (const ch of chats) c[ch.status] += 1;
@@ -296,18 +318,19 @@ function TelegramPage() {
                           </span>
                         )}
                       </div>
-                      <div className="mt-0.5 flex items-center gap-1">
+                      <div className="mt-0.5 flex items-center gap-1 flex-wrap">
                         <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
                           {STATUS_LABEL[c.status]}
                         </Badge>
-                        {c.is_matched ? (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-green-500/30 px-1 text-[9px] text-green-700 dark:text-green-400">
-                            <CheckCircle2 className="h-2.5 w-2.5" /> 매칭
+                        {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
+                          <Badge
+                            variant="outline"
+                            className="h-4 gap-0.5 border-blue-500/30 bg-blue-500/10 px-1 text-[9px] text-blue-700 dark:text-blue-300"
+                          >
+                            담당: {operatorMap[c.assigned_operator_id]?.display_name ?? "직원"}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-amber-500/30 px-1 text-[9px] text-amber-700 dark:text-amber-400">
-                            <Link2Off className="h-2.5 w-2.5" /> 미매칭
-                          </Badge>
+                          <span className="text-[9px] text-muted-foreground">담당: 없음</span>
                         )}
                         {c.telegram_username && (
                           <span className="text-[10px] text-muted-foreground">@{c.telegram_username}</span>
@@ -492,12 +515,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
           <div className="text-xs text-muted-foreground">
             {customerQuery.data ? (
               <span className="text-green-700 dark:text-green-400">
-                ✓ CRM 고객: {customerQuery.data.name} ({customerQuery.data.phone})
+                ✓ {customerQuery.data.name} · {customerQuery.data.phone}
               </span>
             ) : chat.phone ? (
-              <span className="text-amber-600">공유 번호: {chat.phone} · 미매칭</span>
+              <span>{chat.phone}</span>
             ) : (
-              <span className="text-amber-600">미매칭 — 고객 연결이 필요합니다</span>
+              <span className="text-muted-foreground">번호 대기중</span>
             )}
           </div>
         </div>
