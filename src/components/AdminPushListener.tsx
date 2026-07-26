@@ -86,51 +86,56 @@ export function AdminPushListener() {
   if (!current) return null;
 
   return (
-    <Dialog open onOpenChange={() => {}}>
-      <DialogContent
-        className="max-w-2xl border-4 border-destructive bg-background p-0 shadow-2xl shadow-destructive/30 [&>button]:hidden"
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <div className="bg-destructive px-6 py-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-destructive-foreground/20 text-destructive-foreground">
-              <Bell className="h-8 w-8 animate-pulse" />
-            </div>
-            <div>
-              <DialogTitle className="text-2xl font-bold text-destructive-foreground">
-                {current.title?.trim() ? current.title : "긴급 관리자 공지"}
-              </DialogTitle>
-              <p className="mt-1 text-sm text-destructive-foreground/90">
-                {current.sender_name ? `보낸 사람: ${current.sender_name}` : ""}
-                {current.created_at ? ` · ${new Date(current.created_at).toLocaleString()}` : ""}
-              </p>
-            </div>
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-destructive">
+      <div className="animate-pulse-border absolute inset-0 pointer-events-none border-[16px] border-destructive-foreground/40" />
+
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 animate-ping rounded-full bg-destructive-foreground/30 blur-xl" />
+          <div className="relative flex h-36 w-36 items-center justify-center rounded-full bg-destructive-foreground/20 text-destructive-foreground shadow-2xl">
+            <Bell className="h-20 w-20 animate-pulse" />
           </div>
         </div>
-        <div className="px-6 pb-4 pt-2">
-          <div className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-lg border border-destructive/20 bg-destructive/5 p-5 text-lg font-medium leading-relaxed text-foreground">
-            {current.message}
-          </div>
-          {queue.length > 1 ? (
-            <p className="mt-3 text-sm font-semibold text-destructive">
-              확인 대기 중인 공지 {queue.length}건
-            </p>
-          ) : null}
-          <DialogFooter className="mt-5">
-            <Button
-              size="lg"
-              variant="destructive"
-              className="w-full text-lg font-bold"
-              onClick={ack}
-              disabled={acking}
-            >
-              {acking ? "처리 중..." : "확인 (필수)"}
-            </Button>
-          </DialogFooter>
+
+        <div className="mb-4 flex items-center justify-center gap-3 rounded-full bg-destructive-foreground/20 px-6 py-2 text-destructive-foreground">
+          <AlertTriangle className="h-7 w-7" />
+          <span className="text-2xl font-black tracking-wider">긴급 공지</span>
+          <AlertTriangle className="h-7 w-7" />
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <h1 className="mb-4 max-w-5xl text-5xl font-black leading-tight text-destructive-foreground md:text-7xl">
+          {current.title?.trim() ? current.title : "긴급 관리자 공지"}
+        </h1>
+
+        <p className="mb-10 text-xl font-bold text-destructive-foreground/90">
+          {current.sender_name ? `보낸 사람: ${current.sender_name}` : ""}
+          {current.created_at ? `${current.sender_name ? " · " : ""}${new Date(current.created_at).toLocaleString()}` : ""}
+        </p>
+
+        <div className="max-h-[40vh] w-full max-w-5xl overflow-y-auto whitespace-pre-wrap rounded-2xl border-4 border-destructive-foreground/30 bg-background p-8 text-left text-3xl font-bold leading-relaxed text-foreground shadow-2xl md:text-4xl">
+          {current.message}
+        </div>
+
+        {queue.length > 1 ? (
+          <p className="mt-6 text-xl font-black text-destructive-foreground">
+            확인 대기 중인 공지 {queue.length}건
+          </p>
+        ) : null}
+      </div>
+
+      <div className="w-full border-t-4 border-destructive-foreground/30 bg-background p-6 md:p-8">
+        <div className="mx-auto w-full max-w-5xl">
+          <Button
+            size="lg"
+            variant="destructive"
+            className="h-24 w-full animate-pulse text-3xl font-black shadow-2xl md:h-28 md:text-4xl"
+            onClick={ack}
+            disabled={acking}
+          >
+            {acking ? "처리 중..." : "확인 (필수)"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
