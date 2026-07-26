@@ -683,6 +683,33 @@ export type Database = {
         }
         Relationships: []
       }
+      quick_reply_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          operator_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          operator_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          operator_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sla_audit_log: {
         Row: {
           action: string
@@ -958,6 +985,7 @@ export type Database = {
           last_message_preview: string | null
           last_name: string | null
           phone: string | null
+          status: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id: number | null
           telegram_username: string | null
           unread_count: number
@@ -975,6 +1003,7 @@ export type Database = {
           last_message_preview?: string | null
           last_name?: string | null
           phone?: string | null
+          status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
           telegram_username?: string | null
           unread_count?: number
@@ -992,6 +1021,7 @@ export type Database = {
           last_message_preview?: string | null
           last_name?: string | null
           phone?: string | null
+          status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
           telegram_username?: string | null
           unread_count?: number
@@ -1565,6 +1595,7 @@ export type Database = {
         | "unreachable"
         | "certificate_issuing"
         | "contract_active"
+      telegram_chat_status: "new" | "in_progress" | "done"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1739,6 +1770,7 @@ export const Constants = {
         "certificate_issuing",
         "contract_active",
       ],
+      telegram_chat_status: ["new", "in_progress", "done"],
     },
   },
 } as const
