@@ -16,6 +16,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { CallLogPopupProvider } from "@/components/CallLogPopupProvider";
 import { AiAssistant } from "@/components/AiAssistant";
 import { AdminPushListener } from "@/components/AdminPushListener";
+import { AttendanceCheckInGate } from "@/components/AttendanceCheckInGate";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
