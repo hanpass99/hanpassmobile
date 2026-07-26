@@ -60,9 +60,19 @@ type Message = {
   telegram_chat_row_id: string;
   direction: "in" | "out";
   text: string | null;
+  caption: string | null;
+  message_type: string | null;
+  media_storage_path: string | null;
+  media_file_name: string | null;
+  media_mime: string | null;
+  media_size: number | null;
+  media_width: number | null;
+  media_height: number | null;
+  media_duration: number | null;
   sent_by: string | null;
   created_at: string;
 };
+
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
