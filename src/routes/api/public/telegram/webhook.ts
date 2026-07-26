@@ -13,7 +13,57 @@ import {
   removeKeyboard,
   sendContactRequest,
   sendLanguagePicker,
+  sendTelegramMessage,
 } from "@/lib/telegram.server";
+
+// Returns the current hour (0-23) in the given IANA timezone.
+function getHourInTimezone(tz: string, date = new Date()): number {
+  const h = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hour: "numeric",
+    hour12: false,
+  }).format(date);
+  // Intl may return "24" for midnight in some environments; normalize.
+  const n = parseInt(h, 10);
+  return Number.isFinite(n) ? n % 24 : new Date().getUTCHours();
+}
+
+// Start (UTC ms) of the current off-hours session for the given tz + business window.
+// If it's currently before startHour → session started at endHour of the previous local day.
+// If it's currently at/after endHour → session started at endHour of today.
+function currentOffHoursSessionStart(
+  tz: string,
+  startHour: number,
+  endHour: number,
+  now = new Date(),
+): Date | null {
+  const hour = getHourInTimezone(tz, now);
+  if (hour >= startHour && hour < endHour) return null; // within business hours
+  // Get local Y-M-D in tz
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const y = parts.find((p) => p.type === "year")!.value;
+  const m = parts.find((p) => p.type === "month")!.value;
+  const d = parts.find((p) => p.type === "day")!.value;
+  // Approximate tz offset: build a date at "YYYY-MM-DDTHH:00:00Z" then diff with same wall time interpreted in tz.
+  // Simpler: use the fact that Asia/Seoul has no DST → fixed +09:00. For general tz, compute offset dynamically.
+  const asUtc = new Date(`${y}-${m}-${d}T00:00:00Z`);
+  const localMidnightHour = getHourInTimezone(tz, asUtc);
+  // tz offset in hours = (0 - localMidnightHour) mod 24, but this loses sign around DST; good enough for fixed offsets.
+  const tzOffsetHours = localMidnightHour === 0 ? 0 : 24 - localMidnightHour;
+  if (hour >= endHour) {
+    // Session started today at endHour local time
+    return new Date(Date.UTC(+y, +m - 1, +d, endHour - tzOffsetHours, 0, 0));
+  }
+  // hour < startHour → session started yesterday at endHour local time
+  const yesterday = new Date(Date.UTC(+y, +m - 1, +d, endHour - tzOffsetHours, 0, 0));
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  return yesterday;
+}
 
 
 function safeEqual(a: string, b: string): boolean {
@@ -449,6 +499,45 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           }
         }
 
+        // Off-hours auto-reply: throttle to one message per off-hours session per chat.
+        // Runs AFTER the inbound message is saved, so CRM history is unaffected.
+        try {
+          const { data: bh } = await supabaseAdmin
+            .from("business_hours")
+            .select("start_hour, end_hour, timezone, auto_reply_uz, auto_reply_ru")
+            .eq("singleton", true)
+            .maybeSingle();
+          const startHour = bh?.start_hour ?? 10;
+          const endHour = bh?.end_hour ?? 19;
+          const tz = bh?.timezone ?? "Asia/Seoul";
+          const sessionStart = currentOffHoursSessionStart(tz, startHour, endHour);
+          if (sessionStart) {
+            // Fetch throttle marker (refetch to include the column even if `existing` predates the column)
+            const { data: chatRow } = await supabaseAdmin
+              .from("telegram_chats")
+              .select("last_off_hours_auto_reply_at, language")
+              .eq("id", rowId)
+              .maybeSingle();
+            const lastAt = chatRow?.last_off_hours_auto_reply_at
+              ? new Date(chatRow.last_off_hours_auto_reply_at as string)
+              : null;
+            if (!lastAt || lastAt < sessionStart) {
+              const lang: BotLang = (chatRow?.language === "ru" ? "ru" : chatLang);
+              const text = lang === "ru"
+                ? (bh?.auto_reply_ru ?? "")
+                : (bh?.auto_reply_uz ?? "");
+              if (text) {
+                await sendTelegramMessage(chatId, text);
+                await supabaseAdmin
+                  .from("telegram_chats")
+                  .update({ last_off_hours_auto_reply_at: new Date().toISOString() })
+                  .eq("id", rowId);
+              }
+            }
+          }
+        } catch (e) {
+          console.error("[telegram webhook] off-hours auto-reply failed", e);
+        }
 
         return Response.json({ ok: true });
       },

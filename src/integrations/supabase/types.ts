@@ -112,6 +112,42 @@ export type Database = {
         }
         Relationships: []
       }
+      business_hours: {
+        Row: {
+          auto_reply_ru: string
+          auto_reply_uz: string
+          created_at: string
+          end_hour: number
+          id: string
+          singleton: boolean
+          start_hour: number
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          auto_reply_ru?: string
+          auto_reply_uz?: string
+          created_at?: string
+          end_hour?: number
+          id?: string
+          singleton?: boolean
+          start_hour?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_reply_ru?: string
+          auto_reply_uz?: string
+          created_at?: string
+          end_hour?: number
+          id?: string
+          singleton?: boolean
+          start_hour?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       call_logs: {
         Row: {
           call_date: string
@@ -985,6 +1021,7 @@ export type Database = {
           last_message_at: string | null
           last_message_preview: string | null
           last_name: string | null
+          last_off_hours_auto_reply_at: string | null
           phone: string | null
           status: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id: number | null
@@ -1004,6 +1041,7 @@ export type Database = {
           last_message_at?: string | null
           last_message_preview?: string | null
           last_name?: string | null
+          last_off_hours_auto_reply_at?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
@@ -1023,6 +1061,7 @@ export type Database = {
           last_message_at?: string | null
           last_message_preview?: string | null
           last_name?: string | null
+          last_off_hours_auto_reply_at?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
