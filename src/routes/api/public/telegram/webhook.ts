@@ -534,18 +534,51 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           console.error("[telegram webhook] insert message failed", msgErr);
         }
 
-        // First-time greeting: show language picker (uz / ru)
-        if (isFirstMessage && !message.contact) {
+        // Track whether we've already sent an auto-response so we don't stack messages.
+        let autoResponseSent = false;
+
+        // First-time greeting OR explicit /start: show the language picker (uz / ru)
+        if ((isFirstMessage || isStartCommand) && !message.contact) {
           try {
             await sendLanguagePicker(chatId);
+            autoResponseSent = true;
           } catch (e) {
             console.error("[telegram webhook] language picker failed", e);
           }
         }
 
+        // Closed-conversation re-prompt: chat was already "done" and the customer sent a normal
+        // message (not /start). Send once per throttle window (1 hour) to avoid spamming.
+        if (!autoResponseSent && wasDone && !isStartCommand && !message.contact) {
+          const lastReprompt = existing?.last_done_reprompt_at
+            ? new Date(existing.last_done_reprompt_at as string)
+            : null;
+          const throttleMs = 60 * 60 * 1000; // 1 hour
+          if (!lastReprompt || Date.now() - lastReprompt.getTime() > throttleMs) {
+            try {
+              await sendMessageWithInlineButton(
+                chatId,
+                BOT_COPY.previouslyClosed[chatLang],
+                BOT_COPY.newInquiryButton[chatLang],
+                "new_inquiry",
+              );
+              await supabaseAdmin
+                .from("telegram_chats")
+                .update({ last_done_reprompt_at: new Date().toISOString() })
+                .eq("id", rowId);
+              autoResponseSent = true;
+            } catch (e) {
+              console.error("[telegram webhook] previouslyClosed reprompt failed", e);
+            }
+          } else {
+            // Suppress off-hours reply too — the customer already knows the chat is closed.
+            autoResponseSent = true;
+          }
+        }
+
         // Off-hours auto-reply: throttle to one message per off-hours session per chat.
         // Runs AFTER the inbound message is saved, so CRM history is unaffected.
-        try {
+        if (!autoResponseSent) try {
           const { data: bh } = await supabaseAdmin
             .from("business_hours")
             .select("start_hour, end_hour, timezone, auto_reply_uz, auto_reply_ru")
