@@ -483,7 +483,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
     queryFn: async (): Promise<Template[]> => {
       const { data, error } = await supabase
         .from("quick_reply_templates")
-        .select("id, title, content")
+        .select("id, title, content, shortcut")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Template[];
@@ -915,7 +915,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     queryFn: async (): Promise<Template[]> => {
       const { data, error } = await supabase
         .from("quick_reply_templates")
-        .select("id, title, content")
+        .select("id, title, content, shortcut")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Template[];
