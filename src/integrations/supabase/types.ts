@@ -942,6 +942,109 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_chats: {
+        Row: {
+          chat_id: number
+          created_at: string
+          customer_id: string | null
+          first_name: string | null
+          id: string
+          is_matched: boolean
+          last_message_at: string | null
+          last_message_preview: string | null
+          last_name: string | null
+          phone: string | null
+          telegram_user_id: number | null
+          telegram_username: string | null
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          customer_id?: string | null
+          first_name?: string | null
+          id?: string
+          is_matched?: boolean
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          last_name?: string | null
+          phone?: string | null
+          telegram_user_id?: number | null
+          telegram_username?: string | null
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          customer_id?: string | null
+          first_name?: string | null
+          id?: string
+          is_matched?: boolean
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          last_name?: string | null
+          phone?: string | null
+          telegram_user_id?: number | null
+          telegram_username?: string | null
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_chats_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_messages: {
+        Row: {
+          chat_id: number
+          created_at: string
+          direction: string
+          id: string
+          raw: Json | null
+          sent_by: string | null
+          telegram_chat_row_id: string
+          telegram_message_id: number | null
+          text: string | null
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          direction: string
+          id?: string
+          raw?: Json | null
+          sent_by?: string | null
+          telegram_chat_row_id: string
+          telegram_message_id?: number | null
+          text?: string | null
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          direction?: string
+          id?: string
+          raw?: Json | null
+          sent_by?: string | null
+          telegram_chat_row_id?: string
+          telegram_message_id?: number | null
+          text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_messages_telegram_chat_row_id_fkey"
+            columns: ["telegram_chat_row_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
