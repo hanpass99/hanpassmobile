@@ -1,46 +1,68 @@
-## 문제
+## 목표
 
-통화 팝업에서 고객 이름을 수정하면 "이 고객을 수정할 권한이 없습니다" 토스트가 나옵니다.
+CIS팀이 고객과 텔레그램으로 소통할 때, 5명의 직원 중 **누가 어떤 답장을 보냈는지** CRM에서 추적할 수 있게 합니다. 새 공식 텔레그램 봇을 만들고, 모든 대화를 CRM 안 채팅 UI에서 주고받도록 구축합니다.
 
-확인 결과: 해당 고객(`ZOKIROVMUKHAMMADKARIM`, 01076532555)은 `assigned_to`와 `country_id`가 모두 `NULL`입니다. 현재 `customers` 테이블의 UPDATE RLS 정책은 아래 중 하나여야 통과합니다:
-- 관리자, 또는
-- 본인이 담당자(`assigned_to = auth.uid()`), 또는
-- 자신의 국가 접근 권한과 일치(`country_id ∈ current_user_countries()`)
+## 최종 사용자 흐름
 
-이 고객은 세 조건 모두 해당 없음 → 일반 직원이 이름/상태/메모를 저장할 수 없습니다. 구글폼/친구추천 등에서 유입된 미배정·국가 없는 행이 다수라 팝업에서 흔히 재현됩니다.
+**고객 측**
+1. 고객이 새 봇(예: @HanpassMobileBot)과 대화 시작 → "전화번호 공유하기" 버튼 표시.
+2. 고객이 전화번호 공유 → 시스템이 CRM의 `customers.phone`과 자동 매칭. 실패 시 관리자/직원이 CRM에서 수동 연결.
+3. 이후 모든 메시지는 봇을 통해 CRM으로 유입.
 
-## 해결 방향
+**직원 측 (CRM 내부)**
+1. 사이드바에 새 메뉴 **"텔레그램 상담"** 추가.
+2. 좌측: 최근 대화 순 고객 목록 (미읽음 배지, 마지막 메시지, 국가 필터).
+3. 우측: 카톡/텔레그램 스타일 대화창.
+   - 고객 메시지 = 회색 좌측 말풍선.
+   - 직원 답장 = 우측 말풍선 + **답장한 직원 이름/아바타** 표시.
+4. 직원이 CRM에서 답장 → 봇을 통해 고객 텔레그램으로 발송 + DB에 `sent_by = 로그인 직원 ID` 기록.
+5. 각 대화는 CRM 고객 상세 페이지에서도 미니뷰로 열람 가능.
 
-RLS 정책을 전면 완화하지 않고, 팝업에서 필요한 필드(이름·메모·상태)만 안전하게 수정할 수 있는 **SECURITY DEFINER 함수**를 신설합니다. 이미 직원 전화번호 저장에서 사용한 `admin_set_profile_phone` 패턴과 동일한 방식입니다.
+## 매칭 정책
 
-### 1) DB 마이그레이션
+- **1차 (자동):** 첫 대화 시 봇이 "전화번호 공유" 버튼(`request_contact`) 발송 → 공유 시 `customers.phone`과 매칭 → 성공 시 자동 연결.
+- **2차 (수동):** 자동 매칭 실패 시 대화방이 "미매칭" 섹션에 표시 → 직원이 CRM 고객을 선택해 수동 연결.
+- 매칭 후 텔레그램 `chat_id` ↔ `customer_id` 관계는 영구 저장.
 
-새 함수 `public.staff_update_customer_basic(_customer_id uuid, _name text, _status customer_status, _notes text)`:
-- `SECURITY DEFINER`, `SET search_path = public`
-- 호출자가 인증된 사용자여야 함 (`auth.uid() IS NOT NULL`) — 아니면 예외
-- 전달된 인자 중 NULL이 아닌 필드만 갱신 (`COALESCE(_name, name)` 방식)
-- `status`가 바뀌면 `status_changed_at = now()`, `status_changed_by = auth.uid()` 도 함께 세팅 (기존 트리거와 동일한 컨벤션 유지)
-- 반환: 갱신된 행의 `id`
-- `GRANT EXECUTE ON FUNCTION ... TO authenticated`
+## 데이터 모델 (신규 테이블)
 
-RLS 자체는 그대로 유지 (조회 정책은 변경 없음 — 조회는 이미 팝업 컨텍스트에서 열어놓은 상태).
+| 테이블 | 용도 |
+|---|---|
+| `telegram_chats` | chat_id, customer_id(nullable), telegram_username, first_name, last_login, unread_count |
+| `telegram_messages` | chat_id, direction(in/out), text, media_url, sent_by(직원 uuid, out일 때만), telegram_message_id, created_at, read_at |
 
-### 2) 프론트엔드 수정
+RLS: 인증된 직원 모두 읽기/쓰기, 관리자 전체 접근. GRANT는 authenticated + service_role.
 
-파일: `src/components/CallLogPopupProvider.tsx`
+## 인프라
 
-- 저장 시 `customers` 테이블 직접 update 대신 `supabase.rpc('staff_update_customer_basic', { _customer_id, _name, _status, _notes })` 호출로 교체.
-- 에러 처리: RPC가 예외를 던지면 그 메시지를 토스트로 표시.
-- 성공 시 기존과 동일하게 `phone_call_logs`(이름/메모/상태) 업데이트 및 리스트 refetch.
+1. **관리자가 BotFather에서 새 봇 생성** → `TELEGRAM_BOT_TOKEN` secret 저장 (add_secret 흐름).
+2. **Webhook 엔드포인트**: `src/routes/api/public/telegram/webhook.ts`
+   - Telegram 시크릿 토큰 검증.
+   - 인입 메시지 저장 + Supabase realtime으로 CRM에 푸시.
+3. **발신 서버 함수**: `sendTelegramMessage` (createServerFn, `requireSupabaseAuth`)
+   - 로그인 직원 ID를 `sent_by`로 기록.
+   - Telegram Bot API `sendMessage` 호출.
+4. **첫 웹훅 등록**: 배포 후 `setWebhook` 1회 호출 (sandbox curl).
 
-### 3) 검증
+## 화면/코드 변경
 
-- 미배정·국가 없는 고객에서 팝업 열어 이름 변경 → 정상 저장
-- 상태 변경 시 담당자 자동 배정 트리거가 계속 작동하는지 확인
-- 관리자가 아닌 일반 직원 계정으로도 재현 테스트
+- **신규 라우트**: `src/routes/telegram.tsx` (풀 채팅 UI — AI Elements의 Conversation/Message/PromptInput 활용).
+- **신규 컴포넌트**: `TelegramChatList`, `TelegramChatWindow`, `UnmatchedChatBanner`.
+- **사이드바**: `AppSidebar.tsx`에 메뉴 항목 + 미읽음 뱃지 추가.
+- **고객 상세 페이지**: 텔레그램 대화 미니뷰 탭 추가.
+- **i18n**: ko/en 라벨 추가.
+- **실시간 업데이트**: Supabase realtime 채널 (`telegram_messages` insert 구독).
 
-## 영향 범위
+## 마이그레이션 및 이행
 
-- 신규 SECURITY DEFINER 함수 1개 추가
-- `CallLogPopupProvider.tsx` 저장 로직 소폭 변경
-- 기존 RLS 정책, 다른 화면(고객관리 리스트의 상태 드롭다운 등)은 변경 없음
+- CIS팀에게 안내: 기존 공용 계정에 "앞으로는 새 공식 봇으로 문의 부탁드립니다" 자동 응답 설정.
+- 새 봇 사용자 이름/링크를 고객 안내 문구, 문자 템플릿에 반영 (별도 요청 시).
+
+## 범위 제외 (필요 시 추후)
+
+- 이미지/파일/음성 메시지 (1차는 텍스트만).
+- 다중 봇 지원.
+- 그룹 채팅.
+- 자동 응답 / AI 자동 답장.
+
+이 계획으로 진행해도 될까요?
