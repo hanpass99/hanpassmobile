@@ -1023,6 +1023,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
   const [editing, setEditing] = useState<Template | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [shortcut, setShortcut] = useState("");
 
   const templatesQuery = useQuery({
     queryKey: ["telegram-templates", user?.id],
