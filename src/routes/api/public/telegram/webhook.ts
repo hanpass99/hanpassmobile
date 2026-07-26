@@ -511,6 +511,16 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           }
         }
 
+        // For contact messages, persist a human-readable summary in `text` so
+        // the operator can see the shared phone number directly in the chat.
+        let contactText: string | null = null;
+        if (message.contact?.phone_number) {
+          const digits = normalizePhone(message.contact.phone_number);
+          const pretty = digits ? (formatKoreanPhone(digits) ?? digits) : message.contact.phone_number;
+          const nameParts = [message.contact.first_name, message.contact.last_name].filter(Boolean).join(" ").trim();
+          contactText = `📱 ${nameParts || "연락처"} · ${pretty}`;
+        }
+
         // Save the message
         const { error: msgErr } = await supabaseAdmin.from("telegram_messages").insert({
           chat_id: chatId,
@@ -518,7 +528,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           direction: "in",
           telegram_message_id: message.message_id,
           message_type: media.kind,
-          text: message.text ?? null,
+          text: contactText ?? message.text ?? null,
           caption,
           media_storage_path,
           media_url,

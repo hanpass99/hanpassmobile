@@ -612,7 +612,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
               {STATUS_LABEL[chat.status]}
             </Badge>
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5">
             {customerQuery.data ? (
               <span className="text-green-700 dark:text-green-400">
                 ✓ {customerQuery.data.name} · {customerQuery.data.phone}
@@ -622,6 +622,17 @@ function ConversationPane({ chat }: { chat: Chat }) {
             ) : (
               <span className="text-muted-foreground">번호 대기중</span>
             )}
+            {(() => {
+              const msgs = messagesQuery.data ?? [];
+              const lastOut = [...msgs].reverse().find((mm) => mm.direction === "out" && mm.sent_by);
+              const name = lastOut?.sent_by ? profileMap[lastOut.sent_by]?.display_name : null;
+              if (!name) return null;
+              return (
+                <span className="text-blue-700 dark:text-blue-300">
+                  마지막 응대: {name}
+                </span>
+              );
+            })()}
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -941,6 +952,11 @@ function MessageBody({ m }: { m: Message }) {
   const mediaQ = useSignedMediaUrl(m.media_storage_path);
   const url = mediaQ.data;
   const caption = m.caption ?? null;
+
+  if (kind === "contact") {
+    const label = m.text && m.text.trim() ? m.text : "📱 연락처";
+    return <span className="font-medium">{label}</span>;
+  }
 
   if (kind === "text" || (!m.media_storage_path && m.text)) {
     return <>{m.text ?? m.caption ?? "(비어있음)"}</>;
