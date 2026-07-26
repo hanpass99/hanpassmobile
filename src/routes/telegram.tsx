@@ -1184,6 +1184,20 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                 />
               </div>
               <div>
+                <label className="text-[11px] text-muted-foreground">
+                  단축어 (선택, 공백 없이 짧은 단어 — 예: salom, tarif)
+                </label>
+                <Input
+                  value={shortcut}
+                  onChange={(e) => setShortcut(e.target.value.replace(/\s/g, ""))}
+                  placeholder="salom"
+                  maxLength={32}
+                />
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  입력창에 "/" 를 치면 자동완성 목록이 나타납니다.
+                </div>
+              </div>
+              <div>
                 <label className="text-[11px] text-muted-foreground">내용 (실제 전송될 메시지)</label>
                 <Textarea
                   value={content}
