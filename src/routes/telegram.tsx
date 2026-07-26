@@ -1092,6 +1092,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     setEditing(t);
     setTitle(t.title);
     setContent(t.content);
+    setShortcut(t.shortcut ?? "");
   };
 
   return (
