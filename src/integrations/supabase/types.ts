@@ -974,6 +974,7 @@ export type Database = {
       }
       telegram_chats: {
         Row: {
+          assigned_operator_id: string | null
           chat_id: number
           created_at: string
           customer_id: string | null
@@ -992,6 +993,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_operator_id?: string | null
           chat_id: number
           created_at?: string
           customer_id?: string | null
@@ -1010,6 +1012,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_operator_id?: string | null
           chat_id?: number
           created_at?: string
           customer_id?: string | null
