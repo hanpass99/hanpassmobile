@@ -52,6 +52,7 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
         last_message_preview: text.slice(0, 200),
         last_message_at: new Date().toISOString(),
         status: "in_progress",
+        assigned_operator_id: userId,
       })
       .eq("id", chatRowId);
 
