@@ -639,6 +639,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           can_access_new_signup: boolean
+          can_access_telegram: boolean
           country_id: string | null
           created_at: string
           daily_call_goal: number
@@ -653,6 +654,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           can_access_new_signup?: boolean
+          can_access_telegram?: boolean
           country_id?: string | null
           created_at?: string
           daily_call_goal?: number
@@ -667,6 +669,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           can_access_new_signup?: boolean
+          can_access_telegram?: boolean
           country_id?: string | null
           created_at?: string
           daily_call_goal?: number
@@ -1102,6 +1105,10 @@ export type Database = {
       admin_set_profile_sort_orders: {
         Args: { _user_ids: string[] }
         Returns: undefined
+      }
+      admin_set_profile_telegram_access: {
+        Args: { _user_id: string; _value: boolean }
+        Returns: boolean
       }
       admin_set_user_role: {
         Args: {

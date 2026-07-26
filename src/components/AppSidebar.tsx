@@ -18,14 +18,16 @@ import { cn } from "@/lib/utils";
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, canAccessTelegram } = useAuth();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
 
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("nav.customers"), url: "/customers", icon: Users },
     { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
-    { title: "텔레그램 상담", url: "/telegram", icon: Send },
+    ...(isAdmin || canAccessTelegram
+      ? [{ title: "텔레그램 상담", url: "/telegram", icon: Send }]
+      : []),
     { title: t("nav.callLogs"), url: "/call-logs", icon: PhoneCall },
   ];
   const analyticsItems = [
