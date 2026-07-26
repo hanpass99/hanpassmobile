@@ -612,6 +612,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
         </div>
       </div>
 
+      <ParticipationHistory messages={messagesQuery.data ?? []} profileMap={profileMap} />
+
+
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messagesQuery.isLoading ? (
           <div className="text-sm text-muted-foreground">불러오는 중...</div>
