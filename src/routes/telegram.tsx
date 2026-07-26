@@ -91,7 +91,7 @@ type Message = {
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
-type Template = { id: string; title: string; content: string };
+type Template = { id: string; title: string; content: string; shortcut: string | null };
 
 const STATUS_LABEL: Record<ChatStatus, string> = {
   new: "신규",
