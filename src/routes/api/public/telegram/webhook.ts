@@ -7,6 +7,7 @@ import {
   deriveWebhookSecret,
   downloadTelegramFile,
   editMessageText,
+  formatKoreanPhone,
   getFilePath,
   normalizePhone,
   removeKeyboard,
