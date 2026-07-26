@@ -331,6 +331,8 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               last_message_preview: preview,
               last_message_at: nowIso,
               unread_count: (existing.unread_count ?? 0) + 1,
+              // Any inbound message re-opens a completed chat as "new"
+              status: "new",
             })
             .eq("id", rowId);
         }
