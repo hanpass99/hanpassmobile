@@ -447,8 +447,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
                         : "bg-muted text-foreground rounded-bl-sm",
                     )}
                   >
-                    {m.text ?? "(비어있음)"}
+                    <MessageBody m={m} />
                   </div>
+
                   <div className={cn("mt-0.5 text-[10px] text-muted-foreground", isOut ? "text-right" : "text-left")}>
                     {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </div>
