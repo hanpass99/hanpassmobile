@@ -121,6 +121,6 @@ export const registerTelegramWebhook = createServerFn({ method: "POST" })
     const { setWebhook, getMe, getWebhookInfo } = await import("@/lib/telegram.server");
     await setWebhook(data.webhookUrl);
     const me = await getMe();
-    const info = (await getWebhookInfo()) as Record<string, unknown>;
-    return { ok: true as const, bot: me, info: JSON.parse(JSON.stringify(info)) as Record<string, unknown> };
+    const info = await getWebhookInfo();
+    return { ok: true as const, bot: me, infoJson: JSON.stringify(info) };
   });
