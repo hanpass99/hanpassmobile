@@ -4,6 +4,7 @@ import {
   Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
@@ -13,23 +14,56 @@ import {
 } from "@/components/ui/sidebar";
 import i18n from "@/i18n";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
+
+function useTelegramUnreadTotal(enabled: boolean) {
+  const [total, setTotal] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    let mounted = true;
+    const refresh = async () => {
+      const { data } = await supabase
+        .from("telegram_chats")
+        .select("unread_count");
+      if (!mounted) return;
+      const sum = (data ?? []).reduce((a, r: any) => a + (r.unread_count ?? 0), 0);
+      setTotal(sum);
+    };
+    refresh();
+    const ch = supabase
+      .channel("sidebar-telegram-unread")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "telegram_chats" },
+        () => refresh(),
+      )
+      .subscribe();
+    return () => {
+      mounted = false;
+      supabase.removeChannel(ch);
+    };
+  }, [enabled]);
+  return total;
+}
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useTranslation();
   const { isAdmin, canAccessTelegram } = useAuth();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
+  const telegramEnabled = isAdmin || canAccessTelegram;
+  const telegramUnread = useTelegramUnreadTotal(telegramEnabled);
 
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("nav.customers"), url: "/customers", icon: Users },
     { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
-    ...(isAdmin || canAccessTelegram
-      ? [{ title: "텔레그램 상담", url: "/telegram", icon: Send }]
+    ...(telegramEnabled
+      ? [{ title: "텔레그램 상담", url: "/telegram", icon: Send, badge: telegramUnread }]
       : []),
     { title: t("nav.callLogs"), url: "/call-logs", icon: PhoneCall },
-  ];
+  ] as Array<{ title: string; url: string; icon: typeof LayoutDashboard; badge?: number }>;
   const analyticsItems = [
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
     { title: t("nav.sla"), url: "/sla", icon: AlertTriangle },
@@ -56,12 +90,18 @@ export function AppSidebar() {
           >
             <Link to={item.url} className="flex items-center gap-3">
               <item.icon className="h-4 w-4" />
-              <span>{item.title}</span>
+              <span className="flex-1">{item.title}</span>
+              {item.badge && item.badge > 0 ? (
+                <span className="ml-auto rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
+                  {item.badge > 99 ? "99+" : item.badge}
+                </span>
+              ) : null}
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       );
     });
+
 
   return (
     <Sidebar collapsible="icon">
