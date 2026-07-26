@@ -175,6 +175,27 @@ function TelegramPage() {
   }, [qc]);
 
   const chats = chatsQuery.data ?? [];
+
+  // Load display names for all assigned operators referenced by any chat
+  const operatorIds = useMemo(
+    () => Array.from(new Set(chats.map((c) => c.assigned_operator_id).filter((x): x is string => !!x))),
+    [chats],
+  );
+  const operatorsQuery = useQuery({
+    queryKey: ["telegram-operators", operatorIds.join(",")],
+    enabled: operatorIds.length > 0,
+    queryFn: async (): Promise<Record<string, Profile>> => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", operatorIds);
+      const map: Record<string, Profile> = {};
+      for (const p of data ?? []) map[p.id] = p as Profile;
+      return map;
+    },
+  });
+  const operatorMap = operatorsQuery.data ?? {};
+
   const counts = useMemo(() => {
     const c = { all: chats.length, new: 0, in_progress: 0, done: 0 };
     for (const ch of chats) c[ch.status] += 1;
