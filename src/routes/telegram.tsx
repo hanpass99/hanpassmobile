@@ -554,6 +554,51 @@ function ConversationPane({ chat }: { chat: Chat }) {
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
+  // ---- Slash autocomplete ----
+  const [slashIndex, setSlashIndex] = useState(0);
+  const slashQuery = useMemo(() => {
+    if (!text.startsWith("/")) return null;
+    // Only trigger when the first line begins with "/" and has no whitespace after slash token
+    const firstLine = text.split("\n")[0];
+    if (!firstLine.startsWith("/")) return null;
+    const token = firstLine.slice(1);
+    if (/\s/.test(token)) return null;
+    return token.toLowerCase();
+  }, [text]);
+
+  const slashMatches = useMemo<Template[]>(() => {
+    if (slashQuery === null) return [];
+    const all = templatesQuery.data ?? [];
+    if (slashQuery === "") return all.slice(0, 20);
+    const q = slashQuery;
+    return all
+      .filter((t) => {
+        const sc = (t.shortcut ?? "").toLowerCase();
+        const ti = (t.title ?? "").toLowerCase();
+        return sc.includes(q) || ti.includes(q);
+      })
+      .slice(0, 20);
+  }, [slashQuery, templatesQuery.data]);
+
+  const slashOpen = slashQuery !== null;
+
+  useEffect(() => {
+    setSlashIndex(0);
+  }, [slashQuery]);
+
+  const applySlashTemplate = (t: Template) => {
+    // Replace only the first line's "/token" with the template content, keep any subsequent lines.
+    const lines = text.split("\n");
+    lines[0] = t.content;
+    const next = lines.join("\n");
+    setText(next);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const pos = t.content.length;
+      textareaRef.current?.setSelectionRange(pos, pos);
+    }, 0);
+  };
+
   return (
     <>
       <div className="flex items-center justify-between border-b px-4 py-2.5">
