@@ -134,7 +134,9 @@ function TelegramPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<"all" | ChatStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [operatorFilter, setOperatorFilter] = useState<string>("all");
   const [showSettings, setShowSettings] = useState(false);
+
 
   // Fetch chats
   const chatsQuery = useQuery({
