@@ -297,18 +297,19 @@ function TelegramPage() {
                           </span>
                         )}
                       </div>
-                      <div className="mt-0.5 flex items-center gap-1">
+                      <div className="mt-0.5 flex items-center gap-1 flex-wrap">
                         <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
                           {STATUS_LABEL[c.status]}
                         </Badge>
-                        {c.is_matched ? (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-green-500/30 px-1 text-[9px] text-green-700 dark:text-green-400">
-                            <CheckCircle2 className="h-2.5 w-2.5" /> 매칭
+                        {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
+                          <Badge
+                            variant="outline"
+                            className="h-4 gap-0.5 border-blue-500/30 bg-blue-500/10 px-1 text-[9px] text-blue-700 dark:text-blue-300"
+                          >
+                            담당: {operatorMap[c.assigned_operator_id]?.display_name ?? "직원"}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-amber-500/30 px-1 text-[9px] text-amber-700 dark:text-amber-400">
-                            <Link2Off className="h-2.5 w-2.5" /> 미매칭
-                          </Badge>
+                          <span className="text-[9px] text-muted-foreground">담당: 없음</span>
                         )}
                         {c.telegram_username && (
                           <span className="text-[10px] text-muted-foreground">@{c.telegram_username}</span>
