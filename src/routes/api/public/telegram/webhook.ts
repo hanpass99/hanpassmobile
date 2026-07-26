@@ -295,7 +295,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         // Upsert chat row
         const { data: existing } = await supabaseAdmin
           .from("telegram_chats")
-          .select("id, customer_id, is_matched, unread_count, phone")
+          .select("id, customer_id, is_matched, unread_count, phone, language")
           .eq("chat_id", chatId)
           .maybeSingle();
 
