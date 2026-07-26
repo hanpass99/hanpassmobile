@@ -71,11 +71,34 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    // Fetch prior state so we only send the closing message on new→done transitions
+    const { data: prior } = await context.supabase
+      .from("telegram_chats")
+      .select("chat_id, status, language")
+      .eq("id", data.chatRowId)
+      .maybeSingle();
+
     const { error } = await context.supabase
       .from("telegram_chats")
       .update({ status: data.status })
       .eq("id", data.chatRowId);
     if (error) throw new Error(error.message);
+
+    // On transition to done, send the localized closing message with a "New inquiry" inline button
+    if (data.status === "done" && prior && prior.status !== "done" && prior.chat_id) {
+      try {
+        const { BOT_COPY, sendMessageWithInlineButton } = await import("@/lib/telegram.server");
+        const lang: "uz" | "ru" = prior.language === "ru" ? "ru" : "uz";
+        await sendMessageWithInlineButton(
+          Number(prior.chat_id),
+          BOT_COPY.conversationClosed[lang],
+          BOT_COPY.newInquiryButton[lang],
+          "new_inquiry",
+        );
+      } catch (e) {
+        console.error("[setTelegramChatStatus] closing message failed", e);
+      }
+    }
     return { ok: true };
   });
 

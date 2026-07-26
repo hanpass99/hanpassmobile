@@ -13,6 +13,7 @@ import {
   removeKeyboard,
   sendContactRequest,
   sendLanguagePicker,
+  sendMessageWithInlineButton,
   sendTelegramMessage,
 } from "@/lib/telegram.server";
 
@@ -296,7 +297,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const update = (await request.json()) as TgUpdate;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Handle language-picker callback first
+        // Handle inline-keyboard callbacks
         if (update.callback_query) {
           const cq = update.callback_query;
           const chatId = cq.message?.chat?.id;
@@ -328,6 +329,27 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             } catch (e) {
               console.error("[telegram webhook] answerCallbackQuery failed", e);
             }
+          } else if (chatId && data === "new_inquiry") {
+            // Reset chat to a fresh session while preserving message history & sender_operator audit trail.
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({
+                status: "new",
+                assigned_operator_id: null,
+                last_done_reprompt_at: null,
+                last_off_hours_auto_reply_at: null,
+              })
+              .eq("chat_id", chatId);
+            try {
+              await sendLanguagePicker(chatId);
+            } catch (e) {
+              console.error("[telegram webhook] new_inquiry language picker failed", e);
+            }
+            try {
+              await answerCallbackQuery(cq.id);
+            } catch (e) {
+              console.error("[telegram webhook] answerCallbackQuery failed", e);
+            }
           }
           return Response.json({ ok: true });
         }
@@ -343,15 +365,20 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const nowIso = new Date(message.date * 1000).toISOString();
 
 
+        // Detect /start (customer wants a fresh session)
+        const isStartCommand =
+          typeof message.text === "string" && message.text.trim().toLowerCase().startsWith("/start");
+
         // Upsert chat row
         const { data: existing } = await supabaseAdmin
           .from("telegram_chats")
-          .select("id, customer_id, is_matched, unread_count, phone, language")
+          .select("id, customer_id, is_matched, unread_count, phone, language, status, last_done_reprompt_at")
           .eq("chat_id", chatId)
           .maybeSingle();
 
         let rowId: string;
         let isFirstMessage = false;
+        const wasDone = existing?.status === "done";
 
         if (!existing) {
           isFirstMessage = true;
@@ -376,16 +403,33 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           rowId = inserted.id;
         } else {
           rowId = existing.id;
-          await supabaseAdmin
-            .from("telegram_chats")
-            .update({
-              last_message_preview: preview,
-              last_message_at: nowIso,
-              unread_count: (existing.unread_count ?? 0) + 1,
-              // Any inbound message re-opens a completed chat as "new"
-              status: "new",
-            })
-            .eq("id", rowId);
+          // Preserve "done" status unless the customer explicitly restarts with /start.
+          // Otherwise, treat the inbound message as reopening the chat (status: 'new').
+          const nextStatus: "new" | "done" = isStartCommand ? "new" : wasDone ? "done" : "new";
+          if (isStartCommand) {
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({
+                last_message_preview: preview,
+                last_message_at: nowIso,
+                unread_count: (existing.unread_count ?? 0) + 1,
+                status: nextStatus,
+                assigned_operator_id: null,
+                last_done_reprompt_at: null,
+                last_off_hours_auto_reply_at: null,
+              })
+              .eq("id", rowId);
+          } else {
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({
+                last_message_preview: preview,
+                last_message_at: nowIso,
+                unread_count: (existing.unread_count ?? 0) + 1,
+                status: nextStatus,
+              })
+              .eq("id", rowId);
+          }
         }
 
         // Determine current chat language (default 'uz' until user picks)
@@ -490,18 +534,51 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           console.error("[telegram webhook] insert message failed", msgErr);
         }
 
-        // First-time greeting: show language picker (uz / ru)
-        if (isFirstMessage && !message.contact) {
+        // Track whether we've already sent an auto-response so we don't stack messages.
+        let autoResponseSent = false;
+
+        // First-time greeting OR explicit /start: show the language picker (uz / ru)
+        if ((isFirstMessage || isStartCommand) && !message.contact) {
           try {
             await sendLanguagePicker(chatId);
+            autoResponseSent = true;
           } catch (e) {
             console.error("[telegram webhook] language picker failed", e);
           }
         }
 
+        // Closed-conversation re-prompt: chat was already "done" and the customer sent a normal
+        // message (not /start). Send once per throttle window (1 hour) to avoid spamming.
+        if (!autoResponseSent && wasDone && !isStartCommand && !message.contact) {
+          const lastReprompt = existing?.last_done_reprompt_at
+            ? new Date(existing.last_done_reprompt_at as string)
+            : null;
+          const throttleMs = 60 * 60 * 1000; // 1 hour
+          if (!lastReprompt || Date.now() - lastReprompt.getTime() > throttleMs) {
+            try {
+              await sendMessageWithInlineButton(
+                chatId,
+                BOT_COPY.previouslyClosed[chatLang],
+                BOT_COPY.newInquiryButton[chatLang],
+                "new_inquiry",
+              );
+              await supabaseAdmin
+                .from("telegram_chats")
+                .update({ last_done_reprompt_at: new Date().toISOString() })
+                .eq("id", rowId);
+              autoResponseSent = true;
+            } catch (e) {
+              console.error("[telegram webhook] previouslyClosed reprompt failed", e);
+            }
+          } else {
+            // Suppress off-hours reply too — the customer already knows the chat is closed.
+            autoResponseSent = true;
+          }
+        }
+
         // Off-hours auto-reply: throttle to one message per off-hours session per chat.
         // Runs AFTER the inbound message is saved, so CRM history is unaffected.
-        try {
+        if (!autoResponseSent) try {
           const { data: bh } = await supabaseAdmin
             .from("business_hours")
             .select("start_hour, end_hour, timezone, auto_reply_uz, auto_reply_ru")

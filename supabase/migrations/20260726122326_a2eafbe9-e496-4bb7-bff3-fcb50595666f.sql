@@ -1,0 +1,1 @@
+ALTER TABLE public.telegram_chats ADD COLUMN IF NOT EXISTS last_done_reprompt_at TIMESTAMPTZ;

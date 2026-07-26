@@ -65,7 +65,35 @@ export const BOT_COPY = {
   },
   languagePrompt:
     "Iltimos, tilni tanlang / Пожалуйста, выберите язык:",
+  conversationClosed: {
+    uz: "Murojaatingiz uchun rahmat! ✅ Suhbatingiz yakunlandi. Agar yana savolingiz bo'lsa, quyidagi tugmani bosing yoki /start yuboring. Sog' bo'ling!",
+    ru: "Спасибо за обращение! ✅ Ваш диалог завершён. Если появятся вопросы, нажмите кнопку ниже или отправьте /start. Всего доброго!",
+  },
+  previouslyClosed: {
+    uz: "Oldingi murojaatingiz yakunlangan. Yangi savol bermoqchi bo'lsangiz, quyidagi tugmani bosing yoki /start yuboring.",
+    ru: "Ваше предыдущее обращение завершено. Чтобы задать новый вопрос, нажмите кнопку ниже или отправьте /start.",
+  },
+  newInquiryButton: {
+    uz: "🆕 Yangi murojaat",
+    ru: "🆕 Новое обращение",
+  },
 } as const;
+
+/** Send a plain text message with a single inline button (used for closed-chat re-prompts). */
+export async function sendMessageWithInlineButton(
+  chatId: number,
+  text: string,
+  buttonText: string,
+  callbackData: string,
+) {
+  return callBot<{ message_id: number }>("sendMessage", {
+    chat_id: chatId,
+    text,
+    reply_markup: {
+      inline_keyboard: [[{ text: buttonText, callback_data: callbackData }]],
+    },
+  });
+}
 
 /** Show the initial language picker (inline keyboard). */
 export async function sendLanguagePicker(chatId: number) {

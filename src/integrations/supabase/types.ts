@@ -1018,6 +1018,7 @@ export type Database = {
           id: string
           is_matched: boolean
           language: string | null
+          last_done_reprompt_at: string | null
           last_message_at: string | null
           last_message_preview: string | null
           last_name: string | null
@@ -1038,6 +1039,7 @@ export type Database = {
           id?: string
           is_matched?: boolean
           language?: string | null
+          last_done_reprompt_at?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
           last_name?: string | null
@@ -1058,6 +1060,7 @@ export type Database = {
           id?: string
           is_matched?: boolean
           language?: string | null
+          last_done_reprompt_at?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
           last_name?: string | null
