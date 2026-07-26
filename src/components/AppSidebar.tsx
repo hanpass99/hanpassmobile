@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle,
-  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot,
+  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useTranslation();
+  const { isAdmin } = useAuth();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
 
   const mainItems = [
@@ -31,6 +32,7 @@ export function AppSidebar() {
     { title: t("nav.sla"), url: "/sla", icon: AlertTriangle },
   ];
   const systemItems = [
+    ...(isAdmin ? [{ title: "관리자 공지", url: "/notifications", icon: Bell }] : []),
     { title: t("nav.settings"), url: "/settings", icon: Settings },
     { title: "AI 어시스턴트", url: "/ai-assistant", icon: Bot },
   ];
