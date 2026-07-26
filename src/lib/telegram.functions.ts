@@ -51,10 +51,31 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
       .update({
         last_message_preview: text.slice(0, 200),
         last_message_at: new Date().toISOString(),
+        status: "in_progress",
       })
       .eq("id", chatRowId);
 
     return { ok: true, telegramMessageId };
+  });
+
+// Update conversation status (new / in_progress / done)
+export const setTelegramChatStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        chatRowId: z.string().uuid(),
+        status: z.enum(["new", "in_progress", "done"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("telegram_chats")
+      .update({ status: data.status })
+      .eq("id", data.chatRowId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 // Mark a chat as read (reset unread_count).
