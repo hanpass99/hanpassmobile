@@ -725,6 +725,7 @@ export type Database = {
           created_at: string
           id: string
           operator_id: string
+          shortcut: string | null
           title: string
           updated_at: string
         }
@@ -733,6 +734,7 @@ export type Database = {
           created_at?: string
           id?: string
           operator_id: string
+          shortcut?: string | null
           title: string
           updated_at?: string
         }
@@ -741,6 +743,7 @@ export type Database = {
           created_at?: string
           id?: string
           operator_id?: string
+          shortcut?: string | null
           title?: string
           updated_at?: string
         }
