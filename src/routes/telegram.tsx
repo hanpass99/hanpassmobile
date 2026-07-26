@@ -489,6 +489,111 @@ function ConversationPane({ chat }: { chat: Chat }) {
   );
 }
 
+function useSignedMediaUrl(path: string | null) {
+  return useQuery({
+    queryKey: ["telegram-media-url", path],
+    enabled: !!path,
+    staleTime: 45 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from("telegram-media")
+        .createSignedUrl(path!, 60 * 60);
+      if (error) throw error;
+      return data.signedUrl;
+    },
+  });
+}
+
+function humanSize(n: number | null): string {
+  if (!n) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function MessageBody({ m }: { m: Message }) {
+  const kind = m.message_type ?? "text";
+  const mediaQ = useSignedMediaUrl(m.media_storage_path);
+  const url = mediaQ.data;
+  const caption = m.caption ?? null;
+
+  if (kind === "text" || (!m.media_storage_path && m.text)) {
+    return <>{m.text ?? m.caption ?? "(비어있음)"}</>;
+  }
+
+  const captionEl = caption ? (
+    <div className="mt-1.5 whitespace-pre-wrap break-words">{caption}</div>
+  ) : null;
+
+  if (kind === "photo" || kind === "sticker") {
+    return (
+      <div>
+        {url ? (
+          <a href={url} target="_blank" rel="noreferrer">
+            <img
+              src={url}
+              alt={caption ?? "photo"}
+              className="max-h-80 max-w-full rounded-lg object-contain"
+              loading="lazy"
+            />
+          </a>
+        ) : (
+          <div className="opacity-70">📷 Loading photo…</div>
+        )}
+        {captionEl}
+      </div>
+    );
+  }
+
+  if (kind === "video") {
+    return (
+      <div>
+        {url ? (
+          <video src={url} controls className="max-h-80 max-w-full rounded-lg" preload="metadata" />
+        ) : (
+          <div className="opacity-70">🎬 Loading video…</div>
+        )}
+        {captionEl}
+      </div>
+    );
+  }
+
+  if (kind === "voice" || kind === "audio") {
+    return (
+      <div>
+        {url ? (
+          <audio src={url} controls className="max-w-full" preload="metadata" />
+        ) : (
+          <div className="opacity-70">🎤 Loading audio…</div>
+        )}
+        {captionEl}
+      </div>
+    );
+  }
+
+  // document or other
+  return (
+    <div>
+      <a
+        href={url ?? "#"}
+        target="_blank"
+        rel="noreferrer"
+        download={m.media_file_name ?? undefined}
+        className="flex items-center gap-2 underline underline-offset-2"
+        onClick={(e) => {
+          if (!url) e.preventDefault();
+        }}
+      >
+        📎 <span className="break-all">{m.media_file_name ?? "File"}</span>
+        {m.media_size ? <span className="opacity-70 text-xs">({humanSize(m.media_size)})</span> : null}
+      </a>
+      {captionEl}
+    </div>
+  );
+}
+
+
+
 function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void }) {
   const qc = useQueryClient();
   const [q, setQ] = useState(chat.phone ?? "");
