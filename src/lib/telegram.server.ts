@@ -88,6 +88,31 @@ export async function getMe() {
   return callBot<{ id: number; username: string; first_name: string }>("getMe", {});
 }
 
+/** Fetch Telegram file metadata (file_path required to download). */
+export async function getFilePath(fileId: string): Promise<string> {
+  const res = await callBot<{ file_path?: string; file_size?: number }>("getFile", {
+    file_id: fileId,
+  });
+  if (!res.file_path) throw new Error(`getFile: no file_path for ${fileId}`);
+  return res.file_path;
+}
+
+/** Download the actual bytes for a Telegram file_path. */
+export async function downloadTelegramFile(
+  filePath: string,
+): Promise<{ bytes: ArrayBuffer; contentType: string }> {
+  const token = getBotToken();
+  const url = `${TELEGRAM_API_BASE}/file/bot${token}/${filePath}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Telegram file download failed [${res.status}] for ${filePath}`);
+  }
+  const contentType = res.headers.get("content-type") ?? "application/octet-stream";
+  const bytes = await res.arrayBuffer();
+  return { bytes, contentType };
+}
+
+
 /** Normalize phone to the CRM canonical formats used elsewhere. */
 export function normalizePhone(raw: string): string | null {
   const digits = (raw || "").toString().replace(/\D/g, "");
