@@ -198,6 +198,35 @@ function TelegramPage() {
   });
   const operatorMap = operatorsQuery.data ?? {};
 
+  // Admin: list of all staff for the "operator filter"
+  const staffQuery = useQuery({
+    queryKey: ["telegram-all-staff"],
+    enabled: isAdmin,
+    queryFn: async (): Promise<Profile[]> => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .order("display_name", { ascending: true });
+      return (data ?? []) as Profile[];
+    },
+  });
+
+  // Admin: chat IDs where a given operator has sent any reply (audit lookup)
+  const operatorChatsQuery = useQuery({
+    queryKey: ["telegram-chats-by-operator", operatorFilter],
+    enabled: isAdmin && operatorFilter !== "all",
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await supabase
+        .from("telegram_messages")
+        .select("telegram_chat_row_id")
+        .eq("sent_by", operatorFilter)
+        .limit(5000);
+      if (error) throw error;
+      return new Set((data ?? []).map((r: any) => r.telegram_chat_row_id as string));
+    },
+  });
+
+
   const counts = useMemo(() => {
     const c = { all: chats.length, new: 0, in_progress: 0, done: 0 };
     for (const ch of chats) c[ch.status] += 1;
