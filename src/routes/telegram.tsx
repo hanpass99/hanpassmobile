@@ -1050,17 +1050,20 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       if (!user?.id) throw new Error("로그인이 필요합니다");
       const t = title.trim();
       const c = content.trim();
+      const sRaw = shortcut.trim().toLowerCase().replace(/^\/+/, "");
+      if (/\s/.test(sRaw)) throw new Error("단축어에 공백을 사용할 수 없습니다");
+      const s = sRaw || null;
       if (!t || !c) throw new Error("제목과 내용을 입력하세요");
       if (editing) {
         const { error } = await supabase
           .from("quick_reply_templates")
-          .update({ title: t, content: c })
+          .update({ title: t, content: c, shortcut: s })
           .eq("id", editing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("quick_reply_templates")
-          .insert({ operator_id: user.id, title: t, content: c });
+          .insert({ operator_id: user.id, title: t, content: c, shortcut: s });
         if (error) throw error;
       }
     },
