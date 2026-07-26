@@ -29,6 +29,12 @@ export const Route = createFileRoute("/notifications")({
 });
 
 type Staff = { id: string; display_name: string; phone: string | null; is_active: boolean };
+type Recipient = {
+  user_id: string;
+  display_name: string | null;
+  acknowledged_at: string | null;
+  sms_status: string | null;
+};
 type SentRow = {
   id: string;
   title: string | null;
@@ -38,6 +44,7 @@ type SentRow = {
   acked: number;
   sms_ok: number;
   sms_fail: number;
+  recipients: Recipient[];
 };
 
 function NotificationsPage() {
