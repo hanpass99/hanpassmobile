@@ -14,6 +14,11 @@ import {
   Link2Off,
   MessageCircle,
   Settings,
+  Zap,
+  Plus,
+  Pencil,
+  Trash2,
+  Check,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +34,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -39,7 +49,10 @@ import {
   linkTelegramChatToCustomer,
   searchCustomersForTelegram,
   registerTelegramWebhook,
+  setTelegramChatStatus,
 } from "@/lib/telegram.functions";
+
+type ChatStatus = "new" | "in_progress" | "done";
 
 type Chat = {
   id: string;
@@ -53,6 +66,7 @@ type Chat = {
   last_message_at: string | null;
   unread_count: number;
   is_matched: boolean;
+  status: ChatStatus;
 };
 
 type Message = {
@@ -76,6 +90,26 @@ type Message = {
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
+type Template = { id: string; title: string; content: string };
+
+const STATUS_LABEL: Record<ChatStatus, string> = {
+  new: "신규",
+  in_progress: "처리중",
+  done: "완료",
+};
+
+const STATUS_DOT: Record<ChatStatus, string> = {
+  new: "bg-green-500",
+  in_progress: "bg-yellow-500",
+  done: "bg-gray-400",
+};
+
+const STATUS_BADGE: Record<ChatStatus, string> = {
+  new: "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30",
+  in_progress: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30",
+  done: "bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/30",
+};
+
 export const Route = createFileRoute("/telegram")({
   head: () => ({
     meta: [
@@ -97,7 +131,7 @@ function TelegramPage() {
   const locale = i18nInst.language === "ko" ? ko : enUS;
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [filterTab, setFilterTab] = useState<"all" | "matched" | "unmatched">("all");
+  const [filterTab, setFilterTab] = useState<"all" | ChatStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showSettings, setShowSettings] = useState(false);
 
@@ -140,10 +174,15 @@ function TelegramPage() {
   }, [qc]);
 
   const chats = chatsQuery.data ?? [];
+  const counts = useMemo(() => {
+    const c = { all: chats.length, new: 0, in_progress: 0, done: 0 };
+    for (const ch of chats) c[ch.status] += 1;
+    return c;
+  }, [chats]);
+
   const filtered = useMemo(() => {
     let list = chats;
-    if (filterTab === "matched") list = list.filter((c) => c.is_matched);
-    else if (filterTab === "unmatched") list = list.filter((c) => !c.is_matched);
+    if (filterTab !== "all") list = list.filter((c) => c.status === filterTab);
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       list = list.filter((c) => {
@@ -189,16 +228,26 @@ function TelegramPage() {
               />
             </div>
             <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as typeof filterTab)} className="mt-2">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="all">전체</TabsTrigger>
-                <TabsTrigger value="matched">매칭됨</TabsTrigger>
-                <TabsTrigger value="unmatched">
-                  미매칭
-                  {chats.filter((c) => !c.is_matched).length > 0 && (
-                    <span className="ml-1 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">
-                      {chats.filter((c) => !c.is_matched).length}
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="all" className="text-xs">
+                  전체 <span className="ml-1 opacity-60">{counts.all}</span>
+                </TabsTrigger>
+                <TabsTrigger value="new" className="text-xs">
+                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                  신규
+                  {counts.new > 0 && (
+                    <span className="ml-1 rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
+                      {counts.new}
                     </span>
                   )}
+                </TabsTrigger>
+                <TabsTrigger value="in_progress" className="text-xs">
+                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-yellow-500" />
+                  처리중
+                </TabsTrigger>
+                <TabsTrigger value="done" className="text-xs">
+                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-gray-400" />
+                  완료
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -219,8 +268,14 @@ function TelegramPage() {
                       selectedId === c.id && "bg-accent",
                     )}
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                       {chatDisplayName(c).charAt(0).toUpperCase()}
+                      <span
+                        className={cn(
+                          "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-card",
+                          STATUS_DOT[c.status],
+                        )}
+                      />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
@@ -236,12 +291,15 @@ function TelegramPage() {
                           {c.last_message_preview ?? "(no preview)"}
                         </p>
                         {c.unread_count > 0 && (
-                          <span className="rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                          <span className="rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
                             {c.unread_count}
                           </span>
                         )}
                       </div>
                       <div className="mt-0.5 flex items-center gap-1">
+                        <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
+                          {STATUS_LABEL[c.status]}
+                        </Badge>
                         {c.is_matched ? (
                           <Badge variant="outline" className="h-4 gap-0.5 border-green-500/30 px-1 text-[9px] text-green-700 dark:text-green-400">
                             <CheckCircle2 className="h-2.5 w-2.5" /> 매칭
@@ -285,7 +343,10 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const { user } = useAuth();
   const [text, setText] = useState("");
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showTemplatesManager, setShowTemplatesManager] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const messagesQuery = useQuery({
     queryKey: ["telegram-messages", chat.id],
@@ -337,9 +398,24 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
   });
 
+  // Own quick reply templates
+  const templatesQuery = useQuery({
+    queryKey: ["telegram-templates", user?.id],
+    enabled: !!user?.id,
+    queryFn: async (): Promise<Template[]> => {
+      const { data, error } = await supabase
+        .from("quick_reply_templates")
+        .select("id, title, content")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Template[];
+    },
+  });
+
   const markRead = useServerFn(markTelegramChatRead);
   const sendReply = useServerFn(sendTelegramReply);
   const unlinkFn = useServerFn(linkTelegramChatToCustomer);
+  const setStatusFn = useServerFn(setTelegramChatStatus);
 
   // Mark read on open
   useEffect(() => {
@@ -378,6 +454,14 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
   });
 
+  const statusMut = useMutation({
+    mutationFn: async (status: ChatStatus) => setStatusFn({ data: { chatRowId: chat.id, status } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "상태 변경 실패"),
+  });
+
   const onSubmit = () => {
     const t = text.trim();
     if (!t || sendMut.isPending) return;
@@ -385,6 +469,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
   };
 
   const profileMap = profilesQuery.data ?? {};
+
+  const insertTemplate = (t: Template) => {
+    setText((prev) => (prev ? `${prev}\n${t.content}` : t.content));
+    setTemplatesOpen(false);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
 
   return (
     <>
@@ -395,6 +485,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
             {chat.telegram_username && (
               <span className="text-xs text-muted-foreground">@{chat.telegram_username}</span>
             )}
+            <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", STATUS_BADGE[chat.status])}>
+              {STATUS_LABEL[chat.status]}
+            </Badge>
           </div>
           <div className="text-xs text-muted-foreground">
             {customerQuery.data ? (
@@ -409,6 +502,26 @@ function ConversationPane({ chat }: { chat: Chat }) {
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {chat.status !== "done" ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => statusMut.mutate("done")}
+              disabled={statusMut.isPending}
+              className="border-gray-400/40 text-gray-600 hover:bg-gray-500/10 dark:text-gray-300"
+            >
+              <Check className="mr-1 h-4 w-4" /> 완료 처리
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => statusMut.mutate("in_progress")}
+              disabled={statusMut.isPending}
+            >
+              다시 열기
+            </Button>
+          )}
           {chat.customer_id ? (
             <Button size="sm" variant="ghost" onClick={() => unlinkMut.mutate()}>
               <Link2Off className="mr-1 h-4 w-4" /> 연결 해제
@@ -460,9 +573,67 @@ function ConversationPane({ chat }: { chat: Chat }) {
         )}
       </div>
 
-      <div className="border-t p-3">
+      <div className="border-t p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <Popover open={templatesOpen} onOpenChange={setTemplatesOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8">
+                <Zap className="mr-1 h-3.5 w-3.5" />
+                템플릿
+                {templatesQuery.data && templatesQuery.data.length > 0 && (
+                  <span className="ml-1 opacity-60">({templatesQuery.data.length})</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-0">
+              <div className="flex items-center justify-between border-b px-3 py-2">
+                <span className="text-xs font-medium">내 빠른 답변</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    setTemplatesOpen(false);
+                    setShowTemplatesManager(true);
+                  }}
+                >
+                  <Pencil className="mr-1 h-3 w-3" /> 관리
+                </Button>
+              </div>
+              <div className="max-h-72 overflow-y-auto">
+                {templatesQuery.isLoading ? (
+                  <div className="p-3 text-xs text-muted-foreground">불러오는 중...</div>
+                ) : (templatesQuery.data ?? []).length === 0 ? (
+                  <div className="p-4 text-center text-xs text-muted-foreground">
+                    아직 템플릿이 없습니다.
+                    <br />
+                    "관리"에서 만들어 보세요.
+                  </div>
+                ) : (
+                  <ul className="divide-y">
+                    {(templatesQuery.data ?? []).map((t) => (
+                      <li key={t.id}>
+                        <button
+                          onClick={() => insertTemplate(t)}
+                          className="block w-full px-3 py-2 text-left hover:bg-accent/50"
+                        >
+                          <div className="text-xs font-medium">{t.title}</div>
+                          <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                            {t.content}
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
         <div className="flex items-end gap-2">
           <Textarea
+            ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -484,6 +655,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
 
       {showLinkDialog && (
         <LinkCustomerDialog chat={chat} onClose={() => setShowLinkDialog(false)} />
+      )}
+      {showTemplatesManager && (
+        <TemplatesManagerDialog onClose={() => setShowTemplatesManager(false)} />
       )}
     </>
   );
@@ -571,7 +745,6 @@ function MessageBody({ m }: { m: Message }) {
     );
   }
 
-  // document or other
   return (
     <div>
       <a
@@ -592,6 +765,196 @@ function MessageBody({ m }: { m: Message }) {
   );
 }
 
+
+function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState<Template | null>(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  const templatesQuery = useQuery({
+    queryKey: ["telegram-templates", user?.id],
+    enabled: !!user?.id,
+    queryFn: async (): Promise<Template[]> => {
+      const { data, error } = await supabase
+        .from("quick_reply_templates")
+        .select("id, title, content")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Template[];
+    },
+  });
+
+  const resetForm = () => {
+    setEditing(null);
+    setTitle("");
+    setContent("");
+  };
+
+  const saveMut = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("로그인이 필요합니다");
+      const t = title.trim();
+      const c = content.trim();
+      if (!t || !c) throw new Error("제목과 내용을 입력하세요");
+      if (editing) {
+        const { error } = await supabase
+          .from("quick_reply_templates")
+          .update({ title: t, content: c })
+          .eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("quick_reply_templates")
+          .insert({ operator_id: user.id, title: t, content: c });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(editing ? "수정됨" : "추가됨");
+      resetForm();
+      qc.invalidateQueries({ queryKey: ["telegram-templates", user?.id] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "실패"),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("quick_reply_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("삭제됨");
+      qc.invalidateQueries({ queryKey: ["telegram-templates", user?.id] });
+      resetForm();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "실패"),
+  });
+
+  const startEdit = (t: Template) => {
+    setEditing(t);
+    setTitle(t.title);
+    setContent(t.content);
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>내 빠른 답변 템플릿</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
+          <div className="min-h-0">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">내 템플릿</span>
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={resetForm}>
+                <Plus className="mr-1 h-3 w-3" /> 새 템플릿
+              </Button>
+            </div>
+            <div className="max-h-80 overflow-y-auto rounded border">
+              {templatesQuery.isLoading ? (
+                <div className="p-3 text-xs text-muted-foreground">불러오는 중...</div>
+              ) : (templatesQuery.data ?? []).length === 0 ? (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  아직 템플릿이 없습니다.
+                </div>
+              ) : (
+                <ul className="divide-y">
+                  {(templatesQuery.data ?? []).map((t) => (
+                    <li
+                      key={t.id}
+                      className={cn(
+                        "flex items-start justify-between gap-2 p-2",
+                        editing?.id === t.id && "bg-accent/60",
+                      )}
+                    >
+                      <button
+                        onClick={() => startEdit(t)}
+                        className="min-w-0 flex-1 text-left"
+                      >
+                        <div className="text-xs font-medium">{t.title}</div>
+                        <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                          {t.content}
+                        </div>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-0.5">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => startEdit(t)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            if (confirm(`"${t.title}" 삭제하시겠습니까?`)) deleteMut.mutate(t.id);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground">
+              {editing ? "템플릿 수정" : "새 템플릿"}
+            </div>
+            <div className="space-y-2">
+              <div>
+                <label className="text-[11px] text-muted-foreground">제목 (짧은 이름)</label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="예: 인사말"
+                  maxLength={80}
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground">내용 (실제 전송될 메시지)</label>
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="어떤 언어든 자유롭게 입력하세요 (한국어 / O'zbek / Русский …)"
+                  rows={7}
+                  className="resize-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                {editing && (
+                  <Button variant="ghost" size="sm" onClick={resetForm}>
+                    취소
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  onClick={() => saveMut.mutate()}
+                  disabled={saveMut.isPending || !title.trim() || !content.trim()}
+                >
+                  {editing ? "수정" : "추가"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>
+            닫기
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 
 function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void }) {
