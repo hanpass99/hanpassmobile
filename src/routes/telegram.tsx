@@ -942,6 +942,18 @@ function MessageBody({ m }: { m: Message }) {
   const url = mediaQ.data;
   const caption = m.caption ?? null;
 
+  if (kind === "contact") {
+    // Try to extract phone from raw first, fall back to persisted text summary.
+    const raw = (m as unknown as { raw?: { contact?: { phone_number?: string; first_name?: string; last_name?: string } } }).raw;
+    const c = raw?.contact;
+    const name = c ? [c.first_name, c.last_name].filter(Boolean).join(" ").trim() : "";
+    const phone = c?.phone_number ?? "";
+    const label = name || phone
+      ? `📱 연락처: ${name}${name && phone ? " · " : ""}${phone}`
+      : (m.text ?? "📱 연락처");
+    return <span className="font-medium">{label}</span>;
+  }
+
   if (kind === "text" || (!m.media_storage_path && m.text)) {
     return <>{m.text ?? m.caption ?? "(비어있음)"}</>;
   }
