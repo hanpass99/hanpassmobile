@@ -610,9 +610,11 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               : null;
             if (!lastAt || lastAt < sessionStart) {
               const lang: BotLang = (chatRow?.language === "ru" ? "ru" : chatLang);
-              const text = lang === "ru"
+              const body = lang === "ru"
                 ? (bh?.auto_reply_ru ?? "")
                 : (bh?.auto_reply_uz ?? "");
+              const prefix = lang === "ru" ? "🤖 Автоответ:" : "🤖 Avtomatik javob:";
+              const text = body ? `${prefix}\n\n${body}` : "";
               if (text) {
                 await sendTelegramMessage(chatId, text);
                 await supabaseAdmin
