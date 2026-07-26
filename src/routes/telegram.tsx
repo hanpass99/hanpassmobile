@@ -751,7 +751,55 @@ function ConversationPane({ chat }: { chat: Chat }) {
   );
 }
 
+function ParticipationHistory({
+  messages,
+  profileMap,
+}: {
+  messages: Message[];
+  profileMap: Record<string, Profile>;
+}) {
+  const runs = useMemo(() => {
+    const out: { operatorId: string; start: string; end: string }[] = [];
+    for (const m of messages) {
+      if (m.direction !== "out" || !m.sent_by) continue;
+      const last = out[out.length - 1];
+      if (last && last.operatorId === m.sent_by) {
+        last.end = m.created_at;
+      } else {
+        out.push({ operatorId: m.sent_by, start: m.created_at, end: m.created_at });
+      }
+    }
+    return out;
+  }, [messages]);
+
+  if (runs.length === 0) return null;
+
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString([], {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-b bg-muted/30 px-4 py-1.5 text-[11px]">
+      <span className="font-medium text-muted-foreground">응대 이력:</span>
+      {runs.map((r, i) => (
+        <span
+          key={i}
+          className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-700 dark:text-blue-300"
+        >
+          {profileMap[r.operatorId]?.display_name ?? "직원"} ({fmt(r.start)}
+          {r.start !== r.end ? ` ~ ${fmt(r.end)}` : ""})
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function useSignedMediaUrl(path: string | null) {
+
   return useQuery({
     queryKey: ["telegram-media-url", path],
     enabled: !!path,
