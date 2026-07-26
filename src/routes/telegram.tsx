@@ -236,6 +236,11 @@ function TelegramPage() {
   const filtered = useMemo(() => {
     let list = chats;
     if (filterTab !== "all") list = list.filter((c) => c.status === filterTab);
+    if (isAdmin && operatorFilter !== "all") {
+      const allow = operatorChatsQuery.data;
+      if (allow) list = list.filter((c) => allow.has(c.id));
+      else list = [];
+    }
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       list = list.filter((c) => {
@@ -248,7 +253,8 @@ function TelegramPage() {
       });
     }
     return list;
-  }, [chats, filterTab, searchTerm]);
+  }, [chats, filterTab, searchTerm, isAdmin, operatorFilter, operatorChatsQuery.data]);
+
 
   const selected = filtered.find((c) => c.id === selectedId) ?? chats.find((c) => c.id === selectedId) ?? null;
 
