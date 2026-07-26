@@ -134,7 +134,9 @@ function TelegramPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<"all" | ChatStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [operatorFilter, setOperatorFilter] = useState<string>("all");
   const [showSettings, setShowSettings] = useState(false);
+
 
   // Fetch chats
   const chatsQuery = useQuery({
@@ -196,6 +198,35 @@ function TelegramPage() {
   });
   const operatorMap = operatorsQuery.data ?? {};
 
+  // Admin: list of all staff for the "operator filter"
+  const staffQuery = useQuery({
+    queryKey: ["telegram-all-staff"],
+    enabled: isAdmin,
+    queryFn: async (): Promise<Profile[]> => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .order("display_name", { ascending: true });
+      return (data ?? []) as Profile[];
+    },
+  });
+
+  // Admin: chat IDs where a given operator has sent any reply (audit lookup)
+  const operatorChatsQuery = useQuery({
+    queryKey: ["telegram-chats-by-operator", operatorFilter],
+    enabled: isAdmin && operatorFilter !== "all",
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await supabase
+        .from("telegram_messages")
+        .select("telegram_chat_row_id")
+        .eq("sent_by", operatorFilter)
+        .limit(5000);
+      if (error) throw error;
+      return new Set((data ?? []).map((r: any) => r.telegram_chat_row_id as string));
+    },
+  });
+
+
   const counts = useMemo(() => {
     const c = { all: chats.length, new: 0, in_progress: 0, done: 0 };
     for (const ch of chats) c[ch.status] += 1;
@@ -205,6 +236,11 @@ function TelegramPage() {
   const filtered = useMemo(() => {
     let list = chats;
     if (filterTab !== "all") list = list.filter((c) => c.status === filterTab);
+    if (isAdmin && operatorFilter !== "all") {
+      const allow = operatorChatsQuery.data;
+      if (allow) list = list.filter((c) => allow.has(c.id));
+      else list = [];
+    }
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       list = list.filter((c) => {
@@ -217,7 +253,8 @@ function TelegramPage() {
       });
     }
     return list;
-  }, [chats, filterTab, searchTerm]);
+  }, [chats, filterTab, searchTerm, isAdmin, operatorFilter, operatorChatsQuery.data]);
+
 
   const selected = filtered.find((c) => c.id === selectedId) ?? chats.find((c) => c.id === selectedId) ?? null;
 
@@ -229,12 +266,30 @@ function TelegramPage() {
           <h1 className="text-lg font-semibold">텔레그램 상담 · Telegram Chat</h1>
           <Badge variant="secondary">{chats.length}</Badge>
         </div>
-        {isAdmin && (
-          <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-            <Settings className="mr-1 h-4 w-4" /> 웹훅 설정
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <select
+              value={operatorFilter}
+              onChange={(e) => setOperatorFilter(e.target.value)}
+              className="h-8 rounded-md border bg-background px-2 text-xs"
+              title="상담사별 대화 필터 (감사용)"
+            >
+              <option value="all">전체 상담사</option>
+              {(staffQuery.data ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.display_name ?? "직원"}
+                </option>
+              ))}
+            </select>
+          )}
+          {isAdmin && (
+            <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+              <Settings className="mr-1 h-4 w-4" /> 웹훅 설정
+            </Button>
+          )}
+        </div>
       </div>
+
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-[340px_1fr]">
         {/* Left: chat list */}
@@ -557,6 +612,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
         </div>
       </div>
 
+      <ParticipationHistory messages={messagesQuery.data ?? []} profileMap={profileMap} />
+
+
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messagesQuery.isLoading ? (
           <div className="text-sm text-muted-foreground">불러오는 중...</div>
@@ -567,14 +625,24 @@ function ConversationPane({ chat }: { chat: Chat }) {
             const isOut = m.direction === "out";
             const sender = m.sent_by ? profileMap[m.sent_by] : null;
             const isMine = isOut && m.sent_by === user?.id;
+            const timeLabel = new Date(m.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            const senderLabel = isOut
+              ? `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
+              : `고객 · ${timeLabel}`;
             return (
               <div key={m.id} className={cn("flex", isOut ? "justify-end" : "justify-start")}>
                 <div className={cn("max-w-[75%]", isOut && "flex flex-col items-end")}>
-                  {isOut && (
-                    <div className="mb-0.5 text-[10px] text-muted-foreground">
-                      {sender?.display_name ?? "직원"} {isMine && "(나)"}
-                    </div>
-                  )}
+                  <div
+                    className={cn(
+                      "mb-0.5 text-[10px] font-medium",
+                      isOut ? "text-right text-primary/80" : "text-left text-muted-foreground",
+                    )}
+                  >
+                    {senderLabel}
+                  </div>
                   <div
                     className={cn(
                       "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words",
@@ -585,13 +653,10 @@ function ConversationPane({ chat }: { chat: Chat }) {
                   >
                     <MessageBody m={m} />
                   </div>
-
-                  <div className={cn("mt-0.5 text-[10px] text-muted-foreground", isOut ? "text-right" : "text-left")}>
-                    {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </div>
                 </div>
               </div>
             );
+
           })
         )}
       </div>
@@ -686,7 +751,55 @@ function ConversationPane({ chat }: { chat: Chat }) {
   );
 }
 
+function ParticipationHistory({
+  messages,
+  profileMap,
+}: {
+  messages: Message[];
+  profileMap: Record<string, Profile>;
+}) {
+  const runs = useMemo(() => {
+    const out: { operatorId: string; start: string; end: string }[] = [];
+    for (const m of messages) {
+      if (m.direction !== "out" || !m.sent_by) continue;
+      const last = out[out.length - 1];
+      if (last && last.operatorId === m.sent_by) {
+        last.end = m.created_at;
+      } else {
+        out.push({ operatorId: m.sent_by, start: m.created_at, end: m.created_at });
+      }
+    }
+    return out;
+  }, [messages]);
+
+  if (runs.length === 0) return null;
+
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString([], {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-b bg-muted/30 px-4 py-1.5 text-[11px]">
+      <span className="font-medium text-muted-foreground">응대 이력:</span>
+      {runs.map((r, i) => (
+        <span
+          key={i}
+          className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-700 dark:text-blue-300"
+        >
+          {profileMap[r.operatorId]?.display_name ?? "직원"} ({fmt(r.start)}
+          {r.start !== r.end ? ` ~ ${fmt(r.end)}` : ""})
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function useSignedMediaUrl(path: string | null) {
+
   return useQuery({
     queryKey: ["telegram-media-url", path],
     enabled: !!path,
