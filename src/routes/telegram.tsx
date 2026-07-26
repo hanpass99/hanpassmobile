@@ -292,12 +292,15 @@ function ConversationPane({ chat }: { chat: Chat }) {
     queryFn: async (): Promise<Message[]> => {
       const { data, error } = await supabase
         .from("telegram_messages")
-        .select("id, telegram_chat_row_id, direction, text, sent_by, created_at")
+        .select(
+          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at",
+        )
         .eq("telegram_chat_row_id", chat.id)
         .order("created_at", { ascending: true })
         .limit(500);
       if (error) throw error;
       return (data ?? []) as Message[];
+
     },
   });
 
