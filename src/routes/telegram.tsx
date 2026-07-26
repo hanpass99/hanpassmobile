@@ -1042,6 +1042,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     setEditing(null);
     setTitle("");
     setContent("");
+    setShortcut("");
   };
 
   const saveMut = useMutation({
