@@ -266,12 +266,30 @@ function TelegramPage() {
           <h1 className="text-lg font-semibold">텔레그램 상담 · Telegram Chat</h1>
           <Badge variant="secondary">{chats.length}</Badge>
         </div>
-        {isAdmin && (
-          <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-            <Settings className="mr-1 h-4 w-4" /> 웹훅 설정
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <select
+              value={operatorFilter}
+              onChange={(e) => setOperatorFilter(e.target.value)}
+              className="h-8 rounded-md border bg-background px-2 text-xs"
+              title="상담사별 대화 필터 (감사용)"
+            >
+              <option value="all">전체 상담사</option>
+              {(staffQuery.data ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.display_name ?? "직원"}
+                </option>
+              ))}
+            </select>
+          )}
+          {isAdmin && (
+            <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+              <Settings className="mr-1 h-4 w-4" /> 웹훅 설정
+            </Button>
+          )}
+        </div>
       </div>
+
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-[340px_1fr]">
         {/* Left: chat list */}
