@@ -156,17 +156,27 @@ export async function downloadTelegramFile(
   return { bytes, contentType };
 }
 
+/**
+ * Normalize a phone number for matching against the CRM DB.
+ * - Strips spaces, hyphens, plus sign, and any non-digit chars.
+ * - If it starts with "82" (Korean country code), removes "82" and prepends "0".
+ *   e.g. 821080376033 → 01080376033, +82 10-8037-6033 → 01080376033
+ * Returns the digits-only string, or null if empty/invalid.
+ */
 export function normalizePhone(raw: string): string | null {
-  const digits = (raw || "").toString().replace(/\D/g, "");
-  const normalizedDigits =
-    digits.length === 13 && digits.startsWith("82010")
-      ? `8210${digits.slice(5)}`
-      : digits;
-  if (normalizedDigits.length === 11 && normalizedDigits.startsWith("010")) {
-    return `${normalizedDigits.slice(0, 3)}-${normalizedDigits.slice(3, 7)}-${normalizedDigits.slice(7)}`;
+  let digits = (raw || "").toString().replace(/[^\d]/g, "");
+  if (!digits) return null;
+  if (digits.startsWith("82")) {
+    digits = "0" + digits.slice(2);
   }
-  if (normalizedDigits.length === 12 && normalizedDigits.startsWith("8210")) {
-    return `${normalizedDigits.slice(0, 4)}-${normalizedDigits.slice(4, 8)}-${normalizedDigits.slice(8)}`;
+  return digits || null;
+}
+
+/** Format 010XXXXXXXX (11 digits) into the hyphenated 010-XXXX-XXXX used by the CRM. */
+export function formatKoreanPhone(digits: string): string | null {
+  const d = (digits || "").replace(/\D/g, "");
+  if (d.length === 11 && d.startsWith("010")) {
+    return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
   }
   return null;
 }
