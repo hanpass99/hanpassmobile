@@ -85,10 +85,16 @@ function NotificationsPage() {
       const ids = notis.map((n: any) => n.id);
       const { data: recs } = await supabase
         .from("admin_notification_recipients")
-        .select("notification_id, acknowledged_at, sms_status")
+        .select("notification_id, user_id, acknowledged_at, sms_status, profiles!left(display_name)")
         .in("notification_id", ids);
       return notis.map((n: any) => {
         const rs = (recs ?? []).filter((r: any) => r.notification_id === n.id);
+        const recipients: Recipient[] = rs.map((r: any) => ({
+          user_id: r.user_id,
+          display_name: (r.profiles as any)?.display_name ?? r.user_id.slice(0, 8),
+          acknowledged_at: r.acknowledged_at,
+          sms_status: r.sms_status,
+        }));
         return {
           id: n.id,
           title: n.title,
@@ -98,6 +104,7 @@ function NotificationsPage() {
           acked: rs.filter((r: any) => r.acknowledged_at).length,
           sms_ok: rs.filter((r: any) => r.sms_status === "sent").length,
           sms_fail: rs.filter((r: any) => r.sms_status === "failed").length,
+          recipients,
         };
       });
     },
