@@ -127,27 +127,29 @@ function AuthGate() {
 function AuthedShell() {
   useCallGoal();
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-[52px] items-center gap-3 border-b border-border bg-card px-4" style={{ borderBottomWidth: "0.5px" }}>
-            <SidebarTrigger />
-            <div className="flex-1" />
-            <span className="hidden text-xs text-muted-foreground sm:inline">
-              Hanpass Mobile · OB Call Management
-            </span>
-          </header>
+    <AttendanceCheckInGate>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-background">
+          <AppSidebar />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <header className="sticky top-0 z-30 flex h-[52px] items-center gap-3 border-b border-border bg-card px-4" style={{ borderBottomWidth: "0.5px" }}>
+              <SidebarTrigger />
+              <div className="flex-1" />
+              <span className="hidden text-xs text-muted-foreground sm:inline">
+                Hanpass Mobile · OB Call Management
+              </span>
+            </header>
 
-          <main className="min-w-0 flex-1 p-4 md:p-6">
-            <Outlet />
-          </main>
+            <main className="min-w-0 flex-1 p-4 md:p-6">
+              <Outlet />
+            </main>
+          </div>
         </div>
-      </div>
-      <CallLogPopupProvider />
-      <AiAssistant />
-      <AdminPushListener />
-    </SidebarProvider>
+        <CallLogPopupProvider />
+        <AiAssistant />
+        <AdminPushListener />
+      </SidebarProvider>
+    </AttendanceCheckInGate>
   );
 }
 
