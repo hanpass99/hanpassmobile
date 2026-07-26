@@ -405,19 +405,31 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           rowId = existing.id;
           // Preserve "done" status unless the customer explicitly restarts with /start.
           // Otherwise, treat the inbound message as reopening the chat (status: 'new').
-          const nextStatus = isStartCommand ? "new" : wasDone ? "done" : "new";
-          const updatePayload: Record<string, unknown> = {
-            last_message_preview: preview,
-            last_message_at: nowIso,
-            unread_count: (existing.unread_count ?? 0) + 1,
-            status: nextStatus,
-          };
+          const nextStatus: "new" | "done" = isStartCommand ? "new" : wasDone ? "done" : "new";
           if (isStartCommand) {
-            updatePayload.assigned_operator_id = null;
-            updatePayload.last_done_reprompt_at = null;
-            updatePayload.last_off_hours_auto_reply_at = null;
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({
+                last_message_preview: preview,
+                last_message_at: nowIso,
+                unread_count: (existing.unread_count ?? 0) + 1,
+                status: nextStatus,
+                assigned_operator_id: null,
+                last_done_reprompt_at: null,
+                last_off_hours_auto_reply_at: null,
+              })
+              .eq("id", rowId);
+          } else {
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({
+                last_message_preview: preview,
+                last_message_at: nowIso,
+                unread_count: (existing.unread_count ?? 0) + 1,
+                status: nextStatus,
+              })
+              .eq("id", rowId);
           }
-          await supabaseAdmin.from("telegram_chats").update(updatePayload).eq("id", rowId);
         }
 
         // Determine current chat language (default 'uz' until user picks)
