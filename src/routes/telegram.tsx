@@ -625,14 +625,24 @@ function ConversationPane({ chat }: { chat: Chat }) {
             const isOut = m.direction === "out";
             const sender = m.sent_by ? profileMap[m.sent_by] : null;
             const isMine = isOut && m.sent_by === user?.id;
+            const timeLabel = new Date(m.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            const senderLabel = isOut
+              ? `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
+              : `고객 · ${timeLabel}`;
             return (
               <div key={m.id} className={cn("flex", isOut ? "justify-end" : "justify-start")}>
                 <div className={cn("max-w-[75%]", isOut && "flex flex-col items-end")}>
-                  {isOut && (
-                    <div className="mb-0.5 text-[10px] text-muted-foreground">
-                      {sender?.display_name ?? "직원"} {isMine && "(나)"}
-                    </div>
-                  )}
+                  <div
+                    className={cn(
+                      "mb-0.5 text-[10px] font-medium",
+                      isOut ? "text-right text-primary/80" : "text-left text-muted-foreground",
+                    )}
+                  >
+                    {senderLabel}
+                  </div>
                   <div
                     className={cn(
                       "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words",
@@ -643,13 +653,10 @@ function ConversationPane({ chat }: { chat: Chat }) {
                   >
                     <MessageBody m={m} />
                   </div>
-
-                  <div className={cn("mt-0.5 text-[10px] text-muted-foreground", isOut ? "text-right" : "text-left")}>
-                    {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </div>
                 </div>
               </div>
             );
+
           })
         )}
       </div>
