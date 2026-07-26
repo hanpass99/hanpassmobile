@@ -8,6 +8,7 @@ type AuthCtx = {
   loading: boolean;
   isAdmin: boolean;
   canAccessNewSignup: boolean;
+  canAccessTelegram: boolean;
   displayName: string;
   avatarUrl: string | null;
   signOut: () => Promise<void>;
@@ -21,18 +22,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [canAccessNewSignup, setCanAccessNewSignup] = useState(false);
+  const [canAccessTelegram, setCanAccessTelegram] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const loadProfile = async (uid: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
-      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup, can_access_telegram").eq("id", uid).maybeSingle(),
     ]);
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
     setDisplayName(profile?.display_name ?? "");
     setAvatarUrl((profile as any)?.avatar_url ?? null);
     setCanAccessNewSignup(!!(profile as any)?.can_access_new_signup);
+    setCanAccessTelegram(!!(profile as any)?.can_access_telegram);
   };
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setIsAdmin(false);
         setCanAccessNewSignup(false);
+        setCanAccessTelegram(false);
         setDisplayName("");
         setAvatarUrl(null);
       }
@@ -65,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isAdmin,
         canAccessNewSignup,
+        canAccessTelegram,
         displayName,
         avatarUrl,
         signOut: async () => {
