@@ -764,18 +764,88 @@ function ConversationPane({ chat }: { chat: Chat }) {
           </Popover>
         </div>
 
-        <div className="flex items-end gap-2">
+        <div className="relative flex items-end gap-2">
+          {slashOpen && (
+            <div className="absolute bottom-full left-0 right-14 mb-1 z-20 rounded-md border bg-popover shadow-lg">
+              <div className="border-b px-3 py-1.5 text-[11px] text-muted-foreground">
+                템플릿 자동완성 {slashQuery ? `· "/${slashQuery}"` : ""} — ↑/↓ 이동, Enter 삽입, Esc 취소
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {slashMatches.length === 0 ? (
+                  <div className="p-3 text-center text-xs text-muted-foreground">템플릿 없음</div>
+                ) : (
+                  <ul>
+                    {slashMatches.map((t, idx) => (
+                      <li key={t.id}>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applySlashTemplate(t);
+                          }}
+                          onMouseEnter={() => setSlashIndex(idx)}
+                          className={cn(
+                            "block w-full px-3 py-2 text-left text-xs",
+                            idx === slashIndex ? "bg-accent" : "hover:bg-accent/50",
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            {t.shortcut && (
+                              <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                                /{t.shortcut}
+                              </span>
+                            )}
+                            <span className="font-medium">{t.title}</span>
+                          </div>
+                          <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                            {t.content}
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
           <Textarea
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
+              if (slashOpen && slashMatches.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSlashIndex((i) => (i + 1) % slashMatches.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSlashIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
+                  return;
+                }
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  applySlashTemplate(slashMatches[slashIndex]);
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setText("");
+                  return;
+                }
+                if (e.key === "Tab") {
+                  e.preventDefault();
+                  applySlashTemplate(slashMatches[slashIndex]);
+                  return;
+                }
+              }
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 onSubmit();
               }
             }}
-            placeholder="메시지 입력 (Enter 전송, Shift+Enter 줄바꿈)"
+            placeholder="메시지 입력 (Enter 전송, Shift+Enter 줄바꿈, / 로 템플릿 검색)"
             rows={2}
             className="resize-none"
             disabled={sendMut.isPending}
