@@ -164,6 +164,7 @@ function RootComponent() {
             <AuthGate />
           </ErrorBoundary>
           <Toaster richColors position="top-right" />
+          <AutoTranslator />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
