@@ -25,6 +25,7 @@ export function AppSidebar() {
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("nav.customers"), url: "/customers", icon: Users },
     { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
+    { title: "텔레그램 상담", url: "/telegram", icon: Send },
     { title: t("nav.callLogs"), url: "/call-logs", icon: PhoneCall },
   ];
   const analyticsItems = [
