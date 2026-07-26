@@ -515,12 +515,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
           <div className="text-xs text-muted-foreground">
             {customerQuery.data ? (
               <span className="text-green-700 dark:text-green-400">
-                ✓ CRM 고객: {customerQuery.data.name} ({customerQuery.data.phone})
+                ✓ {customerQuery.data.name} · {customerQuery.data.phone}
               </span>
             ) : chat.phone ? (
-              <span className="text-amber-600">공유 번호: {chat.phone} · 미매칭</span>
+              <span>{chat.phone}</span>
             ) : (
-              <span className="text-amber-600">미매칭 — 고객 연결이 필요합니다</span>
+              <span className="text-muted-foreground">번호 대기중</span>
             )}
           </div>
         </div>
