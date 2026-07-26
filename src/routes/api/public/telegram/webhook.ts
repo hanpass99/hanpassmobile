@@ -365,15 +365,20 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const nowIso = new Date(message.date * 1000).toISOString();
 
 
+        // Detect /start (customer wants a fresh session)
+        const isStartCommand =
+          typeof message.text === "string" && message.text.trim().toLowerCase().startsWith("/start");
+
         // Upsert chat row
         const { data: existing } = await supabaseAdmin
           .from("telegram_chats")
-          .select("id, customer_id, is_matched, unread_count, phone, language")
+          .select("id, customer_id, is_matched, unread_count, phone, language, status, last_done_reprompt_at")
           .eq("chat_id", chatId)
           .maybeSingle();
 
         let rowId: string;
         let isFirstMessage = false;
+        const wasDone = existing?.status === "done";
 
         if (!existing) {
           isFirstMessage = true;
@@ -398,16 +403,21 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           rowId = inserted.id;
         } else {
           rowId = existing.id;
-          await supabaseAdmin
-            .from("telegram_chats")
-            .update({
-              last_message_preview: preview,
-              last_message_at: nowIso,
-              unread_count: (existing.unread_count ?? 0) + 1,
-              // Any inbound message re-opens a completed chat as "new"
-              status: "new",
-            })
-            .eq("id", rowId);
+          // Preserve "done" status unless the customer explicitly restarts with /start.
+          // Otherwise, treat the inbound message as reopening the chat (status: 'new').
+          const nextStatus = isStartCommand ? "new" : wasDone ? "done" : "new";
+          const updatePayload: Record<string, unknown> = {
+            last_message_preview: preview,
+            last_message_at: nowIso,
+            unread_count: (existing.unread_count ?? 0) + 1,
+            status: nextStatus,
+          };
+          if (isStartCommand) {
+            updatePayload.assigned_operator_id = null;
+            updatePayload.last_done_reprompt_at = null;
+            updatePayload.last_off_hours_auto_reply_at = null;
+          }
+          await supabaseAdmin.from("telegram_chats").update(updatePayload).eq("id", rowId);
         }
 
         // Determine current chat language (default 'uz' until user picks)
