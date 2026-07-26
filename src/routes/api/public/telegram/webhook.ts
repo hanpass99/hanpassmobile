@@ -1,13 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "node:crypto";
 import {
+  answerCallbackQuery,
+  BOT_COPY,
+  type BotLang,
   deriveWebhookSecret,
   downloadTelegramFile,
+  editMessageText,
   getFilePath,
   normalizePhone,
   removeKeyboard,
   sendContactRequest,
+  sendLanguagePicker,
 } from "@/lib/telegram.server";
+
 
 function safeEqual(a: string, b: string): boolean {
   const A = Buffer.from(a);
