@@ -335,7 +335,10 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             .eq("id", rowId);
         }
 
-        // Contact auto-match (unchanged)
+        // Determine current chat language (default 'uz' until user picks)
+        const chatLang: BotLang = (existing?.language === "ru" ? "ru" : "uz");
+
+        // Contact auto-match
         if (message.contact?.phone_number) {
           const normalized = normalizePhone(message.contact.phone_number);
           if (normalized) {
@@ -349,30 +352,20 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
                 .from("telegram_chats")
                 .update({ customer_id: cust.id, phone: normalized, is_matched: true })
                 .eq("id", rowId);
-              try {
-                await removeKeyboard(
-                  chatId,
-                  `✅ 확인되었습니다. 잠시만 기다려주세요.\n✅ Verified. An agent will reply shortly.`,
-                );
-              } catch (e) {
-                console.error("[telegram webhook] removeKeyboard failed", e);
-              }
             } else {
               await supabaseAdmin
                 .from("telegram_chats")
                 .update({ phone: normalized })
                 .eq("id", rowId);
-              try {
-                await removeKeyboard(
-                  chatId,
-                  `📞 번호를 확인 중입니다. 상담사가 곧 답변드립니다.\n📞 Checking your number. An agent will reply soon.`,
-                );
-              } catch (e) {
-                console.error(e);
-              }
+            }
+            try {
+              await removeKeyboard(chatId, BOT_COPY.checking[chatLang]);
+            } catch (e) {
+              console.error("[telegram webhook] removeKeyboard failed", e);
             }
           }
         }
+
 
         // Download media (if any) and upload to Storage
         let media_storage_path: string | null = null;
