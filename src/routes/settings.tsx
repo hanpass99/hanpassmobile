@@ -134,6 +134,20 @@ function Settings() {
     toast.success(value ? t("settings.newSignupAllowed") : t("settings.newSignupBlocked"));
   };
 
+  const setTelegramAccess = async (r: Row, value: boolean) => {
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_telegram: value } : x)));
+    const { error } = await supabase.rpc("admin_set_profile_telegram_access" as any, {
+      _user_id: r.id,
+      _value: value,
+    });
+    if (error) {
+      toast.error(error.message);
+      setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_telegram: !value } : x)));
+      return;
+    }
+    toast.success(value ? "텔레그램 상담 접근 허용됨" : "텔레그램 상담 접근 차단됨");
+  };
+
 
   const moveRow = async (idx: number, dir: -1 | 1) => {
     const next = [...rows];
@@ -379,15 +393,27 @@ function Settings() {
                   </TableCell>
                   {isAdmin && (
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={r.role === "admin" || r.can_access_new_signup}
-                          disabled={r.role === "admin"}
-                          onCheckedChange={(v) => setNewSignupAccess(r, v)}
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {r.role === "admin" ? t("settings.accessAllowedAll") : r.can_access_new_signup ? t("settings.accessAllowed") : t("settings.accessBlocked")}
-                        </span>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={r.role === "admin" || r.can_access_new_signup}
+                            disabled={r.role === "admin"}
+                            onCheckedChange={(v) => setNewSignupAccess(r, v)}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            신규가입: {r.role === "admin" ? t("settings.accessAllowedAll") : r.can_access_new_signup ? t("settings.accessAllowed") : t("settings.accessBlocked")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={r.role === "admin" || r.can_access_telegram}
+                            disabled={r.role === "admin"}
+                            onCheckedChange={(v) => setTelegramAccess(r, v)}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            텔레그램: {r.role === "admin" ? t("settings.accessAllowedAll") : r.can_access_telegram ? t("settings.accessAllowed") : t("settings.accessBlocked")}
+                          </span>
+                        </div>
                       </div>
                     </TableCell>
                   )}
