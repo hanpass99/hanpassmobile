@@ -104,11 +104,20 @@ type TgMessage = {
   sticker?: { file_id: string; emoji?: string };
 };
 
+type TgCallbackQuery = {
+  id: string;
+  from: TgUser;
+  message?: TgMessage;
+  data?: string;
+};
+
 type TgUpdate = {
   update_id: number;
   message?: TgMessage;
   edited_message?: TgMessage;
+  callback_query?: TgCallbackQuery;
 };
+
 
 type MediaKind = "text" | "photo" | "document" | "video" | "voice" | "audio" | "sticker" | "contact" | "other";
 
