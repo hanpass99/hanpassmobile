@@ -89,38 +89,48 @@ export function AdminPushListener() {
   return (
     <Dialog open onOpenChange={() => {}}>
       <DialogContent
-        className="max-w-lg border-2 border-primary shadow-2xl [&>button]:hidden"
+        className="max-w-2xl border-4 border-destructive bg-background p-0 shadow-2xl shadow-destructive/30 [&>button]:hidden"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Bell className="h-6 w-6" />
+        <div className="bg-destructive px-6 py-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-destructive-foreground/20 text-destructive-foreground">
+              <Bell className="h-8 w-8 animate-pulse" />
             </div>
             <div>
-              <DialogTitle className="text-xl">
-                {current.title?.trim() ? current.title : "관리자 공지"}
+              <DialogTitle className="text-2xl font-bold text-destructive-foreground">
+                {current.title?.trim() ? current.title : "긴급 관리자 공지"}
               </DialogTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-sm text-destructive-foreground/90">
                 {current.sender_name ? `보낸 사람: ${current.sender_name}` : ""}
                 {current.created_at ? ` · ${new Date(current.created_at).toLocaleString()}` : ""}
               </p>
             </div>
           </div>
-        </DialogHeader>
-        <div className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-md bg-muted/40 p-4 text-base leading-relaxed">
-          {current.message}
         </div>
-        {queue.length > 1 ? (
-          <p className="text-xs text-muted-foreground">확인 대기 중인 공지 {queue.length}건</p>
-        ) : null}
-        <DialogFooter>
-          <Button size="lg" className="w-full text-base" onClick={ack} disabled={acking}>
-            {acking ? "처리 중..." : "확인"}
-          </Button>
-        </DialogFooter>
+        <div className="px-6 pb-4 pt-2">
+          <div className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-lg border border-destructive/20 bg-destructive/5 p-5 text-lg font-medium leading-relaxed text-foreground">
+            {current.message}
+          </div>
+          {queue.length > 1 ? (
+            <p className="mt-3 text-sm font-semibold text-destructive">
+              확인 대기 중인 공지 {queue.length}건
+            </p>
+          ) : null}
+          <DialogFooter className="mt-5">
+            <Button
+              size="lg"
+              variant="destructive"
+              className="w-full text-lg font-bold"
+              onClick={ack}
+              disabled={acking}
+            >
+              {acking ? "처리 중..." : "확인 (필수)"}
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
