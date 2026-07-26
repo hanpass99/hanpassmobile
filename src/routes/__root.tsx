@@ -22,6 +22,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useCallGoal } from "@/hooks/use-call-goal";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AutoTranslator } from "@/components/AutoTranslator";
 import i18n from "@/i18n";
 import { useTranslation } from "react-i18next";
 
