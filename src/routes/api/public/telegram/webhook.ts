@@ -297,7 +297,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const update = (await request.json()) as TgUpdate;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Handle language-picker callback first
+        // Handle inline-keyboard callbacks
         if (update.callback_query) {
           const cq = update.callback_query;
           const chatId = cq.message?.chat?.id;
@@ -323,6 +323,27 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               await sendContactRequest(chatId, lang);
             } catch (e) {
               console.error("[telegram webhook] sendContactRequest failed", e);
+            }
+            try {
+              await answerCallbackQuery(cq.id);
+            } catch (e) {
+              console.error("[telegram webhook] answerCallbackQuery failed", e);
+            }
+          } else if (chatId && data === "new_inquiry") {
+            // Reset chat to a fresh session while preserving message history & sender_operator audit trail.
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({
+                status: "new",
+                assigned_operator_id: null,
+                last_done_reprompt_at: null,
+                last_off_hours_auto_reply_at: null,
+              })
+              .eq("chat_id", chatId);
+            try {
+              await sendLanguagePicker(chatId);
+            } catch (e) {
+              console.error("[telegram webhook] new_inquiry language picker failed", e);
             }
             try {
               await answerCallbackQuery(cq.id);
