@@ -86,44 +86,44 @@ export function AdminPushListener() {
   if (!current) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="animate-pulse-border relative w-full max-w-xl overflow-hidden rounded-2xl border-4 border-destructive bg-background shadow-2xl">
-        <div className="flex items-center gap-3 bg-destructive px-5 py-3 text-destructive-foreground">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+      <div className="animate-pulse-border relative w-full max-w-4xl overflow-hidden rounded-3xl border-[6px] border-destructive bg-background shadow-[0_0_60px_rgba(var(--destructive),0.45)]">
+        <div className="flex items-center gap-4 bg-destructive px-8 py-5 text-destructive-foreground">
           <div className="relative">
-            <Bell className="h-6 w-6 animate-pulse" />
+            <Bell className="h-10 w-10 animate-pulse" />
           </div>
-          <div className="flex flex-1 items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            <span className="text-lg font-black tracking-wide">긴급 공지 · URGENT NOTICE</span>
+          <div className="flex flex-1 items-center gap-3">
+            <AlertTriangle className="h-8 w-8" />
+            <span className="text-3xl font-black tracking-wide">긴급 공지 · URGENT NOTICE</span>
           </div>
           {queue.length > 1 ? (
-            <span className="rounded-full bg-destructive-foreground/20 px-3 py-1 text-sm font-bold">
+            <span className="rounded-full bg-destructive-foreground/20 px-5 py-2 text-lg font-bold">
               +{queue.length - 1}
             </span>
           ) : null}
         </div>
 
-        <div className="px-6 py-5">
-          <h2 className="mb-1 text-2xl font-black leading-tight text-foreground">
+        <div className="px-10 py-8">
+          <h2 className="mb-2 text-4xl font-black leading-tight text-foreground">
             {current.title?.trim() ? current.title : "관리자 공지 / Admin Notice"}
           </h2>
-          <p className="mb-4 text-xs text-muted-foreground">
+          <p className="mb-6 text-base text-muted-foreground">
             {current.sender_name ? `${current.sender_name}` : ""}
             {current.created_at
               ? `${current.sender_name ? " · " : ""}${new Date(current.created_at).toLocaleString()}`
               : ""}
           </p>
 
-          <div className="max-h-[45vh] overflow-y-auto whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-4 text-base font-medium leading-relaxed text-foreground">
+          <div className="max-h-[55vh] overflow-y-auto whitespace-pre-wrap rounded-xl border-2 border-border bg-muted/40 p-6 text-2xl font-medium leading-relaxed text-foreground">
             {current.message}
           </div>
         </div>
 
-        <div className="border-t border-border bg-muted/30 p-4">
+        <div className="border-t border-border bg-muted/30 p-6">
           <Button
             size="lg"
             variant="destructive"
-            className="h-14 w-full text-lg font-bold shadow-lg"
+            className="h-20 w-full text-2xl font-black shadow-xl"
             onClick={ack}
             disabled={acking}
           >
