@@ -296,7 +296,15 @@ function NotificationsPage() {
                   <TableCell className="text-sm">{h.title ?? "-"}</TableCell>
                   <TableCell className="max-w-md truncate text-sm text-muted-foreground">{h.message}</TableCell>
                   <TableCell className="text-right text-sm">
-                    {h.acked}/{h.total}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => setDetailNoti(h)}
+                    >
+                      <Eye className="h-3 w-3" />
+                      {h.acked}/{h.total}
+                    </Button>
                   </TableCell>
                   <TableCell className="text-right text-xs">
                     {h.sms_ok > 0 ? <span className="text-emerald-600">성공 {h.sms_ok}</span> : null}
@@ -316,6 +324,63 @@ function NotificationsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!detailNoti} onOpenChange={(open) => !open && setDetailNoti(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>확인 현황 · Acknowledgement Status</DialogTitle>
+            <DialogDescription>
+              {detailNoti ? (
+                <>
+                  {new Date(detailNoti.created_at).toLocaleString()} · {detailNoti.title ?? "관리자 공지"}
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          {detailNoti ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-sm">
+                <div className="rounded-md bg-emerald-50 px-3 py-1 text-emerald-700">
+                  확인 완료: {detailNoti.acked}명
+                </div>
+                <div className="rounded-md bg-red-50 px-3 py-1 text-red-700">
+                  미확인: {detailNoti.total - detailNoti.acked}명
+                </div>
+              </div>
+
+              <div className="max-h-[50vh] overflow-y-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>직원</TableHead>
+                      <TableHead className="text-right">상태</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {detailNoti.recipients
+                      .filter((r) => !r.acknowledged_at)
+                      .map((r) => (
+                        <TableRow key={r.user_id}>
+                          <TableCell className="text-sm font-medium">{r.display_name}</TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant="destructive" className="text-xs">미확인</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {detailNoti.recipients.filter((r) => !r.acknowledged_at).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={2} className="p-4 text-center text-sm text-muted-foreground">
+                          모두 확인했습니다. All acknowledged.
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
