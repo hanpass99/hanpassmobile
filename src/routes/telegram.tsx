@@ -1130,7 +1130,14 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                         onClick={() => startEdit(t)}
                         className="min-w-0 flex-1 text-left"
                       >
-                        <div className="text-xs font-medium">{t.title}</div>
+                        <div className="flex items-center gap-1.5">
+                          {t.shortcut && (
+                            <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                              /{t.shortcut}
+                            </span>
+                          )}
+                          <span className="text-xs font-medium">{t.title}</span>
+                        </div>
                         <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
                           {t.content}
                         </div>
