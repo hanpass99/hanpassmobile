@@ -427,17 +427,15 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           console.error("[telegram webhook] insert message failed", msgErr);
         }
 
-        // First-time greeting: ask for phone number
+        // First-time greeting: show language picker (uz / ru)
         if (isFirstMessage && !message.contact) {
           try {
-            await sendContactRequest(
-              chatId,
-              `안녕하세요! 한패스 모바일입니다.\n원활한 상담을 위해 아래 버튼으로 전화번호를 공유해주세요.\n\nHello! This is Hanpass Mobile.\nPlease share your phone number using the button below so we can assist you.`,
-            );
+            await sendLanguagePicker(chatId);
           } catch (e) {
-            console.error("[telegram webhook] greeting failed", e);
+            console.error("[telegram webhook] language picker failed", e);
           }
         }
+
 
         return Response.json({ ok: true });
       },
