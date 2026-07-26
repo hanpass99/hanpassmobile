@@ -168,7 +168,7 @@ function NotificationsPage() {
   if (!isAdmin) {
     return (
       <div className="space-y-4">
-        <PageHeader title="관리자 공지" description="관리자만 접근할 수 있습니다." icon={Bell} />
+        <PageHeader title="관리자 공지" description="관리자만 접근할 수 있습니다." />
       </div>
     );
   }
@@ -177,7 +177,7 @@ function NotificationsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="관리자 공지" description="직원에게 팝업 공지와 업무폰 SMS를 함께 발송합니다." icon={Bell} />
+      <PageHeader title="관리자 공지" description="직원에게 팝업 공지와 업무폰 SMS를 함께 발송합니다." />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card>
