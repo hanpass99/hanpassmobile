@@ -60,9 +60,19 @@ type Message = {
   telegram_chat_row_id: string;
   direction: "in" | "out";
   text: string | null;
+  caption: string | null;
+  message_type: string | null;
+  media_storage_path: string | null;
+  media_file_name: string | null;
+  media_mime: string | null;
+  media_size: number | null;
+  media_width: number | null;
+  media_height: number | null;
+  media_duration: number | null;
   sent_by: string | null;
   created_at: string;
 };
+
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
@@ -282,12 +292,15 @@ function ConversationPane({ chat }: { chat: Chat }) {
     queryFn: async (): Promise<Message[]> => {
       const { data, error } = await supabase
         .from("telegram_messages")
-        .select("id, telegram_chat_row_id, direction, text, sent_by, created_at")
+        .select(
+          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at",
+        )
         .eq("telegram_chat_row_id", chat.id)
         .order("created_at", { ascending: true })
         .limit(500);
       if (error) throw error;
       return (data ?? []) as Message[];
+
     },
   });
 
@@ -434,8 +447,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
                         : "bg-muted text-foreground rounded-bl-sm",
                     )}
                   >
-                    {m.text ?? "(비어있음)"}
+                    <MessageBody m={m} />
                   </div>
+
                   <div className={cn("mt-0.5 text-[10px] text-muted-foreground", isOut ? "text-right" : "text-left")}>
                     {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </div>
@@ -474,6 +488,111 @@ function ConversationPane({ chat }: { chat: Chat }) {
     </>
   );
 }
+
+function useSignedMediaUrl(path: string | null) {
+  return useQuery({
+    queryKey: ["telegram-media-url", path],
+    enabled: !!path,
+    staleTime: 45 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from("telegram-media")
+        .createSignedUrl(path!, 60 * 60);
+      if (error) throw error;
+      return data.signedUrl;
+    },
+  });
+}
+
+function humanSize(n: number | null): string {
+  if (!n) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function MessageBody({ m }: { m: Message }) {
+  const kind = m.message_type ?? "text";
+  const mediaQ = useSignedMediaUrl(m.media_storage_path);
+  const url = mediaQ.data;
+  const caption = m.caption ?? null;
+
+  if (kind === "text" || (!m.media_storage_path && m.text)) {
+    return <>{m.text ?? m.caption ?? "(비어있음)"}</>;
+  }
+
+  const captionEl = caption ? (
+    <div className="mt-1.5 whitespace-pre-wrap break-words">{caption}</div>
+  ) : null;
+
+  if (kind === "photo" || kind === "sticker") {
+    return (
+      <div>
+        {url ? (
+          <a href={url} target="_blank" rel="noreferrer">
+            <img
+              src={url}
+              alt={caption ?? "photo"}
+              className="max-h-80 max-w-full rounded-lg object-contain"
+              loading="lazy"
+            />
+          </a>
+        ) : (
+          <div className="opacity-70">📷 Loading photo…</div>
+        )}
+        {captionEl}
+      </div>
+    );
+  }
+
+  if (kind === "video") {
+    return (
+      <div>
+        {url ? (
+          <video src={url} controls className="max-h-80 max-w-full rounded-lg" preload="metadata" />
+        ) : (
+          <div className="opacity-70">🎬 Loading video…</div>
+        )}
+        {captionEl}
+      </div>
+    );
+  }
+
+  if (kind === "voice" || kind === "audio") {
+    return (
+      <div>
+        {url ? (
+          <audio src={url} controls className="max-w-full" preload="metadata" />
+        ) : (
+          <div className="opacity-70">🎤 Loading audio…</div>
+        )}
+        {captionEl}
+      </div>
+    );
+  }
+
+  // document or other
+  return (
+    <div>
+      <a
+        href={url ?? "#"}
+        target="_blank"
+        rel="noreferrer"
+        download={m.media_file_name ?? undefined}
+        className="flex items-center gap-2 underline underline-offset-2"
+        onClick={(e) => {
+          if (!url) e.preventDefault();
+        }}
+      >
+        📎 <span className="break-all">{m.media_file_name ?? "File"}</span>
+        {m.media_size ? <span className="opacity-70 text-xs">({humanSize(m.media_size)})</span> : null}
+      </a>
+      {captionEl}
+    </div>
+  );
+}
+
+
 
 function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void }) {
   const qc = useQueryClient();

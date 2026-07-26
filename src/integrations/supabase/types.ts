@@ -1006,10 +1006,20 @@ export type Database = {
       }
       telegram_messages: {
         Row: {
+          caption: string | null
           chat_id: number
           created_at: string
           direction: string
           id: string
+          media_duration: number | null
+          media_file_name: string | null
+          media_height: number | null
+          media_mime: string | null
+          media_size: number | null
+          media_storage_path: string | null
+          media_url: string | null
+          media_width: number | null
+          message_type: string
           raw: Json | null
           sent_by: string | null
           telegram_chat_row_id: string
@@ -1017,10 +1027,20 @@ export type Database = {
           text: string | null
         }
         Insert: {
+          caption?: string | null
           chat_id: number
           created_at?: string
           direction: string
           id?: string
+          media_duration?: number | null
+          media_file_name?: string | null
+          media_height?: number | null
+          media_mime?: string | null
+          media_size?: number | null
+          media_storage_path?: string | null
+          media_url?: string | null
+          media_width?: number | null
+          message_type?: string
           raw?: Json | null
           sent_by?: string | null
           telegram_chat_row_id: string
@@ -1028,10 +1048,20 @@ export type Database = {
           text?: string | null
         }
         Update: {
+          caption?: string | null
           chat_id?: number
           created_at?: string
           direction?: string
           id?: string
+          media_duration?: number | null
+          media_file_name?: string | null
+          media_height?: number | null
+          media_mime?: string | null
+          media_size?: number | null
+          media_storage_path?: string | null
+          media_url?: string | null
+          media_width?: number | null
+          message_type?: string
           raw?: Json | null
           sent_by?: string | null
           telegram_chat_row_id?: string
