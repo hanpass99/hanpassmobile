@@ -243,16 +243,54 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
 
         const update = (await request.json()) as TgUpdate;
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // Handle language-picker callback first
+        if (update.callback_query) {
+          const cq = update.callback_query;
+          const chatId = cq.message?.chat?.id;
+          const data = cq.data ?? "";
+          if (chatId && data.startsWith("lang:")) {
+            const lang = (data.split(":")[1] === "ru" ? "ru" : "uz") as BotLang;
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({ language: lang })
+              .eq("chat_id", chatId);
+            try {
+              if (cq.message?.message_id) {
+                await editMessageText(
+                  chatId,
+                  cq.message.message_id,
+                  lang === "uz" ? "✅ Til: O'zbek" : "✅ Язык: Русский",
+                );
+              }
+            } catch (e) {
+              console.error("[telegram webhook] editMessageText failed", e);
+            }
+            try {
+              await sendContactRequest(chatId, lang);
+            } catch (e) {
+              console.error("[telegram webhook] sendContactRequest failed", e);
+            }
+            try {
+              await answerCallbackQuery(cq.id);
+            } catch (e) {
+              console.error("[telegram webhook] answerCallbackQuery failed", e);
+            }
+          }
+          return Response.json({ ok: true });
+        }
+
         const message = update.message ?? update.edited_message;
         if (!message?.chat?.id) return Response.json({ ok: true, ignored: true });
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const chatId = message.chat.id;
         const from = message.from;
         const media = detectMedia(message);
         const caption = message.caption ?? null;
         const preview = previewForKind(media.kind, caption, message.text ?? null);
         const nowIso = new Date(message.date * 1000).toISOString();
+
 
         // Upsert chat row
         const { data: existing } = await supabaseAdmin
