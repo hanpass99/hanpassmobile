@@ -499,6 +499,45 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           }
         }
 
+        // Off-hours auto-reply: throttle to one message per off-hours session per chat.
+        // Runs AFTER the inbound message is saved, so CRM history is unaffected.
+        try {
+          const { data: bh } = await supabaseAdmin
+            .from("business_hours")
+            .select("start_hour, end_hour, timezone, auto_reply_uz, auto_reply_ru")
+            .eq("singleton", true)
+            .maybeSingle();
+          const startHour = bh?.start_hour ?? 10;
+          const endHour = bh?.end_hour ?? 19;
+          const tz = bh?.timezone ?? "Asia/Seoul";
+          const sessionStart = currentOffHoursSessionStart(tz, startHour, endHour);
+          if (sessionStart) {
+            // Fetch throttle marker (refetch to include the column even if `existing` predates the column)
+            const { data: chatRow } = await supabaseAdmin
+              .from("telegram_chats")
+              .select("last_off_hours_auto_reply_at, language")
+              .eq("id", rowId)
+              .maybeSingle();
+            const lastAt = chatRow?.last_off_hours_auto_reply_at
+              ? new Date(chatRow.last_off_hours_auto_reply_at as string)
+              : null;
+            if (!lastAt || lastAt < sessionStart) {
+              const lang: BotLang = (chatRow?.language === "ru" ? "ru" : chatLang);
+              const text = lang === "ru"
+                ? (bh?.auto_reply_ru ?? "")
+                : (bh?.auto_reply_uz ?? "");
+              if (text) {
+                await sendTelegramMessage(chatId, text);
+                await supabaseAdmin
+                  .from("telegram_chats")
+                  .update({ last_off_hours_auto_reply_at: new Date().toISOString() })
+                  .eq("id", rowId);
+              }
+            }
+          }
+        } catch (e) {
+          console.error("[telegram webhook] off-hours auto-reply failed", e);
+        }
 
         return Response.json({ ok: true });
       },
