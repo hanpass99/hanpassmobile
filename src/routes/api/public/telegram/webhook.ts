@@ -1,13 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "node:crypto";
 import {
+  answerCallbackQuery,
+  BOT_COPY,
+  type BotLang,
   deriveWebhookSecret,
   downloadTelegramFile,
+  editMessageText,
   getFilePath,
   normalizePhone,
   removeKeyboard,
   sendContactRequest,
+  sendLanguagePicker,
 } from "@/lib/telegram.server";
+
 
 function safeEqual(a: string, b: string): boolean {
   const A = Buffer.from(a);
@@ -98,11 +104,20 @@ type TgMessage = {
   sticker?: { file_id: string; emoji?: string };
 };
 
+type TgCallbackQuery = {
+  id: string;
+  from: TgUser;
+  message?: TgMessage;
+  data?: string;
+};
+
 type TgUpdate = {
   update_id: number;
   message?: TgMessage;
   edited_message?: TgMessage;
+  callback_query?: TgCallbackQuery;
 };
+
 
 type MediaKind = "text" | "photo" | "document" | "video" | "voice" | "audio" | "sticker" | "contact" | "other";
 
@@ -228,10 +243,47 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
 
         const update = (await request.json()) as TgUpdate;
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // Handle language-picker callback first
+        if (update.callback_query) {
+          const cq = update.callback_query;
+          const chatId = cq.message?.chat?.id;
+          const data = cq.data ?? "";
+          if (chatId && data.startsWith("lang:")) {
+            const lang = (data.split(":")[1] === "ru" ? "ru" : "uz") as BotLang;
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({ language: lang })
+              .eq("chat_id", chatId);
+            try {
+              if (cq.message?.message_id) {
+                await editMessageText(
+                  chatId,
+                  cq.message.message_id,
+                  lang === "uz" ? "✅ Til: O'zbek" : "✅ Язык: Русский",
+                );
+              }
+            } catch (e) {
+              console.error("[telegram webhook] editMessageText failed", e);
+            }
+            try {
+              await sendContactRequest(chatId, lang);
+            } catch (e) {
+              console.error("[telegram webhook] sendContactRequest failed", e);
+            }
+            try {
+              await answerCallbackQuery(cq.id);
+            } catch (e) {
+              console.error("[telegram webhook] answerCallbackQuery failed", e);
+            }
+          }
+          return Response.json({ ok: true });
+        }
+
         const message = update.message ?? update.edited_message;
         if (!message?.chat?.id) return Response.json({ ok: true, ignored: true });
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const chatId = message.chat.id;
         const from = message.from;
         const media = detectMedia(message);
@@ -239,10 +291,11 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const preview = previewForKind(media.kind, caption, message.text ?? null);
         const nowIso = new Date(message.date * 1000).toISOString();
 
+
         // Upsert chat row
         const { data: existing } = await supabaseAdmin
           .from("telegram_chats")
-          .select("id, customer_id, is_matched, unread_count, phone")
+          .select("id, customer_id, is_matched, unread_count, phone, language")
           .eq("chat_id", chatId)
           .maybeSingle();
 
@@ -282,7 +335,10 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             .eq("id", rowId);
         }
 
-        // Contact auto-match (unchanged)
+        // Determine current chat language (default 'uz' until user picks)
+        const chatLang: BotLang = (existing?.language === "ru" ? "ru" : "uz");
+
+        // Contact auto-match
         if (message.contact?.phone_number) {
           const normalized = normalizePhone(message.contact.phone_number);
           if (normalized) {
@@ -296,30 +352,20 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
                 .from("telegram_chats")
                 .update({ customer_id: cust.id, phone: normalized, is_matched: true })
                 .eq("id", rowId);
-              try {
-                await removeKeyboard(
-                  chatId,
-                  `✅ 확인되었습니다. 잠시만 기다려주세요.\n✅ Verified. An agent will reply shortly.`,
-                );
-              } catch (e) {
-                console.error("[telegram webhook] removeKeyboard failed", e);
-              }
             } else {
               await supabaseAdmin
                 .from("telegram_chats")
                 .update({ phone: normalized })
                 .eq("id", rowId);
-              try {
-                await removeKeyboard(
-                  chatId,
-                  `📞 번호를 확인 중입니다. 상담사가 곧 답변드립니다.\n📞 Checking your number. An agent will reply soon.`,
-                );
-              } catch (e) {
-                console.error(e);
-              }
+            }
+            try {
+              await removeKeyboard(chatId, BOT_COPY.checking[chatLang]);
+            } catch (e) {
+              console.error("[telegram webhook] removeKeyboard failed", e);
             }
           }
         }
+
 
         // Download media (if any) and upload to Storage
         let media_storage_path: string | null = null;
@@ -381,17 +427,15 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           console.error("[telegram webhook] insert message failed", msgErr);
         }
 
-        // First-time greeting: ask for phone number
+        // First-time greeting: show language picker (uz / ru)
         if (isFirstMessage && !message.contact) {
           try {
-            await sendContactRequest(
-              chatId,
-              `안녕하세요! 한패스 모바일입니다.\n원활한 상담을 위해 아래 버튼으로 전화번호를 공유해주세요.\n\nHello! This is Hanpass Mobile.\nPlease share your phone number using the button below so we can assist you.`,
-            );
+            await sendLanguagePicker(chatId);
           } catch (e) {
-            console.error("[telegram webhook] greeting failed", e);
+            console.error("[telegram webhook] language picker failed", e);
           }
         }
+
 
         return Response.json({ ok: true });
       },

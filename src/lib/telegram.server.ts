@@ -3,14 +3,14 @@ import { createHash } from "node:crypto";
 
 export const TELEGRAM_API_BASE = "https://api.telegram.org";
 
+export type BotLang = "uz" | "ru";
+
 export function getBotToken(): string {
   const t = process.env.TELEGRAM_BOT_TOKEN;
   if (!t) throw new Error("TELEGRAM_BOT_TOKEN is not configured");
   return t;
 }
 
-/** Deterministic webhook secret derived from the bot token so both
- * the setWebhook call and the receiver agree without an extra secret. */
 export function deriveWebhookSecret(): string {
   return createHash("sha256")
     .update(`telegram-webhook:${getBotToken()}`)
@@ -49,14 +49,45 @@ export async function sendTelegramMessage(chatId: number, text: string) {
   });
 }
 
-export async function sendContactRequest(chatId: number, prompt: string) {
+/** Bot copy in Uzbek / Russian */
+export const BOT_COPY = {
+  contactPrompt: {
+    uz: "Assalomu alaykum! Hanpass Mobile'ga xush kelibsiz. Sizga yordam berishimiz uchun quyidagi tugma orqali telefon raqamingizni yuboring.",
+    ru: "Здравствуйте! Добро пожаловать в Hanpass Mobile. Пожалуйста, поделитесь своим номером телефона с помощью кнопки ниже, чтобы мы могли вам помочь.",
+  },
+  checking: {
+    uz: "📞 Raqamingiz tekshirilmoqda. Operatorimiz tez orada javob beradi.",
+    ru: "📞 Проверяем ваш номер. Оператор скоро ответит.",
+  },
+  shareButton: {
+    uz: "📱 Telefon raqamni yuborish",
+    ru: "📱 Отправить номер телефона",
+  },
+  languagePrompt:
+    "Iltimos, tilni tanlang / Пожалуйста, выберите язык:",
+} as const;
+
+/** Show the initial language picker (inline keyboard). */
+export async function sendLanguagePicker(chatId: number) {
   return callBot<{ message_id: number }>("sendMessage", {
     chat_id: chatId,
-    text: prompt,
+    text: BOT_COPY.languagePrompt,
     reply_markup: {
-      keyboard: [
-        [{ text: "📱 Share phone / 전화번호 공유", request_contact: true }],
-      ],
+      inline_keyboard: [[
+        { text: "🇺🇿 O'zbek", callback_data: "lang:uz" },
+        { text: "🇷🇺 Русский", callback_data: "lang:ru" },
+      ]],
+    },
+  });
+}
+
+/** Ask for contact using the localized keyboard button. */
+export async function sendContactRequest(chatId: number, lang: BotLang) {
+  return callBot<{ message_id: number }>("sendMessage", {
+    chat_id: chatId,
+    text: BOT_COPY.contactPrompt[lang],
+    reply_markup: {
+      keyboard: [[{ text: BOT_COPY.shareButton[lang], request_contact: true }]],
       resize_keyboard: true,
       one_time_keyboard: true,
     },
@@ -71,11 +102,26 @@ export async function removeKeyboard(chatId: number, text: string) {
   });
 }
 
+export async function answerCallbackQuery(callbackQueryId: string, text?: string) {
+  return callBot("answerCallbackQuery", {
+    callback_query_id: callbackQueryId,
+    text: text ?? "",
+  });
+}
+
+export async function editMessageText(chatId: number, messageId: number, text: string) {
+  return callBot("editMessageText", {
+    chat_id: chatId,
+    message_id: messageId,
+    text,
+  });
+}
+
 export async function setWebhook(url: string) {
   return callBot("setWebhook", {
     url,
     secret_token: deriveWebhookSecret(),
-    allowed_updates: ["message", "edited_message"],
+    allowed_updates: ["message", "edited_message", "callback_query"],
     drop_pending_updates: false,
   });
 }
@@ -88,7 +134,6 @@ export async function getMe() {
   return callBot<{ id: number; username: string; first_name: string }>("getMe", {});
 }
 
-/** Fetch Telegram file metadata (file_path required to download). */
 export async function getFilePath(fileId: string): Promise<string> {
   const res = await callBot<{ file_path?: string; file_size?: number }>("getFile", {
     file_id: fileId,
@@ -97,7 +142,6 @@ export async function getFilePath(fileId: string): Promise<string> {
   return res.file_path;
 }
 
-/** Download the actual bytes for a Telegram file_path. */
 export async function downloadTelegramFile(
   filePath: string,
 ): Promise<{ bytes: ArrayBuffer; contentType: string }> {
@@ -112,8 +156,6 @@ export async function downloadTelegramFile(
   return { bytes, contentType };
 }
 
-
-/** Normalize phone to the CRM canonical formats used elsewhere. */
 export function normalizePhone(raw: string): string | null {
   const digits = (raw || "").toString().replace(/\D/g, "");
   const normalizedDigits =
