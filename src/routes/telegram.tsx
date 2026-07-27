@@ -1064,7 +1064,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
         <MediaTemplateConfirmDialog
           template={pendingMediaTemplate}
           onClose={() => setPendingMediaTemplate(null)}
-          onSend={async (caption) => {
+          onSend={async (caption: string) => {
             await sendMediaFn({
               data: {
                 chatRowId: chat.id,
