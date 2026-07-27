@@ -89,6 +89,8 @@ type Message = {
   media_duration: number | null;
   sent_by: string | null;
   created_at: string;
+  edited_at: string | null;
+  telegram_message_id: number | null;
 };
 
 
