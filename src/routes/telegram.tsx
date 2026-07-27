@@ -745,16 +745,35 @@ function ConversationPane({ chat }: { chat: Chat }) {
             const senderLabel = isOut
               ? `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
               : `고객 · ${timeLabel}`;
+            const isEditing = editingId === m.id;
+            const editable =
+              isMine &&
+              !!m.telegram_message_id &&
+              (m.message_type === "text" || m.message_type === "photo" || m.message_type === "document");
             return (
-              <div key={m.id} className={cn("flex", isOut ? "justify-end" : "justify-start")}>
+              <div key={m.id} className={cn("group flex", isOut ? "justify-end" : "justify-start")}>
                 <div className={cn("max-w-[75%]", isOut && "flex flex-col items-end")}>
                   <div
                     className={cn(
-                      "mb-0.5 text-[10px] font-medium",
-                      isOut ? "text-right text-primary/80" : "text-left text-muted-foreground",
+                      "mb-0.5 flex items-center gap-1.5 text-[10px] font-medium",
+                      isOut ? "justify-end text-primary/80" : "justify-start text-muted-foreground",
                     )}
                   >
-                    {senderLabel}
+                    <span>{senderLabel}</span>
+                    {m.edited_at && <span className="italic opacity-70">(수정됨)</span>}
+                    {editable && !isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingId(m.id);
+                          setEditingText(m.text ?? m.caption ?? "");
+                        }}
+                        className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition text-primary/70 hover:text-primary"
+                        title="메시지 수정"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
                   <div
                     className={cn(
@@ -764,11 +783,52 @@ function ConversationPane({ chat }: { chat: Chat }) {
                         : "bg-muted text-foreground rounded-bl-sm",
                     )}
                   >
-                    <MessageBody m={m} />
+                    {isEditing ? (
+                      <div className="flex flex-col gap-2 min-w-[240px]">
+                        <Textarea
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          rows={3}
+                          className="text-foreground bg-background"
+                          autoFocus
+                        />
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditingText("");
+                            }}
+                            disabled={editMut.isPending}
+                          >
+                            취소
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const t = editingText.trim();
+                              if (!t) {
+                                toast.error("내용을 입력하세요");
+                                return;
+                              }
+                              editMut.mutate({ messageId: m.id, text: t });
+                            }}
+                            disabled={editMut.isPending}
+                          >
+                            {editMut.isPending ? "저장중..." : "저장"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <MessageBody m={m} onPhotoClick={setPhotoUrl} />
+                    )}
                   </div>
                 </div>
               </div>
             );
+
+
 
           })
         )}
