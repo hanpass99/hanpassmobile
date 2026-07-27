@@ -1428,17 +1428,28 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       const sRaw = shortcut.trim().toLowerCase().replace(/^\/+/, "");
       if (/\s/.test(sRaw)) throw new Error("단축어에 공백을 사용할 수 없습니다");
       const s = sRaw || null;
-      if (!t || !c) throw new Error("제목과 내용을 입력하세요");
+      if (!t) throw new Error("제목을 입력하세요");
+      if (mediaType === "none" && !c) throw new Error("내용 또는 미디어를 입력하세요");
+      const payload = {
+        title: t,
+        content: c,
+        shortcut: s,
+        media_type: mediaType,
+        media_storage_path: mediaStoragePath,
+        media_file_name: mediaFileName,
+        media_mime: mediaMime,
+        media_size: mediaSize,
+      };
       if (editing) {
         const { error } = await supabase
           .from("quick_reply_templates")
-          .update({ title: t, content: c, shortcut: s })
+          .update(payload)
           .eq("id", editing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("quick_reply_templates")
-          .insert({ operator_id: user.id, title: t, content: c, shortcut: s });
+          .insert({ operator_id: user.id, ...payload });
         if (error) throw error;
       }
     },
