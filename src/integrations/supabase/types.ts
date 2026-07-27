@@ -1091,6 +1091,7 @@ export type Database = {
           chat_id: number
           created_at: string
           direction: string
+          edited_at: string | null
           id: string
           media_duration: number | null
           media_file_name: string | null
@@ -1112,6 +1113,7 @@ export type Database = {
           chat_id: number
           created_at?: string
           direction: string
+          edited_at?: string | null
           id?: string
           media_duration?: number | null
           media_file_name?: string | null
@@ -1133,6 +1135,7 @@ export type Database = {
           chat_id?: number
           created_at?: string
           direction?: string
+          edited_at?: string | null
           id?: string
           media_duration?: number | null
           media_file_name?: string | null
