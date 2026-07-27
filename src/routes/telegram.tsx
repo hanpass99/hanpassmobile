@@ -1064,7 +1064,13 @@ function humanSize(n: number | null): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function MessageBody({ m }: { m: Message }) {
+function MessageBody({
+  m,
+  onPhotoClick,
+}: {
+  m: Message;
+  onPhotoClick?: (url: string) => void;
+}) {
   const kind = m.message_type ?? "text";
   const mediaQ = useSignedMediaUrl(m.media_storage_path);
   const url = mediaQ.data;
@@ -1087,14 +1093,19 @@ function MessageBody({ m }: { m: Message }) {
     return (
       <div>
         {url ? (
-          <a href={url} target="_blank" rel="noreferrer">
+          <button
+            type="button"
+            onClick={() => onPhotoClick?.(url)}
+            className="block cursor-zoom-in"
+            title="크게 보기"
+          >
             <img
               src={url}
               alt={caption ?? "photo"}
               className="max-h-80 max-w-full rounded-lg object-contain"
               loading="lazy"
             />
-          </a>
+          </button>
         ) : (
           <div className="opacity-70">📷 Loading photo…</div>
         )}
@@ -1102,6 +1113,7 @@ function MessageBody({ m }: { m: Message }) {
       </div>
     );
   }
+
 
   if (kind === "video") {
     return (
