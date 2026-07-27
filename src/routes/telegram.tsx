@@ -621,8 +621,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const profileMap = profilesQuery.data ?? {};
 
   const insertTemplate = (t: Template) => {
-    setText((prev) => (prev ? `${prev}\n${t.content}` : t.content));
     setTemplatesOpen(false);
+    if (t.media_type !== "none" && t.media_storage_path) {
+      setPendingMediaTemplate(t);
+      return;
+    }
+    setText((prev) => (prev ? `${prev}\n${t.content}` : t.content));
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
