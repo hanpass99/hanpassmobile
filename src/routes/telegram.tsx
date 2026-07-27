@@ -1060,6 +1060,28 @@ function ConversationPane({ chat }: { chat: Chat }) {
       {showTemplatesManager && (
         <TemplatesManagerDialog onClose={() => setShowTemplatesManager(false)} />
       )}
+      {pendingMediaTemplate && (
+        <MediaTemplateConfirmDialog
+          template={pendingMediaTemplate}
+          onClose={() => setPendingMediaTemplate(null)}
+          onSend={async (caption) => {
+            await sendMediaFn({
+              data: {
+                chatRowId: chat.id,
+                storagePath: pendingMediaTemplate.media_storage_path!,
+                fileName: pendingMediaTemplate.media_file_name ?? "file",
+                mime: pendingMediaTemplate.media_mime ?? "application/octet-stream",
+                size: pendingMediaTemplate.media_size ?? 0,
+                kind: pendingMediaTemplate.media_type === "image" ? "photo" : "document",
+                caption: caption.trim() ? caption.trim() : null,
+              },
+            });
+            setPendingMediaTemplate(null);
+            qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
+            qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+          }}
+        />
+      )}
       <Dialog open={!!photoUrl} onOpenChange={(o) => !o && setPhotoUrl(null)}>
         <DialogContent className="max-w-4xl p-2 bg-black/95 border-none">
           <DialogHeader className="sr-only">
