@@ -1387,6 +1387,13 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [shortcut, setShortcut] = useState("");
+  const [mediaType, setMediaType] = useState<TemplateMediaType>("none");
+  const [mediaStoragePath, setMediaStoragePath] = useState<string | null>(null);
+  const [mediaFileName, setMediaFileName] = useState<string | null>(null);
+  const [mediaMime, setMediaMime] = useState<string | null>(null);
+  const [mediaSize, setMediaSize] = useState<number | null>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const previewUrlQ = useSignedMediaUrl(mediaType === "image" ? mediaStoragePath : null);
 
   const templatesQuery = useQuery({
     queryKey: ["telegram-templates", user?.id],
@@ -1406,6 +1413,11 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     setTitle("");
     setContent("");
     setShortcut("");
+    setMediaType("none");
+    setMediaStoragePath(null);
+    setMediaFileName(null);
+    setMediaMime(null);
+    setMediaSize(null);
   };
 
   const saveMut = useMutation({
