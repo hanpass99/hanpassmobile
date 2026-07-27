@@ -448,6 +448,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [pendingMediaTemplate, setPendingMediaTemplate] = useState<Template | null>(null);
 
   const messagesQuery = useQuery({
     queryKey: ["telegram-messages", chat.id],
