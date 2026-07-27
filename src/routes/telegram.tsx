@@ -1620,6 +1620,60 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                   className="resize-none"
                 />
               </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground">
+                  미디어 첨부 (선택 — 이미지 또는 파일)
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onUploadMedia(f);
+                      e.target.value = "";
+                    }}
+                    disabled={uploadingMedia}
+                  />
+                  {mediaStoragePath && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setMediaType("none");
+                        setMediaStoragePath(null);
+                        setMediaFileName(null);
+                        setMediaMime(null);
+                        setMediaSize(null);
+                      }}
+                    >
+                      제거
+                    </Button>
+                  )}
+                </div>
+                {uploadingMedia && (
+                  <div className="mt-1 text-[10px] text-muted-foreground">업로드 중...</div>
+                )}
+                {mediaStoragePath && (
+                  <div className="mt-2 flex items-center gap-2 rounded border bg-muted/30 p-2">
+                    {mediaType === "image" && previewUrlQ.data ? (
+                      <img
+                        src={previewUrlQ.data}
+                        alt=""
+                        className="h-16 w-16 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded bg-muted text-2xl">
+                        📎
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1 text-[11px]">
+                      <div className="truncate">{mediaFileName}</div>
+                      <div className="text-muted-foreground">{humanSize(mediaSize)}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-end gap-2 pt-1">
                 {editing && (
                   <Button variant="ghost" size="sm" onClick={resetForm}>
@@ -1629,7 +1683,11 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                 <Button
                   size="sm"
                   onClick={() => saveMut.mutate()}
-                  disabled={saveMut.isPending || !title.trim() || !content.trim()}
+                  disabled={
+                    saveMut.isPending ||
+                    !title.trim() ||
+                    (mediaType === "none" && !content.trim())
+                  }
                 >
                   {editing ? "수정" : "추가"}
                 </Button>
