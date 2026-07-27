@@ -48,7 +48,6 @@ import {
   sendTelegramReply,
   sendTelegramMedia,
   editTelegramMessage,
-  markTelegramChatRead,
   linkTelegramChatToCustomer,
   searchCustomersForTelegram,
   registerTelegramWebhook,
