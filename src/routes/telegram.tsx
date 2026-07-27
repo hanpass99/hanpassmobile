@@ -495,20 +495,15 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
   });
 
-  const markRead = useServerFn(markTelegramChatRead);
   const sendReply = useServerFn(sendTelegramReply);
+  const sendMediaFn = useServerFn(sendTelegramMedia);
+  const editMsgFn = useServerFn(editTelegramMessage);
   const unlinkFn = useServerFn(linkTelegramChatToCustomer);
   const setStatusFn = useServerFn(setTelegramChatStatus);
 
-  // Mark read on open
-  useEffect(() => {
-    if (chat.unread_count > 0) {
-      markRead({ data: { chatRowId: chat.id } })
-        .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
-        .catch(console.error);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.id]);
+  // NOTE: intentionally do NOT reset unread_count on open — the green "unread" badge only
+  // clears when the operator actually replies. Merely viewing a chat leaves the badge intact
+  // so the assigned operator can tell that no one has responded yet.
 
   // Auto-scroll
   useEffect(() => {
