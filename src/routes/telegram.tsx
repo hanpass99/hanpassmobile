@@ -528,6 +528,59 @@ function ConversationPane({ chat }: { chat: Chat }) {
     onError: (e) => toast.error(e instanceof Error ? e.message : "전송 실패"),
   });
 
+  const editMut = useMutation({
+    mutationFn: async (payload: { messageId: string; text: string }) =>
+      editMsgFn({ data: payload }),
+    onSuccess: () => {
+      setEditingId(null);
+      setEditingText("");
+      qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "수정 실패"),
+  });
+
+  const uploadAndSend = async (file: File) => {
+    if (!file) return;
+    const MAX = 20 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error("파일이 너무 큽니다 (최대 20MB)");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const isImage = file.type.startsWith("image/");
+      const kind: "photo" | "document" = isImage ? "photo" : "document";
+      const safeName = (file.name || `file-${Date.now()}`).replace(/[^\w.\-]+/g, "_");
+      const storagePath = `chats/${chat.chat_id}/out-${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from("telegram-media")
+        .upload(storagePath, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+      if (upErr) throw upErr;
+      await sendMediaFn({
+        data: {
+          chatRowId: chat.id,
+          storagePath,
+          fileName: safeName,
+          mime: file.type || "application/octet-stream",
+          size: file.size,
+          kind,
+          caption: text.trim() ? text.trim() : null,
+        },
+      });
+      setText("");
+      qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
+      qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "파일 전송 실패");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const unlinkMut = useMutation({
     mutationFn: async () => unlinkFn({ data: { chatRowId: chat.id, customerId: null } }),
     onSuccess: () => {
