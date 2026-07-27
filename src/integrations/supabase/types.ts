@@ -724,6 +724,11 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          media_file_name: string | null
+          media_mime: string | null
+          media_size: number | null
+          media_storage_path: string | null
+          media_type: Database["public"]["Enums"]["template_media_type"]
           operator_id: string
           shortcut: string | null
           title: string
@@ -733,6 +738,11 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          media_file_name?: string | null
+          media_mime?: string | null
+          media_size?: number | null
+          media_storage_path?: string | null
+          media_type?: Database["public"]["Enums"]["template_media_type"]
           operator_id: string
           shortcut?: string | null
           title: string
@@ -742,6 +752,11 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          media_file_name?: string | null
+          media_mime?: string | null
+          media_size?: number | null
+          media_storage_path?: string | null
+          media_type?: Database["public"]["Enums"]["template_media_type"]
           operator_id?: string
           shortcut?: string | null
           title?: string
@@ -1671,6 +1686,7 @@ export type Database = {
         | "certificate_issuing"
         | "contract_active"
       telegram_chat_status: "new" | "in_progress" | "done"
+      template_media_type: "none" | "image" | "document"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1846,6 +1862,7 @@ export const Constants = {
         "contract_active",
       ],
       telegram_chat_status: ["new", "in_progress", "done"],
+      template_media_type: ["none", "image", "document"],
     },
   },
 } as const
