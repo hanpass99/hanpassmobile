@@ -902,11 +902,21 @@ function ConversationPane({ chat }: { chat: Chat }) {
                       <li key={t.id}>
                         <button
                           onClick={() => insertTemplate(t)}
-                          className="block w-full px-3 py-2 text-left hover:bg-accent/50"
+                          className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-accent/50"
                         >
-                          <div className="text-xs font-medium">{t.title}</div>
-                          <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
-                            {t.content}
+                          <TemplateThumb t={t} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-medium truncate">{t.title}</span>
+                              {t.media_type !== "none" && (
+                                <span className="rounded bg-primary/10 px-1 py-0.5 text-[9px] text-primary">
+                                  {t.media_type === "image" ? "🖼️" : "📎"}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                              {t.content}
+                            </div>
                           </div>
                         </button>
                       </li>
