@@ -49,6 +49,46 @@ export async function sendTelegramMessage(chatId: number, text: string) {
   });
 }
 
+/** Send a photo or document via multipart. Returns Telegram message id. */
+export async function sendTelegramMedia(
+  chatId: number,
+  kind: "photo" | "document",
+  bytes: Uint8Array,
+  fileName: string,
+  mime: string,
+  caption?: string,
+): Promise<{ message_id: number }> {
+  const token = getBotToken();
+  const method = kind === "photo" ? "sendPhoto" : "sendDocument";
+  const field = kind === "photo" ? "photo" : "document";
+  const form = new FormData();
+  form.append("chat_id", String(chatId));
+  if (caption) form.append("caption", caption);
+  const arrayBuffer = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: mime || "application/octet-stream" });
+  form.append(field, blob, fileName);
+  const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/${method}`, {
+    method: "POST",
+    body: form,
+  });
+  const text = await res.text();
+  let parsed: any;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error(`Telegram ${method} non-JSON response: ${text.slice(0, 200)}`);
+  }
+  if (!res.ok || parsed?.ok === false) {
+    throw new Error(
+      `Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`,
+    );
+  }
+  return parsed.result as { message_id: number };
+}
+
 /** Bot copy in Uzbek / Russian */
 export const BOT_COPY = {
   contactPrompt: {
@@ -142,6 +182,14 @@ export async function editMessageText(chatId: number, messageId: number, text: s
     chat_id: chatId,
     message_id: messageId,
     text,
+  });
+}
+
+export async function editMessageCaption(chatId: number, messageId: number, caption: string) {
+  return callBot("editMessageCaption", {
+    chat_id: chatId,
+    message_id: messageId,
+    caption,
   });
 }
 

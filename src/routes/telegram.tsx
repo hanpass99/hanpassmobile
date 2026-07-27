@@ -10,7 +10,6 @@ import {
   Search,
   Send,
   UserPlus,
-  CheckCircle2,
   Link2Off,
   MessageCircle,
   Settings,
@@ -19,6 +18,8 @@ import {
   Pencil,
   Trash2,
   Check,
+  Paperclip,
+  X,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +46,8 @@ import { cn } from "@/lib/utils";
 
 import {
   sendTelegramReply,
-  markTelegramChatRead,
+  sendTelegramMedia,
+  editTelegramMessage,
   linkTelegramChatToCustomer,
   searchCustomersForTelegram,
   registerTelegramWebhook,
@@ -86,6 +88,8 @@ type Message = {
   media_duration: number | null;
   sent_by: string | null;
   created_at: string;
+  edited_at: string | null;
+  telegram_message_id: number | null;
 };
 
 
@@ -335,7 +339,7 @@ function TelegramPage() {
             ) : filtered.length === 0 ? (
               <div className="p-4 text-sm text-muted-foreground">대화가 없습니다.</div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y pb-4">
                 {filtered.map((c) => (
                   <button
                     key={c.id}
@@ -423,8 +427,13 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showTemplatesManager, setShowTemplatesManager] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const messagesQuery = useQuery({
     queryKey: ["telegram-messages", chat.id],
@@ -432,7 +441,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       const { data, error } = await supabase
         .from("telegram_messages")
         .select(
-          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at",
+          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at, edited_at, telegram_message_id",
         )
         .eq("telegram_chat_row_id", chat.id)
         .order("created_at", { ascending: true })
@@ -490,20 +499,15 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
   });
 
-  const markRead = useServerFn(markTelegramChatRead);
   const sendReply = useServerFn(sendTelegramReply);
+  const sendMediaFn = useServerFn(sendTelegramMedia);
+  const editMsgFn = useServerFn(editTelegramMessage);
   const unlinkFn = useServerFn(linkTelegramChatToCustomer);
   const setStatusFn = useServerFn(setTelegramChatStatus);
 
-  // Mark read on open
-  useEffect(() => {
-    if (chat.unread_count > 0) {
-      markRead({ data: { chatRowId: chat.id } })
-        .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
-        .catch(console.error);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.id]);
+  // NOTE: intentionally do NOT reset unread_count on open — the green "unread" badge only
+  // clears when the operator actually replies. Merely viewing a chat leaves the badge intact
+  // so the assigned operator can tell that no one has responded yet.
 
   // Auto-scroll
   useEffect(() => {
@@ -523,6 +527,59 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "전송 실패"),
   });
+
+  const editMut = useMutation({
+    mutationFn: async (payload: { messageId: string; text: string }) =>
+      editMsgFn({ data: payload }),
+    onSuccess: () => {
+      setEditingId(null);
+      setEditingText("");
+      qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "수정 실패"),
+  });
+
+  const uploadAndSend = async (file: File) => {
+    if (!file) return;
+    const MAX = 20 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error("파일이 너무 큽니다 (최대 20MB)");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const isImage = file.type.startsWith("image/");
+      const kind: "photo" | "document" = isImage ? "photo" : "document";
+      const safeName = (file.name || `file-${Date.now()}`).replace(/[^\w.\-]+/g, "_");
+      const storagePath = `chats/${chat.chat_id}/out-${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from("telegram-media")
+        .upload(storagePath, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+      if (upErr) throw upErr;
+      await sendMediaFn({
+        data: {
+          chatRowId: chat.id,
+          storagePath,
+          fileName: safeName,
+          mime: file.type || "application/octet-stream",
+          size: file.size,
+          kind,
+          caption: text.trim() ? text.trim() : null,
+        },
+      });
+      setText("");
+      qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
+      qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "파일 전송 실패");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const unlinkMut = useMutation({
     mutationFn: async () => unlinkFn({ data: { chatRowId: chat.id, customerId: null } }),
@@ -688,16 +745,35 @@ function ConversationPane({ chat }: { chat: Chat }) {
             const senderLabel = isOut
               ? `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
               : `고객 · ${timeLabel}`;
+            const isEditing = editingId === m.id;
+            const editable =
+              isMine &&
+              !!m.telegram_message_id &&
+              (m.message_type === "text" || m.message_type === "photo" || m.message_type === "document");
             return (
-              <div key={m.id} className={cn("flex", isOut ? "justify-end" : "justify-start")}>
+              <div key={m.id} className={cn("group flex", isOut ? "justify-end" : "justify-start")}>
                 <div className={cn("max-w-[75%]", isOut && "flex flex-col items-end")}>
                   <div
                     className={cn(
-                      "mb-0.5 text-[10px] font-medium",
-                      isOut ? "text-right text-primary/80" : "text-left text-muted-foreground",
+                      "mb-0.5 flex items-center gap-1.5 text-[10px] font-medium",
+                      isOut ? "justify-end text-primary/80" : "justify-start text-muted-foreground",
                     )}
                   >
-                    {senderLabel}
+                    <span>{senderLabel}</span>
+                    {m.edited_at && <span className="italic opacity-70">(수정됨)</span>}
+                    {editable && !isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingId(m.id);
+                          setEditingText(m.text ?? m.caption ?? "");
+                        }}
+                        className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition text-primary/70 hover:text-primary"
+                        title="메시지 수정"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
                   <div
                     className={cn(
@@ -707,11 +783,52 @@ function ConversationPane({ chat }: { chat: Chat }) {
                         : "bg-muted text-foreground rounded-bl-sm",
                     )}
                   >
-                    <MessageBody m={m} />
+                    {isEditing ? (
+                      <div className="flex flex-col gap-2 min-w-[240px]">
+                        <Textarea
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          rows={3}
+                          className="text-foreground bg-background"
+                          autoFocus
+                        />
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditingText("");
+                            }}
+                            disabled={editMut.isPending}
+                          >
+                            취소
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const t = editingText.trim();
+                              if (!t) {
+                                toast.error("내용을 입력하세요");
+                                return;
+                              }
+                              editMut.mutate({ messageId: m.id, text: t });
+                            }}
+                            disabled={editMut.isPending}
+                          >
+                            {editMut.isPending ? "저장중..." : "저장"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <MessageBody m={m} onPhotoClick={setPhotoUrl} />
+                    )}
                   </div>
                 </div>
               </div>
             );
+
+
 
           })
         )}
@@ -861,10 +978,34 @@ function ConversationPane({ chat }: { chat: Chat }) {
             className="resize-none"
             disabled={sendMut.isPending}
           />
-          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim()} size="icon" className="h-10 w-10">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,application/pdf,video/*,audio/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) uploadAndSend(f);
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading || sendMut.isPending}
+            title="사진/파일 첨부"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim() || isUploading} size="icon" className="h-10 w-10">
             <Send className="h-4 w-4" />
           </Button>
         </div>
+        {isUploading && (
+          <div className="text-xs text-muted-foreground">업로드 중...</div>
+        )}
       </div>
 
       {showLinkDialog && (
@@ -873,6 +1014,41 @@ function ConversationPane({ chat }: { chat: Chat }) {
       {showTemplatesManager && (
         <TemplatesManagerDialog onClose={() => setShowTemplatesManager(false)} />
       )}
+      <Dialog open={!!photoUrl} onOpenChange={(o) => !o && setPhotoUrl(null)}>
+        <DialogContent className="max-w-4xl p-2 bg-black/95 border-none">
+          <DialogHeader className="sr-only">
+            <DialogTitle>사진 보기</DialogTitle>
+          </DialogHeader>
+          <button
+            type="button"
+            onClick={() => setPhotoUrl(null)}
+            className="absolute right-3 top-3 z-10 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
+            aria-label="닫기"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          {photoUrl && (
+            <img
+              src={photoUrl}
+              alt="photo"
+              className="mx-auto max-h-[85vh] w-auto max-w-full rounded"
+            />
+          )}
+          <DialogFooter className="mt-2 sm:justify-center">
+            {photoUrl && (
+              <a
+                href={photoUrl}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="text-xs text-white/80 underline underline-offset-2 hover:text-white"
+              >
+                원본 다운로드
+              </a>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -947,7 +1123,13 @@ function humanSize(n: number | null): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function MessageBody({ m }: { m: Message }) {
+function MessageBody({
+  m,
+  onPhotoClick,
+}: {
+  m: Message;
+  onPhotoClick?: (url: string) => void;
+}) {
   const kind = m.message_type ?? "text";
   const mediaQ = useSignedMediaUrl(m.media_storage_path);
   const url = mediaQ.data;
@@ -970,14 +1152,19 @@ function MessageBody({ m }: { m: Message }) {
     return (
       <div>
         {url ? (
-          <a href={url} target="_blank" rel="noreferrer">
+          <button
+            type="button"
+            onClick={() => onPhotoClick?.(url)}
+            className="block cursor-zoom-in"
+            title="크게 보기"
+          >
             <img
               src={url}
               alt={caption ?? "photo"}
               className="max-h-80 max-w-full rounded-lg object-contain"
               loading="lazy"
             />
-          </a>
+          </button>
         ) : (
           <div className="opacity-70">📷 Loading photo…</div>
         )}
@@ -985,6 +1172,7 @@ function MessageBody({ m }: { m: Message }) {
       </div>
     );
   }
+
 
   if (kind === "video") {
     return (

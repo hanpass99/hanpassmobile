@@ -53,10 +53,150 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
         last_message_at: new Date().toISOString(),
         status: "in_progress",
         assigned_operator_id: userId,
+        unread_count: 0,
       })
       .eq("id", chatRowId);
 
     return { ok: true, telegramMessageId };
+  });
+
+// Send a photo or document to a Telegram chat (from an already-uploaded storage object).
+export const sendTelegramMedia = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        chatRowId: z.string().uuid(),
+        storagePath: z.string().min(1),
+        fileName: z.string().min(1).max(200),
+        mime: z.string().min(1).max(120),
+        size: z.number().int().nonnegative(),
+        kind: z.enum(["photo", "document"]),
+        caption: z.string().max(1024).optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId, supabase } = context;
+    const { data: chat, error: chatErr } = await supabase
+      .from("telegram_chats")
+      .select("chat_id")
+      .eq("id", data.chatRowId)
+      .maybeSingle();
+    if (chatErr || !chat) throw new Error("Chat not found");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: dl, error: dlErr } = await supabaseAdmin.storage
+      .from("telegram-media")
+      .download(data.storagePath);
+    if (dlErr || !dl) throw new Error(`저장 파일을 불러올 수 없습니다: ${dlErr?.message ?? "unknown"}`);
+    const bytes = new Uint8Array(await dl.arrayBuffer());
+
+    const { sendTelegramMedia: sendMediaBot } = await import("@/lib/telegram.server");
+    let tgMsgId: number | null = null;
+    try {
+      const r = await sendMediaBot(
+        Number(chat.chat_id),
+        data.kind,
+        bytes,
+        data.fileName,
+        data.mime,
+        data.caption ?? undefined,
+      );
+      tgMsgId = r.message_id;
+    } catch (e) {
+      throw new Error(e instanceof Error ? e.message : String(e));
+    }
+
+    const messageType = data.kind === "photo" ? "photo" : "document";
+    const preview = data.kind === "photo" ? "📷 Photo" : `📎 ${data.fileName}`;
+    const publicUrl = supabaseAdmin.storage
+      .from("telegram-media")
+      .getPublicUrl(data.storagePath).data.publicUrl;
+
+    const { error: insErr } = await supabase.from("telegram_messages").insert({
+      chat_id: chat.chat_id,
+      telegram_chat_row_id: data.chatRowId,
+      direction: "out",
+      telegram_message_id: tgMsgId,
+      message_type: messageType,
+      caption: data.caption ?? null,
+      media_storage_path: data.storagePath,
+      media_url: publicUrl,
+      media_file_name: data.fileName,
+      media_mime: data.mime,
+      media_size: data.size,
+      sent_by: userId,
+    });
+    if (insErr) throw new Error(insErr.message);
+
+    await supabase
+      .from("telegram_chats")
+      .update({
+        last_message_preview: data.caption ? `${preview} · ${data.caption.slice(0, 160)}` : preview,
+        last_message_at: new Date().toISOString(),
+        status: "in_progress",
+        assigned_operator_id: userId,
+        unread_count: 0,
+      })
+      .eq("id", data.chatRowId);
+
+    return { ok: true, telegramMessageId: tgMsgId };
+  });
+
+// Edit a previously sent text message (both on Telegram and in the CRM DB).
+// Sender identity (sent_by, direction, created_at) stays immutable via the DB audit trigger.
+export const editTelegramMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        messageId: z.string().uuid(),
+        text: z.string().min(1).max(4000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId, supabase } = context;
+    const { data: msg, error: msgErr } = await supabase
+      .from("telegram_messages")
+      .select("id, chat_id, telegram_message_id, direction, sent_by, message_type")
+      .eq("id", data.messageId)
+      .maybeSingle();
+    if (msgErr || !msg) throw new Error("메시지를 찾을 수 없습니다");
+    if (msg.direction !== "out" || msg.sent_by !== userId) {
+      throw new Error("본인이 보낸 메시지만 수정할 수 있습니다");
+    }
+    if (!msg.telegram_message_id) throw new Error("텔레그램 메시지 ID가 없어 수정할 수 없습니다");
+
+    const { editMessageText } = await import("@/lib/telegram.server");
+    try {
+      if (msg.message_type === "text" || !msg.message_type) {
+        await editMessageText(Number(msg.chat_id), Number(msg.telegram_message_id), data.text);
+      } else {
+        // For media, edit the caption instead
+        const { editMessageCaption } = await import("@/lib/telegram.server");
+        await editMessageCaption(Number(msg.chat_id), Number(msg.telegram_message_id), data.text);
+      }
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      if (/can't be edited|message to edit not found|too old/i.test(m)) {
+        throw new Error("이 메시지는 텔레그램에서 수정할 수 없습니다 (시간 초과 또는 정책 제한).");
+      }
+      throw new Error(m);
+    }
+
+    const updatePayload =
+      msg.message_type === "text" || !msg.message_type
+        ? { text: data.text, edited_at: new Date().toISOString() }
+        : { caption: data.text, edited_at: new Date().toISOString() };
+    const { error: upErr } = await supabase
+      .from("telegram_messages")
+      .update(updatePayload)
+      .eq("id", data.messageId);
+    if (upErr) throw new Error(upErr.message);
+
+    return { ok: true };
   });
 
 // Update conversation status (new / in_progress / done)
