@@ -506,7 +506,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
     queryFn: async (): Promise<Template[]> => {
       const { data, error } = await supabase
         .from("quick_reply_templates")
-        .select("id, title, content, shortcut")
+        .select(TEMPLATE_SELECT)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Template[];
