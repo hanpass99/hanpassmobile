@@ -339,7 +339,7 @@ function TelegramPage() {
             ) : filtered.length === 0 ? (
               <div className="p-4 text-sm text-muted-foreground">대화가 없습니다.</div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y pb-4">
                 {filtered.map((c) => (
                   <button
                     key={c.id}
