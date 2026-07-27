@@ -427,8 +427,13 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showTemplatesManager, setShowTemplatesManager] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const messagesQuery = useQuery({
     queryKey: ["telegram-messages", chat.id],
