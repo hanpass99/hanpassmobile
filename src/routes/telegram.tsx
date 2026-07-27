@@ -95,7 +95,21 @@ type Message = {
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
-type Template = { id: string; title: string; content: string; shortcut: string | null };
+type TemplateMediaType = "none" | "image" | "document";
+type Template = {
+  id: string;
+  title: string;
+  content: string;
+  shortcut: string | null;
+  media_type: TemplateMediaType;
+  media_storage_path: string | null;
+  media_file_name: string | null;
+  media_mime: string | null;
+  media_size: number | null;
+};
+
+const TEMPLATE_SELECT =
+  "id, title, content, shortcut, media_type, media_storage_path, media_file_name, media_mime, media_size";
 
 const STATUS_LABEL: Record<ChatStatus, string> = {
   new: "신규",
@@ -434,6 +448,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [pendingMediaTemplate, setPendingMediaTemplate] = useState<Template | null>(null);
 
   const messagesQuery = useQuery({
     queryKey: ["telegram-messages", chat.id],
@@ -492,7 +507,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
     queryFn: async (): Promise<Template[]> => {
       const { data, error } = await supabase
         .from("quick_reply_templates")
-        .select("id, title, content, shortcut")
+        .select(TEMPLATE_SELECT)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Template[];
@@ -606,8 +621,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const profileMap = profilesQuery.data ?? {};
 
   const insertTemplate = (t: Template) => {
-    setText((prev) => (prev ? `${prev}\n${t.content}` : t.content));
     setTemplatesOpen(false);
+    if (t.media_type !== "none" && t.media_storage_path) {
+      setPendingMediaTemplate(t);
+      return;
+    }
+    setText((prev) => (prev ? `${prev}\n${t.content}` : t.content));
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
@@ -646,6 +665,13 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const applySlashTemplate = (t: Template) => {
     // Replace only the first line's "/token" with the template content, keep any subsequent lines.
     const lines = text.split("\n");
+    if (t.media_type !== "none" && t.media_storage_path) {
+      // For media templates, clear the "/token" from the first line and open the media preview.
+      lines[0] = "";
+      setText(lines.join("\n").replace(/^\n/, ""));
+      setPendingMediaTemplate(t);
+      return;
+    }
     lines[0] = t.content;
     const next = lines.join("\n");
     setText(next);
@@ -876,11 +902,21 @@ function ConversationPane({ chat }: { chat: Chat }) {
                       <li key={t.id}>
                         <button
                           onClick={() => insertTemplate(t)}
-                          className="block w-full px-3 py-2 text-left hover:bg-accent/50"
+                          className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-accent/50"
                         >
-                          <div className="text-xs font-medium">{t.title}</div>
-                          <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
-                            {t.content}
+                          <TemplateThumb t={t} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-medium truncate">{t.title}</span>
+                              {t.media_type !== "none" && (
+                                <span className="rounded bg-primary/10 px-1 py-0.5 text-[9px] text-primary">
+                                  {t.media_type === "image" ? "🖼️" : "📎"}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                              {t.content}
+                            </div>
                           </div>
                         </button>
                       </li>
@@ -917,16 +953,26 @@ function ConversationPane({ chat }: { chat: Chat }) {
                             idx === slashIndex ? "bg-accent" : "hover:bg-accent/50",
                           )}
                         >
-                          <div className="flex items-center gap-2">
-                            {t.shortcut && (
-                              <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
-                                /{t.shortcut}
-                              </span>
-                            )}
-                            <span className="font-medium">{t.title}</span>
-                          </div>
-                          <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
-                            {t.content}
+                          <div className="flex items-start gap-2">
+                            <TemplateThumb t={t} />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                {t.shortcut && (
+                                  <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                                    /{t.shortcut}
+                                  </span>
+                                )}
+                                <span className="font-medium">{t.title}</span>
+                                {t.media_type !== "none" && (
+                                  <span className="rounded bg-primary/10 px-1 py-0.5 text-[9px] text-primary">
+                                    {t.media_type === "image" ? "🖼️" : "📎"}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                                {t.content}
+                              </div>
+                            </div>
                           </div>
                         </button>
                       </li>
@@ -1013,6 +1059,28 @@ function ConversationPane({ chat }: { chat: Chat }) {
       )}
       {showTemplatesManager && (
         <TemplatesManagerDialog onClose={() => setShowTemplatesManager(false)} />
+      )}
+      {pendingMediaTemplate && (
+        <MediaTemplateConfirmDialog
+          template={pendingMediaTemplate}
+          onClose={() => setPendingMediaTemplate(null)}
+          onSend={async (caption: string) => {
+            await sendMediaFn({
+              data: {
+                chatRowId: chat.id,
+                storagePath: pendingMediaTemplate.media_storage_path!,
+                fileName: pendingMediaTemplate.media_file_name ?? "file",
+                mime: pendingMediaTemplate.media_mime ?? "application/octet-stream",
+                size: pendingMediaTemplate.media_size ?? 0,
+                kind: pendingMediaTemplate.media_type === "image" ? "photo" : "document",
+                caption: caption.trim() ? caption.trim() : null,
+              },
+            });
+            setPendingMediaTemplate(null);
+            qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
+            qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+          }}
+        />
       )}
       <Dialog open={!!photoUrl} onOpenChange={(o) => !o && setPhotoUrl(null)}>
         <DialogContent className="max-w-4xl p-2 bg-black/95 border-none">
@@ -1123,6 +1191,97 @@ function humanSize(n: number | null): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function TemplateThumb({ t }: { t: Template }) {
+  const isImage = t.media_type === "image" && !!t.media_storage_path;
+  const q = useSignedMediaUrl(isImage ? t.media_storage_path : null);
+  if (t.media_type === "none" || !t.media_storage_path) return null;
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded border bg-muted text-sm">
+      {isImage && q.data ? (
+        <img src={q.data} alt="" className="h-full w-full object-cover" loading="lazy" />
+      ) : (
+        <span>{t.media_type === "image" ? "🖼️" : "📎"}</span>
+      )}
+    </div>
+  );
+}
+
+function MediaTemplateConfirmDialog({
+  template,
+  onClose,
+  onSend,
+}: {
+  template: Template;
+  onClose: () => void;
+  onSend: (caption: string) => Promise<void>;
+}) {
+  const [caption, setCaption] = useState(template.content ?? "");
+  const [sending, setSending] = useState(false);
+  const isImage = template.media_type === "image";
+  const q = useSignedMediaUrl(template.media_storage_path);
+  return (
+    <Dialog open onOpenChange={(o) => !o && !sending && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>미디어 템플릿 전송 확인</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded border bg-muted/30 p-2">
+            {isImage ? (
+              q.data ? (
+                <img
+                  src={q.data}
+                  alt={template.media_file_name ?? ""}
+                  className="mx-auto max-h-64 w-auto max-w-full rounded"
+                />
+              ) : (
+                <div className="p-6 text-center text-xs text-muted-foreground">미리보기 불러오는 중…</div>
+              )
+            ) : (
+              <div className="flex items-center gap-2 p-2 text-sm">
+                📎 <span className="break-all">{template.media_file_name ?? "File"}</span>
+                {template.media_size ? (
+                  <span className="text-xs opacity-70">({humanSize(template.media_size)})</span>
+                ) : null}
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground">캡션 (내용 텍스트)</label>
+            <Textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={4}
+              className="resize-none"
+              placeholder="선택 사항 — 비워두면 미디어만 전송됩니다."
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} disabled={sending}>
+            취소
+          </Button>
+          <Button
+            onClick={async () => {
+              setSending(true);
+              try {
+                await onSend(caption);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "전송 실패");
+              } finally {
+                setSending(false);
+              }
+            }}
+            disabled={sending}
+          >
+            {sending ? "전송 중..." : "전송"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function MessageBody({
   m,
   onPhotoClick,
@@ -1228,6 +1387,13 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [shortcut, setShortcut] = useState("");
+  const [mediaType, setMediaType] = useState<TemplateMediaType>("none");
+  const [mediaStoragePath, setMediaStoragePath] = useState<string | null>(null);
+  const [mediaFileName, setMediaFileName] = useState<string | null>(null);
+  const [mediaMime, setMediaMime] = useState<string | null>(null);
+  const [mediaSize, setMediaSize] = useState<number | null>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const previewUrlQ = useSignedMediaUrl(mediaType === "image" ? mediaStoragePath : null);
 
   const templatesQuery = useQuery({
     queryKey: ["telegram-templates", user?.id],
@@ -1235,7 +1401,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     queryFn: async (): Promise<Template[]> => {
       const { data, error } = await supabase
         .from("quick_reply_templates")
-        .select("id, title, content, shortcut")
+        .select(TEMPLATE_SELECT)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Template[];
@@ -1247,6 +1413,11 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     setTitle("");
     setContent("");
     setShortcut("");
+    setMediaType("none");
+    setMediaStoragePath(null);
+    setMediaFileName(null);
+    setMediaMime(null);
+    setMediaSize(null);
   };
 
   const saveMut = useMutation({
@@ -1257,17 +1428,28 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       const sRaw = shortcut.trim().toLowerCase().replace(/^\/+/, "");
       if (/\s/.test(sRaw)) throw new Error("단축어에 공백을 사용할 수 없습니다");
       const s = sRaw || null;
-      if (!t || !c) throw new Error("제목과 내용을 입력하세요");
+      if (!t) throw new Error("제목을 입력하세요");
+      if (mediaType === "none" && !c) throw new Error("내용 또는 미디어를 입력하세요");
+      const payload = {
+        title: t,
+        content: c,
+        shortcut: s,
+        media_type: mediaType,
+        media_storage_path: mediaStoragePath,
+        media_file_name: mediaFileName,
+        media_mime: mediaMime,
+        media_size: mediaSize,
+      };
       if (editing) {
         const { error } = await supabase
           .from("quick_reply_templates")
-          .update({ title: t, content: c, shortcut: s })
+          .update(payload)
           .eq("id", editing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("quick_reply_templates")
-          .insert({ operator_id: user.id, title: t, content: c, shortcut: s });
+          .insert({ operator_id: user.id, ...payload });
         if (error) throw error;
       }
     },
@@ -1297,6 +1479,33 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     setTitle(t.title);
     setContent(t.content);
     setShortcut(t.shortcut ?? "");
+    setMediaType(t.media_type);
+    setMediaStoragePath(t.media_storage_path);
+    setMediaFileName(t.media_file_name);
+    setMediaMime(t.media_mime);
+    setMediaSize(t.media_size);
+  };
+
+  const onUploadMedia = async (file: File) => {
+    if (!user?.id) return;
+    setUploadingMedia(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "bin";
+      const path = `templates/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("telegram-media").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+      });
+      if (error) throw error;
+      setMediaStoragePath(path);
+      setMediaFileName(file.name);
+      setMediaMime(file.type || "application/octet-stream");
+      setMediaSize(file.size);
+      setMediaType(file.type.startsWith("image/") ? "image" : "document");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "업로드 실패");
+    } finally {
+      setUploadingMedia(false);
+    }
   };
 
   return (
@@ -1411,6 +1620,60 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                   className="resize-none"
                 />
               </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground">
+                  미디어 첨부 (선택 — 이미지 또는 파일)
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onUploadMedia(f);
+                      e.target.value = "";
+                    }}
+                    disabled={uploadingMedia}
+                  />
+                  {mediaStoragePath && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setMediaType("none");
+                        setMediaStoragePath(null);
+                        setMediaFileName(null);
+                        setMediaMime(null);
+                        setMediaSize(null);
+                      }}
+                    >
+                      제거
+                    </Button>
+                  )}
+                </div>
+                {uploadingMedia && (
+                  <div className="mt-1 text-[10px] text-muted-foreground">업로드 중...</div>
+                )}
+                {mediaStoragePath && (
+                  <div className="mt-2 flex items-center gap-2 rounded border bg-muted/30 p-2">
+                    {mediaType === "image" && previewUrlQ.data ? (
+                      <img
+                        src={previewUrlQ.data}
+                        alt=""
+                        className="h-16 w-16 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded bg-muted text-2xl">
+                        📎
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1 text-[11px]">
+                      <div className="truncate">{mediaFileName}</div>
+                      <div className="text-muted-foreground">{humanSize(mediaSize)}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-end gap-2 pt-1">
                 {editing && (
                   <Button variant="ghost" size="sm" onClick={resetForm}>
@@ -1420,7 +1683,11 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                 <Button
                   size="sm"
                   onClick={() => saveMut.mutate()}
-                  disabled={saveMut.isPending || !title.trim() || !content.trim()}
+                  disabled={
+                    saveMut.isPending ||
+                    !title.trim() ||
+                    (mediaType === "none" && !content.trim())
+                  }
                 >
                   {editing ? "수정" : "추가"}
                 </Button>
