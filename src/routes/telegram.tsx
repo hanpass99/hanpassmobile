@@ -978,10 +978,34 @@ function ConversationPane({ chat }: { chat: Chat }) {
             className="resize-none"
             disabled={sendMut.isPending}
           />
-          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim()} size="icon" className="h-10 w-10">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,application/pdf,video/*,audio/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) uploadAndSend(f);
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading || sendMut.isPending}
+            title="사진/파일 첨부"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim() || isUploading} size="icon" className="h-10 w-10">
             <Send className="h-4 w-4" />
           </Button>
         </div>
+        {isUploading && (
+          <div className="text-xs text-muted-foreground">업로드 중...</div>
+        )}
       </div>
 
       {showLinkDialog && (
@@ -990,6 +1014,41 @@ function ConversationPane({ chat }: { chat: Chat }) {
       {showTemplatesManager && (
         <TemplatesManagerDialog onClose={() => setShowTemplatesManager(false)} />
       )}
+      <Dialog open={!!photoUrl} onOpenChange={(o) => !o && setPhotoUrl(null)}>
+        <DialogContent className="max-w-4xl p-2 bg-black/95 border-none">
+          <DialogHeader className="sr-only">
+            <DialogTitle>사진 보기</DialogTitle>
+          </DialogHeader>
+          <button
+            type="button"
+            onClick={() => setPhotoUrl(null)}
+            className="absolute right-3 top-3 z-10 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
+            aria-label="닫기"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          {photoUrl && (
+            <img
+              src={photoUrl}
+              alt="photo"
+              className="mx-auto max-h-[85vh] w-auto max-w-full rounded"
+            />
+          )}
+          <DialogFooter className="mt-2 sm:justify-center">
+            {photoUrl && (
+              <a
+                href={photoUrl}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="text-xs text-white/80 underline underline-offset-2 hover:text-white"
+              >
+                원본 다운로드
+              </a>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
