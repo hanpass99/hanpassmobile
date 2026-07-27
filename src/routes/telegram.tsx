@@ -95,7 +95,21 @@ type Message = {
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
-type Template = { id: string; title: string; content: string; shortcut: string | null };
+type TemplateMediaType = "none" | "image" | "document";
+type Template = {
+  id: string;
+  title: string;
+  content: string;
+  shortcut: string | null;
+  media_type: TemplateMediaType;
+  media_storage_path: string | null;
+  media_file_name: string | null;
+  media_mime: string | null;
+  media_size: number | null;
+};
+
+const TEMPLATE_SELECT =
+  "id, title, content, shortcut, media_type, media_storage_path, media_file_name, media_mime, media_size";
 
 const STATUS_LABEL: Record<ChatStatus, string> = {
   new: "신규",
