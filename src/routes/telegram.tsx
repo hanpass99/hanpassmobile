@@ -10,7 +10,6 @@ import {
   Search,
   Send,
   UserPlus,
-  CheckCircle2,
   Link2Off,
   MessageCircle,
   Settings,
@@ -19,6 +18,8 @@ import {
   Pencil,
   Trash2,
   Check,
+  Paperclip,
+  X,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
