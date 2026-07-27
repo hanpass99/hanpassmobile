@@ -1191,6 +1191,97 @@ function humanSize(n: number | null): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function TemplateThumb({ t }: { t: Template }) {
+  const isImage = t.media_type === "image" && !!t.media_storage_path;
+  const q = useSignedMediaUrl(isImage ? t.media_storage_path : null);
+  if (t.media_type === "none" || !t.media_storage_path) return null;
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded border bg-muted text-sm">
+      {isImage && q.data ? (
+        <img src={q.data} alt="" className="h-full w-full object-cover" loading="lazy" />
+      ) : (
+        <span>{t.media_type === "image" ? "🖼️" : "📎"}</span>
+      )}
+    </div>
+  );
+}
+
+function MediaTemplateConfirmDialog({
+  template,
+  onClose,
+  onSend,
+}: {
+  template: Template;
+  onClose: () => void;
+  onSend: (caption: string) => Promise<void>;
+}) {
+  const [caption, setCaption] = useState(template.content ?? "");
+  const [sending, setSending] = useState(false);
+  const isImage = template.media_type === "image";
+  const q = useSignedMediaUrl(template.media_storage_path);
+  return (
+    <Dialog open onOpenChange={(o) => !o && !sending && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>미디어 템플릿 전송 확인</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded border bg-muted/30 p-2">
+            {isImage ? (
+              q.data ? (
+                <img
+                  src={q.data}
+                  alt={template.media_file_name ?? ""}
+                  className="mx-auto max-h-64 w-auto max-w-full rounded"
+                />
+              ) : (
+                <div className="p-6 text-center text-xs text-muted-foreground">미리보기 불러오는 중…</div>
+              )
+            ) : (
+              <div className="flex items-center gap-2 p-2 text-sm">
+                📎 <span className="break-all">{template.media_file_name ?? "File"}</span>
+                {template.media_size ? (
+                  <span className="text-xs opacity-70">({humanSize(template.media_size)})</span>
+                ) : null}
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground">캡션 (내용 텍스트)</label>
+            <Textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={4}
+              className="resize-none"
+              placeholder="선택 사항 — 비워두면 미디어만 전송됩니다."
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} disabled={sending}>
+            취소
+          </Button>
+          <Button
+            onClick={async () => {
+              setSending(true);
+              try {
+                await onSend(caption);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "전송 실패");
+              } finally {
+                setSending(false);
+              }
+            }}
+            disabled={sending}
+          >
+            {sending ? "전송 중..." : "전송"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function MessageBody({
   m,
   onPhotoClick,
