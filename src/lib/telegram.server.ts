@@ -185,6 +185,14 @@ export async function editMessageText(chatId: number, messageId: number, text: s
   });
 }
 
+export async function editMessageCaption(chatId: number, messageId: number, caption: string) {
+  return callBot("editMessageCaption", {
+    chat_id: chatId,
+    message_id: messageId,
+    caption,
+  });
+}
+
 export async function setWebhook(url: string) {
   return callBot("setWebhook", {
     url,
