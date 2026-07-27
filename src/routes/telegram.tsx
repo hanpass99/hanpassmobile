@@ -1510,7 +1510,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>내 빠른 답변 템플릿</DialogTitle>
         </DialogHeader>
