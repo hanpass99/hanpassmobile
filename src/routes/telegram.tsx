@@ -665,6 +665,13 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const applySlashTemplate = (t: Template) => {
     // Replace only the first line's "/token" with the template content, keep any subsequent lines.
     const lines = text.split("\n");
+    if (t.media_type !== "none" && t.media_storage_path) {
+      // For media templates, clear the "/token" from the first line and open the media preview.
+      lines[0] = "";
+      setText(lines.join("\n").replace(/^\n/, ""));
+      setPendingMediaTemplate(t);
+      return;
+    }
     lines[0] = t.content;
     const next = lines.join("\n");
     setText(next);
