@@ -1479,6 +1479,33 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     setTitle(t.title);
     setContent(t.content);
     setShortcut(t.shortcut ?? "");
+    setMediaType(t.media_type);
+    setMediaStoragePath(t.media_storage_path);
+    setMediaFileName(t.media_file_name);
+    setMediaMime(t.media_mime);
+    setMediaSize(t.media_size);
+  };
+
+  const onUploadMedia = async (file: File) => {
+    if (!user?.id) return;
+    setUploadingMedia(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "bin";
+      const path = `templates/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("telegram-media").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+      });
+      if (error) throw error;
+      setMediaStoragePath(path);
+      setMediaFileName(file.name);
+      setMediaMime(file.type || "application/octet-stream");
+      setMediaSize(file.size);
+      setMediaType(file.type.startsWith("image/") ? "image" : "document");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "업로드 실패");
+    } finally {
+      setUploadingMedia(false);
+    }
   };
 
   return (
