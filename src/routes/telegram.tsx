@@ -471,6 +471,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const [isUploading, setIsUploading] = useState(false);
   const [pendingMediaTemplate, setPendingMediaTemplate] = useState<Template | null>(null);
   const [showSmsDialog, setShowSmsDialog] = useState(false);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
 
   const messagesQuery = useQuery({
     queryKey: ["telegram-messages", chat.id],
