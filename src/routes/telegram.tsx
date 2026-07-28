@@ -381,12 +381,12 @@ function TelegramPage() {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate flex-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="truncate flex-1 min-w-0 text-xs text-muted-foreground">
                           {c.last_message_preview ?? "(no preview)"}
                         </p>
                         {c.unread_count > 0 && (
-                          <span className="rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
+                          <span className="shrink-0 rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
                             {c.unread_count}
                           </span>
                         )}
