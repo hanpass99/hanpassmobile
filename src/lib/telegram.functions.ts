@@ -101,6 +101,7 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
         size: z.number().int().nonnegative(),
         kind: z.enum(["photo", "document"]),
         caption: z.string().max(1024).optional().nullable(),
+        replyToMessageId: z.string().uuid().nullable().optional(),
       })
       .parse(d),
   )
@@ -112,6 +113,22 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
       .eq("id", data.chatRowId)
       .maybeSingle();
     if (chatErr || !chat) throw new Error("Chat not found");
+
+    let replyToTgId: number | null = null;
+    if (data.replyToMessageId) {
+      const { data: replyRow } = await supabase
+        .from("telegram_messages")
+        .select("telegram_message_id, telegram_chat_row_id")
+        .eq("id", data.replyToMessageId)
+        .maybeSingle();
+      if (
+        replyRow &&
+        replyRow.telegram_chat_row_id === data.chatRowId &&
+        replyRow.telegram_message_id
+      ) {
+        replyToTgId = Number(replyRow.telegram_message_id);
+      }
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: dl, error: dlErr } = await supabaseAdmin.storage
@@ -130,6 +147,7 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
         data.fileName,
         data.mime,
         data.caption ?? undefined,
+        replyToTgId,
       );
       tgMsgId = r.message_id;
       await supabase
@@ -167,7 +185,9 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
       media_mime: data.mime,
       media_size: data.size,
       sent_by: userId,
-    });
+      reply_to_message_id: data.replyToMessageId ?? null,
+      reply_to_telegram_message_id: replyToTgId,
+    } as never);
     if (insErr) throw new Error(insErr.message);
 
     await supabase
