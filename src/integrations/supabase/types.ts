@@ -112,6 +112,154 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_faq_entries: {
+        Row: {
+          answer_ru: string
+          answer_uz: string
+          category: string | null
+          created_at: string
+          created_by: string | null
+          embedding: string | null
+          id: string
+          is_active: boolean
+          question_examples: string[]
+          updated_at: string
+        }
+        Insert: {
+          answer_ru: string
+          answer_uz: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          embedding?: string | null
+          id?: string
+          is_active?: boolean
+          question_examples?: string[]
+          updated_at?: string
+        }
+        Update: {
+          answer_ru?: string
+          answer_uz?: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          embedding?: string | null
+          id?: string
+          is_active?: boolean
+          question_examples?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_reply_logs: {
+        Row: {
+          chat_row_id: string | null
+          confidence: number | null
+          created_at: string
+          decision: string
+          id: string
+          inbound_message_id: string | null
+          matched_faq_id: string | null
+          outbound_message_id: string | null
+          question_text: string | null
+          reason: string | null
+          reply_text: string | null
+        }
+        Insert: {
+          chat_row_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          decision: string
+          id?: string
+          inbound_message_id?: string | null
+          matched_faq_id?: string | null
+          outbound_message_id?: string | null
+          question_text?: string | null
+          reason?: string | null
+          reply_text?: string | null
+        }
+        Update: {
+          chat_row_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          decision?: string
+          id?: string
+          inbound_message_id?: string | null
+          matched_faq_id?: string | null
+          outbound_message_id?: string | null
+          question_text?: string | null
+          reason?: string | null
+          reply_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_reply_logs_chat_row_id_fkey"
+            columns: ["chat_row_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_reply_logs_inbound_message_id_fkey"
+            columns: ["inbound_message_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_reply_logs_matched_faq_id_fkey"
+            columns: ["matched_faq_id"]
+            isOneToOne: false
+            referencedRelation: "ai_faq_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_reply_logs_outbound_message_id_fkey"
+            columns: ["outbound_message_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_reply_settings: {
+        Row: {
+          chat_row_id: string | null
+          confidence_threshold: number
+          created_at: string
+          enabled: boolean
+          id: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          chat_row_id?: string | null
+          confidence_threshold?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          scope: string
+          updated_at?: string
+        }
+        Update: {
+          chat_row_id?: string | null
+          confidence_threshold?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_reply_settings_chat_row_id_fkey"
+            columns: ["chat_row_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_hours: {
         Row: {
           auto_reply_ru: string
@@ -1114,6 +1262,7 @@ export type Database = {
           direction: string
           edited_at: string | null
           id: string
+          is_ai_generated: boolean
           media_duration: number | null
           media_file_name: string | null
           media_height: number | null
@@ -1138,6 +1287,7 @@ export type Database = {
           direction: string
           edited_at?: string | null
           id?: string
+          is_ai_generated?: boolean
           media_duration?: number | null
           media_file_name?: string | null
           media_height?: number | null
@@ -1162,6 +1312,7 @@ export type Database = {
           direction?: string
           edited_at?: string | null
           id?: string
+          is_ai_generated?: boolean
           media_duration?: number | null
           media_file_name?: string | null
           media_height?: number | null
@@ -1347,6 +1498,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_ai_faq: {
+        Args: { match_count?: number; query_embedding: string }
+        Returns: {
+          answer_ru: string
+          answer_uz: string
+          category: string
+          id: string
+          question_examples: string[]
+          similarity: number
+        }[]
       }
       normalize_google_form_phone: { Args: { _phone: string }; Returns: string }
       search_customers: {

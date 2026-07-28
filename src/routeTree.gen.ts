@@ -21,6 +21,7 @@ import { Route as ChannelPerformanceRouteImport } from './routes/channel-perform
 import { Route as CallLogsRouteImport } from './routes/call-logs'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AttendanceRouteImport } from './routes/attendance'
+import { Route as AiFaqRouteImport } from './routes/ai-faq'
 import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -91,6 +92,11 @@ const AttendanceRoute = AttendanceRouteImport.update({
   path: '/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiFaqRoute = AiFaqRouteImport.update({
+  id: '/ai-faq',
+  path: '/ai-faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AiAssistantRoute = AiAssistantRouteImport.update({
   id: '/ai-assistant',
   path: '/ai-assistant',
@@ -144,6 +150,7 @@ const ApiPublicTelegramWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai-assistant': typeof AiAssistantRoute
+  '/ai-faq': typeof AiFaqRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/call-logs': typeof CallLogsRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai-assistant': typeof AiAssistantRoute
+  '/ai-faq': typeof AiFaqRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/call-logs': typeof CallLogsRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ai-assistant': typeof AiAssistantRoute
+  '/ai-faq': typeof AiFaqRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
   '/call-logs': typeof CallLogsRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/ai-assistant'
+    | '/ai-faq'
     | '/attendance'
     | '/auth'
     | '/call-logs'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/ai-assistant'
+    | '/ai-faq'
     | '/attendance'
     | '/auth'
     | '/call-logs'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/ai-assistant'
+    | '/ai-faq'
     | '/attendance'
     | '/auth'
     | '/call-logs'
@@ -286,6 +298,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AiAssistantRoute: typeof AiAssistantRoute
+  AiFaqRoute: typeof AiFaqRoute
   AttendanceRoute: typeof AttendanceRoute
   AuthRoute: typeof AuthRoute
   CallLogsRoute: typeof CallLogsRoute
@@ -393,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai-faq': {
+      id: '/ai-faq'
+      path: '/ai-faq'
+      fullPath: '/ai-faq'
+      preLoaderRoute: typeof AiFaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ai-assistant': {
       id: '/ai-assistant'
       path: '/ai-assistant'
@@ -462,6 +482,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiAssistantRoute: AiAssistantRoute,
+  AiFaqRoute: AiFaqRoute,
   AttendanceRoute: AttendanceRoute,
   AuthRoute: AuthRoute,
   CallLogsRoute: CallLogsRoute,
@@ -486,13 +507,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
