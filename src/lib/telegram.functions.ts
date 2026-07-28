@@ -116,8 +116,20 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
         data.caption ?? undefined,
       );
       tgMsgId = r.message_id;
+      await supabase
+        .from("telegram_chats")
+        .update({ is_blocked: false, blocked_at: null })
+        .eq("id", data.chatRowId);
     } catch (e) {
-      throw new Error(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/\[403\]|bot was blocked|user is deactivated|chat not found/i.test(msg)) {
+        await supabase
+          .from("telegram_chats")
+          .update({ is_blocked: true, blocked_at: new Date().toISOString() })
+          .eq("id", data.chatRowId);
+        throw new Error("고객이 봇을 차단했습니다. SMS로 발송하세요.");
+      }
+      throw new Error(msg);
     }
 
     const messageType = data.kind === "photo" ? "photo" : "document";
