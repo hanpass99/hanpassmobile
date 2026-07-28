@@ -883,6 +883,36 @@ function ConversationPane({ chat }: { chat: Chat }) {
         )}
       </div>
 
+      {chat.is_blocked ? (
+        <div className="border-t p-4 space-y-3 bg-red-500/5">
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">🚫</span>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm text-red-700 dark:text-red-300">
+                고객이 봇을 차단했습니다
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                텔레그램으로는 메시지를 보낼 수 없습니다. 대신 SMS로 발송하세요.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowSmsDialog(true)}
+              disabled={!(customerQuery.data?.phone || chat.phone)}
+              className="flex-1"
+            >
+              <Send className="mr-2 h-4 w-4" />
+              SMS 발송
+            </Button>
+          </div>
+          {!(customerQuery.data?.phone || chat.phone) && (
+            <div className="text-xs text-muted-foreground">
+              전화번호가 없습니다. 고객을 먼저 연결하세요.
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="border-t p-3 space-y-2">
         <div className="flex items-center gap-2">
           <Popover open={templatesOpen} onOpenChange={setTemplatesOpen}>
