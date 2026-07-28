@@ -1173,6 +1173,14 @@ function ConversationPane({ chat }: { chat: Chat }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {showSmsDialog && (
+        <SendSmsDialog
+          chat={chat}
+          customerName={customerQuery.data?.name ?? null}
+          customerPhone={customerQuery.data?.phone ?? chat.phone ?? ""}
+          onClose={() => setShowSmsDialog(false)}
+        />
+      )}
     </>
   );
 }
