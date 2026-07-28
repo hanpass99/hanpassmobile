@@ -283,6 +283,201 @@ function previewForKind(kind: MediaKind, caption?: string | null, text?: string 
   return caption ? `${base} · ${caption.slice(0, 160)}` : base;
 }
 
+// AI auto-reply: fetch settings, run safety checks, search FAQ, generate reply,
+// send to Telegram, and log the decision. Returns true when an AI reply was sent.
+async function tryAiAutoReply(args: {
+  supabaseAdmin: any;
+  chatRowId: string;
+  chatId: number;
+  inboundMessageId: string | null;
+  question: string;
+  lang: BotLang;
+}): Promise<boolean> {
+  const { supabaseAdmin, chatRowId, chatId, inboundMessageId, question, lang } = args;
+
+  // 1. Load settings (global + chat override)
+  const { data: settings } = await supabaseAdmin
+    .from("ai_reply_settings")
+    .select("scope, chat_row_id, enabled, confidence_threshold");
+  const global = (settings ?? []).find((r: any) => r.scope === "global");
+  const chatOverride = (settings ?? []).find(
+    (r: any) => r.scope === "chat" && r.chat_row_id === chatRowId,
+  );
+  const enabled = chatOverride ? chatOverride.enabled : (global?.enabled ?? true);
+  const threshold = Number(chatOverride?.confidence_threshold ?? global?.confidence_threshold ?? 0.75);
+
+  if (!enabled) {
+    await supabaseAdmin.from("ai_reply_logs").insert({
+      chat_row_id: chatRowId,
+      inbound_message_id: inboundMessageId,
+      decision: "skipped_disabled",
+      question_text: question,
+    });
+    return false;
+  }
+
+  const {
+    containsSafetyKeyword,
+    embedText,
+    generateReply,
+  } = await import("@/lib/ai-reply.server");
+
+  // 2. Safety keywords → always escalate
+  if (containsSafetyKeyword(question)) {
+    await supabaseAdmin.from("ai_reply_logs").insert({
+      chat_row_id: chatRowId,
+      inbound_message_id: inboundMessageId,
+      decision: "skipped_safety",
+      reason: "safety keyword",
+      question_text: question,
+    });
+    return false;
+  }
+
+  // 3. Anti-loop: if AI already sent 3 consecutive replies as the most recent outbound, escalate
+  const { data: recent } = await supabaseAdmin
+    .from("telegram_messages")
+    .select("direction, is_ai_generated")
+    .eq("telegram_chat_row_id", chatRowId)
+    .order("created_at", { ascending: false })
+    .limit(6);
+  const outboundStreak = (recent ?? [])
+    .filter((r: any) => r.direction === "out")
+    .slice(0, 3);
+  if (outboundStreak.length === 3 && outboundStreak.every((r: any) => r.is_ai_generated)) {
+    await supabaseAdmin.from("ai_reply_logs").insert({
+      chat_row_id: chatRowId,
+      inbound_message_id: inboundMessageId,
+      decision: "skipped_safety",
+      reason: "AI streak limit",
+      question_text: question,
+    });
+    return false;
+  }
+
+  // 4. Embed the question and search FAQ
+  let faqs: Array<{
+    id: string;
+    category: string | null;
+    question_examples: string[];
+    answer_uz: string;
+    answer_ru: string;
+    similarity: number;
+  }> = [];
+  try {
+    const emb = await embedText(question);
+    if (emb.length > 0) {
+      const { data: matches } = await supabaseAdmin.rpc("match_ai_faq", {
+        query_embedding: emb as never,
+        match_count: 5,
+      });
+      faqs = (matches ?? []) as typeof faqs;
+    }
+  } catch (e) {
+    console.error("[ai auto-reply] embedding/search failed", e);
+  }
+
+  // 5. Load short history (last 6 turns)
+  const { data: hist } = await supabaseAdmin
+    .from("telegram_messages")
+    .select("direction, text, created_at")
+    .eq("telegram_chat_row_id", chatRowId)
+    .order("created_at", { ascending: false })
+    .limit(6);
+  const history = ((hist ?? []) as Array<{ direction: string; text: string | null }>)
+    .filter((h) => h.text)
+    .reverse()
+    .map((h) => ({
+      role: (h.direction === "in" ? "customer" : "operator") as "customer" | "operator",
+      text: h.text as string,
+    }));
+
+  // 6. Generate reply
+  let decision;
+  try {
+    decision = await generateReply(question, lang, faqs, history);
+  } catch (e) {
+    await supabaseAdmin.from("ai_reply_logs").insert({
+      chat_row_id: chatRowId,
+      inbound_message_id: inboundMessageId,
+      decision: "error",
+      reason: e instanceof Error ? e.message : String(e),
+      question_text: question,
+    });
+    return false;
+  }
+
+  if (!decision.reply || decision.confidence < threshold) {
+    await supabaseAdmin.from("ai_reply_logs").insert({
+      chat_row_id: chatRowId,
+      inbound_message_id: inboundMessageId,
+      matched_faq_id: decision.matchedFaqId,
+      confidence: decision.confidence,
+      decision: "skipped_low_confidence",
+      reason: decision.reason,
+      reply_text: decision.reply,
+      question_text: question,
+    });
+    return false;
+  }
+
+  // 7. Send to Telegram with 🤖 prefix
+  const finalText = `🤖 ${decision.reply}`;
+  let tgMsgId: number | null = null;
+  try {
+    const r = await sendTelegramMessage(chatId, finalText);
+    tgMsgId = r.message_id;
+  } catch (e) {
+    console.error("[ai auto-reply] send failed", e);
+    await supabaseAdmin.from("ai_reply_logs").insert({
+      chat_row_id: chatRowId,
+      inbound_message_id: inboundMessageId,
+      matched_faq_id: decision.matchedFaqId,
+      confidence: decision.confidence,
+      decision: "error",
+      reason: e instanceof Error ? e.message : String(e),
+      question_text: question,
+    });
+    return false;
+  }
+
+  // 8. Persist outbound + log + bump chat preview
+  const { data: outbound } = await supabaseAdmin
+    .from("telegram_messages")
+    .insert({
+      chat_id: chatId,
+      telegram_chat_row_id: chatRowId,
+      direction: "out",
+      telegram_message_id: tgMsgId,
+      text: finalText,
+      is_ai_generated: true,
+    } as never)
+    .select("id")
+    .single();
+
+  await supabaseAdmin
+    .from("telegram_chats")
+    .update({
+      last_message_preview: finalText.slice(0, 200),
+      last_message_at: new Date().toISOString(),
+    })
+    .eq("id", chatRowId);
+
+  await supabaseAdmin.from("ai_reply_logs").insert({
+    chat_row_id: chatRowId,
+    inbound_message_id: inboundMessageId,
+    outbound_message_id: (outbound as { id: string } | null)?.id ?? null,
+    matched_faq_id: decision.matchedFaqId,
+    confidence: decision.confidence,
+    decision: "sent",
+    reason: decision.reason,
+    reply_text: finalText,
+    question_text: question,
+  });
+
+  return true;
+}
+
 export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
@@ -522,27 +717,32 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
 
         // Save the message
-        const { error: msgErr } = await supabaseAdmin.from("telegram_messages").insert({
-          chat_id: chatId,
-          telegram_chat_row_id: rowId,
-          direction: "in",
-          telegram_message_id: message.message_id,
-          message_type: media.kind,
-          text: contactText ?? message.text ?? null,
-          caption,
-          media_storage_path,
-          media_url,
-          media_file_name,
-          media_mime,
-          media_size,
-          media_width: media.width ?? null,
-          media_height: media.height ?? null,
-          media_duration: media.duration ?? null,
-          raw: message as never,
-        });
+        const { data: insertedMsg, error: msgErr } = await supabaseAdmin
+          .from("telegram_messages")
+          .insert({
+            chat_id: chatId,
+            telegram_chat_row_id: rowId,
+            direction: "in",
+            telegram_message_id: message.message_id,
+            message_type: media.kind,
+            text: contactText ?? message.text ?? null,
+            caption,
+            media_storage_path,
+            media_url,
+            media_file_name,
+            media_mime,
+            media_size,
+            media_width: media.width ?? null,
+            media_height: media.height ?? null,
+            media_duration: media.duration ?? null,
+            raw: message as never,
+          })
+          .select("id")
+          .single();
         if (msgErr && !msgErr.message.includes("duplicate")) {
           console.error("[telegram webhook] insert message failed", msgErr);
         }
+        const inboundMessageId = insertedMsg?.id as string | undefined;
 
         // Track whether we've already sent an auto-response so we don't stack messages.
         let autoResponseSent = false;
@@ -556,6 +756,35 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             console.error("[telegram webhook] language picker failed", e);
           }
         }
+
+        // === AI AUTO-REPLY ===
+        // Try AI reply for text messages after the chat has been through the
+        // greeting/language flow. Skipped for /start, first message, contact
+        // shares, media, and closed conversations (which get their own re-prompt).
+        if (
+          !autoResponseSent &&
+          !isStartCommand &&
+          !isFirstMessage &&
+          !wasDone &&
+          media.kind === "text" &&
+          typeof message.text === "string" &&
+          message.text.trim().length > 0
+        ) {
+          try {
+            const aiSent = await tryAiAutoReply({
+              supabaseAdmin,
+              chatRowId: rowId,
+              chatId,
+              inboundMessageId: inboundMessageId ?? null,
+              question: message.text,
+              lang: chatLang,
+            });
+            if (aiSent) autoResponseSent = true;
+          } catch (e) {
+            console.error("[telegram webhook] AI auto-reply failed", e);
+          }
+        }
+
 
         // Closed-conversation re-prompt: chat was already "done" and the customer sent a normal
         // message (not /start). Send once per throttle window (1 hour) to avoid spamming.

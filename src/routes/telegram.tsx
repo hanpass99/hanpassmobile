@@ -95,6 +95,7 @@ type Message = {
   edited_at: string | null;
   telegram_message_id: number | null;
   reply_to_message_id: string | null;
+  is_ai_generated?: boolean | null;
 };
 
 
@@ -479,7 +480,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       const { data, error } = await supabase
         .from("telegram_messages")
         .select(
-          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at, edited_at, telegram_message_id, reply_to_message_id",
+          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at, edited_at, telegram_message_id, reply_to_message_id, is_ai_generated",
         )
         .eq("telegram_chat_row_id", chat.id)
         .order("created_at", { ascending: true })
@@ -808,7 +809,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
               minute: "2-digit",
             });
             const senderLabel = isOut
-              ? `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
+              ? m.is_ai_generated
+                ? `🤖 AI 자동 응답 · ${timeLabel}`
+                : `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
               : `고객 · ${timeLabel}`;
             const isEditing = editingId === m.id;
             const editable =
@@ -857,7 +860,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
                     className={cn(
                       "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words",
                       isOut
-                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                        ? m.is_ai_generated
+                          ? "bg-violet-500/15 text-foreground border border-violet-400/40 rounded-br-sm"
+                          : "bg-primary text-primary-foreground rounded-br-sm"
                         : "bg-muted text-foreground rounded-bl-sm",
                     )}
                   >
