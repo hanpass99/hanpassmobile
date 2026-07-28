@@ -70,6 +70,7 @@ type Chat = {
   is_matched: boolean;
   status: ChatStatus;
   assigned_operator_id: string | null;
+  is_blocked?: boolean | null;
 };
 
 type Message = {
