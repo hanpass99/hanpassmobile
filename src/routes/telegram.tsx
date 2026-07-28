@@ -1106,6 +1106,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
           <div className="text-xs text-muted-foreground">업로드 중...</div>
         )}
       </div>
+      )}
 
       {showLinkDialog && (
         <LinkCustomerDialog chat={chat} onClose={() => setShowLinkDialog(false)} />
