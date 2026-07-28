@@ -609,9 +609,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
           size: file.size,
           kind,
           caption: text.trim() ? text.trim() : null,
+          replyToMessageId: replyTo?.id ?? null,
         },
       });
       setText("");
+      setReplyTo(null);
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     } catch (e) {
