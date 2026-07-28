@@ -952,6 +952,29 @@ function ConversationPane({ chat }: { chat: Chat }) {
         </div>
       ) : (
       <div className="border-t p-3 space-y-2">
+        {replyTo && (
+          <div className="flex items-start gap-2 rounded border-l-2 border-primary bg-primary/5 px-2 py-1.5 text-xs">
+            <Reply className="mt-0.5 h-3.5 w-3.5 text-primary shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-primary">
+                {replyTo.direction === "out"
+                  ? `${(replyTo.sent_by && profileMap[replyTo.sent_by]?.display_name) || "직원"} 에게 답장`
+                  : "고객에게 답장"}
+              </div>
+              <div className="line-clamp-2 text-muted-foreground whitespace-pre-wrap break-words">
+                {quotedSnippet(replyTo)}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted"
+              title="답장 취소"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <Popover open={templatesOpen} onOpenChange={setTemplatesOpen}>
             <PopoverTrigger asChild>
