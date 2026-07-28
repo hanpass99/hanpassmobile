@@ -899,7 +899,16 @@ function ConversationPane({ chat }: { chat: Chat }) {
                         </div>
                       </div>
                     ) : (
-                      <MessageBody m={m} onPhotoClick={setPhotoUrl} />
+                      <>
+                        {m.reply_to_message_id && (
+                          <QuotedReplyPreview
+                            target={messagesById.get(m.reply_to_message_id) ?? null}
+                            isOut={isOut}
+                            profileMap={profileMap}
+                          />
+                        )}
+                        <MessageBody m={m} onPhotoClick={setPhotoUrl} />
+                      </>
                     )}
                   </div>
                 </div>
