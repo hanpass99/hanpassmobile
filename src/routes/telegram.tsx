@@ -711,6 +711,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
             <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", STATUS_BADGE[chat.status])}>
               {STATUS_LABEL[chat.status]}
             </Badge>
+            {chat.is_blocked && (
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300">
+                🚫 차단됨
+              </Badge>
+            )}
           </div>
           <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5">
             {customerQuery.data ? (
