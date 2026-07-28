@@ -809,7 +809,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
               minute: "2-digit",
             });
             const senderLabel = isOut
-              ? `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
+              ? m.is_ai_generated
+                ? `🤖 AI 자동 응답 · ${timeLabel}`
+                : `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
               : `고객 · ${timeLabel}`;
             const isEditing = editingId === m.id;
             const editable =
