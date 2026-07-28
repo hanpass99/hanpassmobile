@@ -42,11 +42,16 @@ async function callBot<T = unknown>(
   return parsed.result as T;
 }
 
-export async function sendTelegramMessage(chatId: number, text: string) {
-  return callBot<{ message_id: number }>("sendMessage", {
-    chat_id: chatId,
-    text,
-  });
+export async function sendTelegramMessage(
+  chatId: number,
+  text: string,
+  replyToMessageId?: number | null,
+) {
+  const body: Record<string, unknown> = { chat_id: chatId, text };
+  if (replyToMessageId) {
+    body.reply_parameters = { message_id: replyToMessageId, allow_sending_without_reply: true };
+  }
+  return callBot<{ message_id: number }>("sendMessage", body);
 }
 
 /** Send a photo or document via multipart. Returns Telegram message id. */
@@ -57,6 +62,7 @@ export async function sendTelegramMedia(
   fileName: string,
   mime: string,
   caption?: string,
+  replyToMessageId?: number | null,
 ): Promise<{ message_id: number }> {
   const token = getBotToken();
   const method = kind === "photo" ? "sendPhoto" : "sendDocument";
@@ -64,6 +70,12 @@ export async function sendTelegramMedia(
   const form = new FormData();
   form.append("chat_id", String(chatId));
   if (caption) form.append("caption", caption);
+  if (replyToMessageId) {
+    form.append(
+      "reply_parameters",
+      JSON.stringify({ message_id: replyToMessageId, allow_sending_without_reply: true }),
+    );
+  }
   const arrayBuffer = bytes.buffer.slice(
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,
