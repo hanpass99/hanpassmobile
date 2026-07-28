@@ -406,6 +406,11 @@ function TelegramPage() {
                         <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
                           {STATUS_LABEL[c.status]}
                         </Badge>
+                        {c.is_blocked && (
+                          <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-[9px] text-red-700 dark:text-red-300">
+                            🚫 차단됨
+                          </Badge>
+                        )}
                         {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
                           <Badge
                             variant="outline"
