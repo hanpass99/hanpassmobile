@@ -1029,11 +1029,13 @@ export type Database = {
       telegram_chats: {
         Row: {
           assigned_operator_id: string | null
+          blocked_at: string | null
           chat_id: number
           created_at: string
           customer_id: string | null
           first_name: string | null
           id: string
+          is_blocked: boolean
           is_matched: boolean
           language: string | null
           last_done_reprompt_at: string | null
@@ -1050,11 +1052,13 @@ export type Database = {
         }
         Insert: {
           assigned_operator_id?: string | null
+          blocked_at?: string | null
           chat_id: number
           created_at?: string
           customer_id?: string | null
           first_name?: string | null
           id?: string
+          is_blocked?: boolean
           is_matched?: boolean
           language?: string | null
           last_done_reprompt_at?: string | null
@@ -1071,11 +1075,13 @@ export type Database = {
         }
         Update: {
           assigned_operator_id?: string | null
+          blocked_at?: string | null
           chat_id?: number
           created_at?: string
           customer_id?: string | null
           first_name?: string | null
           id?: string
+          is_blocked?: boolean
           is_matched?: boolean
           language?: string | null
           last_done_reprompt_at?: string | null

@@ -53,6 +53,8 @@ import {
   registerTelegramWebhook,
   setTelegramChatStatus,
 } from "@/lib/telegram.functions";
+import { markTelegramChatRead } from "@/lib/telegram.functions";
+import { useSendSms } from "@/hooks/use-sms";
 
 type ChatStatus = "new" | "in_progress" | "done";
 
@@ -70,6 +72,7 @@ type Chat = {
   is_matched: boolean;
   status: ChatStatus;
   assigned_operator_id: string | null;
+  is_blocked?: boolean | null;
 };
 
 type Message = {
@@ -405,6 +408,11 @@ function TelegramPage() {
                         <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
                           {STATUS_LABEL[c.status]}
                         </Badge>
+                        {c.is_blocked && (
+                          <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-[9px] text-red-700 dark:text-red-300">
+                            🚫 차단됨
+                          </Badge>
+                        )}
                         {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
                           <Badge
                             variant="outline"
@@ -460,6 +468,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [pendingMediaTemplate, setPendingMediaTemplate] = useState<Template | null>(null);
+  const [showSmsDialog, setShowSmsDialog] = useState(false);
 
   const messagesQuery = useQuery({
     queryKey: ["telegram-messages", chat.id],
@@ -705,6 +714,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
             <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", STATUS_BADGE[chat.status])}>
               {STATUS_LABEL[chat.status]}
             </Badge>
+            {chat.is_blocked && (
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300">
+                🚫 차단됨
+              </Badge>
+            )}
           </div>
           <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5">
             {customerQuery.data ? (
@@ -871,6 +885,36 @@ function ConversationPane({ chat }: { chat: Chat }) {
         )}
       </div>
 
+      {chat.is_blocked ? (
+        <div className="border-t p-4 space-y-3 bg-red-500/5">
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">🚫</span>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm text-red-700 dark:text-red-300">
+                고객이 봇을 차단했습니다
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                텔레그램으로는 메시지를 보낼 수 없습니다. 대신 SMS로 발송하세요.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowSmsDialog(true)}
+              disabled={!(customerQuery.data?.phone || chat.phone)}
+              className="flex-1"
+            >
+              <Send className="mr-2 h-4 w-4" />
+              SMS 발송
+            </Button>
+          </div>
+          {!(customerQuery.data?.phone || chat.phone) && (
+            <div className="text-xs text-muted-foreground">
+              전화번호가 없습니다. 고객을 먼저 연결하세요.
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="border-t p-3 space-y-2">
         <div className="flex items-center gap-2">
           <Popover open={templatesOpen} onOpenChange={setTemplatesOpen}>
@@ -1064,6 +1108,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
           <div className="text-xs text-muted-foreground">업로드 중...</div>
         )}
       </div>
+      )}
 
       {showLinkDialog && (
         <LinkCustomerDialog chat={chat} onClose={() => setShowLinkDialog(false)} />
@@ -1128,6 +1173,14 @@ function ConversationPane({ chat }: { chat: Chat }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {showSmsDialog && (
+        <SendSmsDialog
+          chat={chat}
+          customerName={customerQuery.data?.name ?? null}
+          customerPhone={customerQuery.data?.phone ?? chat.phone ?? ""}
+          onClose={() => setShowSmsDialog(false)}
+        />
+      )}
     </>
   );
 }
@@ -1795,6 +1848,108 @@ function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void
     </Dialog>
   );
 }
+
+function SendSmsDialog({
+  chat,
+  customerName,
+  customerPhone,
+  onClose,
+}: {
+  chat: Chat;
+  customerName: string | null;
+  customerPhone: string;
+  onClose: () => void;
+}) {
+  const [message, setMessage] = useState("");
+  const [title, setTitle] = useState("");
+  const sendSms = useSendSms();
+  const markRead = useServerFn(markTelegramChatRead);
+  const qc = useQueryClient();
+
+  const handleSend = async () => {
+    const msg = message.trim();
+    if (!msg) {
+      toast.error("메시지를 입력하세요");
+      return;
+    }
+    if (!customerPhone) {
+      toast.error("전화번호가 없습니다");
+      return;
+    }
+    try {
+      const res = await sendSms.mutateAsync({
+        receivers: [
+          {
+            customer_id: chat.customer_id ?? null,
+            name: customerName ?? chat.first_name ?? null,
+            phone: customerPhone,
+          },
+        ],
+        message: msg,
+        title: title.trim() || undefined,
+      });
+      if (res?.ok === false) {
+        toast.error(res?.aligo?.message || "SMS 발송 실패");
+        return;
+      }
+      // Mark chat as read even though we replied via SMS (Telegram delivery is blocked)
+      try {
+        await markRead({ data: { chatRowId: chat.id } });
+        qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+      } catch {
+        // non-fatal
+      }
+      toast.success("SMS 발송 완료 · 읽음 처리됨");
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "SMS 발송 실패");
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>SMS 발송 (차단된 고객)</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="text-xs text-muted-foreground">
+            수신자:{" "}
+            <span className="font-medium text-foreground">
+              {customerName ?? chat.first_name ?? "고객"} · {customerPhone}
+            </span>
+          </div>
+          <Input
+            placeholder="제목 (LMS일 때만 사용, 선택)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={44}
+          />
+          <Textarea
+            placeholder="메시지 내용을 입력하세요"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={6}
+          />
+          <div className="text-[10px] text-muted-foreground">
+            90바이트 초과 시 자동으로 LMS로 전환됩니다.
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={sendSms.isPending}>
+            취소
+          </Button>
+          <Button onClick={handleSend} disabled={sendSms.isPending || !message.trim() || !customerPhone}>
+            <Send className="mr-2 h-4 w-4" />
+            {sendSms.isPending ? "발송중..." : "SMS 발송"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 
 function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
   const defaultUrl =
