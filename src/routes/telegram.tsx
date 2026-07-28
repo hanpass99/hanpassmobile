@@ -647,6 +647,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
   };
 
   const profileMap = profilesQuery.data ?? {};
+  const messagesById = useMemo(() => {
+    const map = new Map<string, Message>();
+    for (const m of messagesQuery.data ?? []) map.set(m.id, m);
+    return map;
+  }, [messagesQuery.data]);
+  const focusInput = () => setTimeout(() => textareaRef.current?.focus(), 0);
 
   const insertTemplate = (t: Template) => {
     setTemplatesOpen(false);
