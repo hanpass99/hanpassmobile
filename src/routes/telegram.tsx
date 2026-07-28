@@ -1975,9 +1975,13 @@ function SendSmsDialog({
 }) {
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState("");
+  const [phone, setPhone] = useState(customerPhone ?? "");
   const sendSms = useSendSms();
   const markRead = useServerFn(markTelegramChatRead);
   const qc = useQueryClient();
+
+  const normalizedPhone = phone.replace(/[^\d]/g, "");
+  const isValidKrPhone = /^01[0-9]{8,9}$/.test(normalizedPhone);
 
   const handleSend = async () => {
     const msg = message.trim();
@@ -1985,8 +1989,8 @@ function SendSmsDialog({
       toast.error("메시지를 입력하세요");
       return;
     }
-    if (!customerPhone) {
-      toast.error("전화번호가 없습니다");
+    if (!isValidKrPhone) {
+      toast.error("올바른 한국 휴대폰 번호를 입력하세요 (예: 010-1234-5678)");
       return;
     }
     try {
@@ -1995,7 +1999,7 @@ function SendSmsDialog({
           {
             customer_id: chat.customer_id ?? null,
             name: customerName ?? chat.first_name ?? null,
-            phone: customerPhone,
+            phone: normalizedPhone,
           },
         ],
         message: msg,
@@ -2029,8 +2033,40 @@ function SendSmsDialog({
           <div className="text-xs text-muted-foreground">
             수신자:{" "}
             <span className="font-medium text-foreground">
-              {customerName ?? chat.first_name ?? "고객"} · {customerPhone}
+              {customerName ?? chat.first_name ?? "고객"}
             </span>
+            {customerPhone && (
+              <span className="ml-1">
+                · 텔레그램 등록 번호:{" "}
+                <span className="font-mono">{customerPhone}</span>
+              </span>
+            )}
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground">
+              수신 번호 (한국 휴대폰)
+            </label>
+            <Input
+              placeholder="010-1234-5678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              inputMode="tel"
+              className={!phone || isValidKrPhone ? "" : "border-destructive"}
+            />
+            {phone && !isValidKrPhone && (
+              <div className="text-[10px] text-destructive">
+                올바른 한국 휴대폰 번호를 입력하세요 (010으로 시작하는 10-11자리)
+              </div>
+            )}
+            {customerPhone && phone.replace(/[^\d]/g, "") !== customerPhone.replace(/[^\d]/g, "") && (
+              <button
+                type="button"
+                onClick={() => setPhone(customerPhone)}
+                className="text-[10px] text-primary hover:underline"
+              >
+                원본 번호로 되돌리기
+              </button>
+            )}
           </div>
           <Input
             placeholder="제목 (LMS일 때만 사용, 선택)"
@@ -2052,11 +2088,12 @@ function SendSmsDialog({
           <Button variant="outline" onClick={onClose} disabled={sendSms.isPending}>
             취소
           </Button>
-          <Button onClick={handleSend} disabled={sendSms.isPending || !message.trim() || !customerPhone}>
+          <Button onClick={handleSend} disabled={sendSms.isPending || !message.trim() || !isValidKrPhone}>
             <Send className="mr-2 h-4 w-4" />
             {sendSms.isPending ? "발송중..." : "SMS 발송"}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
