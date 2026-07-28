@@ -278,9 +278,13 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
       .eq("id", data.chatRowId)
       .maybeSingle();
 
+    const updatePayload: Record<string, unknown> = { status: data.status };
+    if (data.status === "done") {
+      updatePayload.unread_count = 0;
+    }
     const { error } = await context.supabase
       .from("telegram_chats")
-      .update({ status: data.status })
+      .update(updatePayload)
       .eq("id", data.chatRowId);
     if (error) throw new Error(error.message);
 
