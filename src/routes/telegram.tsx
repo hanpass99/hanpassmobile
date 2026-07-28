@@ -478,7 +478,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       const { data, error } = await supabase
         .from("telegram_messages")
         .select(
-          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at, edited_at, telegram_message_id",
+          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at, edited_at, telegram_message_id, reply_to_message_id",
         )
         .eq("telegram_chat_row_id", chat.id)
         .order("created_at", { ascending: true })
