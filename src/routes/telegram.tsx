@@ -860,7 +860,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
                     className={cn(
                       "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words",
                       isOut
-                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                        ? m.is_ai_generated
+                          ? "bg-violet-500/15 text-foreground border border-violet-400/40 rounded-br-sm"
+                          : "bg-primary text-primary-foreground rounded-br-sm"
                         : "bg-muted text-foreground rounded-bl-sm",
                     )}
                   >
