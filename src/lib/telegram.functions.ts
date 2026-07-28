@@ -30,8 +30,20 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
     try {
       const result = await sendTelegramMessage(Number(chat.chat_id), text);
       telegramMessageId = result.message_id;
+      // Clear blocked flag if delivery succeeds
+      await supabase
+        .from("telegram_chats")
+        .update({ is_blocked: false, blocked_at: null })
+        .eq("id", chatRowId);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      if (/\[403\]|bot was blocked|user is deactivated|chat not found/i.test(msg)) {
+        await supabase
+          .from("telegram_chats")
+          .update({ is_blocked: true, blocked_at: new Date().toISOString() })
+          .eq("id", chatRowId);
+        throw new Error("고객이 봇을 차단했습니다. SMS로 발송하세요.");
+      }
       throw new Error(`텔레그램 전송 실패: ${msg}`);
     }
 
