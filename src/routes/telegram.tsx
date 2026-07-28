@@ -354,12 +354,15 @@ function TelegramPage() {
               <div className="p-4 text-sm text-muted-foreground">대화가 없습니다.</div>
             ) : (
               <div className="divide-y pb-4">
-                {filtered.map((c) => (
+                {filtered.map((c) => {
+                  const unreadCount = Math.max(0, Number(c.unread_count) || 0);
+                  return (
                   <button
                     key={c.id}
                     onClick={() => setSelectedId(c.id)}
                     className={cn(
-                      "flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-accent/50 transition",
+                      "flex w-full min-w-0 items-start gap-2 px-3 py-2.5 text-left transition hover:bg-accent/50",
+                      unreadCount > 0 && "bg-green-500/[0.04]",
                       selectedId === c.id && "bg-accent",
                     )}
                   >
@@ -371,25 +374,32 @@ function TelegramPage() {
                           STATUS_DOT[c.status],
                         )}
                       />
+                      {unreadCount > 0 && (
+                        <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-card">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm font-medium">{chatDisplayName(c)}</span>
-                        {c.last_message_at && (
-                          <span className="shrink-0 text-[10px] text-muted-foreground">
-                            {formatDistanceToNow(new Date(c.last_message_at), { addSuffix: false, locale })}
-                          </span>
-                        )}
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", unreadCount > 0 && "font-semibold text-foreground")}>{chatDisplayName(c)}</span>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {unreadCount > 0 && (
+                            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm">
+                              {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                          )}
+                          {c.last_message_at && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatDistanceToNow(new Date(c.last_message_at), { addSuffix: false, locale })}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <p className="truncate flex-1 min-w-0 text-xs text-muted-foreground">
+                      <div className="flex min-w-0 items-center gap-1.5 pr-1">
+                        <p className={cn("min-w-0 flex-1 truncate text-xs", unreadCount > 0 ? "font-medium text-foreground" : "text-muted-foreground")}>
                           {c.last_message_preview ?? "(no preview)"}
                         </p>
-                        {c.unread_count > 0 && (
-                          <span className="shrink-0 rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
-                            {c.unread_count}
-                          </span>
-                        )}
                       </div>
                       <div className="mt-0.5 flex items-center gap-1 flex-wrap">
                         <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
@@ -411,7 +421,8 @@ function TelegramPage() {
                       </div>
                     </div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
