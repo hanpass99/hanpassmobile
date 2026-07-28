@@ -1849,6 +1849,108 @@ function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void
   );
 }
 
+function SendSmsDialog({
+  chat,
+  customerName,
+  customerPhone,
+  onClose,
+}: {
+  chat: Chat;
+  customerName: string | null;
+  customerPhone: string;
+  onClose: () => void;
+}) {
+  const [message, setMessage] = useState("");
+  const [title, setTitle] = useState("");
+  const sendSms = useSendSms();
+  const markRead = useServerFn(markTelegramChatRead);
+  const qc = useQueryClient();
+
+  const handleSend = async () => {
+    const msg = message.trim();
+    if (!msg) {
+      toast.error("메시지를 입력하세요");
+      return;
+    }
+    if (!customerPhone) {
+      toast.error("전화번호가 없습니다");
+      return;
+    }
+    try {
+      const res = await sendSms.mutateAsync({
+        receivers: [
+          {
+            customer_id: chat.customer_id ?? null,
+            name: customerName ?? chat.first_name ?? null,
+            phone: customerPhone,
+          },
+        ],
+        message: msg,
+        title: title.trim() || undefined,
+      });
+      if (res?.ok === false) {
+        toast.error(res?.aligo?.message || "SMS 발송 실패");
+        return;
+      }
+      // Mark chat as read even though we replied via SMS (Telegram delivery is blocked)
+      try {
+        await markRead({ data: { chatRowId: chat.id } });
+        qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+      } catch {
+        // non-fatal
+      }
+      toast.success("SMS 발송 완료 · 읽음 처리됨");
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "SMS 발송 실패");
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>SMS 발송 (차단된 고객)</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="text-xs text-muted-foreground">
+            수신자:{" "}
+            <span className="font-medium text-foreground">
+              {customerName ?? chat.first_name ?? "고객"} · {customerPhone}
+            </span>
+          </div>
+          <Input
+            placeholder="제목 (LMS일 때만 사용, 선택)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={44}
+          />
+          <Textarea
+            placeholder="메시지 내용을 입력하세요"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={6}
+          />
+          <div className="text-[10px] text-muted-foreground">
+            90바이트 초과 시 자동으로 LMS로 전환됩니다.
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={sendSms.isPending}>
+            취소
+          </Button>
+          <Button onClick={handleSend} disabled={sendSms.isPending || !message.trim() || !customerPhone}>
+            <Send className="mr-2 h-4 w-4" />
+            {sendSms.isPending ? "발송중..." : "SMS 발송"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+
 function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
   const defaultUrl =
     typeof window !== "undefined"
