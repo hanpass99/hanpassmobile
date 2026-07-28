@@ -826,6 +826,19 @@ function ConversationPane({ chat }: { chat: Chat }) {
                   >
                     <span>{senderLabel}</span>
                     {m.edited_at && <span className="italic opacity-70">(수정됨)</span>}
+                    {!isEditing && !chat.is_blocked && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyTo(m);
+                          focusInput();
+                        }}
+                        className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition text-primary/70 hover:text-primary"
+                        title="답장"
+                      >
+                        <Reply className="h-3 w-3" />
+                      </button>
+                    )}
                     {editable && !isEditing && (
                       <button
                         type="button"
