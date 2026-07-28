@@ -556,10 +556,13 @@ function ConversationPane({ chat }: { chat: Chat }) {
 
   const sendMut = useMutation({
     mutationFn: async (msg: string) => {
-      return sendReply({ data: { chatRowId: chat.id, text: msg } });
+      return sendReply({
+        data: { chatRowId: chat.id, text: msg, replyToMessageId: replyTo?.id ?? null },
+      });
     },
     onSuccess: () => {
       setText("");
+      setReplyTo(null);
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
