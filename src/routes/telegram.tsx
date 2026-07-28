@@ -1189,9 +1189,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
                 size: pendingMediaTemplate.media_size ?? 0,
                 kind: pendingMediaTemplate.media_type === "image" ? "photo" : "document",
                 caption: caption.trim() ? caption.trim() : null,
+                replyToMessageId: replyTo?.id ?? null,
               },
             });
             setPendingMediaTemplate(null);
+            setReplyTo(null);
             qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
             qc.invalidateQueries({ queryKey: ["telegram-chats"] });
           }}
