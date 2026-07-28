@@ -20,6 +20,7 @@ import {
   Check,
   Paperclip,
   X,
+  Reply,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +94,7 @@ type Message = {
   created_at: string;
   edited_at: string | null;
   telegram_message_id: number | null;
+  reply_to_message_id: string | null;
 };
 
 
@@ -469,6 +471,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const [isUploading, setIsUploading] = useState(false);
   const [pendingMediaTemplate, setPendingMediaTemplate] = useState<Template | null>(null);
   const [showSmsDialog, setShowSmsDialog] = useState(false);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
 
   const messagesQuery = useQuery({
     queryKey: ["telegram-messages", chat.id],
@@ -476,7 +479,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       const { data, error } = await supabase
         .from("telegram_messages")
         .select(
-          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at, edited_at, telegram_message_id",
+          "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at, edited_at, telegram_message_id, reply_to_message_id",
         )
         .eq("telegram_chat_row_id", chat.id)
         .order("created_at", { ascending: true })
@@ -553,10 +556,13 @@ function ConversationPane({ chat }: { chat: Chat }) {
 
   const sendMut = useMutation({
     mutationFn: async (msg: string) => {
-      return sendReply({ data: { chatRowId: chat.id, text: msg } });
+      return sendReply({
+        data: { chatRowId: chat.id, text: msg, replyToMessageId: replyTo?.id ?? null },
+      });
     },
     onSuccess: () => {
       setText("");
+      setReplyTo(null);
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
@@ -603,9 +609,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
           size: file.size,
           kind,
           caption: text.trim() ? text.trim() : null,
+          replyToMessageId: replyTo?.id ?? null,
         },
       });
       setText("");
+      setReplyTo(null);
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     } catch (e) {
@@ -639,6 +647,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
   };
 
   const profileMap = profilesQuery.data ?? {};
+  const messagesById = useMemo(() => {
+    const map = new Map<string, Message>();
+    for (const m of messagesQuery.data ?? []) map.set(m.id, m);
+    return map;
+  }, [messagesQuery.data]);
+  const focusInput = () => setTimeout(() => textareaRef.current?.focus(), 0);
 
   const insertTemplate = (t: Template) => {
     setTemplatesOpen(false);
@@ -812,6 +826,19 @@ function ConversationPane({ chat }: { chat: Chat }) {
                   >
                     <span>{senderLabel}</span>
                     {m.edited_at && <span className="italic opacity-70">(수정됨)</span>}
+                    {!isEditing && !chat.is_blocked && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyTo(m);
+                          focusInput();
+                        }}
+                        className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition text-primary/70 hover:text-primary"
+                        title="답장"
+                      >
+                        <Reply className="h-3 w-3" />
+                      </button>
+                    )}
                     {editable && !isEditing && (
                       <button
                         type="button"
@@ -872,7 +899,16 @@ function ConversationPane({ chat }: { chat: Chat }) {
                         </div>
                       </div>
                     ) : (
-                      <MessageBody m={m} onPhotoClick={setPhotoUrl} />
+                      <>
+                        {m.reply_to_message_id && (
+                          <QuotedReplyPreview
+                            target={messagesById.get(m.reply_to_message_id) ?? null}
+                            isOut={isOut}
+                            profileMap={profileMap}
+                          />
+                        )}
+                        <MessageBody m={m} onPhotoClick={setPhotoUrl} />
+                      </>
                     )}
                   </div>
                 </div>
@@ -916,6 +952,29 @@ function ConversationPane({ chat }: { chat: Chat }) {
         </div>
       ) : (
       <div className="border-t p-3 space-y-2">
+        {replyTo && (
+          <div className="flex items-start gap-2 rounded border-l-2 border-primary bg-primary/5 px-2 py-1.5 text-xs">
+            <Reply className="mt-0.5 h-3.5 w-3.5 text-primary shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-primary">
+                {replyTo.direction === "out"
+                  ? `${(replyTo.sent_by && profileMap[replyTo.sent_by]?.display_name) || "직원"} 에게 답장`
+                  : "고객에게 답장"}
+              </div>
+              <div className="line-clamp-2 text-muted-foreground whitespace-pre-wrap break-words">
+                {quotedSnippet(replyTo)}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted"
+              title="답장 취소"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <Popover open={templatesOpen} onOpenChange={setTemplatesOpen}>
             <PopoverTrigger asChild>
@@ -1130,9 +1189,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
                 size: pendingMediaTemplate.media_size ?? 0,
                 kind: pendingMediaTemplate.media_type === "image" ? "photo" : "document",
                 caption: caption.trim() ? caption.trim() : null,
+                replyToMessageId: replyTo?.id ?? null,
               },
             });
             setPendingMediaTemplate(null);
+            setReplyTo(null);
             qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
             qc.invalidateQueries({ queryKey: ["telegram-chats"] });
           }}
@@ -1343,6 +1404,58 @@ function MediaTemplateConfirmDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function quotedSnippet(m: Message): string {
+  const kind = m.message_type ?? "text";
+  if (kind === "photo") return `📷 사진${m.caption ? ` · ${m.caption}` : ""}`;
+  if (kind === "document") return `📎 ${m.media_file_name ?? "파일"}`;
+  if (kind === "video") return `🎬 동영상${m.caption ? ` · ${m.caption}` : ""}`;
+  if (kind === "voice" || kind === "audio") return "🎤 음성";
+  if (kind === "sticker") return "🎨 스티커";
+  if (kind === "contact") return m.text || "📱 연락처";
+  return (m.text ?? m.caption ?? "").trim() || "(빈 메시지)";
+}
+
+function QuotedReplyPreview({
+  target,
+  isOut,
+  profileMap,
+}: {
+  target: Message | null;
+  isOut: boolean;
+  profileMap: Record<string, Profile>;
+}) {
+  if (!target) {
+    return (
+      <div
+        className={cn(
+          "mb-1.5 rounded border-l-2 px-2 py-1 text-[11px] opacity-70",
+          isOut ? "border-primary-foreground/60 bg-black/10" : "border-primary/50 bg-black/5",
+        )}
+      >
+        답장한 메시지를 불러올 수 없음
+      </div>
+    );
+  }
+  const who =
+    target.direction === "out"
+      ? (target.sent_by && profileMap[target.sent_by]?.display_name) || "직원"
+      : "고객";
+  const snippet = quotedSnippet(target);
+  return (
+    <div
+      className={cn(
+        "mb-1.5 rounded border-l-2 px-2 py-1 text-[11px]",
+        isOut
+          ? "border-primary-foreground/70 bg-black/10"
+          : "border-primary/50 bg-black/5",
+      )}
+    >
+      <div className="font-semibold opacity-90">{who}</div>
+      <div className="line-clamp-2 opacity-80 whitespace-pre-wrap break-words">{snippet}</div>
+    </div>
   );
 }
 

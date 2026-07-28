@@ -10,11 +10,12 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
       .object({
         chatRowId: z.string().uuid(),
         text: z.string().min(1).max(4000),
+        replyToMessageId: z.string().uuid().nullable().optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { chatRowId, text } = data;
+    const { chatRowId, text, replyToMessageId } = data;
     const { userId, supabase } = context;
 
     // Look up chat_id via the authenticated client (RLS allows all authenticated to read)
@@ -25,10 +26,23 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
       .maybeSingle();
     if (chatErr || !chat) throw new Error("Chat not found");
 
+    // Resolve reply target's telegram_message_id (must belong to same chat)
+    let replyToTgId: number | null = null;
+    if (replyToMessageId) {
+      const { data: replyRow } = await supabase
+        .from("telegram_messages")
+        .select("telegram_message_id, telegram_chat_row_id")
+        .eq("id", replyToMessageId)
+        .maybeSingle();
+      if (replyRow && replyRow.telegram_chat_row_id === chatRowId && replyRow.telegram_message_id) {
+        replyToTgId = Number(replyRow.telegram_message_id);
+      }
+    }
+
     const { sendTelegramMessage } = await import("@/lib/telegram.server");
     let telegramMessageId: number | null = null;
     try {
-      const result = await sendTelegramMessage(Number(chat.chat_id), text);
+      const result = await sendTelegramMessage(Number(chat.chat_id), text, replyToTgId);
       telegramMessageId = result.message_id;
       // Clear blocked flag if delivery succeeds
       await supabase
@@ -55,7 +69,9 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
       telegram_message_id: telegramMessageId,
       text,
       sent_by: userId,
-    });
+      reply_to_message_id: replyToMessageId ?? null,
+      reply_to_telegram_message_id: replyToTgId,
+    } as never);
     if (insErr) throw new Error(insErr.message);
 
     await supabase
@@ -85,6 +101,7 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
         size: z.number().int().nonnegative(),
         kind: z.enum(["photo", "document"]),
         caption: z.string().max(1024).optional().nullable(),
+        replyToMessageId: z.string().uuid().nullable().optional(),
       })
       .parse(d),
   )
@@ -96,6 +113,22 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
       .eq("id", data.chatRowId)
       .maybeSingle();
     if (chatErr || !chat) throw new Error("Chat not found");
+
+    let replyToTgId: number | null = null;
+    if (data.replyToMessageId) {
+      const { data: replyRow } = await supabase
+        .from("telegram_messages")
+        .select("telegram_message_id, telegram_chat_row_id")
+        .eq("id", data.replyToMessageId)
+        .maybeSingle();
+      if (
+        replyRow &&
+        replyRow.telegram_chat_row_id === data.chatRowId &&
+        replyRow.telegram_message_id
+      ) {
+        replyToTgId = Number(replyRow.telegram_message_id);
+      }
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: dl, error: dlErr } = await supabaseAdmin.storage
@@ -114,6 +147,7 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
         data.fileName,
         data.mime,
         data.caption ?? undefined,
+        replyToTgId,
       );
       tgMsgId = r.message_id;
       await supabase
@@ -151,7 +185,9 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
       media_mime: data.mime,
       media_size: data.size,
       sent_by: userId,
-    });
+      reply_to_message_id: data.replyToMessageId ?? null,
+      reply_to_telegram_message_id: replyToTgId,
+    } as never);
     if (insErr) throw new Error(insErr.message);
 
     await supabase

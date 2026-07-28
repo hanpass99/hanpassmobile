@@ -1124,6 +1124,8 @@ export type Database = {
           media_width: number | null
           message_type: string
           raw: Json | null
+          reply_to_message_id: string | null
+          reply_to_telegram_message_id: number | null
           sent_by: string | null
           telegram_chat_row_id: string
           telegram_message_id: number | null
@@ -1146,6 +1148,8 @@ export type Database = {
           media_width?: number | null
           message_type?: string
           raw?: Json | null
+          reply_to_message_id?: string | null
+          reply_to_telegram_message_id?: number | null
           sent_by?: string | null
           telegram_chat_row_id: string
           telegram_message_id?: number | null
@@ -1168,12 +1172,21 @@ export type Database = {
           media_width?: number | null
           message_type?: string
           raw?: Json | null
+          reply_to_message_id?: string | null
+          reply_to_telegram_message_id?: number | null
           sent_by?: string | null
           telegram_chat_row_id?: string
           telegram_message_id?: number | null
           text?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "telegram_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "telegram_messages_telegram_chat_row_id_fkey"
             columns: ["telegram_chat_row_id"]
