@@ -1382,6 +1382,58 @@ function MediaTemplateConfirmDialog({
   );
 }
 
+function quotedSnippet(m: Message): string {
+  const kind = m.message_type ?? "text";
+  if (kind === "photo") return `📷 사진${m.caption ? ` · ${m.caption}` : ""}`;
+  if (kind === "document") return `📎 ${m.media_file_name ?? "파일"}`;
+  if (kind === "video") return `🎬 동영상${m.caption ? ` · ${m.caption}` : ""}`;
+  if (kind === "voice" || kind === "audio") return "🎤 음성";
+  if (kind === "sticker") return "🎨 스티커";
+  if (kind === "contact") return m.text || "📱 연락처";
+  return (m.text ?? m.caption ?? "").trim() || "(빈 메시지)";
+}
+
+function QuotedReplyPreview({
+  target,
+  isOut,
+  profileMap,
+}: {
+  target: Message | null;
+  isOut: boolean;
+  profileMap: Record<string, Profile>;
+}) {
+  if (!target) {
+    return (
+      <div
+        className={cn(
+          "mb-1.5 rounded border-l-2 px-2 py-1 text-[11px] opacity-70",
+          isOut ? "border-primary-foreground/60 bg-black/10" : "border-primary/50 bg-black/5",
+        )}
+      >
+        답장한 메시지를 불러올 수 없음
+      </div>
+    );
+  }
+  const who =
+    target.direction === "out"
+      ? (target.sent_by && profileMap[target.sent_by]?.display_name) || "직원"
+      : "고객";
+  const snippet = quotedSnippet(target);
+  return (
+    <div
+      className={cn(
+        "mb-1.5 rounded border-l-2 px-2 py-1 text-[11px]",
+        isOut
+          ? "border-primary-foreground/70 bg-black/10"
+          : "border-primary/50 bg-black/5",
+      )}
+    >
+      <div className="font-semibold opacity-90">{who}</div>
+      <div className="line-clamp-2 opacity-80 whitespace-pre-wrap break-words">{snippet}</div>
+    </div>
+  );
+}
+
 function MessageBody({
   m,
   onPhotoClick,
