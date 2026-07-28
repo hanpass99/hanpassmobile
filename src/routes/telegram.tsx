@@ -53,6 +53,8 @@ import {
   registerTelegramWebhook,
   setTelegramChatStatus,
 } from "@/lib/telegram.functions";
+import { markTelegramChatRead } from "@/lib/telegram.functions";
+import { useSendSms } from "@/hooks/use-sms";
 
 type ChatStatus = "new" | "in_progress" | "done";
 
