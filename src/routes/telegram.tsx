@@ -95,6 +95,7 @@ type Message = {
   edited_at: string | null;
   telegram_message_id: number | null;
   reply_to_message_id: string | null;
+  is_ai_generated?: boolean | null;
 };
 
 
