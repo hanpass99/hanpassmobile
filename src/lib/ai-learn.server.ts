@@ -321,7 +321,15 @@ export async function runAutoLearn(
       if (!error) added += 1;
     }
 
+    // 4. Also surface repeating operator answers as reviewable FAQ candidates.
+    try {
+      await detectFaqCandidates(supabaseAdmin);
+    } catch (e) {
+      console.error("[ai-learn] candidate detection failed", e);
+    }
+
     const res = { pairsAnalyzed: pairs.length, candidates: candidates.length, faqsAdded: added };
+
     await finish("success", res);
     return { ...res, windowFrom, windowTo };
   } catch (e) {
