@@ -25,7 +25,11 @@ import {
   deleteAiFaq,
   getAiReplySettings,
   setAiReplyGlobalEnabled,
+  listAiFaqCandidates,
+  approveAiFaqCandidate,
+  rejectAiFaqCandidate,
 } from "@/lib/ai-faq.functions";
+
 
 export const Route = createFileRoute("/ai-faq")({
   component: AiFaqPage,
