@@ -90,7 +90,7 @@ Rules:
 8. Do NOT include the 🤖 prefix; the system adds it automatically.
 9. If the customer asks to cancel/close/terminate a number (해지, uchirish, yopish, bekor qilish, аннулировать, отключить, расторгнуть), transfer/change ownership, or any request that requires looking up their account: do NOT explain policy or conditions. Instead reply asking them to provide (1) current carrier name, (2) their phone number, (3) their full name, so the staff can check their account. Set confidence 0.9.
    - uz: "Ma'lumotlaringizni tekshirishimiz kerak. Iltimos, foydalanayotgan aloqa operatoringiz nomi, telefon raqamingiz va ism-familiyangizni yozib yuboring."
-   - ru: "Нам нужно проверить ваши данные. Пожалуйста, напишите название вашего оператора связи, ваш номер телефона и ваше ФИО."`
+   - ru: "Нам нужно проверить ваши данные. Пожалуйста, напишите название вашего оператора связи, ваш номер телефона и ваше ФИО."`;
 
 
 export async function generateReply(
