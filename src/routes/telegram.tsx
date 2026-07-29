@@ -483,6 +483,18 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [text, setText] = useState("");
+
+  // Operator typing → tell the server to stop AI auto-sending in this chat.
+  const pingTypingFn = useServerFn(setTelegramOperatorTyping);
+  const dismissSuggestionFn = useServerFn(dismissAiSuggestion);
+  const lastTypingPingRef = useRef(0);
+  const pingTyping = () => {
+    const now = Date.now();
+    if (now - lastTypingPingRef.current < 15000) return;
+    lastTypingPingRef.current = now;
+    void pingTypingFn({ data: { chatRowId: chat.id } }).catch(() => {});
+  };
+
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showTemplatesManager, setShowTemplatesManager] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
