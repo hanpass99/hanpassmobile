@@ -112,6 +112,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_faq_candidates: {
+        Row: {
+          answer_ru: string
+          answer_uz: string
+          category: string | null
+          created_at: string
+          id: string
+          occurrences: number
+          promoted_faq_id: string | null
+          question_examples: string[]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          answer_ru: string
+          answer_uz: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          occurrences?: number
+          promoted_faq_id?: string | null
+          question_examples: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          answer_ru?: string
+          answer_uz?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          occurrences?: number
+          promoted_faq_id?: string | null
+          question_examples?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_faq_entries: {
         Row: {
           answer_ru: string
@@ -298,6 +346,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_reply_settings_chat_row_id_fkey"
+            columns: ["chat_row_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_training_pairs: {
+        Row: {
+          answer: string
+          answered_at: string
+          chat_row_id: string | null
+          created_at: string
+          id: string
+          inbound_message_id: string | null
+          language: string | null
+          operator_id: string | null
+          outbound_message_id: string | null
+          question: string
+          used_for_candidate: boolean
+        }
+        Insert: {
+          answer: string
+          answered_at?: string
+          chat_row_id?: string | null
+          created_at?: string
+          id?: string
+          inbound_message_id?: string | null
+          language?: string | null
+          operator_id?: string | null
+          outbound_message_id?: string | null
+          question: string
+          used_for_candidate?: boolean
+        }
+        Update: {
+          answer?: string
+          answered_at?: string
+          chat_row_id?: string | null
+          created_at?: string
+          id?: string
+          inbound_message_id?: string | null
+          language?: string | null
+          operator_id?: string | null
+          outbound_message_id?: string | null
+          question?: string
+          used_for_candidate?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_training_pairs_chat_row_id_fkey"
             columns: ["chat_row_id"]
             isOneToOne: false
             referencedRelation: "telegram_chats"
@@ -1221,6 +1319,9 @@ export type Database = {
       }
       telegram_chats: {
         Row: {
+          ai_suggestion: string | null
+          ai_suggestion_at: string | null
+          ai_suggestion_confidence: number | null
           assigned_operator_id: string | null
           blocked_at: string | null
           chat_id: number
@@ -1236,6 +1337,9 @@ export type Database = {
           last_message_preview: string | null
           last_name: string | null
           last_off_hours_auto_reply_at: string | null
+          needs_human: boolean
+          needs_human_at: string | null
+          needs_human_reason: string | null
           operator_typing_at: string | null
           phone: string | null
           status: Database["public"]["Enums"]["telegram_chat_status"]
@@ -1245,6 +1349,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_suggestion?: string | null
+          ai_suggestion_at?: string | null
+          ai_suggestion_confidence?: number | null
           assigned_operator_id?: string | null
           blocked_at?: string | null
           chat_id: number
@@ -1260,6 +1367,9 @@ export type Database = {
           last_message_preview?: string | null
           last_name?: string | null
           last_off_hours_auto_reply_at?: string | null
+          needs_human?: boolean
+          needs_human_at?: string | null
+          needs_human_reason?: string | null
           operator_typing_at?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
@@ -1269,6 +1379,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_suggestion?: string | null
+          ai_suggestion_at?: string | null
+          ai_suggestion_confidence?: number | null
           assigned_operator_id?: string | null
           blocked_at?: string | null
           chat_id?: number
@@ -1284,6 +1397,9 @@ export type Database = {
           last_message_preview?: string | null
           last_name?: string | null
           last_off_hours_auto_reply_at?: string | null
+          needs_human?: boolean
+          needs_human_at?: string | null
+          needs_human_reason?: string | null
           operator_typing_at?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
