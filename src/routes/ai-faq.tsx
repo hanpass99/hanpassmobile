@@ -127,6 +127,10 @@ function AiFaqPage() {
         </div>
       </div>
 
+      <CandidatesSection />
+
+
+
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">총 {faqs.length}개</div>
         <Button
