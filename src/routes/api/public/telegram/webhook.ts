@@ -283,8 +283,44 @@ function previewForKind(kind: MediaKind, caption?: string | null, text?: string 
   return caption ? `${base} · ${caption.slice(0, 160)}` : base;
 }
 
+// Message sent to the customer when the AI cannot answer confidently.
+const HUMAN_HANDOFF_NOTICE: Record<string, string> = {
+  uz: "🤖 Ushbu savolni mutaxassisimiz tekshirib, tez orada javob beradi. Iltimos, biroz kuting.",
+  ru: "🤖 Этот вопрос уточнит наш специалист и ответит вам в ближайшее время. Пожалуйста, подождите.",
+  ko: "🤖 이 문의는 담당자가 확인 후 안내드리겠습니다. 잠시만 기다려 주세요.",
+};
+
+// Escalate to a human: notify the customer in their language and flag the chat.
+async function escalateToHuman(args: {
+  supabaseAdmin: any;
+  chatRowId: string;
+  chatId: number;
+  lang: string;
+  reason: string;
+}) {
+  const { supabaseAdmin, chatRowId, chatId, lang, reason } = args;
+  const notice = HUMAN_HANDOFF_NOTICE[lang] ?? HUMAN_HANDOFF_NOTICE.uz;
+  let sent = false;
+  try {
+    await sendTelegramMessage(chatId, notice);
+    sent = true;
+  } catch (e) {
+    console.error("[ai auto-reply] handoff notice failed", e);
+  }
+  await supabaseAdmin
+    .from("telegram_chats")
+    .update({
+      needs_human: true,
+      needs_human_at: new Date().toISOString(),
+      needs_human_reason: reason.slice(0, 300),
+    })
+    .eq("id", chatRowId);
+  return sent;
+}
+
 // AI auto-reply: fetch settings, run safety checks, search FAQ, generate reply,
-// send to Telegram, and log the decision. Returns true when an AI reply was sent.
+// send to Telegram, and log the decision. Returns true when a message was sent
+// to the customer (either an AI answer or the human-handoff notice).
 async function tryAiAutoReply(args: {
   supabaseAdmin: any;
   chatRowId: string;
@@ -322,7 +358,17 @@ async function tryAiAutoReply(args: {
     generateReply,
   } = await import("@/lib/ai-reply.server");
 
-  // 2. Safety keywords → always escalate
+  // Operator intervention: if a staff member is typing in this chat (within the
+  // last 2 minutes), never auto-send. We still generate a suggestion for them.
+  const { data: chatState } = await supabaseAdmin
+    .from("telegram_chats")
+    .select("operator_typing_at")
+    .eq("id", chatRowId)
+    .maybeSingle();
+  const typingAt = (chatState as { operator_typing_at: string | null } | null)?.operator_typing_at;
+  const operatorTyping = !!typingAt && Date.now() - new Date(typingAt).getTime() < 2 * 60 * 1000;
+
+  // 2. Safety keywords → always escalate to a human
   if (containsSafetyKeyword(question)) {
     await supabaseAdmin.from("ai_reply_logs").insert({
       chat_row_id: chatRowId,
@@ -331,7 +377,14 @@ async function tryAiAutoReply(args: {
       reason: "safety keyword",
       question_text: question,
     });
-    return false;
+    if (operatorTyping) return false;
+    return await escalateToHuman({
+      supabaseAdmin,
+      chatRowId,
+      chatId,
+      lang,
+      reason: "요금제/개인정보 등 안전 키워드 → 담당자 확인 필요",
+    });
   }
 
   // 3. Anti-loop: if AI already sent 3 consecutive replies as the most recent outbound, escalate
@@ -352,8 +405,16 @@ async function tryAiAutoReply(args: {
       reason: "AI streak limit",
       question_text: question,
     });
-    return false;
+    if (operatorTyping) return false;
+    return await escalateToHuman({
+      supabaseAdmin,
+      chatRowId,
+      chatId,
+      lang,
+      reason: "AI 연속 응답 제한 → 담당자 확인 필요",
+    });
   }
+
 
   // 4. Embed the question and search FAQ
   let faqs: Array<{
