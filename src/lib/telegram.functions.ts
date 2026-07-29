@@ -82,11 +82,59 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
         status: "in_progress",
         assigned_operator_id: userId,
         unread_count: 0,
-      })
+        // Operator answered → clear the "AI can't answer" flag and any pending suggestion.
+        needs_human: false,
+        needs_human_reason: null,
+        ai_suggestion: null,
+        ai_suggestion_confidence: null,
+        ai_suggestion_at: null,
+      } as never)
       .eq("id", chatRowId);
 
     return { ok: true, telegramMessageId };
   });
+
+// Operator started typing in a chat → suppress AI auto-send for a short window.
+// The webhook checks `operator_typing_at` and switches to suggestion-only mode.
+export const setTelegramOperatorTyping = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ chatRowId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await context.supabase
+      .from("telegram_chats")
+      .update({ operator_typing_at: new Date().toISOString() } as never)
+      .eq("id", data.chatRowId);
+    return { ok: true };
+  });
+
+// Dismiss the pending AI suggestion for a chat (operator ignored it).
+export const dismissAiSuggestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ chatRowId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await context.supabase
+      .from("telegram_chats")
+      .update({
+        ai_suggestion: null,
+        ai_suggestion_confidence: null,
+        ai_suggestion_at: null,
+      } as never)
+      .eq("id", data.chatRowId);
+    return { ok: true };
+  });
+
+// Clear the "AI 응답 불가 - 담당자 확인 필요" flag manually.
+export const clearNeedsHuman = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ chatRowId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await context.supabase
+      .from("telegram_chats")
+      .update({ needs_human: false, needs_human_reason: null } as never)
+      .eq("id", data.chatRowId);
+    return { ok: true };
+  });
+
 
 // Send a photo or document to a Telegram chat (from an already-uploaded storage object).
 export const sendTelegramMedia = createServerFn({ method: "POST" })
