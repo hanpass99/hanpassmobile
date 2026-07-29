@@ -9,14 +9,22 @@ const CHAT_MODEL = "google/gemini-3.6-flash";
 
 // Words/phrases that always require a human operator (money, personal info,
 // legal/contract, refunds, etc.). Case-insensitive substring match.
+// NOTE: 요금제/가격 정보는 매월 변경되므로 AI가 절대 답변하지 않고 담당자에게 넘긴다.
 const SAFETY_KEYWORDS = [
   // KO/generic
-  "환불", "취소", "약관", "개인정보", "결제", "요금",
+  "환불", "취소", "약관", "개인정보", "결제", "요금", "요금제", "가격", "얼마",
+  "금액", "비용", "할인", "프로모션", "이벤트", "데이터", "무제한", "월정액",
   // Russian
   "возврат", "отмен", "договор", "тариф", "оплат", "деньг", "штраф",
+  "цена", "стоимость", "сколько стоит", "скольк", "прайс", "скидк", "акци",
+  "гб", "трафик", "безлимит", "абонент",
   // Uzbek
-  "qaytar", "bekor", "shartnoma", "tarif", "to'lov", "pul", "jarima",
+  "qaytar", "bekor", "shartnoma", "tarif", "to'lov", "tolov", "pul", "jarima",
+  "narx", "qancha", "qiymat", "chegirma", "aksiya", "gb", "limitsiz", "obuna",
+  // English
+  "price", "cost", "how much", "tariff", "plan", "discount", "promo", "unlimited",
 ];
+
 
 function getApiKey(): string {
   const k = process.env.LOVABLE_API_KEY;
