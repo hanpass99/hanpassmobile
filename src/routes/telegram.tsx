@@ -1136,10 +1136,56 @@ function ConversationPane({ chat }: { chat: Chat }) {
               </div>
             </div>
           )}
+          {chat.ai_suggestion && (
+            <div className="mb-2 rounded-lg border border-violet-500/40 bg-violet-500/10 p-2.5">
+              <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+                <Sparkles className="h-3 w-3" /> AI 제안
+                {typeof chat.ai_suggestion_confidence === "number" && (
+                  <span className="font-normal opacity-70">
+                    (신뢰도 {Math.round(chat.ai_suggestion_confidence * 100)}%)
+                  </span>
+                )}
+              </div>
+              <p className="whitespace-pre-wrap break-words text-xs text-foreground">
+                {chat.ai_suggestion}
+              </p>
+              <div className="mt-2 flex gap-1.5">
+                <Button
+                  size="sm"
+                  className="h-6 px-2 text-[11px]"
+                  onClick={() => {
+                    setText(chat.ai_suggestion ?? "");
+                    setTimeout(() => textareaRef.current?.focus(), 0);
+                    void dismissSuggestionFn({ data: { chatRowId: chat.id } })
+                      .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
+                      .catch(() => {});
+                  }}
+                >
+                  사용하기
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[11px]"
+                  onClick={() =>
+                    void dismissSuggestionFn({ data: { chatRowId: chat.id } })
+                      .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
+                      .catch(() => {})
+                  }
+                >
+                  무시
+                </Button>
+              </div>
+            </div>
+          )}
           <Textarea
             ref={textareaRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (e.target.value.trim()) pingTyping();
+            }}
+
             onKeyDown={(e) => {
               if (slashOpen && slashMatches.length > 0) {
                 if (e.key === "ArrowDown") {
