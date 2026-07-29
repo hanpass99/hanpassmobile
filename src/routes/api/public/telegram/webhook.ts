@@ -465,7 +465,14 @@ async function tryAiAutoReply(args: {
       reason: e instanceof Error ? e.message : String(e),
       question_text: question,
     });
-    return false;
+    if (operatorTyping) return false;
+    return await escalateToHuman({
+      supabaseAdmin,
+      chatRowId,
+      chatId,
+      lang,
+      reason: "AI 오류 → 담당자 확인 필요",
+    });
   }
 
   if (!decision.reply || decision.confidence < threshold) {
@@ -476,6 +483,36 @@ async function tryAiAutoReply(args: {
       confidence: decision.confidence,
       decision: "skipped_low_confidence",
       reason: decision.reason,
+      reply_text: decision.reply,
+      question_text: question,
+    });
+    if (operatorTyping) return false;
+    return await escalateToHuman({
+      supabaseAdmin,
+      chatRowId,
+      chatId,
+      lang,
+      reason: `신뢰도 ${decision.confidence.toFixed(2)} < ${threshold} · ${decision.reason}`,
+    });
+  }
+
+  // 6-b. Operator is typing → do NOT send. Store the answer as a suggestion.
+  if (operatorTyping) {
+    await supabaseAdmin
+      .from("telegram_chats")
+      .update({
+        ai_suggestion: decision.reply,
+        ai_suggestion_confidence: decision.confidence,
+        ai_suggestion_at: new Date().toISOString(),
+      })
+      .eq("id", chatRowId);
+    await supabaseAdmin.from("ai_reply_logs").insert({
+      chat_row_id: chatRowId,
+      inbound_message_id: inboundMessageId,
+      matched_faq_id: decision.matchedFaqId,
+      confidence: decision.confidence,
+      decision: "suggested",
+      reason: `상담사 입력 감지 → 제안 모드 · ${decision.reason}`,
       reply_text: decision.reply,
       question_text: question,
     });
@@ -502,7 +539,7 @@ async function tryAiAutoReply(args: {
     return false;
   }
 
-  // 8. Persist outbound + log + bump chat preview
+  // 8. Persist outbound + log + bump chat preview (AI reply also marks the chat read)
   const { data: outbound } = await supabaseAdmin
     .from("telegram_messages")
     .insert({
@@ -521,8 +558,15 @@ async function tryAiAutoReply(args: {
     .update({
       last_message_preview: finalText.slice(0, 200),
       last_message_at: new Date().toISOString(),
+      unread_count: 0,
+      needs_human: false,
+      needs_human_reason: null,
+      ai_suggestion: null,
+      ai_suggestion_confidence: null,
+      ai_suggestion_at: null,
     })
     .eq("id", chatRowId);
+
 
   await supabaseAdmin.from("ai_reply_logs").insert({
     chat_row_id: chatRowId,
