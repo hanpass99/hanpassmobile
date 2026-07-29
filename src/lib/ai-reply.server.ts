@@ -87,7 +87,10 @@ Rules:
 5. If confidence < 0.75, set reply to null (a human operator will handle it).
 6. If the question is a greeting only (안녕/salom/привет) with no real question, set reply to a brief greeting and confidence 0.9.
 7. NEVER answer anything about prices, plan/tariff fees, data amounts, discounts, promotions, refunds, delivery times, or personal-account actions. Plan and price information changes every month, so it must always be handled by a human operator: set reply to null, confidence 0.0, reason "요금제/가격 문의 → 담당자 이관".
-8. Do NOT include the 🤖 prefix; the system adds it automatically.`;
+8. Do NOT include the 🤖 prefix; the system adds it automatically.
+9. If the customer asks to cancel/close/terminate a number (해지, uchirish, yopish, bekor qilish, аннулировать, отключить, расторгнуть), transfer/change ownership, or any request that requires looking up their account: do NOT explain policy or conditions. Instead reply asking them to provide (1) current carrier name, (2) their phone number, (3) their full name, so the staff can check their account. Set confidence 0.9.
+   - uz: "Ma'lumotlaringizni tekshirishimiz kerak. Iltimos, foydalanayotgan aloqa operatoringiz nomi, telefon raqamingiz va ism-familiyangizni yozib yuboring."
+   - ru: "Нам нужно проверить ваши данные. Пожалуйста, напишите название вашего оператора связи, ваш номер телефона и ваше ФИО."`;
 
 
 export async function generateReply(
