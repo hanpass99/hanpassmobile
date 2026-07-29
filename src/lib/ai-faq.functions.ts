@@ -136,3 +136,77 @@ export const setAiReplyChatEnabled = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---- Auto-detected FAQ candidates (from real operator replies) --------------
+
+export const listAiFaqCandidates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("ai_faq_candidates")
+      .select("id, category, question_examples, answer_uz, answer_ru, occurrences, status, created_at")
+      .eq("status", "pending")
+      .order("occurrences", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { candidates: data ?? [] };
+  });
+
+// Approve a candidate → create an active FAQ entry (with embedding).
+export const approveAiFaqCandidate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: c, error } = await context.supabase
+      .from("ai_faq_candidates")
+      .select("id, category, question_examples, answer_uz, answer_ru")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error || !c) throw new Error("Candidate not found");
+
+    const embedding = await embedForFaq((c.question_examples ?? []).join("\n"));
+    const { data: inserted, error: insErr } = await context.supabase
+      .from("ai_faq_entries")
+      .insert({
+        category: c.category,
+        question_examples: c.question_examples,
+        answer_uz: c.answer_uz,
+        answer_ru: c.answer_ru,
+        is_active: true,
+        source: "auto",
+        created_by: context.userId,
+        embedding: embedding as never,
+      } as never)
+      .select("id")
+      .single();
+    if (insErr) throw new Error(insErr.message);
+
+    await context.supabase
+      .from("ai_faq_candidates")
+      .update({
+        status: "approved",
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+        promoted_faq_id: (inserted as { id: string }).id,
+      } as never)
+      .eq("id", data.id);
+    return { ok: true };
+  });
+
+export const rejectAiFaqCandidate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error } = await context.supabase
+      .from("ai_faq_candidates")
+      .update({
+        status: "rejected",
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+      } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

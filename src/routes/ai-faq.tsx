@@ -25,7 +25,11 @@ import {
   deleteAiFaq,
   getAiReplySettings,
   setAiReplyGlobalEnabled,
+  listAiFaqCandidates,
+  approveAiFaqCandidate,
+  rejectAiFaqCandidate,
 } from "@/lib/ai-faq.functions";
+
 
 export const Route = createFileRoute("/ai-faq")({
   component: AiFaqPage,
@@ -126,6 +130,10 @@ function AiFaqPage() {
           />
         </div>
       </div>
+
+      <CandidatesSection />
+
+
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">총 {faqs.length}개</div>
@@ -321,5 +329,75 @@ function FaqEditor({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Auto-detected FAQ candidates from repeated real operator replies.
+function CandidatesSection() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listAiFaqCandidates);
+  const approveFn = useServerFn(approveAiFaqCandidate);
+  const rejectFn = useServerFn(rejectAiFaqCandidate);
+
+  const q = useQuery({
+    queryKey: ["ai-faq-candidates"],
+    queryFn: () => listFn({ data: {} as never }),
+  });
+  const candidates = q.data?.candidates ?? [];
+
+  const act = useMutation({
+    mutationFn: async (v: { id: string; approve: boolean }) =>
+      v.approve ? approveFn({ data: { id: v.id } }) : rejectFn({ data: { id: v.id } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ai-faq-candidates"] });
+      qc.invalidateQueries({ queryKey: ["ai-faqs"] });
+      toast.success("처리했습니다.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (candidates.length === 0) return null;
+
+  return (
+    <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
+      <div className="text-sm font-semibold">
+        상담 이력 기반 FAQ 후보 <span className="text-muted-foreground">({candidates.length})</span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        상담사가 실제로 반복해서 보낸 답변을 자동으로 감지한 항목입니다. 승인하면 지식베이스에 추가됩니다.
+      </p>
+      {candidates.map((c) => (
+        <div key={c.id} className="rounded-md border bg-card p-3">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <Badge variant="outline">{c.category ?? "미분류"}</Badge>
+            <span className="text-xs text-muted-foreground">{c.occurrences}회 반복</span>
+          </div>
+          <div className="mb-2 flex flex-wrap gap-1">
+            {(c.question_examples ?? []).map((qe: string, i: number) => (
+              <span key={i} className="rounded bg-muted px-1.5 py-0.5 text-[11px]">
+                {qe}
+              </span>
+            ))}
+          </div>
+          <div className="grid gap-2 text-xs md:grid-cols-2">
+            <div className="whitespace-pre-wrap rounded bg-muted/50 p-2">🇺🇿 {c.answer_uz}</div>
+            <div className="whitespace-pre-wrap rounded bg-muted/50 p-2">🇷🇺 {c.answer_ru}</div>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" disabled={act.isPending} onClick={() => act.mutate({ id: c.id, approve: true })}>
+              승인
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={act.isPending}
+              onClick={() => act.mutate({ id: c.id, approve: false })}
+            >
+              거절
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -21,7 +21,10 @@ import {
   Paperclip,
   X,
   Reply,
+  AlertTriangle,
+  Sparkles,
 } from "lucide-react";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -54,7 +57,12 @@ import {
   registerTelegramWebhook,
   setTelegramChatStatus,
 } from "@/lib/telegram.functions";
-import { markTelegramChatRead } from "@/lib/telegram.functions";
+import {
+  markTelegramChatRead,
+  setTelegramOperatorTyping,
+  dismissAiSuggestion,
+} from "@/lib/telegram.functions";
+
 import { useSendSms } from "@/hooks/use-sms";
 
 type ChatStatus = "new" | "in_progress" | "done";
@@ -74,7 +82,12 @@ type Chat = {
   status: ChatStatus;
   assigned_operator_id: string | null;
   is_blocked?: boolean | null;
+  needs_human?: boolean | null;
+  needs_human_reason?: string | null;
+  ai_suggestion?: string | null;
+  ai_suggestion_confidence?: number | null;
 };
+
 
 type Message = {
   id: string;
@@ -411,11 +424,21 @@ function TelegramPage() {
                         <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
                           {STATUS_LABEL[c.status]}
                         </Badge>
+                        {c.needs_human && (
+                          <Badge
+                            variant="outline"
+                            title={c.needs_human_reason ?? undefined}
+                            className="h-4 gap-0.5 border-red-500/50 bg-red-500/15 px-1 text-[9px] font-semibold text-red-700 dark:text-red-300"
+                          >
+                            <AlertTriangle className="h-2.5 w-2.5" /> AI 응답 불가 · 담당자 확인 필요
+                          </Badge>
+                        )}
                         {c.is_blocked && (
                           <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-[9px] text-red-700 dark:text-red-300">
                             🚫 차단됨
                           </Badge>
                         )}
+
                         {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
                           <Badge
                             variant="outline"
@@ -460,6 +483,18 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [text, setText] = useState("");
+
+  // Operator typing → tell the server to stop AI auto-sending in this chat.
+  const pingTypingFn = useServerFn(setTelegramOperatorTyping);
+  const dismissSuggestionFn = useServerFn(dismissAiSuggestion);
+  const lastTypingPingRef = useRef(0);
+  const pingTyping = () => {
+    const now = Date.now();
+    if (now - lastTypingPingRef.current < 15000) return;
+    lastTypingPingRef.current = now;
+    void pingTypingFn({ data: { chatRowId: chat.id } }).catch(() => {});
+  };
+
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showTemplatesManager, setShowTemplatesManager] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -1101,10 +1136,56 @@ function ConversationPane({ chat }: { chat: Chat }) {
               </div>
             </div>
           )}
+          {chat.ai_suggestion && (
+            <div className="mb-2 rounded-lg border border-violet-500/40 bg-violet-500/10 p-2.5">
+              <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+                <Sparkles className="h-3 w-3" /> AI 제안
+                {typeof chat.ai_suggestion_confidence === "number" && (
+                  <span className="font-normal opacity-70">
+                    (신뢰도 {Math.round(chat.ai_suggestion_confidence * 100)}%)
+                  </span>
+                )}
+              </div>
+              <p className="whitespace-pre-wrap break-words text-xs text-foreground">
+                {chat.ai_suggestion}
+              </p>
+              <div className="mt-2 flex gap-1.5">
+                <Button
+                  size="sm"
+                  className="h-6 px-2 text-[11px]"
+                  onClick={() => {
+                    setText(chat.ai_suggestion ?? "");
+                    setTimeout(() => textareaRef.current?.focus(), 0);
+                    void dismissSuggestionFn({ data: { chatRowId: chat.id } })
+                      .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
+                      .catch(() => {});
+                  }}
+                >
+                  사용하기
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[11px]"
+                  onClick={() =>
+                    void dismissSuggestionFn({ data: { chatRowId: chat.id } })
+                      .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
+                      .catch(() => {})
+                  }
+                >
+                  무시
+                </Button>
+              </div>
+            </div>
+          )}
           <Textarea
             ref={textareaRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (e.target.value.trim()) pingTyping();
+            }}
+
             onKeyDown={(e) => {
               if (slashOpen && slashMatches.length > 0) {
                 if (e.key === "ArrowDown") {

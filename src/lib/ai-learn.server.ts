@@ -79,6 +79,92 @@ export async function synthesizeCandidates(pairs: Pair[]): Promise<Candidate[]> 
   );
 }
 
+// --- FAQ candidate detection from collected operator replies -----------------
+
+function normalizeQuestion(q: string): string {
+  return q
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .slice(0, 6)
+    .join(" ");
+}
+
+// Groups recently collected question/answer pairs, keeps the repeating ones,
+// and stores them as reviewable FAQ candidates.
+export async function detectFaqCandidates(
+  supabaseAdmin: any,
+  opts: { minOccurrences?: number; maxPairs?: number } = {},
+): Promise<{ groups: number; candidatesAdded: number; pairsScanned: number }> {
+  const { containsSafetyKeyword } = await import("@/lib/ai-reply.server");
+  const minOccurrences = opts.minOccurrences ?? 2;
+  const maxPairs = opts.maxPairs ?? 500;
+
+  const { data: rows } = await supabaseAdmin
+    .from("ai_training_pairs")
+    .select("id, question, answer, language")
+    .eq("used_for_candidate", false)
+    .order("answered_at", { ascending: false })
+    .limit(maxPairs);
+
+  const pairs = (rows ?? []) as Array<{
+    id: string;
+    question: string;
+    answer: string;
+    language: string | null;
+  }>;
+  if (pairs.length === 0) return { groups: 0, candidatesAdded: 0, pairsScanned: 0 };
+
+  const groups = new Map<string, typeof pairs>();
+  for (const p of pairs) {
+    if (containsSafetyKeyword(p.question) || containsSafetyKeyword(p.answer)) continue;
+    const key = normalizeQuestion(p.question);
+    if (key.length < 4) continue;
+    const list = groups.get(key) ?? [];
+    list.push(p);
+    groups.set(key, list);
+  }
+
+  const repeated = [...groups.values()].filter((g) => g.length >= minOccurrences).slice(0, 20);
+  let added = 0;
+  const usedIds: string[] = [];
+
+  for (const group of repeated) {
+    const samples: Pair[] = group.slice(0, 5).map((g) => ({ question: g.question, answer: g.answer }));
+    let synthesized: Candidate[] = [];
+    try {
+      synthesized = await synthesizeCandidates(samples);
+    } catch (e) {
+      console.error("[ai-learn] candidate synthesis failed", e);
+      continue;
+    }
+    for (const c of synthesized.slice(0, 1)) {
+      const { error } = await supabaseAdmin.from("ai_faq_candidates").insert({
+        category: c.category ?? "상담이력",
+        question_examples: c.question_examples.slice(0, 10),
+        answer_uz: c.answer_uz.slice(0, 2000),
+        answer_ru: c.answer_ru.slice(0, 2000),
+        occurrences: group.length,
+        status: "pending",
+        source: "auto",
+      });
+      if (!error) added += 1;
+    }
+    usedIds.push(...group.map((g) => g.id));
+  }
+
+  if (usedIds.length > 0) {
+    await supabaseAdmin
+      .from("ai_training_pairs")
+      .update({ used_for_candidate: true })
+      .in("id", usedIds);
+  }
+
+  return { groups: repeated.length, candidatesAdded: added, pairsScanned: pairs.length };
+}
+
 export type LearnResult = {
   pairsAnalyzed: number;
   candidates: number;
@@ -86,6 +172,7 @@ export type LearnResult = {
   windowFrom: string;
   windowTo: string;
 };
+
 
 // Main entry point. Uses the service-role client (passed in) so it can run
 // from a cron endpoint without a user session.
@@ -234,7 +321,15 @@ export async function runAutoLearn(
       if (!error) added += 1;
     }
 
+    // 4. Also surface repeating operator answers as reviewable FAQ candidates.
+    try {
+      await detectFaqCandidates(supabaseAdmin);
+    } catch (e) {
+      console.error("[ai-learn] candidate detection failed", e);
+    }
+
     const res = { pairsAnalyzed: pairs.length, candidates: candidates.length, faqsAdded: added };
+
     await finish("success", res);
     return { ...res, windowFrom, windowTo };
   } catch (e) {
