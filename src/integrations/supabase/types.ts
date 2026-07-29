@@ -123,6 +123,7 @@ export type Database = {
           id: string
           is_active: boolean
           question_examples: string[]
+          source: string
           updated_at: string
         }
         Insert: {
@@ -135,6 +136,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           question_examples?: string[]
+          source?: string
           updated_at?: string
         }
         Update: {
@@ -147,7 +149,50 @@ export type Database = {
           id?: string
           is_active?: boolean
           question_examples?: string[]
+          source?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_learning_runs: {
+        Row: {
+          candidates: number
+          error: string | null
+          faqs_added: number
+          finished_at: string | null
+          id: string
+          pairs_analyzed: number
+          started_at: string
+          status: string
+          trigger_source: string
+          window_from: string | null
+          window_to: string | null
+        }
+        Insert: {
+          candidates?: number
+          error?: string | null
+          faqs_added?: number
+          finished_at?: string | null
+          id?: string
+          pairs_analyzed?: number
+          started_at?: string
+          status?: string
+          trigger_source?: string
+          window_from?: string | null
+          window_to?: string | null
+        }
+        Update: {
+          candidates?: number
+          error?: string | null
+          faqs_added?: number
+          finished_at?: string | null
+          id?: string
+          pairs_analyzed?: number
+          started_at?: string
+          status?: string
+          trigger_source?: string
+          window_from?: string | null
+          window_to?: string | null
         }
         Relationships: []
       }
@@ -1191,6 +1236,7 @@ export type Database = {
           last_message_preview: string | null
           last_name: string | null
           last_off_hours_auto_reply_at: string | null
+          operator_typing_at: string | null
           phone: string | null
           status: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id: number | null
@@ -1214,6 +1260,7 @@ export type Database = {
           last_message_preview?: string | null
           last_name?: string | null
           last_off_hours_auto_reply_at?: string | null
+          operator_typing_at?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
@@ -1237,6 +1284,7 @@ export type Database = {
           last_message_preview?: string | null
           last_name?: string | null
           last_off_hours_auto_reply_at?: string | null
+          operator_typing_at?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
