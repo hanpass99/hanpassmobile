@@ -74,7 +74,12 @@ type Chat = {
   status: ChatStatus;
   assigned_operator_id: string | null;
   is_blocked?: boolean | null;
+  needs_human?: boolean | null;
+  needs_human_reason?: string | null;
+  ai_suggestion?: string | null;
+  ai_suggestion_confidence?: number | null;
 };
+
 
 type Message = {
   id: string;
