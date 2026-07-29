@@ -424,11 +424,21 @@ function TelegramPage() {
                         <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
                           {STATUS_LABEL[c.status]}
                         </Badge>
+                        {c.needs_human && (
+                          <Badge
+                            variant="outline"
+                            title={c.needs_human_reason ?? undefined}
+                            className="h-4 gap-0.5 border-red-500/50 bg-red-500/15 px-1 text-[9px] font-semibold text-red-700 dark:text-red-300"
+                          >
+                            <AlertTriangle className="h-2.5 w-2.5" /> AI 응답 불가 · 담당자 확인 필요
+                          </Badge>
+                        )}
                         {c.is_blocked && (
                           <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-[9px] text-red-700 dark:text-red-300">
                             🚫 차단됨
                           </Badge>
                         )}
+
                         {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
                           <Badge
                             variant="outline"
