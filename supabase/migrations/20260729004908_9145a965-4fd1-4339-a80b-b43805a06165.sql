@@ -1,0 +1,1 @@
+UPDATE public.ai_faq_entries SET is_active = false WHERE id = '1f351672-b699-40f3-8afe-127a919a1a6d';

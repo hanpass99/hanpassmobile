@@ -9,14 +9,22 @@ const CHAT_MODEL = "google/gemini-3.6-flash";
 
 // Words/phrases that always require a human operator (money, personal info,
 // legal/contract, refunds, etc.). Case-insensitive substring match.
+// NOTE: 요금제/가격 정보는 매월 변경되므로 AI가 절대 답변하지 않고 담당자에게 넘긴다.
 const SAFETY_KEYWORDS = [
   // KO/generic
-  "환불", "취소", "약관", "개인정보", "결제", "요금",
+  "환불", "취소", "약관", "개인정보", "결제", "요금", "요금제", "가격", "얼마",
+  "금액", "비용", "할인", "프로모션", "이벤트", "데이터", "무제한", "월정액",
   // Russian
   "возврат", "отмен", "договор", "тариф", "оплат", "деньг", "штраф",
+  "цена", "стоимость", "сколько стоит", "скольк", "прайс", "скидк", "акци",
+  "гб", "трафик", "безлимит", "абонент",
   // Uzbek
-  "qaytar", "bekor", "shartnoma", "tarif", "to'lov", "pul", "jarima",
+  "qaytar", "bekor", "shartnoma", "tarif", "to'lov", "tolov", "pul", "jarima",
+  "narx", "qancha", "qiymat", "chegirma", "aksiya", "gb", "limitsiz", "obuna",
+  // English
+  "price", "cost", "how much", "tariff", "plan", "discount", "promo", "unlimited",
 ];
+
 
 function getApiKey(): string {
   const k = process.env.LOVABLE_API_KEY;
@@ -78,8 +86,9 @@ Rules:
 4. confidence: how sure you are the reply directly answers the question using the provided context. If FAQ context clearly matches → 0.85+. If loosely related → 0.4-0.7. If unrelated / missing info → below 0.3.
 5. If confidence < 0.75, set reply to null (a human operator will handle it).
 6. If the question is a greeting only (안녕/salom/привет) with no real question, set reply to a brief greeting and confidence 0.9.
-7. Never promise specific prices, refunds, delivery times, or personal-account actions. Escalate those.
+7. NEVER answer anything about prices, plan/tariff fees, data amounts, discounts, promotions, refunds, delivery times, or personal-account actions. Plan and price information changes every month, so it must always be handled by a human operator: set reply to null, confidence 0.0, reason "요금제/가격 문의 → 담당자 이관".
 8. Do NOT include the 🤖 prefix; the system adds it automatically.`;
+
 
 export async function generateReply(
   question: string,
