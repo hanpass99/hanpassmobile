@@ -128,15 +128,48 @@ export function AutoTranslator() {
     // Initial pass
     processNode(document.body);
 
-    // Observe future mutations
+    // Observe future mutations — queued and processed during idle time so
+    // chat-heavy screens (e.g. Telegram) never block the main thread.
+    const queue: Node[] = [];
+    let idleHandle: number | null = null;
+    const idle: (cb: () => void) => number =
+      (window as any).requestIdleCallback
+        ? (cb) => (window as any).requestIdleCallback(cb, { timeout: 500 })
+        : (cb) => window.setTimeout(cb, 100);
+    const cancelIdle: (h: number) => void =
+      (window as any).cancelIdleCallback
+        ? (h) => (window as any).cancelIdleCallback(h)
+        : (h) => window.clearTimeout(h);
+
+    const drain = () => {
+      idleHandle = null;
+      const start = performance.now();
+      while (queue.length > 0 && performance.now() - start < 8) {
+        const node = queue.shift()!;
+        if (!node.isConnected) continue;
+        processNode(node);
+      }
+      if (queue.length > 0) idleHandle = idle(drain);
+    };
+
+    const schedule = () => {
+      if (idleHandle === null) idleHandle = idle(drain);
+    };
+
     const observer = new MutationObserver((mutations) => {
       for (const m of mutations) {
         if (m.type === "childList") {
-          m.addedNodes.forEach(processNode);
+          m.addedNodes.forEach((n) => {
+            if (n.nodeType === Node.ELEMENT_NODE && isSkipped(n as Element)) return;
+            queue.push(n);
+          });
         } else if (m.type === "characterData") {
-          processNode(m.target);
+          queue.push(m.target);
         }
       }
+      // Guard against runaway growth on very chatty screens
+      if (queue.length > 2000) queue.splice(0, queue.length - 2000);
+      if (queue.length > 0) schedule();
     });
     observer.observe(document.body, {
       childList: true,
@@ -148,10 +181,13 @@ export function AutoTranslator() {
     return () => {
       observer.disconnect();
       observerRef.current = null;
+      queue.length = 0;
+      if (idleHandle !== null) cancelIdle(idleHandle);
       if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
       flushTimerRef.current = null;
     };
   }, [i18n.language, translate]);
+
 
   return null;
 }
