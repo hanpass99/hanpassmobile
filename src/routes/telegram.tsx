@@ -178,6 +178,7 @@ function TelegramPage() {
   // Fetch chats
   const chatsQuery = useQuery({
     queryKey: ["telegram-chats"],
+    staleTime: 10_000,
     queryFn: async (): Promise<Chat[]> => {
       const { data, error } = await supabase
         .from("telegram_chats")
@@ -189,29 +190,53 @@ function TelegramPage() {
     },
   });
 
-  // Realtime: refresh chats & messages
+  // Realtime: refresh chats & messages (debounced so bursts don't thrash the UI)
   useEffect(() => {
+    let chatsTimer: ReturnType<typeof setTimeout> | null = null;
+    const msgTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+    const invalidateChats = () => {
+      if (chatsTimer) return;
+      chatsTimer = setTimeout(() => {
+        chatsTimer = null;
+        qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+      }, 400);
+    };
+    const invalidateMessages = (chatRowId: string) => {
+      if (msgTimers.has(chatRowId)) return;
+      msgTimers.set(
+        chatRowId,
+        setTimeout(() => {
+          msgTimers.delete(chatRowId);
+          qc.invalidateQueries({ queryKey: ["telegram-messages", chatRowId] });
+        }, 300),
+      );
+    };
+
     const channel = supabase
       .channel("telegram-realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "telegram_chats" },
-        () => qc.invalidateQueries({ queryKey: ["telegram-chats"] }),
+        invalidateChats,
       )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "telegram_messages" },
         (payload) => {
           const row = payload.new as { telegram_chat_row_id: string };
-          qc.invalidateQueries({ queryKey: ["telegram-messages", row.telegram_chat_row_id] });
-          qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+          invalidateMessages(row.telegram_chat_row_id);
+          invalidateChats();
         },
       )
       .subscribe();
     return () => {
+      if (chatsTimer) clearTimeout(chatsTimer);
+      msgTimers.forEach((t) => clearTimeout(t));
       supabase.removeChannel(channel);
     };
   }, [qc]);
+
 
   const chats = chatsQuery.data ?? [];
 
