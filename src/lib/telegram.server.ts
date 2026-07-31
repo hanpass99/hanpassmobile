@@ -46,12 +46,21 @@ export async function sendTelegramMessage(
   chatId: number,
   text: string,
   replyToMessageId?: number | null,
+  replyMarkup?: Record<string, unknown> | null,
 ) {
   const body: Record<string, unknown> = { chat_id: chatId, text };
   if (replyToMessageId) {
     body.reply_parameters = { message_id: replyToMessageId, allow_sending_without_reply: true };
   }
+  if (replyMarkup) body.reply_markup = replyMarkup;
   return callBot<{ message_id: number }>("sendMessage", body);
+}
+
+/** Inline keyboard with a single "unsubscribe from ads" button (localized). */
+export function unsubscribeMarkup(lang: BotLang) {
+  return {
+    inline_keyboard: [[{ text: BOT_COPY.unsubscribeButton[lang], callback_data: "optout" }]],
+  };
 }
 
 /** Send a photo or document via multipart. Returns Telegram message id. */
