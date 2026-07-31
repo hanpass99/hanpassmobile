@@ -145,7 +145,7 @@ export const sendBroadcastBatch = createServerFn({ method: "POST" })
       };
     }
 
-    const { BOT_COPY, sendTelegramMessage, sendTelegramMedia } = await import(
+    const { BOT_COPY, sendTelegramMessage, sendTelegramMedia, unsubscribeMarkup } = await import(
       "@/lib/telegram.server"
     );
 
@@ -169,6 +169,7 @@ export const sendBroadcastBatch = createServerFn({ method: "POST" })
       lastId = chat.id;
       const lang: "uz" | "ru" = chat.language === "ru" ? "ru" : "uz";
       const body = `${b.message}${BOT_COPY.broadcastFooter[lang]}`;
+      const markup = unsubscribeMarkup(lang);
       try {
         if (mediaBytes && b.media_kind) {
           await sendTelegramMedia(
@@ -178,9 +179,11 @@ export const sendBroadcastBatch = createServerFn({ method: "POST" })
             b.media_file_name ?? "file",
             b.media_mime ?? "application/octet-stream",
             body.slice(0, 1024),
+            null,
+            markup,
           );
         } else {
-          await sendTelegramMessage(Number(chat.chat_id), body);
+          await sendTelegramMessage(Number(chat.chat_id), body, null, markup);
         }
         sent++;
       } catch (e) {

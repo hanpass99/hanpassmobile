@@ -1,0 +1,2 @@
+ALTER TABLE public.telegram_chats ALTER COLUMN marketing_opt_in SET DEFAULT true;
+UPDATE public.telegram_chats SET marketing_opt_in = true, opt_in_date = COALESCE(opt_in_date, now()) WHERE marketing_opt_in = false;
