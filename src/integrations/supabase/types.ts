@@ -403,6 +403,57 @@ export type Database = {
           },
         ]
       }
+      broadcasts: {
+        Row: {
+          created_at: string
+          failed_count: number
+          id: string
+          lang_filter: string
+          media_file_name: string | null
+          media_kind: string | null
+          media_mime: string | null
+          media_storage_path: string | null
+          message: string
+          sender_id: string
+          status: string
+          success_count: number
+          target_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          failed_count?: number
+          id?: string
+          lang_filter?: string
+          media_file_name?: string | null
+          media_kind?: string | null
+          media_mime?: string | null
+          media_storage_path?: string | null
+          message?: string
+          sender_id: string
+          status?: string
+          success_count?: number
+          target_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          failed_count?: number
+          id?: string
+          lang_filter?: string
+          media_file_name?: string | null
+          media_kind?: string | null
+          media_mime?: string | null
+          media_storage_path?: string | null
+          message?: string
+          sender_id?: string
+          status?: string
+          success_count?: number
+          target_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_hours: {
         Row: {
           auto_reply_ru: string
@@ -1337,10 +1388,13 @@ export type Database = {
           last_message_preview: string | null
           last_name: string | null
           last_off_hours_auto_reply_at: string | null
+          marketing_opt_in: boolean
+          marketing_opt_in_asked_at: string | null
           needs_human: boolean
           needs_human_at: string | null
           needs_human_reason: string | null
           operator_typing_at: string | null
+          opt_in_date: string | null
           phone: string | null
           status: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id: number | null
@@ -1367,10 +1421,13 @@ export type Database = {
           last_message_preview?: string | null
           last_name?: string | null
           last_off_hours_auto_reply_at?: string | null
+          marketing_opt_in?: boolean
+          marketing_opt_in_asked_at?: string | null
           needs_human?: boolean
           needs_human_at?: string | null
           needs_human_reason?: string | null
           operator_typing_at?: string | null
+          opt_in_date?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
@@ -1397,10 +1454,13 @@ export type Database = {
           last_message_preview?: string | null
           last_name?: string | null
           last_off_hours_auto_reply_at?: string | null
+          marketing_opt_in?: boolean
+          marketing_opt_in_asked_at?: string | null
           needs_human?: boolean
           needs_human_at?: string | null
           needs_human_reason?: string | null
           operator_typing_at?: string | null
+          opt_in_date?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
