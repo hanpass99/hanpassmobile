@@ -19,6 +19,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
 import { Route as CallLogsRouteImport } from './routes/call-logs'
+import { Route as BroadcastRouteImport } from './routes/broadcast'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AiFaqRouteImport } from './routes/ai-faq'
@@ -80,6 +81,11 @@ const ChannelPerformanceRoute = ChannelPerformanceRouteImport.update({
 const CallLogsRoute = CallLogsRouteImport.update({
   id: '/call-logs',
   path: '/call-logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BroadcastRoute = BroadcastRouteImport.update({
+  id: '/broadcast',
+  path: '/broadcast',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/ai-faq': typeof AiFaqRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
+  '/broadcast': typeof BroadcastRoute
   '/call-logs': typeof CallLogsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/ai-faq': typeof AiFaqRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
+  '/broadcast': typeof BroadcastRoute
   '/call-logs': typeof CallLogsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/ai-faq': typeof AiFaqRoute
   '/attendance': typeof AttendanceRoute
   '/auth': typeof AuthRoute
+  '/broadcast': typeof BroadcastRoute
   '/call-logs': typeof CallLogsRoute
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/ai-faq'
     | '/attendance'
     | '/auth'
+    | '/broadcast'
     | '/call-logs'
     | '/channel-performance'
     | '/customers'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/ai-faq'
     | '/attendance'
     | '/auth'
+    | '/broadcast'
     | '/call-logs'
     | '/channel-performance'
     | '/customers'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/ai-faq'
     | '/attendance'
     | '/auth'
+    | '/broadcast'
     | '/call-logs'
     | '/channel-performance'
     | '/customers'
@@ -301,6 +313,7 @@ export interface RootRouteChildren {
   AiFaqRoute: typeof AiFaqRoute
   AttendanceRoute: typeof AttendanceRoute
   AuthRoute: typeof AuthRoute
+  BroadcastRoute: typeof BroadcastRoute
   CallLogsRoute: typeof CallLogsRoute
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CustomersRoute: typeof CustomersRoute
@@ -390,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/call-logs'
       fullPath: '/call-logs'
       preLoaderRoute: typeof CallLogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/broadcast': {
+      id: '/broadcast'
+      path: '/broadcast'
+      fullPath: '/broadcast'
+      preLoaderRoute: typeof BroadcastRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -485,6 +505,7 @@ const rootRouteChildren: RootRouteChildren = {
   AiFaqRoute: AiFaqRoute,
   AttendanceRoute: AttendanceRoute,
   AuthRoute: AuthRoute,
+  BroadcastRoute: BroadcastRoute,
   CallLogsRoute: CallLogsRoute,
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CustomersRoute: CustomersRoute,
