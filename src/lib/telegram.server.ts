@@ -72,6 +72,7 @@ export async function sendTelegramMedia(
   mime: string,
   caption?: string,
   replyToMessageId?: number | null,
+  replyMarkup?: Record<string, unknown> | null,
 ): Promise<{ message_id: number }> {
   const token = getBotToken();
   const method = kind === "photo" ? "sendPhoto" : "sendDocument";
@@ -85,6 +86,7 @@ export async function sendTelegramMedia(
       JSON.stringify({ message_id: replyToMessageId, allow_sending_without_reply: true }),
     );
   }
+  if (replyMarkup) form.append("reply_markup", JSON.stringify(replyMarkup));
   const arrayBuffer = bytes.buffer.slice(
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,
