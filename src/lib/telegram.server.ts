@@ -129,6 +129,28 @@ export const BOT_COPY = {
     uz: "🆕 Yangi murojaat",
     ru: "🆕 Новое обращение",
   },
+  optInPrompt: {
+    uz: "📢 Yangi tarif va aksiyalar haqida xabar olishni xohlaysizmi?",
+    ru: "📢 Хотите получать новости о тарифах и акциях?",
+  },
+  optInYes: { uz: "✅ Ha, xohlayman", ru: "✅ Да" },
+  optInNo: { uz: "❌ Yo'q", ru: "❌ Нет" },
+  optInSavedYes: {
+    uz: "✅ Rahmat! Yangiliklar va aksiyalar haqida xabar beramiz. Istalgan vaqtda /stop yuboring.",
+    ru: "✅ Спасибо! Будем присылать новости и акции. В любой момент можно отправить /stop.",
+  },
+  optInSavedNo: {
+    uz: "✅ Yaxshi, reklama xabarlarini yubormaymiz.",
+    ru: "✅ Хорошо, рекламные сообщения отправлять не будем.",
+  },
+  unsubscribed: {
+    uz: "✅ Obuna bekor qilindi. Endi reklama xabarlarini yubormaymiz.",
+    ru: "✅ Подписка отменена. Рекламные сообщения больше не будут приходить.",
+  },
+  broadcastFooter: {
+    uz: "\n\n— Reklama olishni to'xtatish uchun /stop yuboring.",
+    ru: "\n\n— Чтобы отписаться, отправьте /stop.",
+  },
 } as const;
 
 /** Send a plain text message with a single inline button (used for closed-chat re-prompts). */
@@ -146,6 +168,21 @@ export async function sendMessageWithInlineButton(
     },
   });
 }
+
+/** Ask the customer once whether they want marketing/broadcast messages. */
+export async function sendMarketingOptInPrompt(chatId: number, lang: BotLang) {
+  return callBot<{ message_id: number }>("sendMessage", {
+    chat_id: chatId,
+    text: BOT_COPY.optInPrompt[lang],
+    reply_markup: {
+      inline_keyboard: [[
+        { text: BOT_COPY.optInYes[lang], callback_data: "optin:yes" },
+        { text: BOT_COPY.optInNo[lang], callback_data: "optin:no" },
+      ]],
+    },
+  });
+}
+
 
 /** Show the initial language picker (inline keyboard). */
 export async function sendLanguagePicker(chatId: number) {
