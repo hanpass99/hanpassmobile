@@ -13,9 +13,35 @@ import {
   removeKeyboard,
   sendContactRequest,
   sendLanguagePicker,
+  sendMarketingOptInPrompt,
   sendMessageWithInlineButton,
   sendTelegramMessage,
 } from "@/lib/telegram.server";
+
+// Ask the marketing opt-in question at most once per chat (separate from the
+// consultation flow, so it never blocks or replaces support answers).
+async function maybeAskMarketingOptIn(
+  supabaseAdmin: any,
+  chatId: number,
+  lang: BotLang,
+) {
+  try {
+    const { data: row } = await supabaseAdmin
+      .from("telegram_chats")
+      .select("id, marketing_opt_in_asked_at")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    if (!row || row.marketing_opt_in_asked_at) return;
+    await sendMarketingOptInPrompt(chatId, lang);
+    await supabaseAdmin
+      .from("telegram_chats")
+      .update({ marketing_opt_in_asked_at: new Date().toISOString() })
+      .eq("id", row.id);
+  } catch (e) {
+    console.error("[telegram webhook] opt-in prompt failed", e);
+  }
+}
+
 
 // Returns the current hour (0-23) in the given IANA timezone.
 function getHourInTimezone(tz: string, date = new Date()): number {
