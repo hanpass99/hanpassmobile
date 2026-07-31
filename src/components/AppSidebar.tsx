@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle,
-  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send,
+  Settings, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -70,10 +70,12 @@ export function AppSidebar() {
   ];
   const systemItems = [
     ...(isAdmin ? [{ title: "관리자 공지", url: "/notifications", icon: Bell }] : []),
+    ...(isAdmin ? [{ title: "브로드캐스트", url: "/broadcast", icon: Megaphone }] : []),
     ...(isAdmin ? [{ title: "AI 학습", url: "/ai-faq", icon: Bot }] : []),
     { title: t("nav.settings"), url: "/settings", icon: Settings },
     { title: "AI 어시스턴트", url: "/ai-assistant", icon: Bot },
   ];
+
 
   const renderItems = (items: typeof mainItems) =>
     items.map((item) => {
