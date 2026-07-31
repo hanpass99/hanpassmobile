@@ -243,8 +243,8 @@ function BroadcastPage() {
             <CardTitle className="text-base">안전 정책</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>· 수신 동의(marketing_opt_in)한 고객에게만 발송됩니다.</p>
-            <p>· /stop 을 보낸 고객에게는 절대 발송되지 않습니다.</p>
+            <p>· 봇과 대화한 모든 고객에게 발송됩니다 (기본 수신).</p>
+            <p>· 수신 거부 버튼 또는 /stop 을 보낸 고객에게는 절대 발송되지 않습니다.</p>
             <p>· 초당 약 1건 속도로 순차 발송하여 봇 차단을 예방합니다.</p>
             <p>· 차단(403)·오류 고객은 자동으로 수신 거부 처리 후 건너뜁니다.</p>
           </CardContent>
