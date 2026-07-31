@@ -171,7 +171,7 @@ function BroadcastPage() {
                 placeholder="요금제 / 이벤트 안내 내용을 입력하세요."
               />
               <p className="text-xs text-muted-foreground">
-                모든 메시지 하단에 수신 거부 안내(/stop)가 자동으로 추가됩니다.
+                모든 메시지 하단에 수신 거부 안내 문구와 버튼이 자동으로 추가됩니다.
               </p>
             </div>
 
