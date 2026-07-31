@@ -138,27 +138,21 @@ export const BOT_COPY = {
     uz: "🆕 Yangi murojaat",
     ru: "🆕 Новое обращение",
   },
-  optInPrompt: {
-    uz: "📢 Yangi tarif va aksiyalar haqida xabar olishni xohlaysizmi?",
-    ru: "📢 Хотите получать новости о тарифах и акциях?",
-  },
-  optInYes: { uz: "✅ Ha, xohlayman", ru: "✅ Да" },
-  optInNo: { uz: "❌ Yo'q", ru: "❌ Нет" },
-  optInSavedYes: {
-    uz: "✅ Rahmat! Yangiliklar va aksiyalar haqida xabar beramiz. Istalgan vaqtda /stop yuboring.",
-    ru: "✅ Спасибо! Будем присылать новости и акции. В любой момент можно отправить /stop.",
-  },
-  optInSavedNo: {
-    uz: "✅ Yaxshi, reklama xabarlarini yubormaymiz.",
-    ru: "✅ Хорошо, рекламные сообщения отправлять не будем.",
+  unsubscribeButton: {
+    uz: "🔕 Reklama olishni to'xtatish",
+    ru: "🔕 Отписаться от рекламы",
   },
   unsubscribed: {
-    uz: "✅ Obuna bekor qilindi. Endi reklama xabarlarini yubormaymiz.",
-    ru: "✅ Подписка отменена. Рекламные сообщения больше не будут приходить.",
+    uz: "✅ Bekor qilindi. Endi sizga reklama yuborilmaydi. Qayta yoqish uchun /reklama yuboring.",
+    ru: "✅ Отписано. Реклама больше не будет отправляться. Чтобы снова включить, отправьте /reklama.",
+  },
+  resubscribed: {
+    uz: "✅ Reklama xabarlari qayta yoqildi. To'xtatish uchun /stop yuboring.",
+    ru: "✅ Рекламные сообщения снова включены. Чтобы отключить, отправьте /stop.",
   },
   broadcastFooter: {
-    uz: "\n\n— Reklama olishni to'xtatish uchun /stop yuboring.",
-    ru: "\n\n— Чтобы отписаться, отправьте /stop.",
+    uz: "\n\n— Bunday xabarlarni olishni xohlamasangiz, pastdagi tugmani bosing.",
+    ru: "\n\n— Если не хотите получать такие сообщения, нажмите кнопку ниже.",
   },
 } as const;
 
@@ -178,19 +172,7 @@ export async function sendMessageWithInlineButton(
   });
 }
 
-/** Ask the customer once whether they want marketing/broadcast messages. */
-export async function sendMarketingOptInPrompt(chatId: number, lang: BotLang) {
-  return callBot<{ message_id: number }>("sendMessage", {
-    chat_id: chatId,
-    text: BOT_COPY.optInPrompt[lang],
-    reply_markup: {
-      inline_keyboard: [[
-        { text: BOT_COPY.optInYes[lang], callback_data: "optin:yes" },
-        { text: BOT_COPY.optInNo[lang], callback_data: "optin:no" },
-      ]],
-    },
-  });
-}
+
 
 
 /** Show the initial language picker (inline keyboard). */
