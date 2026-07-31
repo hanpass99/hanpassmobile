@@ -650,6 +650,40 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             } catch (e) {
               console.error("[telegram webhook] sendContactRequest failed", e);
             }
+            // Marketing opt-in question (once per chat, separate message)
+            await maybeAskMarketingOptIn(supabaseAdmin, chatId, lang);
+            try {
+              await answerCallbackQuery(cq.id);
+            } catch (e) {
+              console.error("[telegram webhook] answerCallbackQuery failed", e);
+            }
+          } else if (chatId && data.startsWith("optin:")) {
+            const optIn = data.split(":")[1] === "yes";
+            const { data: row } = await supabaseAdmin
+              .from("telegram_chats")
+              .select("language")
+              .eq("chat_id", chatId)
+              .maybeSingle();
+            const lang: BotLang = row?.language === "ru" ? "ru" : "uz";
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({
+                marketing_opt_in: optIn,
+                opt_in_date: optIn ? new Date().toISOString() : null,
+                marketing_opt_in_asked_at: new Date().toISOString(),
+              })
+              .eq("chat_id", chatId);
+            try {
+              if (cq.message?.message_id) {
+                await editMessageText(
+                  chatId,
+                  cq.message.message_id,
+                  optIn ? BOT_COPY.optInSavedYes[lang] : BOT_COPY.optInSavedNo[lang],
+                );
+              }
+            } catch (e) {
+              console.error("[telegram webhook] opt-in editMessageText failed", e);
+            }
             try {
               await answerCallbackQuery(cq.id);
             } catch (e) {
@@ -694,6 +728,33 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         // Detect /start (customer wants a fresh session)
         const isStartCommand =
           typeof message.text === "string" && message.text.trim().toLowerCase().startsWith("/start");
+
+        // /stop → marketing opt-out. Never touches the consultation flow.
+        if (typeof message.text === "string" && message.text.trim().toLowerCase().startsWith("/stop")) {
+          const { data: row } = await supabaseAdmin
+            .from("telegram_chats")
+            .select("id, language")
+            .eq("chat_id", chatId)
+            .maybeSingle();
+          const lang: BotLang = row?.language === "ru" ? "ru" : "uz";
+          if (row) {
+            await supabaseAdmin
+              .from("telegram_chats")
+              .update({
+                marketing_opt_in: false,
+                opt_in_date: null,
+                marketing_opt_in_asked_at: new Date().toISOString(),
+              })
+              .eq("id", row.id);
+          }
+          try {
+            await sendTelegramMessage(chatId, BOT_COPY.unsubscribed[lang]);
+          } catch (e) {
+            console.error("[telegram webhook] /stop confirmation failed", e);
+          }
+          return Response.json({ ok: true, optOut: true });
+        }
+
 
         // Upsert chat row
         const { data: existing } = await supabaseAdmin
