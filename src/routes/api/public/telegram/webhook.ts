@@ -653,45 +653,20 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             } catch (e) {
               console.error("[telegram webhook] sendContactRequest failed", e);
             }
-            // Marketing opt-in question (once per chat, separate message)
-            await maybeAskMarketingOptIn(supabaseAdmin, chatId, lang);
             try {
               await answerCallbackQuery(cq.id);
             } catch (e) {
               console.error("[telegram webhook] answerCallbackQuery failed", e);
             }
-          } else if (chatId && data.startsWith("optin:")) {
-            const optIn = data.split(":")[1] === "yes";
-            const { data: row } = await supabaseAdmin
-              .from("telegram_chats")
-              .select("language")
-              .eq("chat_id", chatId)
-              .maybeSingle();
-            const lang: BotLang = row?.language === "ru" ? "ru" : "uz";
-            await supabaseAdmin
-              .from("telegram_chats")
-              .update({
-                marketing_opt_in: optIn,
-                opt_in_date: optIn ? new Date().toISOString() : null,
-                marketing_opt_in_asked_at: new Date().toISOString(),
-              })
-              .eq("chat_id", chatId);
-            try {
-              if (cq.message?.message_id) {
-                await editMessageText(
-                  chatId,
-                  cq.message.message_id,
-                  optIn ? BOT_COPY.optInSavedYes[lang] : BOT_COPY.optInSavedNo[lang],
-                );
-              }
-            } catch (e) {
-              console.error("[telegram webhook] opt-in editMessageText failed", e);
-            }
+          } else if (chatId && data === "optout") {
+            // Unsubscribe button attached to broadcast messages.
+            await setMarketingOptIn(supabaseAdmin, chatId, false);
             try {
               await answerCallbackQuery(cq.id);
             } catch (e) {
               console.error("[telegram webhook] answerCallbackQuery failed", e);
             }
+
           } else if (chatId && data === "new_inquiry") {
             // Reset chat to a fresh session while preserving message history & sender_operator audit trail.
             await supabaseAdmin
