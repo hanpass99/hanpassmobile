@@ -707,30 +707,12 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const isStartCommand =
           typeof message.text === "string" && message.text.trim().toLowerCase().startsWith("/start");
 
-        // /stop → marketing opt-out. Never touches the consultation flow.
-        if (typeof message.text === "string" && message.text.trim().toLowerCase().startsWith("/stop")) {
-          const { data: row } = await supabaseAdmin
-            .from("telegram_chats")
-            .select("id, language")
-            .eq("chat_id", chatId)
-            .maybeSingle();
-          const lang: BotLang = row?.language === "ru" ? "ru" : "uz";
-          if (row) {
-            await supabaseAdmin
-              .from("telegram_chats")
-              .update({
-                marketing_opt_in: false,
-                opt_in_date: null,
-                marketing_opt_in_asked_at: new Date().toISOString(),
-              })
-              .eq("id", row.id);
-          }
-          try {
-            await sendTelegramMessage(chatId, BOT_COPY.unsubscribed[lang]);
-          } catch (e) {
-            console.error("[telegram webhook] /stop confirmation failed", e);
-          }
-          return Response.json({ ok: true, optOut: true });
+        // /stop and /reklama → marketing opt-out / opt-in. Never touches the consultation flow.
+        const cmdText =
+          typeof message.text === "string" ? message.text.trim().toLowerCase() : "";
+        if (cmdText.startsWith("/stop") || cmdText.startsWith("/reklama")) {
+          await setMarketingOptIn(supabaseAdmin, chatId, cmdText.startsWith("/reklama"));
+          return Response.json({ ok: true, marketing: true });
         }
 
 
