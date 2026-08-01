@@ -697,6 +697,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
     mutationFn: async (status: ChatStatus) => setStatusFn({ data: { chatRowId: chat.id, status } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+      qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "상태 변경 실패"),
   });
