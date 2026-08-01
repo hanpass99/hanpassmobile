@@ -362,16 +362,33 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
       try {
         const { BOT_COPY, sendMessageWithInlineButton } = await import("@/lib/telegram.server");
         const lang: "uz" | "ru" = prior.language === "ru" ? "ru" : "uz";
-        await sendMessageWithInlineButton(
+        const closingText = BOT_COPY.conversationClosed[lang];
+        const sent = await sendMessageWithInlineButton(
           Number(prior.chat_id),
-          BOT_COPY.conversationClosed[lang],
+          closingText,
           BOT_COPY.newInquiryButton[lang],
           "new_inquiry",
         );
+        // Also store it in the thread so the operator sees the closing message in CRM
+        await context.supabase.from("telegram_messages").insert({
+          chat_id: prior.chat_id,
+          telegram_chat_row_id: data.chatRowId,
+          direction: "out",
+          telegram_message_id: sent?.message_id ?? null,
+          text: closingText,
+        } as never);
+        await context.supabase
+          .from("telegram_chats")
+          .update({
+            last_message_preview: closingText.slice(0, 200),
+            last_message_at: new Date().toISOString(),
+          })
+          .eq("id", data.chatRowId);
       } catch (e) {
         console.error("[setTelegramChatStatus] closing message failed", e);
       }
     }
+
     return { ok: true };
   });
 
