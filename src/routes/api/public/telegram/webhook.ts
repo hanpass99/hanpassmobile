@@ -467,20 +467,40 @@ async function tryAiAutoReply(args: {
     console.error("[ai auto-reply] embedding/search failed", e);
   }
 
-  // 5. Load short history (last 6 turns)
+  // 5. Load conversation history (last 30 turns, text + media captions)
   const { data: hist } = await supabaseAdmin
     .from("telegram_messages")
-    .select("direction, text, created_at")
+    .select("direction, text, caption, message_type, is_ai_generated, created_at")
     .eq("telegram_chat_row_id", chatRowId)
     .order("created_at", { ascending: false })
-    .limit(6);
-  const history = ((hist ?? []) as Array<{ direction: string; text: string | null }>)
-    .filter((h) => h.text)
+    .limit(30);
+  const history = (
+    (hist ?? []) as Array<{
+      direction: string;
+      text: string | null;
+      caption: string | null;
+      message_type: string | null;
+      is_ai_generated: boolean | null;
+    }>
+  )
     .reverse()
-    .map((h) => ({
-      role: (h.direction === "in" ? "customer" : "operator") as "customer" | "operator",
-      text: h.text as string,
-    }));
+    .map((h) => {
+      const body =
+        (h.text && h.text.trim()) ||
+        (h.caption && h.caption.trim()) ||
+        (h.message_type && h.message_type !== "text" ? `[${h.message_type}]` : "");
+      if (!body) return null;
+      return {
+        role: (h.direction === "in"
+          ? "customer"
+          : h.is_ai_generated
+            ? "ai"
+            : "operator") as "customer" | "operator" | "ai",
+        text: body,
+      };
+    })
+    .filter((h): h is { role: "customer" | "operator" | "ai"; text: string } => h !== null);
+
 
   // 6. Generate reply
   let decision;
