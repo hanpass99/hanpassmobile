@@ -548,8 +548,8 @@ async function tryAiAutoReply(args: {
     return false;
   }
 
-  // 7. Send to Telegram with 🤖 prefix
-  const finalText = `🤖 ${decision.reply}`;
+  // 7. Send to Telegram with an explicit AI auto-reply label (UZ + EN)
+  const finalText = `🤖 AI avtomatik javobi / AI auto-reply\n\n${decision.reply}`;
   let tgMsgId: number | null = null;
   try {
     const r = await sendTelegramMessage(chatId, finalText);
