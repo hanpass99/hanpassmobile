@@ -66,9 +66,10 @@ type FaqCandidate = {
 };
 
 type HistoryTurn = {
-  role: "customer" | "operator";
+  role: "customer" | "operator" | "ai";
   text: string;
 };
+
 
 type ReplyDecision = {
   confidence: number;
