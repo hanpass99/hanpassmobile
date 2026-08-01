@@ -357,28 +357,45 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
       .eq("id", data.chatRowId);
     if (error) throw new Error(error.message);
 
-    // On transition to done, send the localized closing message with a "New inquiry" inline button
+    // On transition to done, persist the closing message first so the operator always sees it in CRM.
+    // Telegram delivery is handled afterwards and its message id is attached to the saved row.
     if (data.status === "done" && prior && prior.status !== "done" && prior.chat_id) {
+      const { BOT_COPY, sendMessageWithInlineButton } = await import("@/lib/telegram.server");
+      const lang: "uz" | "ru" = prior.language === "ru" ? "ru" : "uz";
+      const closingText = BOT_COPY.conversationClosed[lang];
+      const { data: savedMessage, error: insertError } = await context.supabase
+        .from("telegram_messages")
+        .insert({
+          chat_id: prior.chat_id,
+          telegram_chat_row_id: data.chatRowId,
+          direction: "out",
+          text: closingText,
+          sent_by: context.userId,
+          is_ai_generated: false,
+          raw: { system_event: "conversation_closed" },
+        } as never)
+        .select("id")
+        .single();
+      if (insertError) {
+        throw new Error(`완료 안내 저장 실패: ${insertError.message}`);
+      }
+
       try {
-        const { BOT_COPY, sendMessageWithInlineButton } = await import("@/lib/telegram.server");
-        const lang: "uz" | "ru" = prior.language === "ru" ? "ru" : "uz";
-        const closingText = BOT_COPY.conversationClosed[lang];
         const sent = await sendMessageWithInlineButton(
           Number(prior.chat_id),
           closingText,
           BOT_COPY.newInquiryButton[lang],
           "new_inquiry",
         );
-        // Also store it in the thread so the operator sees the closing message in CRM
-        await context.supabase.from("telegram_messages").insert({
-          chat_id: prior.chat_id,
-          telegram_chat_row_id: data.chatRowId,
-          direction: "out",
-          telegram_message_id: sent?.message_id ?? null,
-          text: closingText,
-          sent_by: context.userId,
-          is_ai_generated: false,
-        } as never);
+        if (savedMessage?.id && sent?.message_id) {
+          const { error: messageIdError } = await context.supabase
+            .from("telegram_messages")
+            .update({ telegram_message_id: sent.message_id })
+            .eq("id", savedMessage.id);
+          if (messageIdError) {
+            console.error("[setTelegramChatStatus] telegram id update failed", messageIdError);
+          }
+        }
         await context.supabase
           .from("telegram_chats")
           .update({
@@ -387,7 +404,7 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
           })
           .eq("id", data.chatRowId);
       } catch (e) {
-        console.error("[setTelegramChatStatus] closing message failed", e);
+        console.error("[setTelegramChatStatus] closing Telegram delivery failed", e);
       }
     }
 
