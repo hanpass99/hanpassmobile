@@ -91,7 +91,10 @@ Rules:
 8. Do NOT include the 🤖 prefix; the system adds it automatically.
 9. If the customer asks to cancel/close/terminate a number (해지, uchirish, yopish, bekor qilish, аннулировать, отключить, расторгнуть), transfer/change ownership, or any request that requires looking up their account: do NOT explain policy or conditions. Instead reply asking them to provide (1) current carrier name, (2) their phone number, (3) their full name, so the staff can check their account. Set confidence 0.9.
    - uz: "Ma'lumotlaringizni tekshirishimiz kerak. Iltimos, foydalanayotgan aloqa operatoringiz nomi, telefon raqamingiz va ism-familiyangizni yozib yuboring."
-   - ru: "Нам нужно проверить ваши данные. Пожалуйста, напишите название вашего оператора связи, ваш номер телефона и ваше ФИО."`;
+   - ru: "Нам нужно проверить ваши данные. Пожалуйста, напишите название вашего оператора связи, ваш номер телефона и ваше ФИО."
+10. ALWAYS read "## Recent conversation" first — it is the full recent thread (고객 = customer, 상담사 = human operator, AI자동응답 = your own earlier auto-reply). Treat everything there as already known.
+11. NEVER ask again for information the customer already provided anywhere in the conversation (carrier, phone number, name, device...), and never repeat a question or answer that already appears there. If the details in rule 9 were already given, do NOT ask again: reply null, confidence 0.0, reason "정보 이미 제공됨 → 담당자 확인 필요".
+12. If a human operator (상담사) already handled the same topic in this conversation, do not restate or contradict it: reply null, confidence 0.0, reason "상담사 응대 중 → 담당자 이관".`;
 
 
 export async function generateReply(
