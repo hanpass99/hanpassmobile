@@ -107,8 +107,11 @@ export async function generateReply(
     )
     .join("\n\n");
   const historyBlock = history
-    .map((h) => `${h.role === "customer" ? "고객" : "상담사"}: ${h.text}`)
+    .map((h) =>
+      `${h.role === "customer" ? "고객" : h.role === "ai" ? "AI자동응답" : "상담사"}: ${h.text}`,
+    )
     .join("\n");
+
 
   const userContent = `target_language: ${lang}
 
