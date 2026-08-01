@@ -376,6 +376,8 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
           direction: "out",
           telegram_message_id: sent?.message_id ?? null,
           text: closingText,
+          sent_by: context.userId,
+          is_ai_generated: false,
         } as never);
         await context.supabase
           .from("telegram_chats")
