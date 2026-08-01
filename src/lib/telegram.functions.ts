@@ -91,8 +91,29 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
       } as never)
       .eq("id", chatRowId);
 
+    // Near-real-time learning: every operator reply feeds the AI knowledge base
+    // (throttled to at most one learning run every 15 minutes).
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: lastRun } = await supabaseAdmin
+        .from("ai_learning_runs")
+        .select("started_at")
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const lastAt = (lastRun as { started_at: string } | null)?.started_at;
+      const stale = !lastAt || Date.now() - new Date(lastAt).getTime() > 15 * 60 * 1000;
+      if (stale) {
+        const { runAutoLearn } = await import("@/lib/ai-learn.server");
+        await runAutoLearn(supabaseAdmin, { triggerSource: "operator_reply", maxPairs: 40 });
+      }
+    } catch (e) {
+      console.error("[telegram] auto-learn after reply failed", e);
+    }
+
     return { ok: true, telegramMessageId };
   });
+
 
 // Operator started typing in a chat → suppress AI auto-send for a short window.
 // The webhook checks `operator_typing_at` and switches to suggestion-only mode.
