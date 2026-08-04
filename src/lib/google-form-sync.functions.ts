@@ -164,7 +164,7 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
   const today = new Date().toISOString().slice(0, 10);
 
-  const ALLOWED_CODES = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH"]);
+  const ALLOWED_CODES = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH", "ID"]);
 
   for (const row of rows) {
     const timestamp_raw = (row[0] ?? "").toString().trim();
@@ -314,7 +314,7 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
 // ============================================================
 const RECEIVED_SPREADSHEET_ID = "1LsuShEg0vq1iiq_EZJ0KuvVvQ8f_YlMr7aJcEVwf-UY";
 const RECEIVED_SHEET_NAME = "접수완료";
-const RECEIVED_ALLOWED = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH"]);
+const RECEIVED_ALLOWED = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH", "ID"]);
 
 function normalizeReceivedPhone(raw: string): string | null {
   let digits = (raw || "").toString().replace(/\D/g, "");
@@ -658,7 +658,7 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
       const storedCode = isCis ? "CIS" : (country_raw || null);
 
       // 허용 국가만 저장: CIS, MM, LK, VN, BD, NP, PH, KH
-      const ALLOWED = new Set(["CIS", "MM", "LK", "VN", "BD", "NP", "PH", "KH"]);
+      const ALLOWED = new Set(["CIS", "MM", "LK", "VN", "BD", "NP", "PH", "KH", "ID"]);
       if (!storedCode || !ALLOWED.has(storedCode)) {
         result.skipped++;
         continue;
