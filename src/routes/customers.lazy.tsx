@@ -781,13 +781,30 @@ function CustomersPage() {
           const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
           if (!isNaN(d.getTime()) && d.getUTCMonth() === +m[2] - 1) return fmtYmd(d);
         }
-        // DD/MM/YYYY or DD-MM-YYYY
-        m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+        // 2자리 연도 3분할: 한국식 YY-MM-DD 우선, 불가하면 DD-MM-YY
+        m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{1,2})$/);
         if (m) {
-          let y = +m[3]; if (y < 100) y += 2000;
-          const d = new Date(Date.UTC(y, +m[2] - 1, +m[1]));
+          const a = +m[1], b = +m[2], c = +m[3];
+          const mk = (y: number, mo: number, da: number) => {
+            if (mo < 1 || mo > 12 || da < 1 || da > 31) return null;
+            const d = new Date(Date.UTC(y, mo - 1, da));
+            return !isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da ? d : null;
+          };
+          // YY-MM-DD (예: 25-07-10 → 2025-07-10)
+          const ymd = mk(a + (a <= (new Date().getUTCFullYear() % 100) + 1 ? 2000 : 1900), b, c);
+          if (ymd) return fmtYmd(ymd);
+          // DD-MM-YY (예: 31-07-25 → 2025-07-31)
+          const dmy = mk(c + 2000, b, a);
+          if (dmy) return fmtYmd(dmy);
+          return null;
+        }
+        // DD/MM/YYYY or DD-MM-YYYY
+        m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+        if (m) {
+          const d = new Date(Date.UTC(+m[3], +m[2] - 1, +m[1]));
           if (!isNaN(d.getTime()) && d.getUTCDate() === +m[1] && d.getUTCMonth() === +m[2] - 1) return fmtYmd(d);
         }
+
         return null;
       };
       const countryByCode = new Map(countries.map((c) => [c.code.toUpperCase(), c.id]));
