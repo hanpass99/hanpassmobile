@@ -118,6 +118,10 @@ export const BOT_COPY = {
     uz: "Assalomu alaykum! Hanpass Mobile'ga xush kelibsiz. Sizga yordam berishimiz uchun quyidagi tugma orqali telefon raqamingizni yuboring.",
     ru: "Здравствуйте! Добро пожаловать в Hanpass Mobile. Пожалуйста, поделитесь своим номером телефона с помощью кнопки ниже, чтобы мы могли вам помочь.",
   },
+  greeting: {
+    uz: "Assalomu alaykum, sizga qanday yordam bera olamiz?",
+    ru: "Здравствуйте! Чем мы можем вам помочь?",
+  },
   checking: {
     uz: "📞 Raqamingiz tekshirilmoqda. Operatorimiz tez orada javob beradi.",
     ru: "📞 Проверяем ваш номер. Оператор скоро ответит.",
