@@ -120,7 +120,7 @@ function AuthGate() {
   }
 
   if (isPublicRoute) return <Outlet />;
-  if (!session) return <Navigate to="/auth" />;
+  if (!session) return <Navigate to="/auth" search={{ next: "" }} />;
 
   return <AuthedShell />;
 }

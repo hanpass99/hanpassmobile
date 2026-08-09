@@ -41,7 +41,7 @@ function ResetPasswordPage() {
     if (error) return toast.error(t("resetPwd.failed", { msg: error.message }));
     toast.success(t("resetPwd.success"));
     await supabase.auth.signOut();
-    navigate({ to: "/auth" });
+    navigate({ to: "/auth", search: { next: "" } });
   };
 
   return (
