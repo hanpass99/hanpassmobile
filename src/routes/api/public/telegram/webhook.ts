@@ -365,8 +365,25 @@ async function escalateToHuman(args: {
 
   let sent = false;
   try {
-    await sendTelegramMessage(chatId, notice);
+    const r = await sendTelegramMessage(chatId, notice);
     sent = true;
+    // Persist so operators can see the handoff/holiday notice in the CRM thread.
+    await supabaseAdmin.from("telegram_messages").insert({
+      telegram_chat_row_id: chatRowId,
+      direction: "out",
+      telegram_message_id: r?.message_id ?? null,
+      message_type: "text",
+      text: notice,
+      is_ai_generated: true,
+      raw: { system_event: sunday ? "sunday_handoff_notice" : "human_handoff_notice" },
+    } as never);
+    await supabaseAdmin
+      .from("telegram_chats")
+      .update({
+        last_message_preview: notice.slice(0, 200),
+        last_message_at: new Date().toISOString(),
+      })
+      .eq("id", chatRowId);
   } catch (e) {
     console.error("[ai auto-reply] handoff notice failed", e);
   }
