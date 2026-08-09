@@ -543,10 +543,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
           "id, telegram_chat_row_id, direction, text, caption, message_type, media_storage_path, media_file_name, media_mime, media_size, media_width, media_height, media_duration, sent_by, created_at, edited_at, telegram_message_id, reply_to_message_id, is_ai_generated",
         )
         .eq("telegram_chat_row_id", chat.id)
-        .order("created_at", { ascending: true })
+        // Fetch the newest page first. Ordering ascending before LIMIT kept only
+        // the oldest 500 rows, so newer bot/AI messages disappeared in long chats.
+        .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return (data ?? []) as Message[];
+      return ((data ?? []) as Message[]).reverse();
 
     },
   });
