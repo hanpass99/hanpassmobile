@@ -1092,12 +1092,28 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               const text = body ? (sunday ? body : `${prefix}\n\n${body}`) : "";
 
               if (text) {
-                await sendTelegramMessage(chatId, text);
+                const r = await sendTelegramMessage(chatId, text);
+                // Persist so operators see the off-hours/holiday notice in the CRM thread.
+                await supabaseAdmin.from("telegram_messages").insert({
+                  telegram_chat_row_id: rowId,
+                  chat_id: chatId,
+                  direction: "out",
+                  telegram_message_id: r?.message_id ?? null,
+                  message_type: "text",
+                  text,
+                  is_ai_generated: true,
+                  raw: { system_event: sunday ? "sunday_notice" : "off_hours_auto_reply" },
+                } as never);
                 await supabaseAdmin
                   .from("telegram_chats")
-                  .update({ last_off_hours_auto_reply_at: new Date().toISOString() })
+                  .update({
+                    last_off_hours_auto_reply_at: new Date().toISOString(),
+                    last_message_preview: text.slice(0, 200),
+                    last_message_at: new Date().toISOString(),
+                  })
                   .eq("id", rowId);
               }
+
             }
           }
         } catch (e) {
