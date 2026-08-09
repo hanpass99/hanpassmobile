@@ -322,8 +322,8 @@ const HUMAN_HANDOFF_NOTICE: Record<string, string> = {
 // Sunday is a company holiday — the AI still answers simple questions, but anything
 // that needs a human is deferred to Monday.
 const SUNDAY_HANDOFF_NOTICE: Record<string, string> = {
-  uz: "🤖 Bugun yakshanba — dam olish kuni. Ushbu savolni dushanba kuni mutaxassisimiz tekshirib javob beradi. Tushunganingiz uchun rahmat!",
-  ru: "🤖 Сегодня воскресенье — выходной день. Этот вопрос наш специалист проверит и ответит в понедельник. Спасибо за понимание!",
+  uz: "🤖 Mijozlar markazi 📞\nDushanba – Shanba: 10:00–19:00\nYakshanba: dam olish kuni.\n\nUshbu savolni dushanba kuni mutaxassisimiz tekshirib javob beradi. Tushunganingiz uchun rahmat!",
+  ru: "🤖 Служба поддержки 📞\nПонедельник – Суббота: 10:00–19:00\nВоскресенье: выходной.\n\nЭтот вопрос наш специалист проверит и ответит в понедельник. Спасибо за понимание!",
   ko: "🤖 오늘은 일요일 휴무입니다. 이 문의는 월요일에 담당자가 확인 후 안내드리겠습니다.",
 };
 
