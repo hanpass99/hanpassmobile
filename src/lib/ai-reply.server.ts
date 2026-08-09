@@ -169,11 +169,26 @@ ${question}`;
     return { confidence: 0, reply: null, matchedFaqId: null, reason: `unparseable: ${raw.slice(0, 100)}` };
   }
   const confidence = Number(parsed.confidence ?? 0) || 0;
-  const reply = typeof parsed.reply === "string" && parsed.reply.trim() ? parsed.reply.trim() : null;
+  let reply = typeof parsed.reply === "string" && parsed.reply.trim() ? parsed.reply.trim() : null;
   const matchedFaqId =
     typeof parsed.matched_faq_id === "string" && parsed.matched_faq_id.length > 0
       ? parsed.matched_faq_id
       : null;
-  const reason = typeof parsed.reason === "string" ? parsed.reason : "";
+  let reason = typeof parsed.reason === "string" ? parsed.reason : "";
+
+  // Hard guard: never re-ask for carrier/phone/name if the customer already
+  // sent a phone number in this conversation → hand over to a human instead.
+  if (reply && phoneAlreadyGiven) {
+    const lower = reply.toLowerCase();
+    const asksForInfo =
+      /telefon raqam|ism-familiy|aloqa operator/.test(lower) ||
+      /номер телефона|фио|оператор связи/.test(lower);
+    if (asksForInfo) {
+      reply = null;
+      reason = "정보 이미 제공됨 → 담당자 확인 필요";
+      return { confidence: 0, reply: null, matchedFaqId, reason };
+    }
+  }
   return { confidence, reply, matchedFaqId, reason };
+
 }
