@@ -1032,7 +1032,10 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           const startHour = bh?.start_hour ?? 10;
           const endHour = bh?.end_hour ?? 19;
           const tz = bh?.timezone ?? "Asia/Seoul";
-          const sessionStart = currentOffHoursSessionStart(tz, startHour, endHour);
+          const sunday = isSundayInTimezone(tz);
+          const sessionStart = sunday
+            ? sundaySessionStart(tz)
+            : currentOffHoursSessionStart(tz, startHour, endHour);
           if (sessionStart) {
             // Fetch throttle marker (refetch to include the column even if `existing` predates the column)
             const { data: chatRow } = await supabaseAdmin
@@ -1045,11 +1048,14 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               : null;
             if (!lastAt || lastAt < sessionStart) {
               const lang: BotLang = (chatRow?.language === "ru" ? "ru" : chatLang);
-              const body = lang === "ru"
-                ? (bh?.auto_reply_ru ?? "")
-                : (bh?.auto_reply_uz ?? "");
+              const body = sunday
+                ? (SUNDAY_HANDOFF_NOTICE[lang] ?? SUNDAY_HANDOFF_NOTICE.uz)
+                : lang === "ru"
+                  ? (bh?.auto_reply_ru ?? "")
+                  : (bh?.auto_reply_uz ?? "");
               const prefix = lang === "ru" ? "🤖 Автоответ:" : "🤖 Avtomatik javob:";
-              const text = body ? `${prefix}\n\n${body}` : "";
+              const text = body ? (sunday ? body : `${prefix}\n\n${body}`) : "";
+
               if (text) {
                 await sendTelegramMessage(chatId, text);
                 await supabaseAdmin
