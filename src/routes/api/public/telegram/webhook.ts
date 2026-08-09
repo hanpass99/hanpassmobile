@@ -963,6 +963,24 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           }
         }
 
+        // Customer shared their contact (or sent only a phone number) — greet them
+        // in their chosen language instead of leaving the chat silent.
+        const rawText = typeof message.text === "string" ? message.text.trim() : "";
+        const isPhoneOnlyText =
+          rawText.length > 0 &&
+          rawText.length <= 20 &&
+          /^[+\d][\d\s\-().]*$/.test(rawText) &&
+          rawText.replace(/\D/g, "").length >= 7;
+        if (!autoResponseSent && (Boolean(message.contact) || isPhoneOnlyText)) {
+          try {
+            await sendTelegramMessage(chatId, BOT_COPY.greeting[chatLang]);
+            autoResponseSent = true;
+          } catch (e) {
+            console.error("[telegram webhook] greeting after contact failed", e);
+          }
+        }
+
+
         // === AI AUTO-REPLY ===
         // Try AI reply for text messages after the chat has been through the
         // greeting/language flow. Skipped for /start, first message, contact
