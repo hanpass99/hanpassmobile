@@ -115,6 +115,17 @@ export async function generateReply(
     )
     .join("\n");
 
+  // Deterministic check: did the customer already send a phone number anywhere
+  // in this conversation (including the current question)?
+  const customerText = [
+    ...history.filter((h) => h.role === "customer").map((h) => h.text),
+    question,
+  ].join("\n");
+  const phoneAlreadyGiven = /(\+?\d[\d\s\-()]{6,})/.test(customerText.replace(/[^\d+\s\-()\n]/g, " "));
+
+  const knownBlock = phoneAlreadyGiven
+    ? "## Known customer info\n- 고객이 이미 전화번호를 제공했습니다. 전화번호/성함/통신사를 다시 묻지 마세요."
+    : "";
 
   const userContent = `target_language: ${lang}
 
@@ -123,9 +134,10 @@ ${faqBlock || "(none)"}
 
 ## Recent conversation
 ${historyBlock || "(none)"}
-
+${knownBlock ? `\n${knownBlock}\n` : ""}
 ## Current customer question
 ${question}`;
+
 
   const res = await fetch(`${GATEWAY_BASE}/chat/completions`, {
     method: "POST",
