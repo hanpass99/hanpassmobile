@@ -319,6 +319,37 @@ const HUMAN_HANDOFF_NOTICE: Record<string, string> = {
   ko: "🤖 이 문의는 담당자가 확인 후 안내드리겠습니다. 잠시만 기다려 주세요.",
 };
 
+// Sunday is a company holiday — the AI still answers simple questions, but anything
+// that needs a human is deferred to Monday.
+const SUNDAY_HANDOFF_NOTICE: Record<string, string> = {
+  uz: "🤖 Bugun yakshanba — dam olish kuni. Ushbu savolni dushanba kuni mutaxassisimiz tekshirib javob beradi. Tushunganingiz uchun rahmat!",
+  ru: "🤖 Сегодня воскресенье — выходной день. Этот вопрос наш специалист проверит и ответит в понедельник. Спасибо за понимание!",
+  ko: "🤖 오늘은 일요일 휴무입니다. 이 문의는 월요일에 담당자가 확인 후 안내드리겠습니다.",
+};
+
+/** True when the current local weekday in `tz` is Sunday (company day off). */
+function isSundayInTimezone(tz: string, date = new Date()): boolean {
+  const wd = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short" }).format(date);
+  return wd === "Sun";
+}
+
+/** Start (UTC) of the current Sunday in `tz`, used to throttle the holiday auto-reply. */
+function sundaySessionStart(tz: string, now = new Date()): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const y = +parts.find((p) => p.type === "year")!.value;
+  const m = +parts.find((p) => p.type === "month")!.value;
+  const d = +parts.find((p) => p.type === "day")!.value;
+  const asUtc = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+  const localMidnightHour = getHourInTimezone(tz, asUtc);
+  const tzOffsetHours = localMidnightHour === 0 ? 0 : 24 - localMidnightHour;
+  return new Date(Date.UTC(y, m - 1, d, -tzOffsetHours, 0, 0));
+}
+
 // Escalate to a human: notify the customer in their language and flag the chat.
 async function escalateToHuman(args: {
   supabaseAdmin: any;
@@ -328,7 +359,10 @@ async function escalateToHuman(args: {
   reason: string;
 }) {
   const { supabaseAdmin, chatRowId, chatId, lang, reason } = args;
-  const notice = HUMAN_HANDOFF_NOTICE[lang] ?? HUMAN_HANDOFF_NOTICE.uz;
+  const sunday = isSundayInTimezone("Asia/Seoul");
+  const table = sunday ? SUNDAY_HANDOFF_NOTICE : HUMAN_HANDOFF_NOTICE;
+  const notice = table[lang] ?? table.uz;
+
   let sent = false;
   try {
     await sendTelegramMessage(chatId, notice);
@@ -998,7 +1032,10 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           const startHour = bh?.start_hour ?? 10;
           const endHour = bh?.end_hour ?? 19;
           const tz = bh?.timezone ?? "Asia/Seoul";
-          const sessionStart = currentOffHoursSessionStart(tz, startHour, endHour);
+          const sunday = isSundayInTimezone(tz);
+          const sessionStart = sunday
+            ? sundaySessionStart(tz)
+            : currentOffHoursSessionStart(tz, startHour, endHour);
           if (sessionStart) {
             // Fetch throttle marker (refetch to include the column even if `existing` predates the column)
             const { data: chatRow } = await supabaseAdmin
@@ -1011,11 +1048,14 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               : null;
             if (!lastAt || lastAt < sessionStart) {
               const lang: BotLang = (chatRow?.language === "ru" ? "ru" : chatLang);
-              const body = lang === "ru"
-                ? (bh?.auto_reply_ru ?? "")
-                : (bh?.auto_reply_uz ?? "");
+              const body = sunday
+                ? (SUNDAY_HANDOFF_NOTICE[lang] ?? SUNDAY_HANDOFF_NOTICE.uz)
+                : lang === "ru"
+                  ? (bh?.auto_reply_ru ?? "")
+                  : (bh?.auto_reply_uz ?? "");
               const prefix = lang === "ru" ? "🤖 Автоответ:" : "🤖 Avtomatik javob:";
-              const text = body ? `${prefix}\n\n${body}` : "";
+              const text = body ? (sunday ? body : `${prefix}\n\n${body}`) : "";
+
               if (text) {
                 await sendTelegramMessage(chatId, text);
                 await supabaseAdmin
