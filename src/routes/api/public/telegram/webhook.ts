@@ -990,12 +990,24 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           rawText.replace(/\D/g, "").length >= 7;
         if (!autoResponseSent && (Boolean(message.contact) || isPhoneOnlyText)) {
           try {
-            await sendTelegramMessage(chatId, BOT_COPY.greeting[chatLang]);
+            const greetText = BOT_COPY.greeting[chatLang];
+            const r = await sendTelegramMessage(chatId, greetText);
+            await supabaseAdmin.from("telegram_messages").insert({
+              telegram_chat_row_id: rowId,
+              chat_id: chatId,
+              direction: "out",
+              telegram_message_id: r?.message_id ?? null,
+              message_type: "text",
+              text: greetText,
+              is_ai_generated: true,
+              raw: { system_event: "contact_greeting" },
+            } as never);
             autoResponseSent = true;
           } catch (e) {
             console.error("[telegram webhook] greeting after contact failed", e);
           }
         }
+
 
 
         // === AI AUTO-REPLY ===
