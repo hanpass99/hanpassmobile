@@ -160,6 +160,10 @@ export const BOT_COPY = {
     uz: "\n\n— Bunday xabarlarni olishni xohlamasangiz, pastdagi tugmani bosing.",
     ru: "\n\n— Если не хотите получать такие сообщения, нажмите кнопку ниже.",
   },
+  voiceNotSupported: {
+    uz: "🎤 Kechirasiz, ovozli xabarlarni qabul qila olmaymiz. Iltimos, savolingizni matn (yozuv) ko'rinishida yuboring.",
+    ru: "🎤 Извините, мы не принимаем голосовые сообщения. Пожалуйста, напишите ваш вопрос текстом.",
+  },
 } as const;
 
 /** Send a plain text message with a single inline button (used for closed-chat re-prompts). */

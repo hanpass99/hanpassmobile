@@ -930,6 +930,27 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
 
 
+        // Voice / audio messages are not accepted — ask the customer to write text.
+        if (media.kind === "voice" || media.kind === "audio") {
+          try {
+            const rejectText = BOT_COPY.voiceNotSupported[chatLang];
+            const r = await sendTelegramMessage(chatId, rejectText, message.message_id);
+            await supabaseAdmin.from("telegram_messages").insert({
+              chat_id: chatId,
+              telegram_chat_row_id: rowId,
+              direction: "out",
+              telegram_message_id: r?.message_id ?? null,
+              message_type: "text",
+              text: rejectText,
+              is_ai_generated: true,
+              raw: { system_event: "voice_rejected" },
+            } as never);
+          } catch (e) {
+            console.error("[telegram webhook] voice rejection failed", e);
+          }
+          return Response.json({ ok: true, voice_rejected: true });
+        }
+
         // Download media (if any) and upload to Storage
         let media_storage_path: string | null = null;
         let media_url: string | null = null;

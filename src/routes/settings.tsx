@@ -57,6 +57,7 @@ function Settings() {
   const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [infoTarget, setInfoTarget] = useState<Row | null>(null);
 
   useEffect(() => {
     if (data) {
@@ -304,7 +305,13 @@ function Settings() {
                     </TableCell>
                   )}
                   <TableCell className="font-medium">
-                    {r.display_name}
+                    <button
+                      type="button"
+                      className="text-primary underline-offset-2 hover:underline"
+                      onClick={() => setInfoTarget(r)}
+                    >
+                      {r.display_name}
+                    </button>
                     {r.id === user?.id && <span className="ml-2 text-xs text-muted-foreground">{t("settings.me")}</span>}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.email ?? "-"}</TableCell>
@@ -478,6 +485,49 @@ function Settings() {
           </CardContent>
         </Card>
       )}
+
+      {/* 직원 상세 정보 */}
+      <Dialog open={!!infoTarget} onOpenChange={(o) => !o && setInfoTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{infoTarget?.display_name}</DialogTitle>
+          </DialogHeader>
+          {infoTarget && (
+            <div className="space-y-3 text-sm">
+              {[
+                [t("settings.email"), infoTarget.email ?? "-"],
+                [t("common.phone"), infoTarget.phone || "-"],
+                [t("settings.department"), infoTarget.department ?? "-"],
+                [t("settings.role"), infoTarget.role],
+                [
+                  t("settings.lastAccess"),
+                  infoTarget.last_sign_in_at
+                    ? new Date(infoTarget.last_sign_in_at).toLocaleString()
+                    : t("settings.notSignedIn"),
+                ],
+                [t("common.status"), infoTarget.is_active ? t("common.active") : t("common.inactive")],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="flex items-start justify-between gap-4 border-b pb-2 last:border-0">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="text-right font-medium break-all">{value}</span>
+                </div>
+              ))}
+              {infoTarget.phone ? (
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={`tel:${infoTarget.phone}`}>{t("common.phone")}</a>
+                  </Button>
+                  {infoTarget.email && (
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={`mailto:${infoTarget.email}`}>{t("settings.email")}</a>
+                    </Button>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <CreateStaffDialog
         open={showCreate}
