@@ -57,6 +57,7 @@ function Settings() {
   const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [infoTarget, setInfoTarget] = useState<Row | null>(null);
 
   useEffect(() => {
     if (data) {
