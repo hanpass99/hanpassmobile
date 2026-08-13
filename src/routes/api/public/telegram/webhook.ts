@@ -363,7 +363,41 @@ async function escalateToHuman(args: {
   const table = sunday ? SUNDAY_HANDOFF_NOTICE : HUMAN_HANDOFF_NOTICE;
   const notice = table[lang] ?? table.uz;
 
+  // Don't spam: send the "a specialist will check this" notice only once per
+  // pending handoff. If we already sent it and no human operator has replied
+  // since, just re-flag the chat silently.
+  const { data: lastOut } = await supabaseAdmin
+    .from("telegram_messages")
+    .select("text, is_ai_generated, raw, created_at")
+    .eq("telegram_chat_row_id", chatRowId)
+    .eq("direction", "out")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const prev = (lastOut ?? [])[0] as
+    | { text: string | null; is_ai_generated: boolean | null; raw: any }
+    | undefined;
+  const prevEvent = prev?.raw?.system_event as string | undefined;
+  const alreadyNotified =
+    !!prev &&
+    (prevEvent === "human_handoff_notice" ||
+      prevEvent === "sunday_handoff_notice" ||
+      Object.values(HUMAN_HANDOFF_NOTICE).includes(prev.text ?? "") ||
+      Object.values(SUNDAY_HANDOFF_NOTICE).includes(prev.text ?? ""));
+
+  if (alreadyNotified) {
+    await supabaseAdmin
+      .from("telegram_chats")
+      .update({
+        needs_human: true,
+        needs_human_at: new Date().toISOString(),
+        needs_human_reason: reason.slice(0, 300),
+      })
+      .eq("id", chatRowId);
+    return false;
+  }
+
   let sent = false;
+
   try {
     const r = await sendTelegramMessage(chatId, notice);
     sent = true;
