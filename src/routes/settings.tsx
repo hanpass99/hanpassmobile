@@ -305,7 +305,13 @@ function Settings() {
                     </TableCell>
                   )}
                   <TableCell className="font-medium">
-                    {r.display_name}
+                    <button
+                      type="button"
+                      className="text-primary underline-offset-2 hover:underline"
+                      onClick={() => setInfoTarget(r)}
+                    >
+                      {r.display_name}
+                    </button>
                     {r.id === user?.id && <span className="ml-2 text-xs text-muted-foreground">{t("settings.me")}</span>}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.email ?? "-"}</TableCell>
