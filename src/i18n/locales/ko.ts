@@ -113,6 +113,7 @@ export default {
     delinquent: "체납자", line_exceeded: "회선 초과", minor: "미성년자",
     wrong_application: "오신청", seasonal_worker: "계절 근로자",
     suspended_number: "정지 번호",
+    rejected: "반려",
     allStatus: "전체 상태",
     changed: "상태 변경: {{label}}",
   },

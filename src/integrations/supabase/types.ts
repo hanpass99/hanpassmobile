@@ -2090,6 +2090,7 @@ export type Database = {
         | "unreachable"
         | "certificate_issuing"
         | "contract_active"
+        | "rejected"
       telegram_chat_status: "new" | "in_progress" | "done"
       template_media_type: "none" | "image" | "document"
     }
@@ -2265,6 +2266,7 @@ export const Constants = {
         "unreachable",
         "certificate_issuing",
         "contract_active",
+        "rejected",
       ],
       telegram_chat_status: ["new", "in_progress", "done"],
       template_media_type: ["none", "image", "document"],

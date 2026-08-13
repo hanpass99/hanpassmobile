@@ -112,6 +112,7 @@ export default {
     activated: "Activated", contract_active: "Contract active", stay_expired: "Stay expired",
     delinquent: "Delinquent", line_exceeded: "Line exceeded", minor: "Minor",
     wrong_application: "Wrong application", seasonal_worker: "Seasonal worker",
+    rejected: "Rejected",
     suspended_number: "Suspended number",
     allStatus: "All statuses",
     changed: "Status changed: {{label}}",

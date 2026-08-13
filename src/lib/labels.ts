@@ -42,6 +42,7 @@ export const CUSTOMER_STATUSES = [
   "wrong_application",
   "seasonal_worker",
   "suspended_number",
+  "rejected",
 ] as const;
 export type CustomerStatus = (typeof CUSTOMER_STATUSES)[number];
 
@@ -64,6 +65,7 @@ export const STATUS_CLASS: Record<CustomerStatus, string> = {
   minor:               "bg-indigo-100 text-indigo-800 border-transparent dark:bg-indigo-900/40 dark:text-indigo-200",
   wrong_application:   "bg-stone-100 text-stone-800 border-transparent dark:bg-stone-800/60 dark:text-stone-200",
   seasonal_worker:     "bg-teal-100 text-teal-800 border-transparent dark:bg-teal-900/40 dark:text-teal-200",
+  rejected:            "bg-red-100 text-red-800 border-transparent dark:bg-red-900/40 dark:text-red-200",
   suspended_number:    "bg-fuchsia-100 text-fuchsia-800 border-transparent dark:bg-fuchsia-900/40 dark:text-fuchsia-200",
 };
 
