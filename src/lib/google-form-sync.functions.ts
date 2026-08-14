@@ -314,7 +314,6 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
 // ============================================================
 const RECEIVED_SPREADSHEET_ID = "1LsuShEg0vq1iiq_EZJ0KuvVvQ8f_YlMr7aJcEVwf-UY";
 const RECEIVED_SHEET_NAME = "접수완료";
-const RECEIVED_ALLOWED = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH", "ID"]);
 
 function normalizeReceivedPhone(raw: string): string | null {
   let digits = (raw || "").toString().replace(/\D/g, "");
