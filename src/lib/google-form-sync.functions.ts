@@ -314,7 +314,6 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
 // ============================================================
 const RECEIVED_SPREADSHEET_ID = "1LsuShEg0vq1iiq_EZJ0KuvVvQ8f_YlMr7aJcEVwf-UY";
 const RECEIVED_SHEET_NAME = "접수완료";
-const RECEIVED_ALLOWED = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH", "ID"]);
 
 function normalizeReceivedPhone(raw: string): string | null {
   let digits = (raw || "").toString().replace(/\D/g, "");
@@ -431,13 +430,12 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
         result.skipped++;
         continue;
       }
-      // CIS 매핑
-      const mapped = CIS_CODES.has(country_raw) ? "CIS" : country_raw;
-      if (!mapped || !RECEIVED_ALLOWED.has(mapped)) {
-        result.skipped++;
-        continue;
-      }
+      // 국가 제한 없음 — 모든 나라 데이터 등록 (CIS 국가만 CIS 로 통합)
+      const mapped = CIS_CODES.has(country_raw)
+        ? "CIS"
+        : (mapCountry(country_raw) ?? country_raw);
       const country_id = codeToId.get(mapped) ?? null;
+
       const signup_date = parseReceivedDate(receivedAt) ?? today;
 
       const custKey = `${name}|${phone}|${signup_date}`;
@@ -460,9 +458,10 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
         continue;
       }
 
-      const nationalityLabel = NATIONALITY_LABEL[country_raw];
+      const nationalityLabel = NATIONALITY_LABEL[country_raw] ?? (country_raw || null);
       const parts = ["접수완료 시트 자동 등록"];
       if (nationalityLabel) parts.push(`국적: ${nationalityLabel}`);
+
       if (carrier) parts.push(`통신사: ${carrier}`);
       if (plan) parts.push(`요금제: ${plan}`);
       const notes = parts.join(" · ");
