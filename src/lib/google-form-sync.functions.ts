@@ -458,9 +458,10 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
         continue;
       }
 
-      const nationalityLabel = NATIONALITY_LABEL[country_raw];
+      const nationalityLabel = NATIONALITY_LABEL[country_raw] ?? (country_raw || null);
       const parts = ["접수완료 시트 자동 등록"];
       if (nationalityLabel) parts.push(`국적: ${nationalityLabel}`);
+
       if (carrier) parts.push(`통신사: ${carrier}`);
       if (plan) parts.push(`요금제: ${plan}`);
       const notes = parts.join(" · ");
