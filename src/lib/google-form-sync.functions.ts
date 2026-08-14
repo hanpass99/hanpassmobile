@@ -431,13 +431,12 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
         result.skipped++;
         continue;
       }
-      // CIS 매핑
-      const mapped = CIS_CODES.has(country_raw) ? "CIS" : country_raw;
-      if (!mapped || !RECEIVED_ALLOWED.has(mapped)) {
-        result.skipped++;
-        continue;
-      }
+      // 국가 제한 없음 — 모든 나라 데이터 등록 (CIS 국가만 CIS 로 통합)
+      const mapped = CIS_CODES.has(country_raw)
+        ? "CIS"
+        : (mapCountry(country_raw) ?? country_raw);
       const country_id = codeToId.get(mapped) ?? null;
+
       const signup_date = parseReceivedDate(receivedAt) ?? today;
 
       const custKey = `${name}|${phone}|${signup_date}`;
