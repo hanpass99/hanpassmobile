@@ -295,7 +295,7 @@ function CallLogsPage() {
               data.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="whitespace-nowrap text-sm">
-                    {format(new Date(row.started_at), "yyyy-MM-dd HH:mm:ss")}
+                    {formatKst(row.started_at)}
                   </TableCell>
                   <TableCell className="text-sm">{row.staff?.display_name ?? "—"}</TableCell>
                   <TableCell className="font-mono text-xs">{row.employee_phone}</TableCell>
@@ -326,6 +326,8 @@ function CallLogsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {isAdmin && <CallLogIngestPanel />}
 
       <CallLogPopupDialog
         row={popupRow as any}
