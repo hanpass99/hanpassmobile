@@ -13,19 +13,73 @@ const jsonHeaders = { "Content-Type": "application/json", ...corsHeaders };
 const payloadSchema = z.object({
   employee_phone: z.string().min(4).max(32),
   customer_phone: z.string().max(32).optional().nullable(),
-  direction: z.enum(["incoming", "outgoing", "missed"]),
+  direction: z.string().min(1).max(32),
   status: z.string().max(32).optional().nullable(),
-  duration: z.union([z.number(), z.string()]).optional(),
+  duration: z.union([z.number(), z.string()]).optional().nullable(),
   started_at: z.string().optional().nullable(),
 });
 
 function normalizePhone(raw: string | null | undefined): string | null {
   if (!raw) return null;
-  const digits = raw.replace(/[^\d]/g, "");
+  let digits = raw.replace(/[^\d]/g, "");
   if (!digits) return null;
-  // Korean mobile: strip country code 82
-  if (digits.startsWith("82") && digits.length >= 11) return "0" + digits.slice(2);
+  // Strip Korean country code (+82 / 0082)
+  if (digits.startsWith("0082")) digits = digits.slice(4);
+  if (digits.startsWith("82") && digits.length >= 11) digits = digits.slice(2);
+  // Restore national leading zero for Korean mobile/landline
+  if (!digits.startsWith("0") && /^(1[016789]|2|3[1-3]|4[1-4]|5[1-5]|6[1-4])/.test(digits)) {
+    digits = "0" + digits;
+  }
   return digits;
+}
+
+/** Comparable key: last 8 digits — immune to leading 0 / country code differences. */
+function phoneKey(raw: string | null | undefined): string | null {
+  const n = normalizePhone(raw);
+  if (!n) return null;
+  return n.slice(-8);
+}
+
+/** Normalize direction into incoming | outgoing | missed. */
+function normalizeDirection(raw: string, status: string | null | undefined): string {
+  const d = raw.toLowerCase().trim();
+  if (["missed", "no_answer", "noanswer", "rejected", "declined"].includes(d)) return "missed";
+  if (["in", "incoming", "inbound", "received"].includes(d)) {
+    const s = (status ?? "").toLowerCase();
+    if (["missed", "no_answer", "rejected", "declined"].includes(s)) return "missed";
+    return "incoming";
+  }
+  if (["out", "outgoing", "outbound", "dialed"].includes(d)) return "outgoing";
+  return "outgoing";
+}
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/**
+ * Parse started_at. Supports ISO with offset (yyyy-MM-dd'T'HH:mm:ssZ) and
+ * offset-less local timestamps, which are assumed to be KST (+09:00).
+ */
+function parseStartedAt(raw: string | null | undefined): { iso: string; ok: boolean } {
+  if (!raw) return { iso: new Date().toISOString(), ok: false };
+  const s = raw.trim();
+  const hasOffset = /(Z|[+-]\d{2}:?\d{2})$/.test(s);
+  if (hasOffset) {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return { iso: d.toISOString(), ok: true };
+  }
+  // "yyyy-MM-dd HH:mm:ss" or "yyyy-MM-ddTHH:mm:ss" without offset -> treat as KST
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (m) {
+    const utcMs = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] ?? 0));
+    return { iso: new Date(utcMs - KST_OFFSET_MS).toISOString(), ok: true };
+  }
+  const epoch = Number(s);
+  if (Number.isFinite(epoch) && epoch > 1e9) {
+    return { iso: new Date(epoch < 1e12 ? epoch * 1000 : epoch).toISOString(), ok: true };
+  }
+  const fallback = new Date(s);
+  if (!isNaN(fallback.getTime())) return { iso: fallback.toISOString(), ok: true };
+  return { iso: new Date().toISOString(), ok: false };
 }
 
 export const Route = createFileRoute("/api/public/call-log")({
