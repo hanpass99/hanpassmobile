@@ -490,6 +490,57 @@ export type Database = {
         }
         Relationships: []
       }
+      call_log_ingest: {
+        Row: {
+          customer_phone: string | null
+          direction: string | null
+          duration: number | null
+          employee_phone: string | null
+          error_reason: string | null
+          id: string
+          matched_customer_id: string | null
+          matched_employee_id: string | null
+          parse_ok: boolean
+          phone_call_log_id: string | null
+          raw_body: Json | null
+          received_at: string
+          started_at: string | null
+          status: string | null
+        }
+        Insert: {
+          customer_phone?: string | null
+          direction?: string | null
+          duration?: number | null
+          employee_phone?: string | null
+          error_reason?: string | null
+          id?: string
+          matched_customer_id?: string | null
+          matched_employee_id?: string | null
+          parse_ok?: boolean
+          phone_call_log_id?: string | null
+          raw_body?: Json | null
+          received_at?: string
+          started_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          customer_phone?: string | null
+          direction?: string | null
+          duration?: number | null
+          employee_phone?: string | null
+          error_reason?: string | null
+          id?: string
+          matched_customer_id?: string | null
+          matched_employee_id?: string | null
+          parse_ok?: boolean
+          phone_call_log_id?: string | null
+          raw_body?: Json | null
+          received_at?: string
+          started_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       call_logs: {
         Row: {
           call_date: string
