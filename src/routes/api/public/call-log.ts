@@ -100,10 +100,18 @@ export const Route = createFileRoute("/api/public/call-log")({
           });
         }
 
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const rawText = await request.text();
+
         let body: unknown;
         try {
-          body = await request.json();
+          body = JSON.parse(rawText);
         } catch {
+          await supabaseAdmin.from("call_log_ingest").insert({
+            raw_body: { _unparsed: rawText.slice(0, 4000) } as any,
+            parse_ok: false,
+            error_reason: "invalid_json",
+          });
           return new Response(JSON.stringify({ error: "invalid_json" }), {
             status: 400,
             headers: jsonHeaders,
@@ -112,8 +120,17 @@ export const Route = createFileRoute("/api/public/call-log")({
 
         const parsed = payloadSchema.safeParse(body);
         if (!parsed.success) {
+          const { data: ing } = await supabaseAdmin
+            .from("call_log_ingest")
+            .insert({
+              raw_body: body as any,
+              parse_ok: false,
+              error_reason: `invalid_payload: ${JSON.stringify(parsed.error.flatten().fieldErrors).slice(0, 300)}`,
+            })
+            .select("id")
+            .maybeSingle();
           return new Response(
-            JSON.stringify({ error: "invalid_payload", details: parsed.error.flatten() }),
+            JSON.stringify({ error: "invalid_payload", ingest_id: ing?.id ?? null, details: parsed.error.flatten() }),
             { status: 400, headers: jsonHeaders }
           );
         }
@@ -121,21 +138,21 @@ export const Route = createFileRoute("/api/public/call-log")({
         const empPhone = normalizePhone(data.employee_phone);
         const custPhone = normalizePhone(data.customer_phone ?? null);
         const durationRaw = Number(data.duration ?? 0);
-        const duration = Number.isFinite(durationRaw) ? Math.round(durationRaw) : 0;
-        const startedAt = data.started_at ? new Date(data.started_at) : new Date();
-        const startedIso = isNaN(startedAt.getTime()) ? new Date().toISOString() : startedAt.toISOString();
+        const duration = Number.isFinite(durationRaw) ? Math.max(0, Math.round(durationRaw)) : 0;
+        const { iso: startedIso } = parseStartedAt(data.started_at);
+        const direction = normalizeDirection(data.direction, data.status);
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
+        // Flexible employee matching: compare normalized last-8-digit keys
         let staffId: string | null = null;
-        if (empPhone) {
-          const { data: prof } = await supabaseAdmin
+        const empKey = phoneKey(data.employee_phone);
+        if (empKey) {
+          const { data: profs } = await supabaseAdmin
             .from("profiles")
-            .select("id")
-            .eq("phone" as any, empPhone)
-            .maybeSingle();
-          staffId = prof?.id ?? null;
+            .select("id, phone")
+            .not("phone", "is", null);
+          staffId = (profs ?? []).find((p: any) => phoneKey(p.phone) === empKey)?.id ?? null;
         }
+
 
         let customerId: string | null = null;
         if (custPhone) {
