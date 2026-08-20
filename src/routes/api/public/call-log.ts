@@ -185,28 +185,64 @@ export const Route = createFileRoute("/api/public/call-log")({
         }
 
 
-        const { error } = await supabaseAdmin.from("phone_call_logs" as any).insert({
-          staff_id: staffId,
-          employee_phone: empPhone ?? data.employee_phone,
+        const { data: inserted, error } = await supabaseAdmin
+          .from("phone_call_logs" as any)
+          .insert({
+            staff_id: staffId,
+            employee_phone: empPhone ?? data.employee_phone,
+            customer_phone: custPhone,
+            customer_id: customerId,
+            direction,
+            status: data.status ?? null,
+            duration_sec: duration,
+            started_at: startedIso,
+            raw: body as any,
+          })
+          .select("id")
+          .maybeSingle();
+
+        const ingestRow = {
+          raw_body: body as any,
+          employee_phone: empPhone,
           customer_phone: custPhone,
-          customer_id: customerId,
-          direction: data.direction,
+          direction,
           status: data.status ?? null,
-          duration_sec: duration,
+          duration,
           started_at: startedIso,
-          raw: body as any,
-        });
+          parse_ok: !error,
+          error_reason: error
+            ? `insert_failed: ${error.message}`
+            : staffId
+              ? null
+              : "employee_not_matched",
+          matched_employee_id: staffId,
+          matched_customer_id: customerId,
+          phone_call_log_id: (inserted as any)?.id ?? null,
+        };
+        const { data: ing } = await supabaseAdmin
+          .from("call_log_ingest")
+          .insert(ingestRow as any)
+          .select("id")
+          .maybeSingle();
 
         if (error) {
-          return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: jsonHeaders,
-          });
+          return new Response(
+            JSON.stringify({ error: error.message, ingest_id: ing?.id ?? null }),
+            { status: 500, headers: jsonHeaders }
+          );
         }
 
         return new Response(
-          JSON.stringify({ ok: true, matched_staff: !!staffId, matched_customer: !!customerId }),
-          { status: 201, headers: jsonHeaders }
+          JSON.stringify({
+            ok: true,
+            id: (inserted as any)?.id ?? null,
+            ingest_id: ing?.id ?? null,
+            started_at: startedIso,
+            direction,
+            matched_staff: !!staffId,
+            matched_customer: !!customerId,
+          }),
+          { status: 200, headers: jsonHeaders }
         );
       },
     },
