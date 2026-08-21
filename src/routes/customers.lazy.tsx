@@ -957,9 +957,11 @@ function CustomersPage() {
 
       toast.success(
         t("customers.toastAddedFileDup", { n: inserted.toLocaleString(), dup: dupInFile })
+          + (skippedDup ? ` (기존 중복 ${skippedDup.toLocaleString()}건 제외)` : "")
           + (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
         { id: toastId }
       );
+
       await refetchPoolCounts();
       setPage(1);
       await refetchList();
