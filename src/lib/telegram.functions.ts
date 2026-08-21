@@ -61,35 +61,37 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
       throw new Error(`텔레그램 전송 실패: ${msg}`);
     }
 
-    // Record message + bump last_message
-    const { error: insErr } = await supabase.from("telegram_messages").insert({
-      chat_id: chat.chat_id,
-      telegram_chat_row_id: chatRowId,
-      direction: "out",
-      telegram_message_id: telegramMessageId,
-      text,
-      sent_by: userId,
-      reply_to_message_id: replyToMessageId ?? null,
-      reply_to_telegram_message_id: replyToTgId,
-    } as never);
+    // Record message + bump last_message (run both round-trips in parallel)
+    const [{ error: insErr }] = await Promise.all([
+      supabase.from("telegram_messages").insert({
+        chat_id: chat.chat_id,
+        telegram_chat_row_id: chatRowId,
+        direction: "out",
+        telegram_message_id: telegramMessageId,
+        text,
+        sent_by: userId,
+        reply_to_message_id: replyToMessageId ?? null,
+        reply_to_telegram_message_id: replyToTgId,
+      } as never),
+      supabase
+        .from("telegram_chats")
+        .update({
+          last_message_preview: text.slice(0, 200),
+          last_message_at: new Date().toISOString(),
+          status: "in_progress",
+          assigned_operator_id: userId,
+          unread_count: 0,
+          // Operator answered → clear the "AI can't answer" flag and any pending suggestion.
+          needs_human: false,
+          needs_human_reason: null,
+          ai_suggestion: null,
+          ai_suggestion_confidence: null,
+          ai_suggestion_at: null,
+        } as never)
+        .eq("id", chatRowId),
+    ]);
     if (insErr) throw new Error(insErr.message);
 
-    await supabase
-      .from("telegram_chats")
-      .update({
-        last_message_preview: text.slice(0, 200),
-        last_message_at: new Date().toISOString(),
-        status: "in_progress",
-        assigned_operator_id: userId,
-        unread_count: 0,
-        // Operator answered → clear the "AI can't answer" flag and any pending suggestion.
-        needs_human: false,
-        needs_human_reason: null,
-        ai_suggestion: null,
-        ai_suggestion_confidence: null,
-        ai_suggestion_at: null,
-      } as never)
-      .eq("id", chatRowId);
 
     // Learning is intentionally NOT awaited here: it calls the AI gateway and
     // used to add 10s+ latency to every operator reply. The scheduled
