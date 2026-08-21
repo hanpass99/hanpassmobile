@@ -918,14 +918,33 @@ function CustomersPage() {
         return;
       }
 
-      // 청크 단위 INSERT (500건씩)
+      // 청크 단위 INSERT (500건씩) — 중복(unique) 충돌은 건너뛰기
       const insertChunkSize = 500;
       let inserted = 0;
+      let skippedDup = 0;
       const totalToInsert = finalPayload.length;
+      const isDupErr = (msg?: string) => !!msg && (msg.includes("duplicate key") || msg.includes("23505"));
       for (let i = 0; i < totalToInsert; i += insertChunkSize) {
         const chunk = finalPayload.slice(i, i + insertChunkSize);
         const { error } = await supabase.from("customers").insert(chunk);
         if (error) {
+          if (isDupErr(error.message)) {
+            // 청크 안에 중복이 있음 → 한 건씩 넣고 중복만 건너뜀
+            for (const row of chunk) {
+              const { error: rowErr } = await supabase.from("customers").insert(row);
+              if (!rowErr) inserted++;
+              else if (isDupErr(rowErr.message)) skippedDup++;
+              else {
+                toast.error(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: rowErr.message }), { id: toastId });
+                await refetchPoolCounts();
+                setPage(1);
+                await refetchList();
+                return;
+              }
+            }
+            toast.loading(t("customers.toastUploading", { done: inserted.toLocaleString(), total: totalToInsert.toLocaleString() }), { id: toastId });
+            continue;
+          }
           toast.error(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: error.message }), { id: toastId });
           await refetchPoolCounts();
           setPage(1);
@@ -935,11 +954,14 @@ function CustomersPage() {
         inserted += chunk.length;
         toast.loading(t("customers.toastUploading", { done: inserted.toLocaleString(), total: totalToInsert.toLocaleString() }), { id: toastId });
       }
+
       toast.success(
         t("customers.toastAddedFileDup", { n: inserted.toLocaleString(), dup: dupInFile })
+          + (skippedDup ? ` (기존 중복 ${skippedDup.toLocaleString()}건 제외)` : "")
           + (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
         { id: toastId }
       );
+
       await refetchPoolCounts();
       setPage(1);
       await refetchList();
