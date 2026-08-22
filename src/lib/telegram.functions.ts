@@ -2,6 +2,26 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// 1분 답장 잠금 획득. 다른 담당자가 60초 이내에 답장했다면 전송을 막는다.
+async function acquireReplyLock(supabase: unknown, chatRowId: string) {
+  const client = supabase as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+  };
+  const { data, error } = await client.rpc("acquire_telegram_reply_lock", {
+    _chat_row_id: chatRowId,
+  });
+  if (error) return; // 잠금 확인 실패 시 전송을 막지 않는다
+  const res = (data ?? {}) as {
+    ok?: boolean;
+    seconds_left?: number;
+    locked_by_name?: string | null;
+  };
+  if (res.ok === false && res.seconds_left !== undefined) {
+    const who = res.locked_by_name ?? "다른 담당자";
+    throw new Error(`${who} 님이 답변 중입니다. ${res.seconds_left}초 후에 보낼 수 있습니다.`);
+  }
+}
+
 // Send a reply to a Telegram chat, recording which staff sent it.
 export const sendTelegramReply = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -17,6 +37,9 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { chatRowId, text, replyToMessageId } = data;
     const { userId, supabase } = context;
+
+    // 1분 답장 잠금: 먼저 보낸 담당자가 60초간 이 대화를 선점한다.
+    await acquireReplyLock(supabase, chatRowId);
 
     // Look up chat_id via the authenticated client (RLS allows all authenticated to read)
     const { data: chat, error: chatErr } = await supabase
@@ -182,6 +205,7 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId, supabase } = context;
+    await acquireReplyLock(supabase, data.chatRowId);
     const { data: chat, error: chatErr } = await supabase
       .from("telegram_chats")
       .select("chat_id")
@@ -353,9 +377,17 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
       .eq("id", data.chatRowId)
       .maybeSingle();
 
-    const updatePayload: { status: typeof data.status; unread_count?: number } = { status: data.status };
+    const updatePayload: {
+      status: typeof data.status;
+      unread_count?: number;
+      reply_lock_by?: string | null;
+      reply_lock_at?: string | null;
+    } = { status: data.status };
     if (data.status === "done") {
       updatePayload.unread_count = 0;
+      // 완료 처리하면 답장 잠금 즉시 해제
+      updatePayload.reply_lock_by = null;
+      updatePayload.reply_lock_at = null;
     }
     const { error } = await context.supabase
       .from("telegram_chats")

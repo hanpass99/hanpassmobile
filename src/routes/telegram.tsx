@@ -86,7 +86,19 @@ type Chat = {
   needs_human_reason?: string | null;
   ai_suggestion?: string | null;
   ai_suggestion_confidence?: number | null;
+  reply_lock_by?: string | null;
+  reply_lock_at?: string | null;
 };
+
+const REPLY_LOCK_MS = 60_000;
+
+/** 다른 담당자의 답장 잠금이 살아 있으면 남은 초를 반환, 아니면 0 */
+function replyLockSecondsLeft(chat: Chat, myId: string | null | undefined, nowMs: number) {
+  if (!chat.reply_lock_by || !chat.reply_lock_at) return 0;
+  if (myId && chat.reply_lock_by === myId) return 0;
+  const left = Math.ceil((new Date(chat.reply_lock_at).getTime() + REPLY_LOCK_MS - nowMs) / 1000);
+  return left > 0 ? left : 0;
+}
 
 
 type Message = {
@@ -165,7 +177,13 @@ function chatDisplayName(c: Chat): string {
 
 function TelegramPage() {
   const { i18n: i18nInst } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+  // 1초 간격 틱 — 답장 잠금 카운트다운용
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
   const locale = i18nInst.language === "ko" ? ko : enUS;
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -463,6 +481,12 @@ function TelegramPage() {
                             🚫 차단됨
                           </Badge>
                         )}
+                        {replyLockSecondsLeft(c, user?.id, nowMs) > 0 && (
+                          <Badge variant="outline" className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-[9px] text-amber-700 dark:text-amber-300">
+                            🔒 답변 중 ({replyLockSecondsLeft(c, user?.id, nowMs)}초)
+                          </Badge>
+                        )}
+
 
                         {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
                           <Badge
@@ -600,6 +624,14 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
   });
 
+  // 1분 답장 잠금 상태 (다른 담당자가 방금 답장했으면 입력 잠금)
+  const [lockNow, setLockNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setLockNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const lockSecondsLeft = replyLockSecondsLeft(chat, user?.id, lockNow);
+
   const sendReply = useServerFn(sendTelegramReply);
   const sendMediaFn = useServerFn(sendTelegramMedia);
   const editMsgFn = useServerFn(editTelegramMessage);
@@ -711,6 +743,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
   };
 
   const profileMap = profilesQuery.data ?? {};
+  const lockHolderName =
+    (chat.reply_lock_by && profileMap[chat.reply_lock_by]?.display_name) || "다른 담당자";
   const messagesById = useMemo(() => {
     const map = new Map<string, Message>();
     for (const m of messagesQuery.data ?? []) map.set(m.id, m);
@@ -1020,6 +1054,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
         </div>
       ) : (
       <div className="border-t p-3 space-y-2">
+        {lockSecondsLeft > 0 && (
+          <div className="flex items-center gap-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
+            🔒 {lockHolderName} 님이 답변 중입니다 · 남은 시간 {String(Math.floor(lockSecondsLeft / 60)).padStart(2, "0")}:
+            {String(lockSecondsLeft % 60).padStart(2, "0")}
+          </div>
+        )}
         {replyTo && (
           <div className="flex items-start gap-2 rounded border-l-2 border-primary bg-primary/5 px-2 py-1.5 text-xs">
             <Reply className="mt-0.5 h-3.5 w-3.5 text-primary shrink-0" />
@@ -1247,10 +1287,14 @@ function ConversationPane({ chat }: { chat: Chat }) {
                 onSubmit();
               }
             }}
-            placeholder="메시지 입력 (Enter 전송, Shift+Enter 줄바꿈, / 로 템플릿 검색)"
+            placeholder={
+              lockSecondsLeft > 0
+                ? `${lockHolderName} 님이 답변 중입니다 (${lockSecondsLeft}초 후 가능)`
+                : "메시지 입력 (Enter 전송, Shift+Enter 줄바꿈, / 로 템플릿 검색)"
+            }
             rows={2}
             className="resize-none"
-            disabled={sendMut.isPending}
+            disabled={sendMut.isPending || lockSecondsLeft > 0}
           />
           <input
             ref={fileInputRef}
@@ -1268,12 +1312,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
             size="icon"
             className="h-10 w-10 shrink-0"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || sendMut.isPending}
+            disabled={isUploading || sendMut.isPending || lockSecondsLeft > 0}
             title="사진/파일 첨부"
           >
             <Paperclip className="h-4 w-4" />
           </Button>
-          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim() || isUploading} size="icon" className="h-10 w-10">
+          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim() || isUploading || lockSecondsLeft > 0} size="icon" className="h-10 w-10">
             <Send className="h-4 w-4" />
           </Button>
         </div>
