@@ -86,7 +86,19 @@ type Chat = {
   needs_human_reason?: string | null;
   ai_suggestion?: string | null;
   ai_suggestion_confidence?: number | null;
+  reply_lock_by?: string | null;
+  reply_lock_at?: string | null;
 };
+
+const REPLY_LOCK_MS = 60_000;
+
+/** 다른 담당자의 답장 잠금이 살아 있으면 남은 초를 반환, 아니면 0 */
+function replyLockSecondsLeft(chat: Chat, myId: string | null | undefined, nowMs: number) {
+  if (!chat.reply_lock_by || !chat.reply_lock_at) return 0;
+  if (myId && chat.reply_lock_by === myId) return 0;
+  const left = Math.ceil((new Date(chat.reply_lock_at).getTime() + REPLY_LOCK_MS - nowMs) / 1000);
+  return left > 0 ? left : 0;
+}
 
 
 type Message = {
