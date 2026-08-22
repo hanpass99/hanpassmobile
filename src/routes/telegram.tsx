@@ -90,7 +90,7 @@ type Chat = {
   reply_lock_at?: string | null;
 };
 
-const REPLY_LOCK_MS = 60_000;
+const REPLY_LOCK_MS = 120_000;
 
 /** 다른 담당자의 답장 잠금이 살아 있으면 남은 초를 반환, 아니면 0 */
 function replyLockSecondsLeft(chat: Chat, myId: string | null | undefined, nowMs: number) {
