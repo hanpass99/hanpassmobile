@@ -50,6 +50,7 @@ import { cn } from "@/lib/utils";
 
 import {
   sendTelegramReply,
+  claimTelegramChat,
   sendTelegramMedia,
   editTelegramMessage,
   linkTelegramChatToCustomer,
