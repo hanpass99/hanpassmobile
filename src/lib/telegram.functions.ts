@@ -2,6 +2,26 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// 1분 답장 잠금 획득. 다른 담당자가 60초 이내에 답장했다면 전송을 막는다.
+async function acquireReplyLock(
+  supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> },
+  chatRowId: string,
+) {
+  const { data, error } = await supabase.rpc("acquire_telegram_reply_lock", {
+    _chat_row_id: chatRowId,
+  });
+  if (error) return; // 잠금 확인 실패 시 전송을 막지 않는다
+  const res = (data ?? {}) as {
+    ok?: boolean;
+    seconds_left?: number;
+    locked_by_name?: string | null;
+  };
+  if (res.ok === false && res.seconds_left !== undefined) {
+    const who = res.locked_by_name ?? "다른 담당자";
+    throw new Error(`${who} 님이 답변 중입니다. ${res.seconds_left}초 후에 보낼 수 있습니다.`);
+  }
+}
+
 // Send a reply to a Telegram chat, recording which staff sent it.
 export const sendTelegramReply = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
