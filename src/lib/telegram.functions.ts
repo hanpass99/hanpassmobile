@@ -102,7 +102,6 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
           last_message_preview: text.slice(0, 200),
           last_message_at: new Date().toISOString(),
           status: "in_progress",
-          assigned_operator_id: userId,
           unread_count: 0,
           // Operator answered → clear the "AI can't answer" flag and any pending suggestion.
           needs_human: false,
@@ -295,7 +294,6 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
         last_message_preview: data.caption ? `${preview} · ${data.caption.slice(0, 160)}` : preview,
         last_message_at: new Date().toISOString(),
         status: "in_progress",
-        assigned_operator_id: userId,
         unread_count: 0,
       })
       .eq("id", data.chatRowId);
