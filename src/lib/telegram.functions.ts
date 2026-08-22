@@ -18,6 +18,9 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
     const { chatRowId, text, replyToMessageId } = data;
     const { userId, supabase } = context;
 
+    // 1분 답장 잠금: 먼저 보낸 담당자가 60초간 이 대화를 선점한다.
+    await acquireReplyLock(supabase, chatRowId);
+
     // Look up chat_id via the authenticated client (RLS allows all authenticated to read)
     const { data: chat, error: chatErr } = await supabase
       .from("telegram_chats")
