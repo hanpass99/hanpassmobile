@@ -377,9 +377,17 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
       .eq("id", data.chatRowId)
       .maybeSingle();
 
-    const updatePayload: { status: typeof data.status; unread_count?: number } = { status: data.status };
+    const updatePayload: {
+      status: typeof data.status;
+      unread_count?: number;
+      reply_lock_by?: string | null;
+      reply_lock_at?: string | null;
+    } = { status: data.status };
     if (data.status === "done") {
       updatePayload.unread_count = 0;
+      // 완료 처리하면 답장 잠금 즉시 해제
+      updatePayload.reply_lock_by = null;
+      updatePayload.reply_lock_at = null;
     }
     const { error } = await context.supabase
       .from("telegram_chats")
