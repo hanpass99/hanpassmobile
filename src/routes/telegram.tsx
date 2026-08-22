@@ -1044,6 +1044,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
         </div>
       ) : (
       <div className="border-t p-3 space-y-2">
+        {lockSecondsLeft > 0 && (
+          <div className="flex items-center gap-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
+            🔒 {lockHolderName} 님이 답변 중입니다 · 남은 시간 {String(Math.floor(lockSecondsLeft / 60)).padStart(2, "0")}:
+            {String(lockSecondsLeft % 60).padStart(2, "0")}
+          </div>
+        )}
         {replyTo && (
           <div className="flex items-start gap-2 rounded border-l-2 border-primary bg-primary/5 px-2 py-1.5 text-xs">
             <Reply className="mt-0.5 h-3.5 w-3.5 text-primary shrink-0" />
