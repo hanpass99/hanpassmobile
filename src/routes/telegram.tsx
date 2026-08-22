@@ -1287,10 +1287,14 @@ function ConversationPane({ chat }: { chat: Chat }) {
                 onSubmit();
               }
             }}
-            placeholder="메시지 입력 (Enter 전송, Shift+Enter 줄바꿈, / 로 템플릿 검색)"
+            placeholder={
+              lockSecondsLeft > 0
+                ? `${lockHolderName} 님이 답변 중입니다 (${lockSecondsLeft}초 후 가능)`
+                : "메시지 입력 (Enter 전송, Shift+Enter 줄바꿈, / 로 템플릿 검색)"
+            }
             rows={2}
             className="resize-none"
-            disabled={sendMut.isPending}
+            disabled={sendMut.isPending || lockSecondsLeft > 0}
           />
           <input
             ref={fileInputRef}
