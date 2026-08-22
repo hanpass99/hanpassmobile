@@ -481,6 +481,12 @@ function TelegramPage() {
                             🚫 차단됨
                           </Badge>
                         )}
+                        {replyLockSecondsLeft(c, user?.id, nowMs) > 0 && (
+                          <Badge variant="outline" className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-[9px] text-amber-700 dark:text-amber-300">
+                            🔒 답변 중 ({replyLockSecondsLeft(c, user?.id, nowMs)}초)
+                          </Badge>
+                        )}
+
 
                         {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
                           <Badge
