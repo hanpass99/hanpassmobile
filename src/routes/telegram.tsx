@@ -1312,12 +1312,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
             size="icon"
             className="h-10 w-10 shrink-0"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || sendMut.isPending}
+            disabled={isUploading || sendMut.isPending || lockSecondsLeft > 0}
             title="사진/파일 첨부"
           >
             <Paperclip className="h-4 w-4" />
           </Button>
-          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim() || isUploading} size="icon" className="h-10 w-10">
+          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim() || isUploading || lockSecondsLeft > 0} size="icon" className="h-10 w-10">
             <Send className="h-4 w-4" />
           </Button>
         </div>
