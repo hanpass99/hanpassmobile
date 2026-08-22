@@ -22,24 +22,6 @@ async function acquireReplyLock(supabase: unknown, chatRowId: string) {
   }
 }
 
-// 대화를 연 순간 선점(클레임). 비어 있거나 만료된 잠금이면 내가 가져오고,
-// 다른 담당자가 잡고 있으면 남은 시간을 돌려준다(에러 없이).
-export const claimTelegramChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ chatRowId: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { data: res, error } = await context.supabase.rpc(
-      "acquire_telegram_reply_lock" as never,
-      { _chat_row_id: data.chatRowId } as never,
-    );
-    if (error) return { ok: true as const };
-    return (res ?? { ok: true }) as {
-      ok: boolean;
-      seconds_left?: number;
-      locked_by_name?: string | null;
-    };
-  });
-
 // Send a reply to a Telegram chat, recording which staff sent it.
 export const sendTelegramReply = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

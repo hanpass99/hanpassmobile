@@ -50,7 +50,6 @@ import { cn } from "@/lib/utils";
 
 import {
   sendTelegramReply,
-  claimTelegramChat,
   sendTelegramMedia,
   editTelegramMessage,
   linkTelegramChatToCustomer,
@@ -632,26 +631,6 @@ function ConversationPane({ chat }: { chat: Chat }) {
     return () => clearInterval(t);
   }, []);
   const lockSecondsLeft = replyLockSecondsLeft(chat, user?.id, lockNow);
-
-  // 대화창을 먼저 연 담당자가 바로 선점한다(30초마다 갱신, 창을 보는 동안 유지).
-  const claimChat = useServerFn(claimTelegramChat);
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      try {
-        await claimChat({ data: { chatRowId: chat.id } });
-        if (!cancelled) qc.invalidateQueries({ queryKey: ["telegram-chats"] });
-      } catch {
-        // 잠금 실패는 무시 (배너로 안내됨)
-      }
-    };
-    void run();
-    const t = setInterval(run, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
-  }, [chat.id, claimChat, qc]);
 
   const sendReply = useServerFn(sendTelegramReply);
   const sendMediaFn = useServerFn(sendTelegramMedia);
