@@ -205,6 +205,7 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId, supabase } = context;
+    await acquireReplyLock(supabase, data.chatRowId);
     const { data: chat, error: chatErr } = await supabase
       .from("telegram_chats")
       .select("chat_id")
