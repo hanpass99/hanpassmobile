@@ -631,8 +631,6 @@ function ConversationPane({ chat }: { chat: Chat }) {
     return () => clearInterval(t);
   }, []);
   const lockSecondsLeft = replyLockSecondsLeft(chat, user?.id, lockNow);
-  const lockHolderName =
-    (chat.reply_lock_by && profileMap[chat.reply_lock_by]?.display_name) || "다른 담당자";
 
   const sendReply = useServerFn(sendTelegramReply);
   const sendMediaFn = useServerFn(sendTelegramMedia);
