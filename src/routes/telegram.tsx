@@ -624,6 +624,16 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
   });
 
+  // 1분 답장 잠금 상태 (다른 담당자가 방금 답장했으면 입력 잠금)
+  const [lockNow, setLockNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setLockNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const lockSecondsLeft = replyLockSecondsLeft(chat, user?.id, lockNow);
+  const lockHolderName =
+    (chat.reply_lock_by && profileMap[chat.reply_lock_by]?.display_name) || "다른 담당자";
+
   const sendReply = useServerFn(sendTelegramReply);
   const sendMediaFn = useServerFn(sendTelegramMedia);
   const editMsgFn = useServerFn(editTelegramMessage);
