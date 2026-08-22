@@ -177,7 +177,13 @@ function chatDisplayName(c: Chat): string {
 
 function TelegramPage() {
   const { i18n: i18nInst } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+  // 1초 간격 틱 — 답장 잠금 카운트다운용
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
   const locale = i18nInst.language === "ko" ? ko : enUS;
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
