@@ -743,6 +743,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
   };
 
   const profileMap = profilesQuery.data ?? {};
+  const lockHolderName =
+    (chat.reply_lock_by && profileMap[chat.reply_lock_by]?.display_name) || "다른 담당자";
   const messagesById = useMemo(() => {
     const map = new Map<string, Message>();
     for (const m of messagesQuery.data ?? []) map.set(m.id, m);
