@@ -1447,6 +1447,8 @@ export type Database = {
           operator_typing_at: string | null
           opt_in_date: string | null
           phone: string | null
+          reply_lock_at: string | null
+          reply_lock_by: string | null
           status: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id: number | null
           telegram_username: string | null
@@ -1480,6 +1482,8 @@ export type Database = {
           operator_typing_at?: string | null
           opt_in_date?: string | null
           phone?: string | null
+          reply_lock_at?: string | null
+          reply_lock_by?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
           telegram_username?: string | null
@@ -1513,6 +1517,8 @@ export type Database = {
           operator_typing_at?: string | null
           opt_in_date?: string | null
           phone?: string | null
+          reply_lock_at?: string | null
+          reply_lock_by?: string | null
           status?: Database["public"]["Enums"]["telegram_chat_status"]
           telegram_user_id?: number | null
           telegram_username?: string | null
@@ -1672,6 +1678,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acquire_telegram_reply_lock: {
+        Args: { _chat_row_id: string }
+        Returns: Json
+      }
       admin_set_call_goal: {
         Args: { _goal: number; _user_id: string }
         Returns: number
