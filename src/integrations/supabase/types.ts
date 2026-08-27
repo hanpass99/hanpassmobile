@@ -1425,6 +1425,10 @@ export type Database = {
           ai_suggestion_at: string | null
           ai_suggestion_confidence: number | null
           assigned_operator_id: string | null
+          banned: boolean
+          banned_at: string | null
+          banned_by: string | null
+          banned_reason: string | null
           blocked_at: string | null
           chat_id: number
           created_at: string
@@ -1460,6 +1464,10 @@ export type Database = {
           ai_suggestion_at?: string | null
           ai_suggestion_confidence?: number | null
           assigned_operator_id?: string | null
+          banned?: boolean
+          banned_at?: string | null
+          banned_by?: string | null
+          banned_reason?: string | null
           blocked_at?: string | null
           chat_id: number
           created_at?: string
@@ -1495,6 +1503,10 @@ export type Database = {
           ai_suggestion_at?: string | null
           ai_suggestion_confidence?: number | null
           assigned_operator_id?: string | null
+          banned?: boolean
+          banned_at?: string | null
+          banned_by?: string | null
+          banned_reason?: string | null
           blocked_at?: string | null
           chat_id?: number
           created_at?: string
