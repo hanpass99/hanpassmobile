@@ -805,6 +805,17 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         if (!message?.chat?.id) return Response.json({ ok: true, ignored: true });
 
         const chatId = message.chat.id;
+
+        // 우리가 차단한 고객 → 저장하지 않고 무시 (응답도 하지 않음)
+        {
+          const { data: bannedRow } = await supabaseAdmin
+            .from("telegram_chats")
+            .select("banned")
+            .eq("chat_id", chatId)
+            .maybeSingle();
+          if (bannedRow?.banned) return Response.json({ ok: true, banned: true });
+        }
+
         const from = message.from;
         const media = detectMedia(message);
         const caption = message.caption ?? null;
