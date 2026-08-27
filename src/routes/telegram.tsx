@@ -23,6 +23,8 @@ import {
   Reply,
   AlertTriangle,
   Sparkles,
+  Ban,
+  ShieldCheck,
 } from "lucide-react";
 
 
