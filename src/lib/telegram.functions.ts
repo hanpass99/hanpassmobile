@@ -447,6 +447,33 @@ export const setTelegramChatStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// 고객 차단 / 차단 해제 (욕설 등 악성 고객이 메시지를 보내지 못하게 함)
+export const setTelegramChatBanned = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        chatRowId: z.string().uuid(),
+        banned: z.boolean(),
+        reason: z.string().max(300).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("telegram_chats")
+      .update({
+        banned: data.banned,
+        banned_at: data.banned ? new Date().toISOString() : null,
+        banned_by: data.banned ? context.userId : null,
+        banned_reason: data.banned ? (data.reason ?? null) : null,
+        ...(data.banned ? { unread_count: 0, status: "done" as const } : {}),
+      } as never)
+      .eq("id", data.chatRowId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 // Mark a chat as read (reset unread_count).
 export const markTelegramChatRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

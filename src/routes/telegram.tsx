@@ -23,6 +23,8 @@ import {
   Reply,
   AlertTriangle,
   Sparkles,
+  Ban,
+  ShieldCheck,
 } from "lucide-react";
 
 
@@ -56,6 +58,7 @@ import {
   searchCustomersForTelegram,
   registerTelegramWebhook,
   setTelegramChatStatus,
+  setTelegramChatBanned,
 } from "@/lib/telegram.functions";
 import {
   markTelegramChatRead,
@@ -82,6 +85,9 @@ type Chat = {
   status: ChatStatus;
   assigned_operator_id: string | null;
   is_blocked?: boolean | null;
+  banned?: boolean | null;
+  banned_reason?: string | null;
+  banned_by?: string | null;
   needs_human?: boolean | null;
   needs_human_reason?: string | null;
   ai_suggestion?: string | null;
@@ -476,6 +482,11 @@ function TelegramPage() {
                             <AlertTriangle className="h-2.5 w-2.5" /> AI 응답 불가 · 담당자 확인 필요
                           </Badge>
                         )}
+                        {c.banned && (
+                          <Badge variant="outline" className="h-4 gap-0.5 border-red-600/50 bg-red-600/15 px-1 text-[9px] font-semibold text-red-700 dark:text-red-300">
+                            ⛔ 차단한 고객
+                          </Badge>
+                        )}
                         {c.is_blocked && (
                           <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-[9px] text-red-700 dark:text-red-300">
                             🚫 차단됨
@@ -727,6 +738,17 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
   });
 
+  const banFn = useServerFn(setTelegramChatBanned);
+  const banMut = useMutation({
+    mutationFn: async (banned: boolean) =>
+      banFn({ data: { chatRowId: chat.id, banned, reason: banned ? "운영자 차단" : null } }),
+    onSuccess: (_d, banned) => {
+      toast.success(banned ? "고객을 차단했습니다" : "차단을 해제했습니다");
+      qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "차단 처리 실패"),
+  });
+
   const statusMut = useMutation({
     mutationFn: async (status: ChatStatus) => setStatusFn({ data: { chatRowId: chat.id, status } }),
     onSuccess: () => {
@@ -826,6 +848,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
             <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", STATUS_BADGE[chat.status])}>
               {STATUS_LABEL[chat.status]}
             </Badge>
+            {chat.banned && (
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-red-600/50 bg-red-600/15 text-red-700 dark:text-red-300">
+                ⛔ 차단한 고객
+              </Badge>
+            )}
             {chat.is_blocked && (
               <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300">
                 🚫 차단됨
@@ -883,6 +910,31 @@ function ConversationPane({ chat }: { chat: Chat }) {
           ) : (
             <Button size="sm" variant="outline" onClick={() => setShowLinkDialog(true)}>
               <UserPlus className="mr-1 h-4 w-4" /> 고객 연결
+            </Button>
+          )}
+          {chat.banned ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => banMut.mutate(false)}
+              disabled={banMut.isPending}
+              className="border-green-500/40 text-green-700 hover:bg-green-500/10 dark:text-green-400"
+            >
+              <ShieldCheck className="mr-1 h-4 w-4" /> 차단 해제
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (window.confirm("이 고객을 차단할까요? 차단하면 고객이 보내는 메시지가 더 이상 접수되지 않습니다.")) {
+                  banMut.mutate(true);
+                }
+              }}
+              disabled={banMut.isPending}
+              className="border-red-500/40 text-red-700 hover:bg-red-500/10 dark:text-red-400"
+            >
+              <Ban className="mr-1 h-4 w-4" /> 고객 차단
             </Button>
           )}
         </div>
@@ -1023,7 +1075,21 @@ function ConversationPane({ chat }: { chat: Chat }) {
         )}
       </div>
 
-      {chat.is_blocked ? (
+      {chat.banned ? (
+        <div className="border-t bg-red-600/5 p-4">
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">⛔</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-red-700 dark:text-red-300">
+                차단한 고객입니다
+              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                이 고객이 보내는 메시지는 접수되지 않습니다. 다시 상담하려면 상단의 “차단 해제”를 누르세요.
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : chat.is_blocked ? (
         <div className="border-t p-4 space-y-3 bg-red-500/5">
           <div className="flex items-start gap-2">
             <span className="text-2xl">🚫</span>
