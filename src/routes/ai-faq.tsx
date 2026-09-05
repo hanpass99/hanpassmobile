@@ -135,8 +135,29 @@ function AiFaqPage() {
 
 
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm text-muted-foreground">총 {faqs.length}개</div>
+        <div className="flex flex-wrap items-center gap-2">
+        {isAdmin && (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={dedupe.isPending}
+              onClick={() => dedupe.mutate()}
+            >
+              중복 정리
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={autoApprove.isPending}
+              onClick={() => autoApprove.mutate()}
+            >
+              후보 자동 승인
+            </Button>
+          </>
+        )}
         <Button
           size="sm"
           onClick={() =>
