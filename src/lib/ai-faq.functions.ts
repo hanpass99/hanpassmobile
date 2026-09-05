@@ -97,7 +97,7 @@ export const getAiReplySettings = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const global = (rows ?? []).find((r) => r.scope === "global") ?? {
       enabled: true,
-      confidence_threshold: 0.75,
+      confidence_threshold: 0.65,
     };
     const chat = data.chatRowId
       ? (rows ?? []).find((r) => r.scope === "chat" && r.chat_row_id === data.chatRowId)
@@ -209,4 +209,32 @@ export const rejectAiFaqCandidate = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+// ---- Maintenance: dedupe + auto-approve -------------------------------------
+
+// Removes near-identical FAQ entries (keeps the oldest of each group).
+export const dedupeAiFaqs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data, error } = await (context.supabase.rpc as unknown as (
+      fn: string,
+      args: unknown,
+    ) => Promise<{ data: unknown; error: { message: string } | null }>)(
+      "dedupe_ai_faq_entries",
+      { _similarity: 0.88 },
+    );
+    if (error) throw new Error(error.message);
+    return { removed: Number(data ?? 0) };
+  });
+
+// Approves every pending candidate automatically, skipping duplicates.
+export const autoApproveAiFaqCandidates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { autoApprovePendingCandidates } = await import("@/lib/ai-learn.server");
+    return await autoApprovePendingCandidates(supabaseAdmin);
   });

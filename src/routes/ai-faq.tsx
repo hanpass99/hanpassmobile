@@ -25,6 +25,8 @@ import {
   deleteAiFaq,
   getAiReplySettings,
   setAiReplyGlobalEnabled,
+  dedupeAiFaqs,
+  autoApproveAiFaqCandidates,
   listAiFaqCandidates,
   approveAiFaqCandidate,
   rejectAiFaqCandidate,
@@ -59,7 +61,28 @@ function AiFaqPage() {
   const deleteFn = useServerFn(deleteAiFaq);
   const settingsFn = useServerFn(getAiReplySettings);
   const toggleGlobalFn = useServerFn(setAiReplyGlobalEnabled);
+  const dedupeFn = useServerFn(dedupeAiFaqs);
+  const autoApproveFn = useServerFn(autoApproveAiFaqCandidates);
   const [editing, setEditing] = useState<Partial<Faq> | null>(null);
+
+  const dedupe = useMutation({
+    mutationFn: () => dedupeFn(),
+    onSuccess: (r) => {
+      toast.success(`중복 FAQ ${r.removed}개 정리 완료`);
+      qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const autoApprove = useMutation({
+    mutationFn: () => autoApproveFn(),
+    onSuccess: (r) => {
+      toast.success(`후보 ${r.scanned}건 처리 · 승인 ${r.approved} · 중복 제외 ${r.duplicates}`);
+      qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
+      qc.invalidateQueries({ queryKey: ["ai-faq-candidates"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data: listData } = useQuery({
     queryKey: ["ai-faq-list"],
@@ -135,8 +158,29 @@ function AiFaqPage() {
 
 
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm text-muted-foreground">총 {faqs.length}개</div>
+        <div className="flex flex-wrap items-center gap-2">
+        {isAdmin && (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={dedupe.isPending}
+              onClick={() => dedupe.mutate()}
+            >
+              중복 정리
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={autoApprove.isPending}
+              onClick={() => autoApprove.mutate()}
+            >
+              후보 자동 승인
+            </Button>
+          </>
+        )}
         <Button
           size="sm"
           onClick={() =>
@@ -151,7 +195,9 @@ function AiFaqPage() {
         >
           <Plus className="mr-1 h-4 w-4" /> FAQ 추가
         </Button>
+        </div>
       </div>
+
 
       <div className="space-y-3">
         {faqs.map((f) => (

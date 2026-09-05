@@ -92,6 +92,86 @@ function normalizeQuestion(q: string): string {
     .join(" ");
 }
 
+// Similarity above which a new FAQ is considered a duplicate of an existing one.
+export const FAQ_DUPLICATE_SIMILARITY = 0.88;
+
+// Inserts a synthesized FAQ as an active entry unless a near-identical one
+// already exists. Returns true when a new entry was actually created.
+export async function insertFaqIfNew(
+  supabaseAdmin: any,
+  c: Candidate,
+  defaultCategory: string,
+): Promise<boolean> {
+  const { containsSafetyKeyword, embedText } = await import("@/lib/ai-reply.server");
+  const questionText = (c.question_examples ?? []).join("\n");
+  if (!questionText.trim() || !c.answer_uz?.trim() || !c.answer_ru?.trim()) return false;
+  if (
+    containsSafetyKeyword(questionText) ||
+    containsSafetyKeyword(c.answer_uz) ||
+    containsSafetyKeyword(c.answer_ru)
+  ) {
+    return false;
+  }
+
+  let embedding: number[] = [];
+  try {
+    embedding = await embedText(questionText);
+  } catch (e) {
+    console.error("[ai-learn] embedding failed", e);
+    return false;
+  }
+  if (embedding.length === 0) return false;
+
+  const { data: matches } = await supabaseAdmin.rpc("match_ai_faq", {
+    query_embedding: embedding as never,
+    match_count: 1,
+  });
+  const top = (matches ?? [])[0] as { similarity: number } | undefined;
+  if (top && top.similarity >= FAQ_DUPLICATE_SIMILARITY) return false;
+
+  const { error } = await supabaseAdmin.from("ai_faq_entries").insert({
+    category: c.category ?? defaultCategory,
+    question_examples: c.question_examples.slice(0, 10),
+    answer_uz: c.answer_uz.slice(0, 2000),
+    answer_ru: c.answer_ru.slice(0, 2000),
+    is_active: true,
+    source: "auto",
+    embedding: embedding as never,
+  });
+  return !error;
+}
+
+// Reviews every pending FAQ candidate: near-duplicates are dropped, the rest
+// are promoted to active FAQ entries automatically.
+export async function autoApprovePendingCandidates(
+  supabaseAdmin: any,
+  limit = 200,
+): Promise<{ approved: number; duplicates: number; scanned: number }> {
+  const { data: rows } = await supabaseAdmin
+    .from("ai_faq_candidates")
+    .select("id, category, question_examples, answer_uz, answer_ru")
+    .eq("status", "pending")
+    .order("occurrences", { ascending: false })
+    .limit(limit);
+
+  const candidates = (rows ?? []) as Array<Candidate & { id: string }>;
+  let approved = 0;
+  let duplicates = 0;
+  for (const c of candidates) {
+    const created = await insertFaqIfNew(supabaseAdmin, c, "자동학습");
+    if (created) approved += 1;
+    else duplicates += 1;
+    await supabaseAdmin
+      .from("ai_faq_candidates")
+      .update({
+        status: created ? "approved" : "rejected",
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", c.id);
+  }
+  return { approved, duplicates, scanned: candidates.length };
+}
+
 // Groups recently collected question/answer pairs, keeps the repeating ones,
 // and stores them as reviewable FAQ candidates.
 export async function detectFaqCandidates(
@@ -141,16 +221,9 @@ export async function detectFaqCandidates(
       continue;
     }
     for (const c of synthesized.slice(0, 1)) {
-      const { error } = await supabaseAdmin.from("ai_faq_candidates").insert({
-        category: c.category ?? "상담이력",
-        question_examples: c.question_examples.slice(0, 10),
-        answer_uz: c.answer_uz.slice(0, 2000),
-        answer_ru: c.answer_ru.slice(0, 2000),
-        occurrences: group.length,
-        status: "pending",
-        source: "auto",
-      });
-      if (!error) added += 1;
+      // Auto-approve: store directly as an active FAQ entry (skips duplicates).
+      const ok = await insertFaqIfNew(supabaseAdmin, c, "상담이력");
+      if (ok) added += 1;
     }
     usedIds.push(...group.map((g) => g.id));
   }
@@ -289,43 +362,22 @@ export async function runAutoLearn(
     // 3. De-duplicate against the existing knowledge base and insert.
     let added = 0;
     for (const c of candidates) {
-      const questionText = c.question_examples.join("\n");
-      if (containsSafetyKeyword(questionText) || containsSafetyKeyword(c.answer_uz) || containsSafetyKeyword(c.answer_ru)) {
-        continue;
-      }
-      let embedding: number[] = [];
-      try {
-        embedding = await embedText(questionText);
-      } catch (e) {
-        console.error("[ai-learn] embedding failed", e);
-        continue;
-      }
-      if (embedding.length === 0) continue;
-
-      const { data: matches } = await supabaseAdmin.rpc("match_ai_faq", {
-        query_embedding: embedding as never,
-        match_count: 1,
-      });
-      const top = (matches ?? [])[0] as { similarity: number } | undefined;
-      if (top && top.similarity >= 0.9) continue; // already known
-
-      const { error } = await supabaseAdmin.from("ai_faq_entries").insert({
-        category: c.category ?? "자동학습",
-        question_examples: c.question_examples.slice(0, 10),
-        answer_uz: c.answer_uz.slice(0, 2000),
-        answer_ru: c.answer_ru.slice(0, 2000),
-        is_active: true,
-        source: "auto",
-        embedding: embedding as never,
-      });
-      if (!error) added += 1;
+      if (await insertFaqIfNew(supabaseAdmin, c, "자동학습")) added += 1;
     }
 
-    // 4. Also surface repeating operator answers as reviewable FAQ candidates.
+    // 4. Also surface repeating operator answers as FAQ entries (auto-approved).
     try {
       await detectFaqCandidates(supabaseAdmin);
     } catch (e) {
       console.error("[ai-learn] candidate detection failed", e);
+    }
+
+    // 5. Auto-approve any leftover pending candidates, dropping duplicates.
+    try {
+      const auto = await autoApprovePendingCandidates(supabaseAdmin);
+      added += auto.approved;
+    } catch (e) {
+      console.error("[ai-learn] auto-approve failed", e);
     }
 
     const res = { pairsAnalyzed: pairs.length, candidates: candidates.length, faqsAdded: added };
