@@ -141,16 +141,9 @@ export async function detectFaqCandidates(
       continue;
     }
     for (const c of synthesized.slice(0, 1)) {
-      const { error } = await supabaseAdmin.from("ai_faq_candidates").insert({
-        category: c.category ?? "상담이력",
-        question_examples: c.question_examples.slice(0, 10),
-        answer_uz: c.answer_uz.slice(0, 2000),
-        answer_ru: c.answer_ru.slice(0, 2000),
-        occurrences: group.length,
-        status: "pending",
-        source: "auto",
-      });
-      if (!error) added += 1;
+      // Auto-approve: store directly as an active FAQ entry (skips duplicates).
+      const ok = await insertFaqIfNew(supabaseAdmin, c, "상담이력");
+      if (ok) added += 1;
     }
     usedIds.push(...group.map((g) => g.id));
   }
