@@ -458,7 +458,7 @@ async function tryAiAutoReply(args: {
     (r: any) => r.scope === "chat" && r.chat_row_id === chatRowId,
   );
   const enabled = chatOverride ? chatOverride.enabled : (global?.enabled ?? true);
-  const threshold = Number(chatOverride?.confidence_threshold ?? global?.confidence_threshold ?? 0.75);
+  const threshold = Number(chatOverride?.confidence_threshold ?? global?.confidence_threshold ?? 0.65);
 
   if (!enabled) {
     await supabaseAdmin.from("ai_reply_logs").insert({

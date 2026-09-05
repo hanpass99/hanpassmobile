@@ -97,7 +97,7 @@ export const getAiReplySettings = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const global = (rows ?? []).find((r) => r.scope === "global") ?? {
       enabled: true,
-      confidence_threshold: 0.75,
+      confidence_threshold: 0.65,
     };
     const chat = data.chatRowId
       ? (rows ?? []).find((r) => r.scope === "chat" && r.chat_row_id === data.chatRowId)
