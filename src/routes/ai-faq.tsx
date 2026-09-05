@@ -25,6 +25,8 @@ import {
   deleteAiFaq,
   getAiReplySettings,
   setAiReplyGlobalEnabled,
+  dedupeAiFaqs,
+  autoApproveAiFaqCandidates,
   listAiFaqCandidates,
   approveAiFaqCandidate,
   rejectAiFaqCandidate,
@@ -59,7 +61,28 @@ function AiFaqPage() {
   const deleteFn = useServerFn(deleteAiFaq);
   const settingsFn = useServerFn(getAiReplySettings);
   const toggleGlobalFn = useServerFn(setAiReplyGlobalEnabled);
+  const dedupeFn = useServerFn(dedupeAiFaqs);
+  const autoApproveFn = useServerFn(autoApproveAiFaqCandidates);
   const [editing, setEditing] = useState<Partial<Faq> | null>(null);
+
+  const dedupe = useMutation({
+    mutationFn: () => dedupeFn(),
+    onSuccess: (r) => {
+      toast.success(`중복 FAQ ${r.removed}개 정리 완료`);
+      qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const autoApprove = useMutation({
+    mutationFn: () => autoApproveFn(),
+    onSuccess: (r) => {
+      toast.success(`후보 ${r.scanned}건 처리 · 승인 ${r.approved} · 중복 제외 ${r.duplicates}`);
+      qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
+      qc.invalidateQueries({ queryKey: ["ai-faq-candidates"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data: listData } = useQuery({
     queryKey: ["ai-faq-list"],

@@ -218,9 +218,13 @@ export const dedupeAiFaqs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { data, error } = await context.supabase.rpc("dedupe_ai_faq_entries", {
-      _similarity: 0.88,
-    } as never);
+    const { data, error } = await (context.supabase.rpc as unknown as (
+      fn: string,
+      args: unknown,
+    ) => Promise<{ data: unknown; error: { message: string } | null }>)(
+      "dedupe_ai_faq_entries",
+      { _similarity: 0.88 },
+    );
     if (error) throw new Error(error.message);
     return { removed: Number(data ?? 0) };
   });
