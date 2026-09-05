@@ -210,3 +210,27 @@ export const rejectAiFaqCandidate = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---- Maintenance: dedupe + auto-approve -------------------------------------
+
+// Removes near-identical FAQ entries (keeps the oldest of each group).
+export const dedupeAiFaqs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data, error } = await context.supabase.rpc("dedupe_ai_faq_entries", {
+      _similarity: 0.88,
+    } as never);
+    if (error) throw new Error(error.message);
+    return { removed: Number(data ?? 0) };
+  });
+
+// Approves every pending candidate automatically, skipping duplicates.
+export const autoApproveAiFaqCandidates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { autoApprovePendingCandidates } = await import("@/lib/ai-learn.server");
+    return await autoApprovePendingCandidates(supabaseAdmin);
+  });
