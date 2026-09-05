@@ -172,7 +172,9 @@ function AiFaqPage() {
         >
           <Plus className="mr-1 h-4 w-4" /> FAQ 추가
         </Button>
+        </div>
       </div>
+
 
       <div className="space-y-3">
         {faqs.map((f) => (
