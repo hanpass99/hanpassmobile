@@ -362,43 +362,22 @@ export async function runAutoLearn(
     // 3. De-duplicate against the existing knowledge base and insert.
     let added = 0;
     for (const c of candidates) {
-      const questionText = c.question_examples.join("\n");
-      if (containsSafetyKeyword(questionText) || containsSafetyKeyword(c.answer_uz) || containsSafetyKeyword(c.answer_ru)) {
-        continue;
-      }
-      let embedding: number[] = [];
-      try {
-        embedding = await embedText(questionText);
-      } catch (e) {
-        console.error("[ai-learn] embedding failed", e);
-        continue;
-      }
-      if (embedding.length === 0) continue;
-
-      const { data: matches } = await supabaseAdmin.rpc("match_ai_faq", {
-        query_embedding: embedding as never,
-        match_count: 1,
-      });
-      const top = (matches ?? [])[0] as { similarity: number } | undefined;
-      if (top && top.similarity >= 0.9) continue; // already known
-
-      const { error } = await supabaseAdmin.from("ai_faq_entries").insert({
-        category: c.category ?? "자동학습",
-        question_examples: c.question_examples.slice(0, 10),
-        answer_uz: c.answer_uz.slice(0, 2000),
-        answer_ru: c.answer_ru.slice(0, 2000),
-        is_active: true,
-        source: "auto",
-        embedding: embedding as never,
-      });
-      if (!error) added += 1;
+      if (await insertFaqIfNew(supabaseAdmin, c, "자동학습")) added += 1;
     }
 
-    // 4. Also surface repeating operator answers as reviewable FAQ candidates.
+    // 4. Also surface repeating operator answers as FAQ entries (auto-approved).
     try {
       await detectFaqCandidates(supabaseAdmin);
     } catch (e) {
       console.error("[ai-learn] candidate detection failed", e);
+    }
+
+    // 5. Auto-approve any leftover pending candidates, dropping duplicates.
+    try {
+      const auto = await autoApprovePendingCandidates(supabaseAdmin);
+      added += auto.approved;
+    } catch (e) {
+      console.error("[ai-learn] auto-approve failed", e);
     }
 
     const res = { pairsAnalyzed: pairs.length, candidates: candidates.length, faqsAdded: added };
