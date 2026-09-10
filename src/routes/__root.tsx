@@ -84,7 +84,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap",
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -133,15 +141,16 @@ function AuthedShell() {
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex h-[52px] items-center gap-3 border-b border-border bg-card px-4" style={{ borderBottomWidth: "0.5px" }}>
+            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card px-4 md:px-6">
               <SidebarTrigger />
               <div className="flex-1" />
-              <span className="hidden text-xs text-muted-foreground sm:inline">
+              <span className="hidden items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand sm:inline-flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 Hanpass Mobile · OB Call Management
               </span>
             </header>
 
-            <main className="min-w-0 flex-1 p-4 md:p-6">
+            <main className="min-w-0 flex-1 p-4 md:p-5">
               <Outlet />
             </main>
           </div>

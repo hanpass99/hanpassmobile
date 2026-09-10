@@ -1148,7 +1148,7 @@ function CustomersPage() {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
-            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
+            <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
@@ -1192,7 +1192,7 @@ function CustomersPage() {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
-            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
+            <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
@@ -1263,7 +1263,7 @@ function CustomersPage() {
       return (
         <Table aria-label="Customer list">
           <TableHeader>
-            <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
+            <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
               <TableHead>{t("customers.col.storeName")}</TableHead>
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.customerName")}</SortHead>
@@ -1316,7 +1316,7 @@ function CustomersPage() {
     return (
       <Table aria-label="Customer list">
         <TableHeader>
-          <TableRow className="bg-slate-50 border-b border-[#E2E8F0]">
+          <TableRow className="bg-muted/60 border-b border-border">
             {CheckHead}
             <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
             <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
@@ -1559,7 +1559,7 @@ function CustomersPage() {
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
         <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
           {visiblePools.map((p) => (
-            <TabsTrigger key={p} value={p} className="text-xs md:text-sm data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">
+            <TabsTrigger key={p} value={p} className="text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
@@ -2371,9 +2371,9 @@ function CustomerDetailSheet({
 
         <Tabs defaultValue="info" className="mt-4">
           <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
-            <TabsTrigger value="info" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabInfo")}</TabsTrigger>
-            <TabsTrigger value="memo" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabMemo")}</TabsTrigger>
-            <TabsTrigger value="calls" className="data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white text-[#64748B] bg-transparent shadow-none rounded-md">{t("customers.detail.tabCalls")}</TabsTrigger>
+            <TabsTrigger value="info" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md">{t("customers.detail.tabInfo")}</TabsTrigger>
+            <TabsTrigger value="memo" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md">{t("customers.detail.tabMemo")}</TabsTrigger>
+            <TabsTrigger value="calls" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md">{t("customers.detail.tabCalls")}</TabsTrigger>
           </TabsList>
 
 

@@ -87,15 +87,16 @@ export function AppSidebar() {
             isActive={active}
             tooltip={item.title}
             className={cn(
-              "text-sidebar-foreground/50 hover:bg-white/10 hover:text-sidebar-foreground",
-              "data-[active=true]:bg-white/[0.12] data-[active=true]:text-sidebar-foreground data-[active=true]:font-medium",
+              "h-8 rounded-md text-[13px] font-medium text-sidebar-foreground/55 transition-colors",
+              "hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-foreground data-[active=true]:font-semibold",
             )}
           >
             <Link to={item.url} className="flex items-center gap-3">
-              <item.icon className="h-4 w-4" />
-              <span className="flex-1">{item.title}</span>
+              <item.icon className={cn("h-4 w-4", active && "text-sidebar-primary")} />
+              <span className="flex-1 truncate">{item.title}</span>
               {item.badge && item.badge > 0 ? (
-                <span className="ml-auto rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
+                <span className="ml-auto rounded-full bg-sidebar-primary px-1.5 text-[10px] font-bold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
                   {item.badge > 99 ? "99+" : item.badge}
                 </span>
               ) : null}
@@ -105,32 +106,35 @@ export function AppSidebar() {
       );
     });
 
+  const groupLabel = "px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-sidebar-foreground/35";
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <Phone className="h-5 w-5" />
+      <SidebarHeader className="border-b border-sidebar-border">
+        <div className="flex items-center gap-2.5 px-2 py-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+            <Phone className="h-4 w-4" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-[13px] font-semibold leading-tight text-sidebar-foreground">Hanpass Mobile</span>
-            <span className="text-xs text-sidebar-foreground/50">OB Call CRM</span>
+            <span className="font-display text-[13px] font-bold leading-tight tracking-tight text-sidebar-foreground">
+              HANPASS MOBILE
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">OB Call CRM</span>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/30">{t("nav.main")}</SidebarGroupLabel>
+          <SidebarGroupLabel className={groupLabel}>{t("nav.main")}</SidebarGroupLabel>
           <SidebarGroupContent><SidebarMenu>{renderItems(mainItems)}</SidebarMenu></SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/30">{t("nav.analytics")}</SidebarGroupLabel>
+          <SidebarGroupLabel className={groupLabel}>{t("nav.analytics")}</SidebarGroupLabel>
           <SidebarGroupContent><SidebarMenu>{renderItems(analyticsItems)}</SidebarMenu></SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/30">{t("nav.system")}</SidebarGroupLabel>
+          <SidebarGroupLabel className={groupLabel}>{t("nav.system")}</SidebarGroupLabel>
           <SidebarGroupContent><SidebarMenu>{renderItems(systemItems)}</SidebarMenu></SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -144,6 +148,7 @@ export function AppSidebar() {
   );
 }
 
+
 function SidebarPrefs() {
   const { theme, toggle } = useTheme();
   const { i18n: i18nInst } = useTranslation();
@@ -154,15 +159,16 @@ function SidebarPrefs() {
   };
   return (
     <div className="flex items-center gap-1 px-2 py-1 group-data-[collapsible=icon]:hidden">
-      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-xs" onClick={switchLang} title="Language">
+      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-xs text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={switchLang} title="Language">
         <Languages className="h-4 w-4" />
         {i18nInst.language === "ko" ? "한국어" : "English"}
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggle} title="Theme">
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={toggle} title="Theme">
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
     </div>
   );
+
 }
 
 function SidebarUserFooter() {
@@ -172,7 +178,7 @@ function SidebarUserFooter() {
   const initial = (displayName || user.email || "U").trim().charAt(0).toUpperCase();
   return (
     <div className="flex items-center gap-2 px-2 py-2">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-semibold text-primary">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-primary">
         {avatarUrl ? (
           <img src={avatarUrl} alt={displayName || ""} className="h-full w-full object-cover" />
         ) : (
@@ -180,13 +186,14 @@ function SidebarUserFooter() {
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
-        <span className="truncate text-xs font-medium">{displayName || user.email}</span>
-        <span className="text-[10px] text-muted-foreground">{isAdmin ? t("common.admin") : t("common.staff")}</span>
+        <span className="truncate text-xs font-semibold text-sidebar-foreground">{displayName || user.email}</span>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">{isAdmin ? t("common.admin") : t("common.staff")}</span>
       </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 group-data-[collapsible=icon]:hidden"
+      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
         onClick={() => signOut()} title={t("common.logout")}>
         <LogOut className="h-4 w-4" />
       </Button>
     </div>
+
   );
 }
