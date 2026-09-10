@@ -1789,6 +1789,7 @@ export type Database = {
           phone: string
         }[]
       }
+      dedupe_ai_faq_entries: { Args: { _similarity?: number }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
