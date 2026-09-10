@@ -169,6 +169,21 @@
   html, body {
     font-family: var(--font-sans);
   }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
