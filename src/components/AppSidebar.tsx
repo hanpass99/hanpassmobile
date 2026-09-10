@@ -159,15 +159,16 @@ function SidebarPrefs() {
   };
   return (
     <div className="flex items-center gap-1 px-2 py-1 group-data-[collapsible=icon]:hidden">
-      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-xs" onClick={switchLang} title="Language">
+      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-xs text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={switchLang} title="Language">
         <Languages className="h-4 w-4" />
         {i18nInst.language === "ko" ? "한국어" : "English"}
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggle} title="Theme">
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={toggle} title="Theme">
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
     </div>
   );
+
 }
 
 function SidebarUserFooter() {
