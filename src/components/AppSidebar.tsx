@@ -178,7 +178,7 @@ function SidebarUserFooter() {
   const initial = (displayName || user.email || "U").trim().charAt(0).toUpperCase();
   return (
     <div className="flex items-center gap-2 px-2 py-2">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-semibold text-primary">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-primary">
         {avatarUrl ? (
           <img src={avatarUrl} alt={displayName || ""} className="h-full w-full object-cover" />
         ) : (
@@ -186,13 +186,14 @@ function SidebarUserFooter() {
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
-        <span className="truncate text-xs font-medium">{displayName || user.email}</span>
-        <span className="text-[10px] text-muted-foreground">{isAdmin ? t("common.admin") : t("common.staff")}</span>
+        <span className="truncate text-xs font-semibold text-sidebar-foreground">{displayName || user.email}</span>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">{isAdmin ? t("common.admin") : t("common.staff")}</span>
       </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 group-data-[collapsible=icon]:hidden"
+      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
         onClick={() => signOut()} title={t("common.logout")}>
         <LogOut className="h-4 w-4" />
       </Button>
     </div>
+
   );
 }
