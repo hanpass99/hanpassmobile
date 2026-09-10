@@ -84,7 +84,7 @@ function Consent() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-8">
       <div className="rounded-2xl border bg-card p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-[#1E3A5F]">
+        <h1 className="text-xl font-semibold text-primary">
           {clientName}을(를) Hanpass OB CRM에 연결
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
@@ -105,7 +105,7 @@ function Consent() {
           <button
             disabled={busy}
             onClick={() => decide(true)}
-            className="h-11 rounded-lg bg-[#1E3A5F] text-sm font-semibold text-white hover:bg-[#152D4A] disabled:opacity-60"
+            className="h-11 rounded-lg bg-primary text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
           >
             {busy ? "처리 중…" : "승인"}
           </button>

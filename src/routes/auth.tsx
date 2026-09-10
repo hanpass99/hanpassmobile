@@ -79,9 +79,9 @@ function AuthPage() {
     <div className="min-h-screen w-full flex items-center justify-center">
       <div className="grid w-full max-w-5xl min-h-screen md:min-h-0 md:h-[640px] overflow-hidden md:rounded-xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.15)] md:grid-cols-2">
         {/* Left brand panel */}
-        <div className="relative hidden flex-col justify-between bg-[#1E3A5F] p-10 text-white md:flex">
+        <div className="relative hidden flex-col justify-between bg-primary p-10 text-white md:flex">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-[#1E3A5F]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-primary">
               <Phone className="h-6 w-6" />
             </div>
             <div>
@@ -110,17 +110,17 @@ function AuthPage() {
         <div className="flex flex-col bg-white p-8 md:p-12">
           <div className="flex items-center justify-between mb-8">
             <div className="md:hidden flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1E3A5F] text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
                 <Phone className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-bold text-[#1E3A5F]">Hanpass Mobile</div>
-                <div className="text-[10px] text-[#64748B]">OB Call CRM</div>
+                <div className="text-sm font-bold text-primary">Hanpass Mobile</div>
+                <div className="text-[10px] text-muted-foreground">OB Call CRM</div>
               </div>
             </div>
             <button
               onClick={switchLang}
-              className="ml-auto inline-flex items-center gap-1.5 text-[13px] font-medium text-[#1E3A5F] hover:opacity-80"
+              className="ml-auto inline-flex items-center gap-1.5 text-[13px] font-medium text-primary hover:opacity-80"
               title={t("common.language")}
             >
               <Languages className="h-4 w-4" />
@@ -131,60 +131,60 @@ function AuthPage() {
           {mode === "login" ? (
             <div className="flex-1 flex flex-col">
               <div className="mb-8">
-                <h2 className="text-[24px] font-medium text-[#1E3A5F]">{t("auth.loginTitle")}</h2>
-                <p className="mt-1.5 text-[14px] text-[#64748B]">{t("auth.loginSub")}</p>
+                <h2 className="text-[24px] font-medium text-primary">{t("auth.loginTitle")}</h2>
+                <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.loginSub")}</p>
               </div>
               <form onSubmit={handleLogin} className="space-y-5 flex-1">
                 <div className="space-y-1.5">
-                  <Label htmlFor="login-email" className="text-[13px] font-medium text-[#374151]">
+                  <Label htmlFor="login-email" className="text-[13px] font-medium text-foreground">
                     {t("auth.email")}
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                     <Input
                       id="login-email"
                       name="email"
                       type="email"
                       autoComplete="email"
                       required
-                      className="h-11 pl-10 rounded-lg border-[#E2E8F0] text-[#1E3A5F] placeholder:text-[#94A3B8] focus-visible:border-[#1E3A5F] focus-visible:ring-[#1E3A5F]"
+                      className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
                       placeholder="you@example.com"
                     />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password" className="text-[13px] font-medium text-[#374151]">
+                    <Label htmlFor="login-password" className="text-[13px] font-medium text-foreground">
                       {t("auth.password")}
                     </Label>
                     <button
                       type="button"
                       onClick={() => setMode("forgot")}
-                      className="text-[13px] font-medium text-[#1E3A5F] hover:underline"
+                      className="text-[13px] font-medium text-primary hover:underline"
                     >
                       {t("auth.forgot")}
                     </button>
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                     <Input
                       id="login-password"
                       name="password"
                       type="password"
                       autoComplete="current-password"
                       required
-                      className="h-11 pl-10 rounded-lg border-[#E2E8F0] text-[#1E3A5F] placeholder:text-[#94A3B8] focus-visible:border-[#1E3A5F] focus-visible:ring-[#1E3A5F]"
+                      className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
                     />
                   </div>
                 </div>
                 <Button
                   type="submit"
-                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-[#1E3A5F] text-white hover:bg-[#152D4A]"
+                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-primary text-white hover:bg-primary/90"
                   disabled={busy}
                 >
                   {busy ? t("common.processing") : t("auth.login")}
                 </Button>
-                <p className="text-center text-[13px] text-[#94A3B8] pt-2">
+                <p className="text-center text-[13px] text-muted-foreground/70 pt-2">
                   {t("auth.accountNote")}
                 </p>
               </form>
@@ -193,34 +193,34 @@ function AuthPage() {
             <div className="flex-1 flex flex-col">
               <button
                 onClick={() => setMode("login")}
-                className="mb-4 inline-flex items-center gap-1 text-[13px] text-[#64748B] hover:text-[#1E3A5F]"
+                className="mb-4 inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="h-3.5 w-3.5" /> {t("auth.backToLogin")}
               </button>
               <div className="mb-8">
-                <h2 className="text-[24px] font-medium text-[#1E3A5F]">{t("auth.forgotTitle")}</h2>
-                <p className="mt-1.5 text-[14px] text-[#64748B]">{t("auth.forgotSub")}</p>
+                <h2 className="text-[24px] font-medium text-primary">{t("auth.forgotTitle")}</h2>
+                <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.forgotSub")}</p>
               </div>
               <form onSubmit={handleForgot} className="space-y-5 flex-1">
                 <div className="space-y-1.5">
-                  <Label htmlFor="forgot-email" className="text-[13px] font-medium text-[#374151]">
+                  <Label htmlFor="forgot-email" className="text-[13px] font-medium text-foreground">
                     {t("auth.email")}
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                     <Input
                       id="forgot-email"
                       name="email"
                       type="email"
                       required
-                      className="h-11 pl-10 rounded-lg border-[#E2E8F0] text-[#1E3A5F] placeholder:text-[#94A3B8] focus-visible:border-[#1E3A5F] focus-visible:ring-[#1E3A5F]"
+                      className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
                       placeholder="you@example.com"
                     />
                   </div>
                 </div>
                 <Button
                   type="submit"
-                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-[#1E3A5F] text-white hover:bg-[#152D4A]"
+                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-primary text-white hover:bg-primary/90"
                   disabled={busy}
                 >
                   {busy ? t("auth.sending") : t("auth.sendLink")}
