@@ -1503,6 +1503,7 @@ function CustomersPage() {
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
   const SHEET_URL_INTER = "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
   const SHEET_URL_FRIEND = "https://docs.google.com/spreadsheets/d/1OwC6pQ2as5VsyDTYVzUSGsNru9ki2jFvScn5kk2zZ1w/edit";
+  const SHEET_URL_QR = "https://docs.google.com/spreadsheets/d/16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM/edit";
 
   return (
     <div className="space-y-5">
@@ -1548,6 +1549,26 @@ function CustomersPage() {
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
                   {t("customers.googleFormInterSync")}
+                </Button>
+              </>
+            )}
+            {tab === "qr_activation" && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={SHEET_URL_QR} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-1 h-4 w-4" /> QR 시트 열기
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncQrMut.mutate()}
+                  disabled={syncQrMut.isPending}
+                  aria-busy={syncQrMut.isPending}
+                  title="QR 개통 신청 시트 동기화"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncQrMut.isPending ? "animate-spin" : ""}`} />
+                  동기화
                 </Button>
               </>
             )}
