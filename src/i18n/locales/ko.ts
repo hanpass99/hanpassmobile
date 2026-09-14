@@ -145,6 +145,7 @@ export default {
     activation_request: "개통 신청자",
     google_form_activation: "구글폼 개통 신청자",
     google_form_activation_inter: "구글폼 신청자 인터",
+    qr_activation: "QR 개통 신청",
     new_signup: "한패스 신규 가입자",
     friend_referral: "친구 추천",
     prepaid_charge: "한패스 앱으로 선불 충전자",

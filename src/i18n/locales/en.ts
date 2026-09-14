@@ -145,6 +145,7 @@ export default {
     activation_request: "Activation requests",
     google_form_activation: "Google Form activation requests",
     google_form_activation_inter: "Google Form Inter",
+    qr_activation: "QR Activation",
     new_signup: "Hanpass new signups",
     friend_referral: "Friend referrals",
     prepaid_charge: "Hanpass App prepaid chargers",
