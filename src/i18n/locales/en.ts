@@ -155,6 +155,7 @@ export default {
       activation_request: "Activation",
       google_form_activation: "Google Form Activation",
       google_form_activation_inter: "Google Form Inter",
+      qr_activation: "QR Activation",
       new_signup: "New signup",
       friend_referral: "Friend referral",
       prepaid_charge: "Prepaid charge",
