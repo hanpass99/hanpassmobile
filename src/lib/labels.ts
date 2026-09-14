@@ -88,6 +88,7 @@ export const POOLS = [
   "activation_request",
   "google_form_activation",
   "google_form_activation_inter",
+  "qr_activation",
   "friend_referral",
   "prepaid_charge",
   "one_year_activation",

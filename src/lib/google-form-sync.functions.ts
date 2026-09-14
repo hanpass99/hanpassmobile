@@ -12,7 +12,7 @@ const COUNTRY_MAP: Record<string, string> = {
   VIETNAM: "VN", VN: "VN", "VIET NAM": "VN",
   MONGOLIA: "MN", MN: "MN",
   PHILIPPINES: "PH", PH: "PH", PHILIPPINE: "PH",
-  UZBEKISTAN: "CIS", UZ: "CIS", UZB: "CIS",
+  UZBEKISTAN: "CIS", UZ: "CIS", UZB: "CIS", UZBEKSITAN: "CIS", UZBEKISTON: "CIS",
   KAZAKHSTAN: "CIS", KZ: "CIS",
   KYRGYZSTAN: "CIS", KG: "CIS",
   TAJIKISTAN: "CIS", TJ: "CIS",
@@ -69,10 +69,28 @@ type SyncResult = {
 
 type SyncConfig = {
   spreadsheetId: string;
-  pool: "google_form_activation" | "google_form_activation_inter";
+  pool: "google_form_activation" | "google_form_activation_inter" | "qr_activation";
   source: string;
   notesLabel: string;
+  /** 시트 탭 이름 (기본: 설문지 응답 시트1) */
+  sheetName?: string;
+  /** 읽어올 컬럼 범위 (기본: A2:D) */
+  rangeSuffix?: string;
+  /** 컬럼 인덱스 매핑 (기본: ts 0, name 1, phone 2, country 3) */
+  columns?: { ts: number; name: number; phone: number; country: number; sns?: number };
+  /** 이 날짜(YYYY-MM-DD) 이전 접수 건은 무시 */
+  minDate?: string;
+  /** true 면 국가 화이트리스트를 적용하지 않음 */
+  allowAllCountries?: boolean;
 };
+
+/** "2026. 9. 13 오전 10:54:30" 형태의 구글폼 타임스탬프 → YYYY-MM-DD */
+function parseFormDate(raw: string): string | null {
+  const m = (raw || "").match(/(\d{4})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})/);
+  if (!m) return null;
+  const [, y, mo, d] = m;
+  return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
+}
 
 async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   const lovableKey = process.env.LOVABLE_API_KEY;
@@ -81,7 +99,7 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
     throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
   }
 
-  const range = `'${SHEET_NAME}'!A2:D`;
+  const range = `'${cfg.sheetName ?? SHEET_NAME}'!${cfg.rangeSuffix ?? "A2:D"}`;
   const url = `${GATEWAY_URL}/spreadsheets/${cfg.spreadsheetId}/values/${range}`;
 
   let res: Response | null = null;
@@ -166,13 +184,22 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
 
   const ALLOWED_CODES = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH", "ID"]);
 
+  const col = cfg.columns ?? { ts: 0, name: 1, phone: 2, country: 3 };
+
   for (const row of rows) {
-    const timestamp_raw = (row[0] ?? "").toString().trim();
-    const name = (row[1] ?? "").toString().trim();
-    const phone = normalizePhone(row[2] ?? "");
-    const country_raw = (row[3] ?? "").toString().trim();
+    const timestamp_raw = (row[col.ts] ?? "").toString().trim();
+    const name = (row[col.name] ?? "").toString().trim();
+    const phone = normalizePhone(row[col.phone] ?? "");
+    const country_raw = (row[col.country] ?? "").toString().trim();
+    const sns = col.sns !== undefined ? (row[col.sns] ?? "").toString().trim() : "";
+    const formDate = parseFormDate(timestamp_raw);
 
     if (!name || !phone) {
+      result.skipped++;
+      continue;
+    }
+    // 지정한 날짜 이전 접수 건은 무시
+    if (cfg.minDate && (!formDate || formDate < cfg.minDate)) {
       result.skipped++;
       continue;
     }
@@ -190,20 +217,24 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
 
 
     const code = mapCountry(country_raw);
-    // 허용 국가만 저장 (CIS, LK, VN, KH, MM, BD, NP, PH)
-    if (!code || !ALLOWED_CODES.has(code)) {
+    // 허용 국가만 저장 (allowAllCountries 인 경우 제한 없음)
+    if (!cfg.allowAllCountries && (!code || !ALLOWED_CODES.has(code))) {
       result.skipped++;
       continue;
     }
-    const country_id = codeToId.get(code) ?? null;
+    const country_id = code ? (codeToId.get(code) ?? null) : null;
 
     existingPhones.add(phone);
 
     // CIS 로 매핑된 경우 실제 국적을 메모에 병기
-    const nationalityLabel = NATIONALITY_LABEL[country_raw.trim().toUpperCase()];
-    const notes = nationalityLabel
-      ? `${cfg.notesLabel} · 국적: ${nationalityLabel}`
-      : cfg.notesLabel;
+    const nationalityLabel =
+      NATIONALITY_LABEL[country_raw.trim().toUpperCase()] ??
+      (cfg.allowAllCountries ? country_raw || null : null);
+    const noteParts = [cfg.notesLabel];
+    if (nationalityLabel) noteParts.push(`국적: ${nationalityLabel}`);
+    if (sns) noteParts.push(`SNS: ${sns}`);
+    const notes = noteParts.join(" · ");
+
 
     const { data: cust, error: custErr } = await supabaseAdmin
       .from("customers")
@@ -211,8 +242,8 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
         name,
         phone,
         country_id,
-        signup_date: today,
-        application_date: today,
+        signup_date: formDate ?? today,
+        application_date: formDate ?? today,
         status: "new",
         assigned_to: null,
         pool: cfg.pool,
@@ -305,6 +336,29 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
       notesLabel: "구글폼 인터 자동 등록",
     });
   });
+
+// ============================================================
+// QR 개통 신청 시트 동기화
+// 컬럼: A=타임스탬프, B=Name, C=Nationality, D=Phone, E=SNS/Messenger Id
+// 2026-09-10 이후 접수 건만 수집, 한국 번호만 등록, 국적 제한 없음
+// ============================================================
+const QR_SPREADSHEET_ID = "16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM";
+
+export const syncQrActivation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<SyncResult> => {
+    return runSync({
+      spreadsheetId: QR_SPREADSHEET_ID,
+      pool: "qr_activation",
+      source: "qr",
+      notesLabel: "QR 개통 신청 자동 등록",
+      rangeSuffix: "A2:E",
+      columns: { ts: 0, name: 1, country: 2, phone: 3, sns: 4 },
+      minDate: "2026-09-10",
+      allowAllCountries: true,
+    });
+  });
+
 
 // ============================================================
 // 개통 신청자 - 접수완료 시트 자동 동기화 (google_form_activation 풀에 병합)
