@@ -99,7 +99,7 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
     throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
   }
 
-  const range = `'${SHEET_NAME}'!A2:D`;
+  const range = `'${cfg.sheetName ?? SHEET_NAME}'!${cfg.rangeSuffix ?? "A2:D"}`;
   const url = `${GATEWAY_URL}/spreadsheets/${cfg.spreadsheetId}/values/${range}`;
 
   let res: Response | null = null;
@@ -184,13 +184,22 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
 
   const ALLOWED_CODES = new Set(["CIS", "LK", "VN", "KH", "MM", "BD", "NP", "PH", "ID"]);
 
+  const col = cfg.columns ?? { ts: 0, name: 1, phone: 2, country: 3 };
+
   for (const row of rows) {
-    const timestamp_raw = (row[0] ?? "").toString().trim();
-    const name = (row[1] ?? "").toString().trim();
-    const phone = normalizePhone(row[2] ?? "");
-    const country_raw = (row[3] ?? "").toString().trim();
+    const timestamp_raw = (row[col.ts] ?? "").toString().trim();
+    const name = (row[col.name] ?? "").toString().trim();
+    const phone = normalizePhone(row[col.phone] ?? "");
+    const country_raw = (row[col.country] ?? "").toString().trim();
+    const sns = col.sns !== undefined ? (row[col.sns] ?? "").toString().trim() : "";
+    const formDate = parseFormDate(timestamp_raw);
 
     if (!name || !phone) {
+      result.skipped++;
+      continue;
+    }
+    // 지정한 날짜 이전 접수 건은 무시
+    if (cfg.minDate && (!formDate || formDate < cfg.minDate)) {
       result.skipped++;
       continue;
     }
