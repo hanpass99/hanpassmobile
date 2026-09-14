@@ -981,7 +981,7 @@ function CustomersPage() {
     if (effPool === "existing") {
       header = ["고객명", "전화번호", "개통일", "요금제", "국적", "메모"];
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
-    } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "google_form_activation_inter") {
+    } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "google_form_activation_inter" || effPool === "qr_activation") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
 
@@ -1427,6 +1427,31 @@ function CustomersPage() {
     if (tab !== "google_form_activation_inter") return;
     syncInterMutRef.current.mutate();
     const timer = setInterval(() => syncInterMutRef.current.mutate(), 30_000);
+    return () => clearInterval(timer);
+  }, [tab]);
+
+  // === QR 개통 신청 자동 동기화 (활성화: qr_activation 탭) ===
+  const syncQrFn = useServerFn(syncQrActivation);
+  const syncQrMut = useMutation({
+    mutationFn: () => syncQrFn(),
+    onSuccess: (r) => {
+      if (r.inserted > 0) {
+        toast.success(`QR 개통 신청 ${r.inserted}건을 가져왔습니다`);
+        void refetchList();
+        void refetchPoolCounts();
+      }
+      if (r.errors && r.errors.length > 0) {
+        toast.error(`QR 개통 신청 동기화 오류: ${r.errors[0]}`);
+      }
+    },
+    onError: (e: Error) => toast.error(`QR 개통 신청 동기화 실패: ${e.message}`),
+  });
+  const syncQrMutRef = useRef(syncQrMut);
+  syncQrMutRef.current = syncQrMut;
+  useEffect(() => {
+    if (tab !== "qr_activation") return;
+    syncQrMutRef.current.mutate();
+    const timer = setInterval(() => syncQrMutRef.current.mutate(), 30_000);
     return () => clearInterval(timer);
   }, [tab]);
 
@@ -2462,7 +2487,7 @@ function AddCustomerDialog({
   const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "google_form_activation_inter";
+  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "google_form_activation_inter" || pool === "qr_activation";
 
   useEffect(() => {
     if (open) {
