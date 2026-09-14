@@ -228,7 +228,8 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
 
     // CIS 로 매핑된 경우 실제 국적을 메모에 병기
     const nationalityLabel =
-      NATIONALITY_LABEL[country_raw.trim().toUpperCase()] ?? (country_raw || null);
+      NATIONALITY_LABEL[country_raw.trim().toUpperCase()] ??
+      (cfg.allowAllCountries ? country_raw || null : null);
     const noteParts = [cfg.notesLabel];
     if (nationalityLabel) noteParts.push(`국적: ${nationalityLabel}`);
     if (sns) noteParts.push(`SNS: ${sns}`);
