@@ -12,7 +12,7 @@ const COUNTRY_MAP: Record<string, string> = {
   VIETNAM: "VN", VN: "VN", "VIET NAM": "VN",
   MONGOLIA: "MN", MN: "MN",
   PHILIPPINES: "PH", PH: "PH", PHILIPPINE: "PH",
-  UZBEKISTAN: "CIS", UZ: "CIS", UZB: "CIS",
+  UZBEKISTAN: "CIS", UZ: "CIS", UZB: "CIS", UZBEKSITAN: "CIS", UZBEKISTON: "CIS",
   KAZAKHSTAN: "CIS", KZ: "CIS",
   KYRGYZSTAN: "CIS", KG: "CIS",
   TAJIKISTAN: "CIS", TJ: "CIS",
@@ -69,10 +69,28 @@ type SyncResult = {
 
 type SyncConfig = {
   spreadsheetId: string;
-  pool: "google_form_activation" | "google_form_activation_inter";
+  pool: "google_form_activation" | "google_form_activation_inter" | "qr_activation";
   source: string;
   notesLabel: string;
+  /** 시트 탭 이름 (기본: 설문지 응답 시트1) */
+  sheetName?: string;
+  /** 읽어올 컬럼 범위 (기본: A2:D) */
+  rangeSuffix?: string;
+  /** 컬럼 인덱스 매핑 (기본: ts 0, name 1, phone 2, country 3) */
+  columns?: { ts: number; name: number; phone: number; country: number; sns?: number };
+  /** 이 날짜(YYYY-MM-DD) 이전 접수 건은 무시 */
+  minDate?: string;
+  /** true 면 국가 화이트리스트를 적용하지 않음 */
+  allowAllCountries?: boolean;
 };
+
+/** "2026. 9. 13 오전 10:54:30" 형태의 구글폼 타임스탬프 → YYYY-MM-DD */
+function parseFormDate(raw: string): string | null {
+  const m = (raw || "").match(/(\d{4})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})/);
+  if (!m) return null;
+  const [, y, mo, d] = m;
+  return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
+}
 
 async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   const lovableKey = process.env.LOVABLE_API_KEY;
