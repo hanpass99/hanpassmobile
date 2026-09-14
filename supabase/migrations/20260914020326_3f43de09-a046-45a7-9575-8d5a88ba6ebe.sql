@@ -1,0 +1,1 @@
+ALTER TYPE public.customer_pool ADD VALUE IF NOT EXISTS 'qr_activation';

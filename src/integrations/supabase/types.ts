@@ -2147,6 +2147,7 @@ export type Database = {
         | "one_year_activation"
         | "google_form_activation"
         | "google_form_activation_inter"
+        | "qr_activation"
       customer_status:
         | "new"
         | "in_progress"
@@ -2322,6 +2323,7 @@ export const Constants = {
         "one_year_activation",
         "google_form_activation",
         "google_form_activation_inter",
+        "qr_activation",
       ],
       customer_status: [
         "new",
