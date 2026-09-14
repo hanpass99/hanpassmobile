@@ -338,6 +338,29 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
   });
 
 // ============================================================
+// QR 개통 신청 시트 동기화
+// 컬럼: A=타임스탬프, B=Name, C=Nationality, D=Phone, E=SNS/Messenger Id
+// 2026-09-10 이후 접수 건만 수집, 한국 번호만 등록, 국적 제한 없음
+// ============================================================
+const QR_SPREADSHEET_ID = "16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM";
+
+export const syncQrActivation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<SyncResult> => {
+    return runSync({
+      spreadsheetId: QR_SPREADSHEET_ID,
+      pool: "qr_activation",
+      source: "qr",
+      notesLabel: "QR 개통 신청 자동 등록",
+      rangeSuffix: "A2:E",
+      columns: { ts: 0, name: 1, country: 2, phone: 3, sns: 4 },
+      minDate: "2026-09-10",
+      allowAllCountries: true,
+    });
+  });
+
+
+// ============================================================
 // 개통 신청자 - 접수완료 시트 자동 동기화 (google_form_activation 풀에 병합)
 // 시트 컬럼: A=NO, B=접수일(YYYY-MM-DD HH:MM), C=처리상태, D=청구기준,
 //           E=가입구분, F=국적, G=통신사, H=요금제, I=고객명, J=전화번호
