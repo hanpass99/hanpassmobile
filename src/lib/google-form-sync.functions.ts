@@ -217,20 +217,23 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
 
 
     const code = mapCountry(country_raw);
-    // 허용 국가만 저장 (CIS, LK, VN, KH, MM, BD, NP, PH)
-    if (!code || !ALLOWED_CODES.has(code)) {
+    // 허용 국가만 저장 (allowAllCountries 인 경우 제한 없음)
+    if (!cfg.allowAllCountries && (!code || !ALLOWED_CODES.has(code))) {
       result.skipped++;
       continue;
     }
-    const country_id = codeToId.get(code) ?? null;
+    const country_id = code ? (codeToId.get(code) ?? null) : null;
 
     existingPhones.add(phone);
 
     // CIS 로 매핑된 경우 실제 국적을 메모에 병기
-    const nationalityLabel = NATIONALITY_LABEL[country_raw.trim().toUpperCase()];
-    const notes = nationalityLabel
-      ? `${cfg.notesLabel} · 국적: ${nationalityLabel}`
-      : cfg.notesLabel;
+    const nationalityLabel =
+      NATIONALITY_LABEL[country_raw.trim().toUpperCase()] ?? (country_raw || null);
+    const noteParts = [cfg.notesLabel];
+    if (nationalityLabel) noteParts.push(`국적: ${nationalityLabel}`);
+    if (sns) noteParts.push(`SNS: ${sns}`);
+    const notes = noteParts.join(" · ");
+
 
     const { data: cust, error: custErr } = await supabaseAdmin
       .from("customers")
