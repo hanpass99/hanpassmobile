@@ -368,7 +368,7 @@ function CustomersPage() {
     setPage(1);
   }, [tab, debouncedSearch, countryIds, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
 
-  // 탭 전환 시 기본 정렬: 1년 개통자는 개통일 오름차순(만기 임박 우선), 친구 추천은 가입일 최신순
+  // 탭 전환 시 기본 정렬: 1년 개통자는 개통일 오름차순(만기 임박 우선), 친구 추천은 가입일 최신순, QR 개통 신청은 오래된 접수부터
   useEffect(() => {
     if (tab === "one_year_activation") {
       setSortKey("activation_date");
@@ -376,6 +376,9 @@ function CustomersPage() {
     } else if (tab === "friend_referral") {
       setSortKey("signup_date");
       setSortDir("desc");
+    } else if (tab === "qr_activation") {
+      setSortKey("imported_at");
+      setSortDir("asc");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
