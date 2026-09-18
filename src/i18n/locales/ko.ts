@@ -460,6 +460,15 @@ export default {
     newSignupAllowed: "신규 가입자 접근 허용",
     newSignupBlocked: "신규 가입자 접근 차단",
   },
+  country: {
+    label: "담당 국가",
+    placeholder: "담당 국가를 선택하세요",
+    selectRequired: "담당 국가를 선택해 주세요",
+    setupTitle: "담당 국가를 선택해 주세요",
+    setupSub: "담당 국가를 선택해야 시스템을 이용할 수 있습니다. 변경이 필요하면 관리자에게 문의하세요.",
+    save: "저장하고 시작하기",
+    saved: "담당 국가가 저장되었습니다",
+  },
   auth: {
     loginTitle: "관리자 로그인",
     loginSub: "계정 정보를 입력해 주세요",
