@@ -39,18 +39,18 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "group flex items-start justify-between gap-3 rounded-lg border p-3.5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-card-hover)]",
+        "group flex items-start justify-between gap-3 rounded-md border p-3 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-card-hover)]",
         tiles[tone],
       )}
     >
       <div className="flex min-w-0 flex-col gap-1">
-        <span className={cn("truncate text-[10px] font-bold uppercase tracking-[0.08em]", labels[tone])}>
+        <span className={cn("truncate text-[11px] font-medium tracking-normal", labels[tone])}>
           {label}
         </span>
-        <span className="font-display text-[22px] font-bold leading-none tracking-tight tabular-nums text-foreground">
+        <span className="font-display text-[22px] font-semibold leading-none tracking-normal tabular-nums text-foreground">
           {value}
           {suffix && (
-            <span className="ml-1 text-xs font-semibold text-muted-foreground">{suffix}</span>
+            <span className="ml-1 text-xs font-medium text-muted-foreground">{suffix}</span>
           )}
         </span>
         {hint && <span className="text-[11px] font-medium text-muted-foreground">{hint}</span>}

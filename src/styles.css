@@ -14,8 +14,8 @@
 }
 
 @theme inline {
-  --font-sans: "Manrope", "Pretendard", "Inter", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-  --font-display: "Sora", "Pretendard", system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-sans: "Noto Sans KR", "Pretendard", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+  --font-display: "Noto Sans KR", "Pretendard", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
@@ -112,8 +112,8 @@
   --sidebar-foreground: #1B2430;
   --sidebar-primary: #D61C29;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #FDECEF;
-  --sidebar-accent-foreground: #B3121F;
+  --sidebar-accent: #F3F5F8;
+  --sidebar-accent-foreground: #1B2430;
   --sidebar-border: #E9ECF1;
   --sidebar-ring: #D61C29;
 }
@@ -161,8 +161,8 @@
   --sidebar-foreground: #F1F5F9;
   --sidebar-primary: #F04452;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #2A1520;
-  --sidebar-accent-foreground: #FDA4AF;
+  --sidebar-accent: #1F2A3C;
+  --sidebar-accent-foreground: #F1F5F9;
   --sidebar-border: #1C2940;
   --sidebar-ring: #F04452;
 }
@@ -177,16 +177,15 @@
   }
   h1, h2, h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
   table {
     font-variant-numeric: tabular-nums;
   }
   th {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
     color: var(--color-muted-foreground);
   }
 
