@@ -88,13 +88,13 @@ export function AppSidebar() {
             isActive={active}
             tooltip={item.title}
             className={cn(
-              "h-8 rounded-md text-[13px] font-medium text-sidebar-foreground/55 transition-colors",
-              "hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
-              "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-semibold",
+              "h-9 rounded-md text-[13px] font-normal text-sidebar-foreground/70 transition-colors",
+              "hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              "data-[active=true]:bg-primary/8 data-[active=true]:text-primary data-[active=true]:font-medium",
             )}
           >
             <Link to={item.url} className="flex items-center gap-3">
-              <item.icon className={cn("h-4 w-4", active && "text-sidebar-primary")} />
+              <item.icon className={cn("h-4 w-4 text-sidebar-foreground/55", active && "text-primary")} />
               <span className="flex-1 truncate">{item.title}</span>
               {item.badge && item.badge > 0 ? (
                 <span className="ml-auto rounded-full bg-sidebar-primary px-1.5 text-[10px] font-bold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
@@ -107,7 +107,7 @@ export function AppSidebar() {
       );
     });
 
-  const groupLabel = "px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-sidebar-foreground/35";
+  const groupLabel = "px-2 text-[11px] font-medium tracking-normal text-sidebar-foreground/45";
 
   if (isHanpassStaff && !isAdmin) {
     return (
@@ -118,10 +118,10 @@ export function AppSidebar() {
               <Phone className="h-4 w-4" />
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-              <span className="font-display text-[13px] font-bold leading-tight tracking-tight text-sidebar-foreground">
+              <span className="font-display text-[13px] font-semibold leading-tight tracking-normal text-sidebar-foreground">
                 HANPASS MOBILE
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">OB Call CRM</span>
+              <span className="text-[10px] font-normal tracking-normal text-sidebar-foreground/40">OB Call CRM</span>
             </div>
           </div>
         </SidebarHeader>
@@ -151,10 +151,10 @@ export function AppSidebar() {
             <Phone className="h-4 w-4" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-display text-[13px] font-bold leading-tight tracking-tight text-sidebar-foreground">
+            <span className="font-display text-[13px] font-semibold leading-tight tracking-normal text-sidebar-foreground">
               HANPASS MOBILE
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">OB Call CRM</span>
+            <span className="text-[10px] font-normal tracking-normal text-sidebar-foreground/40">OB Call CRM</span>
           </div>
         </div>
       </SidebarHeader>
@@ -222,7 +222,7 @@ function SidebarUserFooter() {
       </div>
       <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
         <span className="truncate text-xs font-semibold text-sidebar-foreground">{displayName || user.email}</span>
-        <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">{isAdmin ? t("common.admin") : t("common.staff")}</span>
+        <span className="text-[10px] font-normal tracking-normal text-sidebar-foreground/45">{isAdmin ? t("common.admin") : t("common.staff")}</span>
       </div>
       <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
         onClick={() => signOut()} title={t("common.logout")}>

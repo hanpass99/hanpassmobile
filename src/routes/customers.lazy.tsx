@@ -1663,12 +1663,12 @@ function CustomersPage() {
                     type="button"
                     onClick={() => setStatusF("all")}
                     className={cn(
-                      "rounded-lg border bg-card p-3 text-left transition hover:shadow-card-hover",
+                      "rounded-md border bg-card p-3 text-left transition hover:shadow-card-hover",
                       statusF === "all" ? "border-primary ring-1 ring-primary" : "border-border/60"
                     )}
                   >
                     <div className="text-[11px] font-medium text-muted-foreground">{t("status.allStatus")}</div>
-                    <div className="mt-1 text-xl font-bold tracking-tight">{statusTotal.toLocaleString()}</div>
+                    <div className="mt-1 text-xl font-semibold tracking-normal tabular-nums">{statusTotal.toLocaleString()}</div>
                   </button>
                   {CUSTOMER_STATUSES.map((s) => {
                     const n = statusCounts[s] ?? 0;
@@ -1679,14 +1679,14 @@ function CustomersPage() {
                         type="button"
                         onClick={() => setStatusF(active ? "all" : s)}
                         className={cn(
-                          "rounded-lg border bg-card p-3 text-left transition hover:shadow-card-hover",
+                          "rounded-md border bg-card p-3 text-left transition hover:shadow-card-hover",
                           active ? "border-primary ring-1 ring-primary" : "border-border/60"
                         )}
                       >
                         <div className={cn("inline-block rounded px-1.5 py-0.5 text-[11px] font-medium", STATUS_CLASS[s])}>
                           {STATUS_LABEL[s]}
                         </div>
-                        <div className="mt-1 text-xl font-bold tracking-tight">{n.toLocaleString()}</div>
+                        <div className="mt-1 text-xl font-semibold tracking-normal tabular-nums">{n.toLocaleString()}</div>
                       </button>
                     );
                   })}
