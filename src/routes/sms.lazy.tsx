@@ -45,13 +45,13 @@ function SmsPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState("send");
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-5 p-0 md:p-2">
       <PageHeader
         title={t("sms.title")}
         description={t("sms.subtitle")}
       />
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
+        <TabsList className="grid h-auto w-full grid-cols-3">
           <TabsTrigger value="send"><Send className="mr-1 h-4 w-4" />{t("sms.tabs.send")}</TabsTrigger>
           <TabsTrigger value="templates"><FileText className="mr-1 h-4 w-4" />{t("sms.tabs.templates")}</TabsTrigger>
           <TabsTrigger value="history"><History className="mr-1 h-4 w-4" />{t("sms.tabs.history")}</TabsTrigger>
@@ -164,7 +164,7 @@ function SendTab() {
                 value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+             <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("sms.allStatus")}</SelectItem>
                 <SelectItem value="new">{t("sms.status.new")}</SelectItem>
@@ -176,7 +176,7 @@ function SendTab() {
             </Select>
           </div>
 
-          <div className="rounded border max-h-[420px] overflow-auto">
+          <div className="max-h-[420px] overflow-auto rounded border">
             <Table aria-label={t("sms.receivers")}>
               <TableHeader className="sticky top-0 bg-background">
                 <TableRow>
@@ -345,7 +345,7 @@ function TemplatesTab() {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <CardTitle className="text-base">{t("sms.templatesTitle", { count: items.length })}</CardTitle>
         <Button size="sm" onClick={startNew}><Plus className="mr-1 h-4 w-4" />{t("sms.newTemplate")}</Button>
       </CardHeader>
@@ -468,7 +468,7 @@ function HistoryTab() {
       <CardHeader className="pb-3">
         <CardTitle className="text-base">{t("sms.historyTitle", { count: filtered.length })}</CardTitle>
       </CardHeader>
-      <CardContent>
+        <CardContent className="px-3 sm:px-5">
         <div className="flex flex-wrap gap-2 mb-3">
           <div className="relative min-w-[200px] flex-1">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -476,7 +476,7 @@ function HistoryTab() {
               value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+             <SelectTrigger className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("sms.historyAll")}</SelectItem>
               <SelectItem value="sent">{t("sms.historySent")}</SelectItem>
@@ -534,15 +534,15 @@ function HistoryTab() {
           </DialogHeader>
           {detail && (
             <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div><Label className="text-xs">{t("sms.receiver")}</Label><div>{detail.receiver_name || "-"}</div></div>
                 <div><Label className="text-xs">{t("sms.phone")}</Label><div className="font-mono">{detail.receiver_phone}</div></div>
                 <div><Label className="text-xs">{t("sms.type")}</Label><div>{detail.msg_type}</div></div>
                 <div><Label className="text-xs">{t("sms.statusLabel")}</Label><div>{detail.status}</div></div>
-                <div className="col-span-2"><Label className="text-xs">{t("sms.sentAt")}</Label>
+                 <div className="sm:col-span-2"><Label className="text-xs">{t("sms.sentAt")}</Label>
                   <div>{format(new Date(detail.sent_at), "yyyy-MM-dd HH:mm:ss")}</div></div>
                 {detail.title && (
-                  <div className="col-span-2"><Label className="text-xs">{t("sms.fieldTitle")}</Label><div>{detail.title}</div></div>
+                   <div className="sm:col-span-2"><Label className="text-xs">{t("sms.fieldTitle")}</Label><div>{detail.title}</div></div>
                 )}
               </div>
               <div>

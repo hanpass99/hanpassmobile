@@ -101,12 +101,12 @@ function ProfilePhotoSection() {
   };
 
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-border/60 p-3">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-lg border border-border/60 p-3 sm:gap-4">
       <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xl font-bold text-primary">
         {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initial}
       </div>
-      <div className="flex-1">
-        <div className="text-sm font-semibold">{displayName || user?.email}</div>
+      <div className="min-w-0">
+        <div className="truncate text-sm font-semibold">{displayName || user?.email}</div>
         <div className="mt-2 flex flex-wrap gap-2">
           <input
             ref={inputRef} type="file" accept="image/*" className="hidden"

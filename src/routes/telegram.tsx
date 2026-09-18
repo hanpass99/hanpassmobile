@@ -25,6 +25,7 @@ import {
   Sparkles,
   Ban,
   ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
 
 
@@ -345,19 +346,19 @@ function TelegramPage() {
   const selected = filtered.find((c) => c.id === selectedId) ?? chats.find((c) => c.id === selectedId) ?? null;
 
   return (
-    <div className="flex h-[calc(100vh-100px)] flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+    <div className="flex h-[calc(100dvh-5.5rem)] min-h-[480px] flex-col gap-3 sm:h-[calc(100vh-100px)]">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <MessageCircle className="h-5 w-5" />
-          <h1 className="text-lg font-semibold">텔레그램 상담 · Telegram Chat</h1>
+          <h1 className="truncate text-base font-semibold sm:text-lg">텔레그램 상담 · Telegram Chat</h1>
           <Badge variant="secondary">{chats.length}</Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {isAdmin && (
             <select
               value={operatorFilter}
               onChange={(e) => setOperatorFilter(e.target.value)}
-              className="h-8 rounded-md border bg-background px-2 text-xs"
+              className="hidden h-8 rounded-md border bg-background px-2 text-xs sm:block"
               title="상담사별 대화 필터 (감사용)"
             >
               <option value="all">전체 상담사</option>
@@ -370,7 +371,7 @@ function TelegramPage() {
           )}
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-              <Settings className="mr-1 h-4 w-4" /> 웹훅 설정
+              <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">웹훅 설정</span>
             </Button>
           )}
         </div>
@@ -379,7 +380,7 @@ function TelegramPage() {
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-[340px_1fr]">
         {/* Left: chat list */}
-        <div className="flex min-h-0 flex-col rounded-lg border bg-card">
+        <div className={cn("min-h-0 flex-col rounded-lg border bg-card", selectedId ? "hidden md:flex" : "flex")}>
           <div className="border-b p-2">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -523,9 +524,16 @@ function TelegramPage() {
         </div>
 
         {/* Right: conversation */}
-        <div className="flex min-h-0 flex-col rounded-lg border bg-card">
+        <div className={cn("min-h-0 flex-col rounded-lg border bg-card", selectedId ? "flex" : "hidden md:flex")}>
           {selected ? (
-            <ConversationPane chat={selected} />
+            <>
+              <div className="border-b p-2 md:hidden">
+                <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)}>
+                  <ArrowLeft className="mr-1 h-4 w-4" /> 대화 목록
+                </Button>
+              </div>
+              <ConversationPane chat={selected} />
+            </>
           ) : (
             <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
               왼쪽에서 대화를 선택하세요.
@@ -838,9 +846,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
 
   return (
     <>
-      <div className="flex items-center justify-between border-b px-4 py-2.5">
+      <div className="grid grid-cols-1 gap-2 border-b px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="truncate font-medium">{chatDisplayName(chat)}</span>
             {chat.telegram_username && (
               <span className="text-xs text-muted-foreground">@{chat.telegram_username}</span>
@@ -882,7 +890,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
             })()}
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex max-w-full items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
           {chat.status !== "done" ? (
             <Button
               size="sm"
@@ -943,7 +951,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       <ParticipationHistory messages={messagesQuery.data ?? []} profileMap={profileMap} />
 
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
         {messagesQuery.isLoading ? (
           <div className="text-sm text-muted-foreground">불러오는 중...</div>
         ) : (messagesQuery.data ?? []).length === 0 ? (
@@ -969,7 +977,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
               (m.message_type === "text" || m.message_type === "photo" || m.message_type === "document");
             return (
               <div key={m.id} className={cn("group flex", isOut ? "justify-end" : "justify-start")}>
-                <div className={cn("max-w-[75%]", isOut && "flex flex-col items-end")}>
+                <div className={cn("max-w-[88%] sm:max-w-[75%]", isOut && "flex flex-col items-end")}>
                   <div
                     className={cn(
                       "mb-0.5 flex items-center gap-1.5 text-[10px] font-medium",
@@ -1016,7 +1024,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                     )}
                   >
                     {isEditing ? (
-                      <div className="flex flex-col gap-2 min-w-[240px]">
+                      <div className="flex min-w-0 flex-col gap-2 sm:min-w-[240px]">
                         <Textarea
                           value={editingText}
                           onChange={(e) => setEditingText(e.target.value)}

@@ -140,7 +140,7 @@ function CallLogsPage() {
   const totalActivated = (data ?? []).filter((r) => r.call_status === "activated").length;
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-5 p-0 md:p-2">
       <PageHeader
         title={t("nav.callLogs", { defaultValue: "통화 로그" })}
         description={t("callLogs.desc", { defaultValue: "직원별 통화 이력을 최신순으로 확인합니다." })}
@@ -153,16 +153,16 @@ function CallLogsPage() {
       />
 
       {/* Date range filter */}
-      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
+      <div className="grid grid-cols-2 items-end gap-3 rounded-lg border bg-card p-4 sm:flex sm:flex-wrap">
         <div>
           <Label className="text-xs">{t("common.from", { defaultValue: "시작일" })}</Label>
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 w-[160px]" />
+          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 w-full sm:w-[160px]" />
         </div>
         <div>
           <Label className="text-xs">{t("common.to", { defaultValue: "종료일" })}</Label>
-          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 w-[160px]" />
+          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 w-full sm:w-[160px]" />
         </div>
-        <div className="ml-auto flex gap-2 text-sm">
+        <div className="col-span-2 flex flex-wrap gap-1 text-sm sm:ml-auto">
           <Button variant="ghost" size="sm" onClick={() => { setDateFrom(todayStr()); setDateTo(todayStr()); }}>
             {t("callLogs.today", { defaultValue: "오늘" })}
           </Button>
@@ -176,18 +176,18 @@ function CallLogsPage() {
       </div>
 
       {/* Dashboard summary */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 md:gap-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("callLogs.totalCalls", { defaultValue: "총 통화 수" })}</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{totalCalls}</div></CardContent>
+          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{t("callLogs.totalCalls", { defaultValue: "총 통화 수" })}</CardTitle></CardHeader>
+          <CardContent className="p-3 pt-0"><div className="text-xl font-bold sm:text-2xl">{totalCalls}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("callLogs.totalActivated", { defaultValue: "개통 완료" })}</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold text-emerald-600">{totalActivated}</div></CardContent>
+          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{t("callLogs.totalActivated", { defaultValue: "개통 완료" })}</CardTitle></CardHeader>
+          <CardContent className="p-3 pt-0"><div className="text-xl font-bold text-emerald-600 sm:text-2xl">{totalActivated}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{isAdmin ? t("callLogs.activeStaff", { defaultValue: "활동 직원" }) : t("callLogs.avgDuration", { defaultValue: "평균 통화(초)" })}</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{isAdmin ? stats.length : (totalCalls ? Math.round((data ?? []).reduce((a, r) => a + (r.duration_sec ?? 0), 0) / totalCalls) : 0)}</div></CardContent>
+          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{isAdmin ? t("callLogs.activeStaff", { defaultValue: "활동 직원" }) : t("callLogs.avgDuration", { defaultValue: "평균 통화(초)" })}</CardTitle></CardHeader>
+          <CardContent className="p-3 pt-0"><div className="text-xl font-bold sm:text-2xl">{isAdmin ? stats.length : (totalCalls ? Math.round((data ?? []).reduce((a, r) => a + (r.duration_sec ?? 0), 0) / totalCalls) : 0)}</div></CardContent>
         </Card>
       </div>
 

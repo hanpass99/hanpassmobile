@@ -96,13 +96,13 @@ function AttendancePage() {
       <PageHeader title={t("attendance.title")} description={loading ? t("common.loading") : t("attendance.subtitle")} />
 
       <Card>
-        <CardContent className="flex flex-wrap items-end gap-3 p-4">
+        <CardContent className="grid grid-cols-1 items-end gap-3 p-4 sm:flex sm:flex-wrap">
           <div className="space-y-1.5">
             <div className="text-xs font-medium text-muted-foreground">{t("attendance.selectedDate")}</div>
             <DatePick value={date} onChange={setDate} />
           </div>
           {isAdmin && (
-            <div className="ml-auto flex flex-wrap items-end gap-2">
+            <div className="flex flex-wrap items-end gap-2 sm:ml-auto">
               <div className="space-y-1.5">
                 <div className="text-xs font-medium text-muted-foreground">{t("attendance.bulkStatus")}</div>
                 <AttendanceSelect value={bulkStatus} onChange={setBulkStatus} />
@@ -164,10 +164,10 @@ function AttendancePage() {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+        <CardHeader className="grid gap-3 pb-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <CardTitle className="text-base">{t("attendance.history")}</CardTitle>
           <Select value={selectedStaff} onValueChange={setSelectedStaff}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("attendance.allStaff")}</SelectItem>
               {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}

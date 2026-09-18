@@ -1521,7 +1521,7 @@ function CustomersPage() {
         title={t("customers.title")}
         description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · ${t("customers.displayed",{n:rows.length.toLocaleString()})}${loading?" · "+t("common.loading"):""}`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             {tab === "google_form_activation" && (
               <>
                 <Button variant="outline" size="sm" asChild>
@@ -1613,9 +1613,9 @@ function CustomersPage() {
 
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
-        <TabsList className="grid w-full bg-transparent p-0" style={{ gridTemplateColumns: `repeat(${visiblePools.length}, minmax(0, 1fr))` }}>
+        <TabsList className="flex h-auto w-full snap-x justify-start gap-1 overflow-x-auto bg-transparent p-0 pb-2">
           {visiblePools.map((p) => (
-            <TabsTrigger key={p} value={p} className="text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md">
+            <TabsTrigger key={p} value={p} className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm">
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
@@ -1626,11 +1626,11 @@ function CustomersPage() {
           return (
           <TabsContent key={tv} value={tv} className="mt-4">
             <Card>
-              <CardContent className="space-y-4 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardContent className="space-y-4 p-3 sm:p-4">
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                   <div className="text-sm font-semibold">{POOL_LABEL[p]}</div>
                   {tab === p && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                       {isAdmin && (
                         <>
                           <input
@@ -1858,12 +1858,13 @@ function CustomersPage() {
                   </div>
                 )}
 
-                <div className="overflow-x-auto rounded-lg border border-border/60">
+                <div className="table-scroll rounded-lg border border-border/60 [--table-max-h:70dvh]">
                   {renderTable(p)}
                 </div>
                 {total > PAGE_SIZE && (
                   <div className="flex flex-col items-center gap-2 pt-3">
-                    <div className="flex items-center gap-3">
+                    <div className="max-w-full overflow-x-auto pb-1">
+                    <div className="flex w-max items-center gap-3">
                       <Pagination>
                         <PaginationContent>
                           <PaginationItem>
@@ -1929,7 +1930,7 @@ function CustomersPage() {
                           <span className="text-muted-foreground">/ {totalPages.toLocaleString()}</span>
                         </div>
                       )}
-                    </div>
+                    </div></div>
                     <div className="text-xs text-muted-foreground">
                       {loadingMore ? t("customers.loadingLabel") : t("customers.pageOf", { page: page.toLocaleString(), total: totalPages.toLocaleString(), count: total.toLocaleString(), size: PAGE_SIZE })}
                     </div>

@@ -178,7 +178,7 @@ function BroadcastPage() {
             <div className="space-y-2">
               <Label>대상 언어</Label>
               <Select value={langFilter} onValueChange={(v) => setLangFilter(v as LangFilter)}>
-                <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                 <SelectTrigger className="w-full sm:w-56"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
                   <SelectItem value="uz">우즈베크어만</SelectItem>
@@ -226,7 +226,7 @@ function BroadcastPage() {
               </div>
             )}
 
-            <div className="flex items-center gap-3">
+             <div className="flex flex-wrap items-center gap-3">
               <Button disabled={!canSend} onClick={() => setConfirmOpen(true)}>
                 <Send className="mr-2 h-4 w-4" />
                 {sending ? "발송 중…" : "발송"}
@@ -255,7 +255,7 @@ function BroadcastPage() {
         <CardHeader>
           <CardTitle className="text-base">발송 이력</CardTitle>
         </CardHeader>
-        <CardContent>
+         <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

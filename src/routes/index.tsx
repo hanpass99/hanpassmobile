@@ -175,7 +175,7 @@ function Dashboard() {
 
 
       <Card>
-        <CardContent className="flex flex-wrap items-end gap-3 p-4">
+        <CardContent className="grid grid-cols-2 items-end gap-3 p-4 sm:flex sm:flex-wrap">
           <div className="space-y-1.5">
             <div className="text-xs font-medium text-muted-foreground">{t("common.startDate")}</div>
             <DatePick value={from} onChange={setFrom} />
@@ -187,7 +187,7 @@ function Dashboard() {
           <div className="space-y-1.5">
             <div className="text-xs font-medium text-muted-foreground">{t("dashboard.countryFilter")}</div>
             <Select value={countryF} onValueChange={setCountryF}>
-              <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
                 <Globe2 className="mr-2 h-4 w-4" />
                 <SelectValue />
               </SelectTrigger>
@@ -197,7 +197,7 @@ function Dashboard() {
               </SelectContent>
             </Select>
           </div>
-          <div className="ml-auto flex gap-2">
+          <div className="col-span-2 flex gap-2 sm:ml-auto">
             <Button variant="outline" size="sm" onClick={() => { setFrom(monthStart); setTo(today); setCountryF("all"); }}>
               {t("common.reset")}
             </Button>
@@ -303,7 +303,7 @@ function Dashboard() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader><CardTitle>{t("dashboard.dailyTrend")}</CardTitle><CardDescription>{format(from, "yyyy.MM.dd")} ~ {format(to, "yyyy.MM.dd")}</CardDescription></CardHeader>
-          <CardContent className="h-[280px]">
+            <CardContent className="h-[260px] px-2 sm:h-[280px] sm:px-5">
             {loading ? <Skeleton className="h-full w-full" /> : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
@@ -319,7 +319,7 @@ function Dashboard() {
 
         <Card>
           <CardHeader><CardTitle>{t("dashboard.countryDist")}</CardTitle><CardDescription>{t("dashboard.countryDistDesc")}</CardDescription></CardHeader>
-          <CardContent className="h-[280px]">
+          <CardContent className="h-[260px] px-2 sm:h-[280px] sm:px-5">
             {loading ? <Skeleton className="h-full w-full" /> : countryData.every((c) => c.value === 0) ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t("common.empty")}</div>
             ) : (
@@ -338,13 +338,13 @@ function Dashboard() {
 
       <Card>
         <CardHeader><CardTitle>{t("dashboard.channelPerf")}</CardTitle><CardDescription>{t("dashboard.channelPerfDesc")}</CardDescription></CardHeader>
-        <CardContent className="h-[280px]">
+          <CardContent className="h-[260px] px-1 sm:h-[280px] sm:px-5">
           {loading ? <Skeleton className="h-full w-full" /> : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={channelData} layout="vertical" margin={{ left: 30 }}>
+            <BarChart data={channelData} layout="vertical" margin={{ left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" fontSize={11} />
-              <YAxis type="category" dataKey="name" fontSize={11} width={140} />
+              <YAxis type="category" dataKey="name" fontSize={10} width={82} />
               <Tooltip /><Legend />
               <Bar dataKey={t("dashboard.customers")} fill="#3b82f6" radius={[0, 6, 6, 0]} />
               <Bar dataKey={t("dashboard.activations")} fill="#10b981" radius={[0, 6, 6, 0]} />
@@ -368,17 +368,17 @@ function Dashboard() {
             {ranking.map((u, i) => {
               const pct = u.target ? (u.activated / u.target) * 100 : 0;
               return (
-                <div key={u.id} className="flex items-center gap-4 rounded-lg border border-border/60 p-3">
+                <div key={u.id} className="flex min-w-0 items-center gap-3 rounded-lg border border-border/60 p-3 sm:gap-4">
                   <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${
                     i === 0 ? "bg-warning/20 text-warning-foreground" :
                     i === 1 ? "bg-muted text-foreground" :
                     i === 2 ? "bg-destructive/15 text-destructive" :
                     "bg-secondary text-secondary-foreground"
                   }`}>{i + 1}</div>
-                  <div className="min-w-[120px] flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold">{u.name}</span>
-                      <span className="text-xs text-muted-foreground">{t("dashboard.activations")} {u.activated} / {u.target || "—"} {u.target ? `(${pct.toFixed(0)}%)` : ""}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                      <span className="truncate text-sm font-semibold">{u.name}</span>
+                      <span className="text-right text-[11px] text-muted-foreground sm:text-xs">{t("dashboard.activations")} {u.activated} / {u.target || "—"} {u.target ? `(${pct.toFixed(0)}%)` : ""}</span>
                     </div>
                     <Progress value={Math.min(100, pct)} className="mt-2 h-2" />
                   </div>

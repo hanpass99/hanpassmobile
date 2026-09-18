@@ -116,7 +116,7 @@ function ChannelPerf() {
       <PageHeader title={t("channelPerf.title")} description={loading ? t("common.loading") : t("channelPerf.subtitle")} />
 
       <Card>
-        <CardContent className="flex flex-wrap items-center gap-2 p-4">
+        <CardContent className="grid grid-cols-2 items-center gap-2 p-4 sm:flex sm:flex-wrap">
           <DateBtn value={dateFrom} onChange={setDateFrom} placeholder={t("common.from") || "시작일"} />
           <span className="text-muted-foreground">~</span>
           <DateBtn value={dateTo} onChange={setDateTo} placeholder={t("common.to") || "종료일"} />
@@ -125,7 +125,7 @@ function ChannelPerf() {
               <X className="mr-1 h-3.5 w-3.5" /> {t("common.reset") || "초기화"}
             </Button>
           )}
-          <label className="ml-auto flex items-center gap-2 text-sm cursor-pointer select-none">
+          <label className="col-span-2 flex items-center gap-2 text-sm cursor-pointer select-none sm:ml-auto">
             <Checkbox checked={showEmpty} onCheckedChange={(v) => setShowEmpty(v === true)} />
             {t("channelPerf.showEmpty")}
           </label>
@@ -143,7 +143,7 @@ function ChannelPerf() {
         <Card>
           <CardContent className="p-4">
             <div className="text-sm font-semibold mb-3">{t("channelPerf.chartTitle")}</div>
-            <div className="h-72 w-full">
+            <div className="h-64 w-full sm:h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
