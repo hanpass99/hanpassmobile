@@ -113,6 +113,15 @@ function StaffAdmin() {
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: active } : x)));
   };
 
+  const approve = async (r: Row) => {
+    const { error: roleErr } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: "staff" as any });
+    if (roleErr) { toast.error(t("settings.actionFailed", { msg: roleErr.message })); return; }
+    const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: true });
+    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
+    toast.success(t("settings.approved", { name: r.display_name }));
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: true, role: "staff" as AppRole } : x)));
+  };
+
   const setRole = async (r: Row, role: AppRole) => {
     const { error } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: role as any });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
@@ -423,6 +432,10 @@ function StaffAdmin() {
                           r.is_active ? (
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setActive(r, false)}>
                               <UserX className="mr-1 h-3.5 w-3.5" /> {t("settings.deactivate")}
+                            </Button>
+                          ) : !r.role ? (
+                            <Button size="sm" onClick={() => approve(r)}>
+                              <UserCheck className="mr-1 h-3.5 w-3.5" /> {t("settings.approve")}
                             </Button>
                           ) : (
                             <Button size="sm" variant="ghost" onClick={() => setActive(r, true)}>

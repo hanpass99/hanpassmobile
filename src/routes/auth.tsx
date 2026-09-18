@@ -21,7 +21,7 @@ function safeNext(next: string): string {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
-type Mode = "login" | "forgot";
+type Mode = "login" | "forgot" | "signup" | "signupDone";
 
 function AuthPage() {
   const { t, i18n: i18nInst } = useTranslation();
@@ -58,6 +58,28 @@ function AuthPage() {
     toast.success(t("auth.welcome"));
     if (target !== "/") window.location.href = target;
     else navigate({ to: "/" });
+  };
+
+  const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const name = String(fd.get("name") ?? "").trim();
+    const company = String(fd.get("company") ?? "한패스 모바일");
+    if (!name) return toast.error(t("auth.enterName"));
+    const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
+    if (!parsed.success) return toast.error(parsed.error.errors[0].message);
+    setBusy(true);
+    const { error } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      options: {
+        data: { display_name: name, company: company === "한패스" ? "한패스" : "한패스 모바일" },
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    setBusy(false);
+    if (error) return toast.error(t("auth.signupFailed", { msg: error.message }));
+    setMode("signupDone");
   };
 
   const handleForgot = async (e: FormEvent<HTMLFormElement>) => {
@@ -185,9 +207,117 @@ function AuthPage() {
                   {busy ? t("common.processing") : t("auth.login")}
                 </Button>
                 <p className="text-center text-[13px] text-muted-foreground/70 pt-2">
-                  {t("auth.accountNote")}
+                  {t("auth.noAccount")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setMode("signup")}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    {t("auth.signup")}
+                  </button>
                 </p>
               </form>
+            </div>
+          ) : mode === "signup" ? (
+            <div className="flex-1 flex flex-col">
+              <button
+                onClick={() => setMode("login")}
+                className="mb-4 inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> {t("auth.backToLogin")}
+              </button>
+              <div className="mb-8">
+                <h2 className="text-[24px] font-medium text-primary">{t("auth.signupTitle")}</h2>
+                <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.signupSub")}</p>
+              </div>
+              <form onSubmit={handleSignup} className="space-y-4 flex-1">
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-name" className="text-[13px] font-medium text-foreground">
+                    {t("auth.name")}
+                  </Label>
+                  <Input
+                    id="signup-name"
+                    name="name"
+                    autoComplete="name"
+                    required
+                    className="h-11 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
+                    placeholder={t("auth.namePlaceholder")}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-company" className="text-[13px] font-medium text-foreground">
+                    {t("auth.company")}
+                  </Label>
+                  <select
+                    id="signup-company"
+                    name="company"
+                    className="h-11 w-full rounded-lg border border-border bg-card px-3 text-[14px] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    defaultValue="한패스 모바일"
+                  >
+                    <option value="한패스">한패스</option>
+                    <option value="한패스 모바일">한패스 모바일</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-email" className="text-[13px] font-medium text-foreground">
+                    {t("auth.email")}
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+                    <Input
+                      id="signup-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-password" className="text-[13px] font-medium text-foreground">
+                    {t("auth.password")}
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+                    <Input
+                      id="signup-password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={6}
+                      className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
+                      placeholder={t("auth.pwdMin")}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+                  disabled={busy}
+                >
+                  {busy ? t("common.processing") : t("auth.signupSubmit")}
+                </Button>
+                <p className="text-center text-[12px] text-muted-foreground/70 pt-1">
+                  {t("auth.adminOnly")}
+                </p>
+              </form>
+            </div>
+          ) : mode === "signupDone" ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <ShieldCheck className="h-7 w-7 text-primary" />
+              </span>
+              <h2 className="text-[22px] font-medium text-primary">{t("auth.signupDoneTitle")}</h2>
+              <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-muted-foreground">{t("auth.signupDoneSub")}</p>
+              <Button
+                className="mt-8 h-11 rounded-lg bg-primary px-8 text-[14px] font-semibold text-primary-foreground hover:bg-primary/90"
+                onClick={() => setMode("login")}
+              >
+                {t("auth.backToLogin")}
+              </Button>
             </div>
           ) : (
             <div className="flex-1 flex flex-col">

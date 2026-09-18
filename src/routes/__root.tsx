@@ -18,6 +18,7 @@ import { AiAssistant } from "@/components/AiAssistant";
 import { AdminPushListener } from "@/components/AdminPushListener";
 import { AttendanceCheckInGate } from "@/components/AttendanceCheckInGate";
 import { Toaster } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useCallGoal } from "@/hooks/use-call-goal";
@@ -156,10 +157,24 @@ function useSectionTitle(pathname: string) {
 
 function AuthedShell() {
   useCallGoal();
-  const { isAdmin, isHanpassStaff } = useAuth();
+  const { isAdmin, isHanpassStaff, isActive, signOut, displayName } = useAuth();
+  const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isNavigating = useRouterState({ select: (s) => s.status === "pending" });
   const sectionTitle = useSectionTitle(pathname);
+  if (isActive === false) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
+        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">H</span>
+        <h1 className="text-xl font-bold text-foreground">{t("auth.pendingTitle")}</h1>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t("auth.pendingSub")}</p>
+        {displayName && <p className="mt-1 text-xs text-muted-foreground/70">{displayName}</p>}
+        <Button variant="outline" className="mt-6" onClick={() => void signOut()}>
+          {t("auth.pendingSignOut")}
+        </Button>
+      </div>
+    );
+  }
   if (isHanpassStaff && !isAdmin && !pathname.startsWith("/customers")) {
     return <Navigate to="/customers" search={{ pool: "activation_request" }} />;
   }
