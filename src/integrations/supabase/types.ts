@@ -1069,6 +1069,7 @@ export type Database = {
           avatar_url: string | null
           can_access_new_signup: boolean
           can_access_telegram: boolean
+          company: string
           country_id: string | null
           created_at: string
           daily_call_goal: number
@@ -1084,6 +1085,7 @@ export type Database = {
           avatar_url?: string | null
           can_access_new_signup?: boolean
           can_access_telegram?: boolean
+          company?: string
           country_id?: string | null
           created_at?: string
           daily_call_goal?: number
@@ -1099,6 +1101,7 @@ export type Database = {
           avatar_url?: string | null
           can_access_new_signup?: boolean
           can_access_telegram?: boolean
+          company?: string
           country_id?: string | null
           created_at?: string
           daily_call_goal?: number
@@ -1702,6 +1705,10 @@ export type Database = {
         Args: { _active: boolean; _user_id: string }
         Returns: undefined
       }
+      admin_set_profile_company: {
+        Args: { _company: string; _user_id: string }
+        Returns: undefined
+      }
       admin_set_profile_countries: {
         Args: { _country_ids: string[]; _user_id: string }
         Returns: undefined
@@ -1797,6 +1804,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_hanpass_staff: { Args: { _user_id: string }; Returns: boolean }
       match_ai_faq: {
         Args: { match_count?: number; query_embedding: string }
         Returns: {
