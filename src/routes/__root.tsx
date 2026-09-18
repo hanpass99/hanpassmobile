@@ -169,21 +169,22 @@ function AuthedShell() {
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:px-6">
-              <SidebarTrigger />
+            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 bg-header px-4 text-header-foreground shadow-sm md:px-6">
+              <SidebarTrigger className="text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground" />
               <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[13px]">
-                <Link to="/" className="hidden font-medium text-muted-foreground hover:text-foreground sm:inline">
+                <Link to="/" className="hidden items-center gap-2 font-medium text-header-foreground/70 hover:text-header-foreground sm:inline-flex">
+                  <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-[10px] font-black text-brand-foreground">H</span>
                   Hanpass Mobile
                 </Link>
                 {sectionTitle && (
                   <>
-                    <span className="hidden text-muted-foreground/40 sm:inline">/</span>
-                    <span className="truncate font-display font-semibold text-foreground">{sectionTitle}</span>
+                    <span className="hidden text-header-foreground/30 sm:inline">/</span>
+                    <span className="truncate font-display font-semibold text-header-foreground">{sectionTitle}</span>
                   </>
                 )}
               </nav>
               <div className="flex-1" />
-              <span className="hidden items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand lg:inline-flex">
+              <span className="hidden items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 OB Call Management
               </span>

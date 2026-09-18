@@ -79,14 +79,14 @@ function AuthPage() {
     <div className="min-h-screen w-full flex items-center justify-center">
       <div className="grid w-full max-w-5xl min-h-screen md:min-h-0 md:h-[640px] overflow-hidden md:rounded-xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.15)] md:grid-cols-2">
         {/* Left brand panel */}
-        <div className="relative hidden flex-col justify-between bg-primary p-10 text-white md:flex">
+        <div className="relative hidden flex-col justify-between bg-primary p-10 text-primary-foreground md:flex">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-primary">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-foreground text-primary">
               <Phone className="h-6 w-6" />
             </div>
             <div>
               <div className="text-[20px] font-bold leading-tight">Hanpass Mobile</div>
-              <div className="text-[13px] text-white/50">OB Call Management</div>
+              <div className="text-[13px] text-primary-foreground/50">OB Call Management</div>
             </div>
           </div>
 
@@ -94,23 +94,23 @@ function AuthPage() {
             <h1 className="text-[22px] font-bold leading-snug tracking-tight whitespace-nowrap">
               {t("auth.brandTagline")}
             </h1>
-            <p className="text-[14px] leading-relaxed text-white/70">
+            <p className="text-[14px] leading-relaxed text-primary-foreground/70">
               {t("auth.brandSub")}
             </p>
-            <div className="flex items-center gap-2 text-[13px] text-white/75">
+            <div className="flex items-center gap-2 text-[13px] text-primary-foreground/75">
               <ShieldCheck className="h-4 w-4 shrink-0" />
               {t("auth.adminOnly")}
             </div>
           </div>
 
-          <div className="text-[12px] text-white/40">{t("auth.rights")}</div>
+          <div className="text-[12px] text-primary-foreground/40">{t("auth.rights")}</div>
         </div>
 
         {/* Right form panel */}
-        <div className="flex flex-col bg-white p-8 md:p-12">
+        <div className="flex flex-col bg-card p-8 md:p-12">
           <div className="flex items-center justify-between mb-8">
             <div className="md:hidden flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Phone className="h-5 w-5" />
               </div>
               <div>
@@ -179,7 +179,7 @@ function AuthPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-primary text-white hover:bg-primary/90"
+                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
                   disabled={busy}
                 >
                   {busy ? t("common.processing") : t("auth.login")}
@@ -220,7 +220,7 @@ function AuthPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-primary text-white hover:bg-primary/90"
+                  className="w-full h-11 rounded-lg text-[14px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
                   disabled={busy}
                 >
                   {busy ? t("auth.sending") : t("auth.sendLink")}
