@@ -12,6 +12,7 @@ export type SettingsRow = {
   department: string | null;
   company: string;
   is_active: boolean;
+  approval_status: "approved" | "pending" | "disabled";
   role: AppRole | null;
   country_ids: string[];
   avatar_url: string | null;
@@ -46,7 +47,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
       ] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, department, company, is_active, country_id, avatar_url, sort_order, can_access_new_signup, can_access_telegram, phone")
+          .select("id, display_name, department, company, is_active, approval_status, country_id, avatar_url, sort_order, can_access_new_signup, can_access_telegram, phone")
           .order("sort_order")
           .order("display_name"),
         supabase.from("user_roles").select("user_id, role"),
@@ -82,6 +83,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           department: p.department,
           company: ((p as any).company as string) ?? "한패스 모바일",
           is_active: p.is_active,
+          approval_status: (((p as any).approval_status as string) ?? (p.is_active ? "approved" : "disabled")) as SettingsRow["approval_status"],
           role: (r?.role as AppRole | undefined) ?? null,
           country_ids: pcMap.get(p.id) ?? [],
           avatar_url: p.avatar_url ?? null,
@@ -95,7 +97,12 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           phone: (p as any).phone ?? null,
         };
       });
-      rows.sort((a, b) => Number(a.role !== null) - Number(b.role !== null) || a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
+      rows.sort(
+        (a, b) =>
+          Number(a.approval_status !== "pending") - Number(b.approval_status !== "pending") ||
+          a.sort_order - b.sort_order ||
+          a.display_name.localeCompare(b.display_name),
+      );
 
       return { rows, countries: (co ?? []) as Country[] };
     },

@@ -116,7 +116,7 @@ function StaffAdmin() {
     const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: active });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(active ? t("settings.activated") : t("settings.deactivated"));
-    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: active } : x)));
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: active, approval_status: (active ? "approved" : "disabled") as Row["approval_status"] } : x)));
   };
 
   const approve = async (r: Row) => {
@@ -125,7 +125,7 @@ function StaffAdmin() {
     const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: true });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.approved", { name: r.display_name }));
-    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: true, role: "staff" as AppRole } : x)));
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: true, approval_status: "approved" as const, role: "staff" as AppRole } : x)));
   };
 
   const setRole = async (r: Row, role: AppRole) => {
@@ -281,7 +281,7 @@ function StaffAdmin() {
                 </TableRow>
               ))}
               {rows.map((r, idx) => (
-                <TableRow key={r.id} className={r.role === null ? "bg-warning/5" : r.is_active ? "" : "opacity-60"}>
+                <TableRow key={r.id} className={r.approval_status === "pending" ? "bg-warning/5" : r.is_active ? "" : "opacity-60"}>
                   {isAdmin && (
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -339,8 +339,8 @@ function StaffAdmin() {
                   </TableCell>
 
                   <TableCell>
-                    {isAdmin && r.id !== user?.id && r.role !== null ? (
-                      <Select value={r.role} onValueChange={(v) => setRole(r, v as AppRole)}>
+                    {isAdmin && r.id !== user?.id && r.approval_status !== "pending" ? (
+                      <Select value={r.role ?? undefined} onValueChange={(v) => setRole(r, v as AppRole)}>
                         <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">{t("common.admin")}</SelectItem>
@@ -349,7 +349,7 @@ function StaffAdmin() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Badge variant={r.role === null ? "outline" : r.role === "admin" ? "default" : "secondary"} className={r.role === null ? "border-warning text-warning" : undefined}>
+                      <Badge variant={r.approval_status === "pending" ? "outline" : r.role === "admin" ? "default" : "secondary"} className={r.approval_status === "pending" ? "border-warning text-warning" : undefined}>
                         {roleLabel(r.role)}
                       </Badge>
                     )}
@@ -377,7 +377,7 @@ function StaffAdmin() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={r.is_active ? "default" : "outline"}>
-                      {r.role === null ? t("settings.pendingApproval") : r.is_active ? t("common.active") : t("common.inactive")}
+                      {r.approval_status === "pending" ? t("settings.pendingApproval") : r.is_active ? t("common.active") : t("common.inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -442,7 +442,7 @@ function StaffAdmin() {
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setActive(r, false)}>
                               <UserX className="mr-1 h-3.5 w-3.5" /> {t("settings.deactivate")}
                             </Button>
-                          ) : !r.role ? (
+                          ) : r.approval_status === "pending" ? (
                             <Button size="sm" onClick={() => approve(r)}>
                               <UserCheck className="mr-1 h-3.5 w-3.5" /> {t("settings.approve")}
                             </Button>

@@ -1066,6 +1066,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approval_status: string
           avatar_url: string | null
           can_access_new_signup: boolean
           can_access_telegram: boolean
@@ -1082,6 +1083,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string
           avatar_url?: string | null
           can_access_new_signup?: boolean
           can_access_telegram?: boolean
@@ -1098,6 +1100,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string
           avatar_url?: string | null
           can_access_new_signup?: boolean
           can_access_telegram?: boolean

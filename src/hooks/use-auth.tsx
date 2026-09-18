@@ -35,9 +35,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadProfile = async (uid: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
-      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup, can_access_telegram, company, is_active").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup, can_access_telegram, company, is_active, approval_status").eq("id", uid).maybeSingle(),
     ]);
-    setIsActive((profile as any)?.is_active ?? true);
+    setIsActive((profile as any)?.approval_status ? (profile as any).approval_status !== "pending" : ((profile as any)?.is_active ?? true));
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
     setIsHanpassStaff(!!roles?.some((r) => (r.role as string) === "hanpass_staff"));
     setCompany((profile as any)?.company ?? "");
