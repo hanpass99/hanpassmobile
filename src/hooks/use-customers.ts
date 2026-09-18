@@ -101,7 +101,9 @@ export function useCustomersLookups() {
 export function useCustomerPoolCounts() {
   const q = useQuery({
     queryKey: ["customers", "poolCounts"],
-    staleTime: 30_000,
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnMount: false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("customer_pool_counts");
       if (!error) {
@@ -138,7 +140,9 @@ export function useCustomerStatusCounts(p: StatusCountsParams) {
       "customers", "statusCounts",
       p.pool, idsKey, p.dateFromIso ?? "", p.dateToIso ?? "",
     ] as const,
-    staleTime: 30_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnMount: false,
     placeholderData: (prev) => prev,
     queryFn: async (): Promise<{ counts: Record<string, number>; total: number }> => {
       const { data, error } = await supabase.rpc("stats_status_counts", {

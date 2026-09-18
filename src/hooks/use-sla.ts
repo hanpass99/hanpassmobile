@@ -106,7 +106,9 @@ export function useSlaTeamSummary(periodStart: string, periodEnd: string) {
 export function useSlaViolationCount() {
   return useQuery({
     queryKey: ["sla", "count"],
-    staleTime: 30_000,
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnMount: false,
     queryFn: async (): Promise<number> => {
       const { data, error } = await supabase.rpc("sla_violations_count");
       if (error) throw new Error(error.message);
