@@ -53,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setIsAdmin(false);
+        setIsHanpassStaff(false);
+        setCompany("");
         setCanAccessNewSignup(false);
         setCanAccessTelegram(false);
         setDisplayName("");
