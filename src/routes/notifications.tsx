@@ -223,14 +223,14 @@ function NotificationsPage() {
                 직원 화면에 큰 팝업으로 표시되며, 확인 버튼을 눌러야 닫힙니다.
               </p>
             </div>
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border p-3">
+              <div className="min-w-0">
                 <div className="text-sm font-medium">업무폰 SMS도 함께 전송</div>
                 <div className="text-xs text-muted-foreground">등록된 전화번호가 있는 직원에게만 발송됩니다.</div>
               </div>
               <Switch checked={sendSms} onCheckedChange={setSendSms} />
             </div>
-            <div className="flex items-center justify-between border-t pt-3">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t pt-3">
               <div className="text-sm text-muted-foreground">
                 선택: <b className="text-foreground">{selectedStaff.length}</b>명
                 {sendSms ? ` · SMS 대상 ${withPhone.length}명` : ""}
@@ -259,10 +259,10 @@ function NotificationsPage() {
               return (
                 <label
                   key={s.id}
-                  className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-muted/50"
+                  className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-2 py-2 hover:bg-muted/50"
                 >
                   <Checkbox checked={selected.has(s.id)} onCheckedChange={(v) => toggleOne(s.id, !!v)} />
-                  <span className="flex-1 text-sm">{s.display_name}</span>
+                   <span className="min-w-0 truncate text-sm">{s.display_name}</span>
                   {hasPhone ? (
                     <span className="text-xs text-muted-foreground">{s.phone}</span>
                   ) : (
@@ -282,7 +282,7 @@ function NotificationsPage() {
         <CardHeader>
           <CardTitle className="text-base">발송 이력 (최근 50건)</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -345,7 +345,7 @@ function NotificationsPage() {
           </DialogHeader>
           {detailNoti ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-4 text-sm">
+               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="rounded-md bg-emerald-50 px-3 py-1 text-emerald-700">
                   확인 완료: {detailNoti.acked}명
                 </div>

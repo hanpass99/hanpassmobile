@@ -132,14 +132,14 @@ function AiFaqPage() {
   const globalEnabled = settings?.global?.enabled ?? true;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-5 p-0 md:p-2">
       <PageHeader
         title="AI 학습 (FAQ)"
         description="텔레그램 자동 응답에 사용되는 질문·답변 예시를 관리합니다."
       />
 
-      <div className="flex items-center justify-between rounded-lg border bg-card p-4">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border bg-card p-4">
+        <div className="min-w-0">
           <div className="text-sm font-medium">AI 자동 응답 (전역)</div>
           <div className="text-xs text-muted-foreground">
             꺼짐 상태에서는 모든 채팅방에서 AI가 답장하지 않습니다.

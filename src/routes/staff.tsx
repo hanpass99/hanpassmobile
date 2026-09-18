@@ -233,14 +233,14 @@ function StaffAdmin() {
 
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
+        <CardHeader className="grid gap-3 space-y-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="min-w-0">
             <CardTitle>{t("settings.staffMgmt")}</CardTitle>
             <CardDescription>
               {t("settings.staffMgmtDesc", { y: Y, m: M })}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex">
             {isAdmin && (
               <Button size="sm" onClick={() => setShowCreate(true)}>
                 <UserPlus className="mr-2 h-4 w-4" /> {t("settings.addStaff")}
@@ -251,7 +251,34 @@ function StaffAdmin() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
+        <CardContent className="space-y-3 p-3 md:hidden">
+          {rows.map((r) => (
+            <div key={r.id} className="rounded-md border p-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                <button type="button" className="min-w-0 text-left" onClick={() => setInfoTarget(r)}>
+                  <span className="block truncate text-sm font-semibold text-primary">{r.display_name}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{r.email ?? "-"}</span>
+                </button>
+                <Badge variant={r.is_active ? "default" : "outline"}>
+                  {r.approval_status === "pending" ? t("settings.pendingApproval") : r.is_active ? t("common.active") : t("common.inactive")}
+                </Badge>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div><span className="text-muted-foreground">{t("settings.company")}</span><div className="mt-0.5 font-medium">{r.company}</div></div>
+                <div><span className="text-muted-foreground">{t("settings.role")}</span><div className="mt-0.5 font-medium">{roleLabel(r.role)}</div></div>
+                <div className="col-span-2"><span className="text-muted-foreground">{t("settings.assignedCountry")}</span><div className="mt-1 flex flex-wrap gap-1">{r.role === "admin" ? <Badge variant="secondary">{t("country.allCountries")}</Badge> : r.country_ids.map((id) => <Badge key={id} variant="secondary">{countries.find((c) => c.id === id)?.code ?? "?"}</Badge>)}</div></div>
+              </div>
+              {isAdmin && (
+                <div className="mt-3 grid grid-cols-2 gap-2 border-t pt-3">
+                  {r.approval_status === "pending" ? <Button size="sm" onClick={() => approve(r)}><UserCheck className="mr-1 h-4 w-4" />{t("settings.approve")}</Button> : <Button size="sm" variant="outline" onClick={() => setInfoTarget(r)}>{t("common.edit")}</Button>}
+                  {r.id !== user?.id && <Button size="sm" variant="outline" onClick={() => setResetTarget(r)}><KeyRound className="mr-1 h-4 w-4" />{t("settings.resetPwd")}</Button>}
+                </div>
+              )}
+            </div>
+          ))}
+          {!rows.length && !loading && <div className="py-8 text-center text-sm text-muted-foreground">{t("dashboard.noStaff")}</div>}
+        </CardContent>
+        <CardContent className="hidden overflow-x-auto p-0 md:block">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
@@ -712,12 +739,12 @@ function CreateStaffDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>{t("settings.createTitle")}</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3 py-2">
-          <div className="col-span-2 space-y-2">
+        <div className="grid grid-cols-1 gap-3 py-2 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2">
             <Label>{t("settings.emailStar")}</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <div className="col-span-2 space-y-2">
+          <div className="space-y-2 sm:col-span-2">
             <Label>{t("settings.pwdMin6")}</Label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
@@ -749,7 +776,7 @@ function CreateStaffDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="col-span-2 space-y-2">
+          <div className="space-y-2 sm:col-span-2">
             <Label>{t("settings.assignedCountry")}</Label>
             {role === "admin" ? (
               <p className="text-[12px] text-muted-foreground">{t("country.allCountries")}</p>
