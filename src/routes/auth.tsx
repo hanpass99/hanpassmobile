@@ -276,6 +276,27 @@ function AuthPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
+                  <Label htmlFor="signup-country" className="text-[13px] font-medium text-foreground">
+                    {t("country.label")}
+                  </Label>
+                  <select
+                    id="signup-country"
+                    name="country_id"
+                    required
+                    defaultValue=""
+                    className="h-11 w-full rounded-lg border border-border bg-card px-3 text-[14px] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="" disabled>
+                      {t("country.placeholder")}
+                    </option>
+                    {countries.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name_ko} ({c.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="signup-email" className="text-[13px] font-medium text-foreground">
                     {t("auth.email")}
                   </Label>

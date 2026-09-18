@@ -345,7 +345,6 @@ function StaffAdmin() {
                         <SelectContent>
                           <SelectItem value="admin">{t("common.admin")}</SelectItem>
                           <SelectItem value="staff">{t("common.staff")}</SelectItem>
-                          <SelectItem value="hanpass_staff">{t("common.hanpassStaff")}</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
@@ -744,7 +743,6 @@ function CreateStaffDialog({
               <SelectContent>
                 <SelectItem value="staff">{t("common.staff")}</SelectItem>
                 <SelectItem value="admin">{t("common.admin")}</SelectItem>
-                <SelectItem value="hanpass_staff">{t("common.hanpassStaff")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
