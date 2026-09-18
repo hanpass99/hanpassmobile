@@ -28,23 +28,30 @@ Deno.serve(async (req) => {
       .eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
     if (!roleData) return json({ error: "forbidden" }, 403);
 
-    const { user_id } = (await req.json()) as { user_id: string };
+    const { user_id, hard } = (await req.json()) as { user_id: string; hard?: boolean };
     if (!user_id) return json({ error: "user_id required" }, 400);
     if (user_id === userData.user.id) return json({ error: "cannot_delete_self" }, 400);
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // Soft-delete: preserve customers.assigned_to and profile row so historical
-    // performance (past activations, call logs, notes) stays attributed to this
-    // staff. Revoke access by removing role and banning the auth user.
+    // Common cleanup: revoke access artifacts.
     await admin.from("user_roles").delete().eq("user_id", user_id);
     await admin.from("profile_countries").delete().eq("user_id", user_id);
     await admin.from("targets").delete().eq("user_id", user_id);
-    await admin.from("profiles").update({ is_active: false }).eq("id", user_id);
-    // Delete the auth user to revoke sign-in. FK from profiles.id to auth.users
-    // was dropped, so the profile row (with is_active=false) remains for history.
+
+    if (hard) {
+      // Hard delete: remove the staff row entirely. Historical rows (call logs,
+      // notes, SMS) are preserved; FKs are SET NULL / unconstrained.
+      await admin.from("customers").update({ assigned_to: null }).eq("assigned_to", user_id);
+      await admin.from("profiles").delete().eq("id", user_id);
+    } else {
+      // Soft-delete: keep the profile row so past performance stays attributed.
+      await admin.from("profiles").update({ is_active: false }).eq("id", user_id);
+    }
+
+    // Delete the auth user to revoke sign-in.
     const { error: delErr } = await admin.auth.admin.deleteUser(user_id);
-    if (delErr) return json({ error: delErr.message }, 400);
+    if (delErr && !/not found/i.test(delErr.message)) return json({ error: delErr.message }, 400);
 
     return json({ ok: true });
   } catch (e) {
