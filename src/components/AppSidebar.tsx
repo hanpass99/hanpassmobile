@@ -108,6 +108,40 @@ export function AppSidebar() {
 
   const groupLabel = "px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-sidebar-foreground/35";
 
+  if (isHanpassStaff && !isAdmin) {
+    return (
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="border-b border-sidebar-border">
+          <div className="flex items-center gap-2.5 px-2 py-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+              <Phone className="h-4 w-4" />
+            </div>
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+              <span className="font-display text-[13px] font-bold leading-tight tracking-tight text-sidebar-foreground">
+                HANPASS MOBILE
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">OB Call CRM</span>
+            </div>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel className={groupLabel}>{t("nav.main")}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderItems([{ title: t("nav.customers"), url: "/customers", icon: Users }])}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter className="border-t border-sidebar-border">
+          <SidebarPrefs />
+          <SidebarUserFooter />
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">

@@ -135,6 +135,11 @@ function AuthGate() {
 
 function AuthedShell() {
   useCallGoal();
+  const { isAdmin, isHanpassStaff } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (isHanpassStaff && !isAdmin && !pathname.startsWith("/customers")) {
+    return <Navigate to="/customers" search={{ pool: "activation_request" }} />;
+  }
   return (
     <AttendanceCheckInGate>
       <SidebarProvider>
