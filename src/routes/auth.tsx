@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
 import { Mail, Lock, ArrowLeft, ShieldCheck, Languages, Phone } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,17 @@ function AuthPage() {
   const target = safeNext(next);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
+  const [countries, setCountries] = useState<Array<{ id: string; code: string; name_ko: string }>>([]);
+
+  useEffect(() => {
+    if (mode !== "signup" || countries.length) return;
+    supabase
+      .from("countries")
+      .select("id, code, name_ko")
+      .eq("is_active", true)
+      .order("code")
+      .then(({ data }) => setCountries((data ?? []) as Array<{ id: string; code: string; name_ko: string }>));
+  }, [mode, countries.length]);
 
   if (loading) return null;
   if (session) return <Navigate to={target} />;
@@ -65,7 +76,9 @@ function AuthPage() {
     const fd = new FormData(e.currentTarget);
     const name = String(fd.get("name") ?? "").trim();
     const company = String(fd.get("company") ?? "한패스 모바일");
+    const countryId = String(fd.get("country_id") ?? "").trim();
     if (!name) return toast.error(t("auth.enterName"));
+    if (!countryId) return toast.error(t("country.selectRequired"));
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
     if (!parsed.success) return toast.error(parsed.error.errors[0].message);
     setBusy(true);
@@ -73,7 +86,11 @@ function AuthPage() {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        data: { display_name: name, company: company === "한패스" ? "한패스" : "한패스 모바일" },
+        data: {
+          display_name: name,
+          company: company === "한패스" ? "한패스" : "한패스 모바일",
+          country_id: countryId,
+        },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -256,6 +273,27 @@ function AuthPage() {
                   >
                     <option value="한패스">한패스</option>
                     <option value="한패스 모바일">한패스 모바일</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-country" className="text-[13px] font-medium text-foreground">
+                    {t("country.label")}
+                  </Label>
+                  <select
+                    id="signup-country"
+                    name="country_id"
+                    required
+                    defaultValue=""
+                    className="h-11 w-full rounded-lg border border-border bg-card px-3 text-[14px] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="" disabled>
+                      {t("country.placeholder")}
+                    </option>
+                    {countries.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name_ko} ({c.code})
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="space-y-1.5">

@@ -8,7 +8,9 @@ type AuthCtx = {
   loading: boolean;
   isAdmin: boolean;
   isActive: boolean | null;
-  isHanpassStaff: boolean;
+  isHanpass: boolean;
+  countryIds: string[];
+  needsCountry: boolean;
   canAccessNewSignup: boolean;
   canAccessTelegram: boolean;
   displayName: string;
@@ -24,23 +26,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isHanpassStaff, setIsHanpassStaff] = useState(false);
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const [company, setCompany] = useState("");
+  const [countryIds, setCountryIds] = useState<string[]>([]);
   const [canAccessNewSignup, setCanAccessNewSignup] = useState(false);
   const [canAccessTelegram, setCanAccessTelegram] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const loadProfile = async (uid: string) => {
-    const [{ data: roles }, { data: profile }] = await Promise.all([
+    const [{ data: roles }, { data: profile }, { data: pcs }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
-      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup, can_access_telegram, company, is_active, approval_status").eq("id", uid).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("display_name, avatar_url, can_access_new_signup, can_access_telegram, company, is_active, approval_status")
+        .eq("id", uid)
+        .maybeSingle(),
+      supabase.from("profile_countries").select("country_id").eq("user_id", uid),
     ]);
     setIsActive((profile as any)?.approval_status ? (profile as any).approval_status !== "pending" : ((profile as any)?.is_active ?? true));
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
-    setIsHanpassStaff(!!roles?.some((r) => (r.role as string) === "hanpass_staff"));
     setCompany((profile as any)?.company ?? "");
+    setCountryIds((pcs ?? []).map((r: any) => r.country_id as string));
     setDisplayName(profile?.display_name ?? "");
     setAvatarUrl((profile as any)?.avatar_url ?? null);
     setCanAccessNewSignup(!!(profile as any)?.can_access_new_signup);
@@ -59,9 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setIsAdmin(false);
-        setIsHanpassStaff(false);
         setIsActive(null);
         setCompany("");
+        setCountryIds([]);
         setCanAccessNewSignup(false);
         setCanAccessTelegram(false);
         setDisplayName("");
@@ -77,6 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const isHanpass = company === "한패스";
+
   return (
     <Ctx.Provider
       value={{
@@ -84,9 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         isAdmin,
-        isHanpassStaff,
+        isHanpass,
         isActive,
         company,
+        countryIds,
+        needsCountry: !!session && !isAdmin && isActive !== false && countryIds.length === 0,
         canAccessNewSignup,
         canAccessTelegram,
         displayName,

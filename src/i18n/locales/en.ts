@@ -460,6 +460,15 @@ export default {
     newSignupAllowed: "New signup access allowed",
     newSignupBlocked: "New signup access blocked",
   },
+  country: {
+    label: "Assigned country",
+    placeholder: "Select your country",
+    selectRequired: "Please select your assigned country",
+    setupTitle: "Select your assigned country",
+    setupSub: "You need to pick your assigned country before using the system. Contact an admin to change it later.",
+    save: "Save and continue",
+    saved: "Assigned country saved",
+  },
   auth: {
     loginTitle: "Admin sign-in",
     loginSub: "Enter your account details",

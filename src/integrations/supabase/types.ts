@@ -1807,6 +1807,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_hanpass_company: { Args: { _uid: string }; Returns: boolean }
       is_hanpass_staff: { Args: { _user_id: string }; Returns: boolean }
       match_ai_faq: {
         Args: { match_count?: number; query_embedding: string }
@@ -1842,6 +1843,7 @@ export type Database = {
           total_count: number
         }[]
       }
+      set_own_country: { Args: { _country_id: string }; Returns: undefined }
       set_staff_attendance: {
         Args: {
           _date: string
@@ -2130,6 +2132,7 @@ export type Database = {
               total_customers: number
             }[]
           }
+      user_company: { Args: { _uid: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "staff" | "hanpass_staff"

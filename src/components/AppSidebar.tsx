@@ -25,7 +25,8 @@ function useTelegramUnreadTotal(enabled: boolean) {
     const refresh = async () => {
       const { data } = await supabase
         .from("telegram_chats")
-        .select("unread_count");
+        .select("unread_count")
+        .gt("unread_count", 0);
       if (!mounted) return;
       const sum = (data ?? []).reduce((a, r: any) => a + (r.unread_count ?? 0), 0);
       setTotal(sum);
@@ -50,7 +51,7 @@ function useTelegramUnreadTotal(enabled: boolean) {
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useTranslation();
-  const { isAdmin, canAccessTelegram, isHanpassStaff } = useAuth();
+  const { isAdmin, canAccessTelegram, isHanpass } = useAuth();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const telegramEnabled = isAdmin || canAccessTelegram;
   const telegramUnread = useTelegramUnreadTotal(telegramEnabled);
@@ -109,7 +110,7 @@ export function AppSidebar() {
 
   const groupLabel = "px-2 text-[11px] font-medium tracking-normal text-sidebar-foreground/45";
 
-  if (isHanpassStaff && !isAdmin) {
+  if (isHanpass) {
     return (
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border">

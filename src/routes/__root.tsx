@@ -17,6 +17,7 @@ import { CallLogPopupProvider } from "@/components/CallLogPopupProvider";
 import { AiAssistant } from "@/components/AiAssistant";
 import { AdminPushListener } from "@/components/AdminPushListener";
 import { AttendanceCheckInGate } from "@/components/AttendanceCheckInGate";
+import { CountrySetupGate } from "@/components/CountrySetupGate";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -157,7 +158,7 @@ function useSectionTitle(pathname: string) {
 
 function AuthedShell() {
   useCallGoal();
-  const { isAdmin, isHanpassStaff, isActive, signOut, displayName } = useAuth();
+  const { isAdmin, isHanpass, isActive, needsCountry, signOut, displayName } = useAuth();
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isNavigating = useRouterState({ select: (s) => s.status === "pending" });
@@ -175,7 +176,10 @@ function AuthedShell() {
       </div>
     );
   }
-  if (isHanpassStaff && !isAdmin && !pathname.startsWith("/customers")) {
+  if (needsCountry) {
+    return <CountrySetupGate />;
+  }
+  if (isHanpass && !pathname.startsWith("/customers")) {
     return <Navigate to="/customers" search={{ pool: "activation_request" }} />;
   }
   return (
