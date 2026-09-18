@@ -42,7 +42,7 @@ const M = now.getMonth() + 1;
 
 function StaffAdmin() {
   const { t } = useTranslation();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, loading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading: loading } = useSettingsData({ year: Y, month: M, isAdmin });
   const [rows, setRows] = useState<Row[]>([]);
@@ -222,6 +222,9 @@ function StaffAdmin() {
     load();
   };
 
+  if (authLoading) {
+    return <div className="py-12 text-center text-sm text-muted-foreground">{t("errors.loading")}</div>;
+  }
   if (!isAdmin) return <Navigate to="/settings" />;
 
   return (
