@@ -21,7 +21,7 @@ function safeNext(next: string): string {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
-type Mode = "login" | "forgot";
+type Mode = "login" | "forgot" | "signup" | "signupDone";
 
 function AuthPage() {
   const { t, i18n: i18nInst } = useTranslation();
@@ -58,6 +58,28 @@ function AuthPage() {
     toast.success(t("auth.welcome"));
     if (target !== "/") window.location.href = target;
     else navigate({ to: "/" });
+  };
+
+  const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const name = String(fd.get("name") ?? "").trim();
+    const company = String(fd.get("company") ?? "한패스 모바일");
+    if (!name) return toast.error(t("auth.enterName"));
+    const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
+    if (!parsed.success) return toast.error(parsed.error.errors[0].message);
+    setBusy(true);
+    const { error } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      options: {
+        data: { display_name: name, company: company === "한패스" ? "한패스" : "한패스 모바일" },
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    setBusy(false);
+    if (error) return toast.error(t("auth.signupFailed", { msg: error.message }));
+    setMode("signupDone");
   };
 
   const handleForgot = async (e: FormEvent<HTMLFormElement>) => {
@@ -185,7 +207,14 @@ function AuthPage() {
                   {busy ? t("common.processing") : t("auth.login")}
                 </Button>
                 <p className="text-center text-[13px] text-muted-foreground/70 pt-2">
-                  {t("auth.accountNote")}
+                  {t("auth.noAccount")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setMode("signup")}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    {t("auth.signup")}
+                  </button>
                 </p>
               </form>
             </div>
