@@ -51,8 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
+        setLoading(true);
         setTimeout(() => {
-          loadProfile(s.user.id).catch(console.error);
+          loadProfile(s.user.id)
+            .catch(console.error)
+            .finally(() => setLoading(false));
         }, 0);
       } else {
         setIsAdmin(false);
@@ -63,11 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCanAccessTelegram(false);
         setDisplayName("");
         setAvatarUrl(null);
+        setLoading(false);
       }
     });
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
-      if (data.session?.user) loadProfile(data.session.user.id);
+      if (data.session?.user) await loadProfile(data.session.user.id);
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
