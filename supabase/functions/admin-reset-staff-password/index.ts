@@ -7,16 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-function genTempPassword(): string {
-  // 10자: 영문 대소문자 + 숫자
-  const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  const buf = new Uint8Array(10);
-  crypto.getRandomValues(buf);
-  let out = "";
-  for (let i = 0; i < buf.length; i++) out += charset[buf[i] % charset.length];
-  // ensure at least 1 number
-  return out + Math.floor(Math.random() * 10);
-}
+// 초기화 시 항상 고정 비밀번호로 변경
+const TEMP_PASSWORD = "hanpass12*";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -45,7 +37,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "user_id required" }), { status: 400, headers: corsHeaders });
     }
 
-    const tempPassword = genTempPassword();
+    const tempPassword = TEMP_PASSWORD;
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const { error: updErr } = await admin.auth.admin.updateUserById(user_id, { password: tempPassword });
     if (updErr) {
