@@ -113,7 +113,7 @@ function AuthPage() {
           </div>
 
           <div className="space-y-5">
-            <h1 className="text-[22px] font-bold leading-snug tracking-tight whitespace-nowrap">
+            <h1 className="text-[22px] font-semibold leading-snug tracking-normal whitespace-nowrap">
               {t("auth.brandTagline")}
             </h1>
             <p className="text-[14px] leading-relaxed text-primary-foreground/70">
@@ -153,7 +153,7 @@ function AuthPage() {
           {mode === "login" ? (
             <div className="flex-1 flex flex-col">
               <div className="mb-8">
-                <h2 className="text-[24px] font-medium text-primary">{t("auth.loginTitle")}</h2>
+                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">{t("auth.loginTitle")}</h2>
                 <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.loginSub")}</p>
               </div>
               <form onSubmit={handleLogin} className="space-y-5 flex-1">
@@ -227,7 +227,7 @@ function AuthPage() {
                 <ArrowLeft className="h-3.5 w-3.5" /> {t("auth.backToLogin")}
               </button>
               <div className="mb-8">
-                <h2 className="text-[24px] font-medium text-primary">{t("auth.signupTitle")}</h2>
+                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">{t("auth.signupTitle")}</h2>
                 <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.signupSub")}</p>
               </div>
               <form onSubmit={handleSignup} className="space-y-4 flex-1">
