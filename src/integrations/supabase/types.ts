@@ -414,7 +414,7 @@ export type Database = {
           media_mime: string | null
           media_storage_path: string | null
           message: string
-          sender_id: string
+          sender_id: string | null
           status: string
           success_count: number
           target_count: number
@@ -430,7 +430,7 @@ export type Database = {
           media_mime?: string | null
           media_storage_path?: string | null
           message?: string
-          sender_id: string
+          sender_id?: string | null
           status?: string
           success_count?: number
           target_count?: number
@@ -446,7 +446,7 @@ export type Database = {
           media_mime?: string | null
           media_storage_path?: string | null
           message?: string
-          sender_id?: string
+          sender_id?: string | null
           status?: string
           success_count?: number
           target_count?: number
@@ -551,7 +551,7 @@ export type Database = {
           is_activation: boolean
           notes: string | null
           result: Database["public"]["Enums"]["call_result"]
-          staff_id: string
+          staff_id: string | null
         }
         Insert: {
           call_date?: string
@@ -562,7 +562,7 @@ export type Database = {
           is_activation?: boolean
           notes?: string | null
           result: Database["public"]["Enums"]["call_result"]
-          staff_id: string
+          staff_id?: string | null
         }
         Update: {
           call_date?: string
@@ -573,7 +573,7 @@ export type Database = {
           is_activation?: boolean
           notes?: string | null
           result?: Database["public"]["Enums"]["call_result"]
-          staff_id?: string
+          staff_id?: string | null
         }
         Relationships: [
           {
