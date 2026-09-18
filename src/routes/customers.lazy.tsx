@@ -296,8 +296,12 @@ function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
 
 function CustomersPage() {
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
-  const visiblePools = useMemo<readonly CustomerPool[]>(() => POOLS, []);
+  const { isAdmin, isHanpassStaff } = useAuth();
+  const hanpassOnly = isHanpassStaff && !isAdmin;
+  const visiblePools = useMemo<readonly CustomerPool[]>(
+    () => (hanpassOnly ? (["activation_request"] as const) : POOLS),
+    [hanpassOnly],
+  );
   const initialSearch = Route.useSearch();
   const initialStatus = (() => {
     const s = initialSearch.status;
