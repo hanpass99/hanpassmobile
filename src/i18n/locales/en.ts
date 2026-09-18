@@ -6,6 +6,7 @@ export default {
     staff: "Staff Performance", country: "Country Performance", channel: "Channel Performance",
     attendance: "Attendance", reports: "Reports", settings: "Settings",
     sms: "SMS", sla: "SLA", callLogs: "Call Logs",
+    staffMgmt: "Staff Management",
   },
   head: {
     dashboard: "Dashboard — Hanpass Mobile OB Call CRM",
@@ -13,6 +14,7 @@ export default {
     sms: "SMS — Hanpass OB CRM",
     sla: "SLA — Hanpass OB CRM",
     settings: "Settings — Hanpass OB CRM",
+    staff: "Staff Management — Hanpass OB CRM",
     channel: "Channel Performance — Hanpass OB CRM",
     attendance: "Attendance — Hanpass OB CRM",
   },

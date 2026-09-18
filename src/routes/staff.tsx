@@ -211,7 +211,7 @@ function StaffAdmin() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("nav.staff")} description={t("settings.staffMgmtDesc", { y: Y, m: M })} />
+      <PageHeader title={t("nav.staffMgmt")} description={t("settings.staffMgmtDesc", { y: Y, m: M })} />
 
 
       <Card>
