@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
 import { Mail, Lock, ArrowLeft, ShieldCheck, Languages, Phone } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,17 @@ function AuthPage() {
   const target = safeNext(next);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
+  const [countries, setCountries] = useState<Array<{ id: string; code: string; name_ko: string }>>([]);
+
+  useEffect(() => {
+    if (mode !== "signup" || countries.length) return;
+    supabase
+      .from("countries")
+      .select("id, code, name_ko")
+      .eq("is_active", true)
+      .order("code")
+      .then(({ data }) => setCountries((data ?? []) as Array<{ id: string; code: string; name_ko: string }>));
+  }, [mode, countries.length]);
 
   if (loading) return null;
   if (session) return <Navigate to={target} />;
