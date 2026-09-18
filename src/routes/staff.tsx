@@ -55,6 +55,7 @@ function StaffAdmin() {
   const [resetting, setResetting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [hardDelete, setHardDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [infoTarget, setInfoTarget] = useState<Row | null>(null);
 
@@ -196,7 +197,7 @@ function StaffAdmin() {
     setDeleting(true);
     const { data: res, error } = await supabase.functions.invoke<AdminDeleteStaffResponse>(
       "admin-delete-staff",
-      { body: { user_id: deleteTarget.id } },
+      { body: { user_id: deleteTarget.id, hard: hardDelete } },
     );
     setDeleting(false);
     const errMsg = res?.error ?? error?.message;
@@ -205,8 +206,10 @@ function StaffAdmin() {
       return;
     }
     toast.success(t("settings.deleteDone", { name: deleteTarget.display_name }));
+    if (hardDelete) setRows((prev) => prev.filter((x) => x.id !== deleteTarget.id));
     setDeleteTarget(null);
     setDeleteConfirmText("");
+    setHardDelete(false);
     load();
   };
 
