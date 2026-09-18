@@ -47,7 +47,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
       ] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, department, company, is_active, country_id, avatar_url, sort_order, can_access_new_signup, can_access_telegram, phone")
+          .select("id, display_name, department, company, is_active, approval_status, country_id, avatar_url, sort_order, can_access_new_signup, can_access_telegram, phone")
           .order("sort_order")
           .order("display_name"),
         supabase.from("user_roles").select("user_id, role"),
