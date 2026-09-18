@@ -435,6 +435,8 @@ export default {
     deleteNameMismatch: "입력한 이름이 일치하지 않습니다",
     deleteFailed: "삭제 실패: {{msg}}",
     deleteDone: "{{name}} 계정이 삭제되었습니다",
+    hardDelete: "직원 목록에서 영구 삭제",
+    hardDeleteWarn: "직원 목록에서 완전히 사라집니다. 과거 통화·메모·문자 기록은 남지만 되돌릴 수 없습니다.",
     createTitle: "직원 계정 추가",
     pwdMin6: "비밀번호 * (최소 6자)",
     nameStar: "이름 *",

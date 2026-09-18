@@ -435,6 +435,8 @@ export default {
     deleteNameMismatch: "Name does not match",
     deleteFailed: "Delete failed: {{msg}}",
     deleteDone: "Account {{name}} deleted",
+    hardDelete: "Remove permanently from the staff list",
+    hardDeleteWarn: "The staff row disappears completely. Past call, note and SMS records remain, but this cannot be undone.",
     createTitle: "Add staff account",
     pwdMin6: "Password * (min 6 chars)",
     nameStar: "Name *",
