@@ -297,7 +297,7 @@ function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin, isHanpass } = useAuth();
-  const hanpassOnly = isHanpass && !isAdmin;
+  const hanpassOnly = isHanpass;
   const visiblePools = useMemo<readonly CustomerPool[]>(
     () => (hanpassOnly ? (["activation_request"] as const) : POOLS),
     [hanpassOnly],

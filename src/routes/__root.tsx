@@ -175,7 +175,7 @@ function AuthedShell() {
       </div>
     );
   }
-  if (isHanpass && !isAdmin && !pathname.startsWith("/customers")) {
+  if (isHanpass && !pathname.startsWith("/customers")) {
     return <Navigate to="/customers" search={{ pool: "activation_request" }} />;
   }
   return (

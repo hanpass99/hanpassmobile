@@ -109,7 +109,7 @@ export function AppSidebar() {
 
   const groupLabel = "px-2 text-[11px] font-medium tracking-normal text-sidebar-foreground/45";
 
-  if (isHanpass && !isAdmin) {
+  if (isHanpass) {
     return (
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border">
