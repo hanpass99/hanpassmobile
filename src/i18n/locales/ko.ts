@@ -36,7 +36,7 @@ export default {
     failed: "실패",
   },
   common: {
-    logout: "로그아웃", admin: "관리자", staff: "직원",
+    logout: "로그아웃", admin: "관리자", staff: "직원", hanpassStaff: "한패스 직원",
     refresh: "새로고침", cancel: "취소", delete: "삭제", remove: "삭제",
     save: "저장", search: "검색", reset: "초기화", confirm: "확인",
     language: "언어", theme: "테마", dark: "다크", light: "라이트",
@@ -392,7 +392,7 @@ export default {
     staffMgmtDesc: "{{y}}년 {{m}}월 기준. 직원은 본인 담당 국가의 고객만 조회할 수 있습니다.",
     addStaff: "직원 추가",
     name: "이름", email: "이메일", lastAccess: "최근 접속",
-    department: "부서", role: "역할", assignedCountry: "담당 국가",
+    department: "부서", role: "역할", assignedCountry: "담당 국가", company: "소속",
     callTarget: "콜 목표", activationTarget: "개통 목표",
     callTargetCount: "콜 목표 (건)", activationTargetCount: "개통 목표 (건)",
     me: "(나)",
