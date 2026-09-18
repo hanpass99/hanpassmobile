@@ -7,9 +7,11 @@ type AuthCtx = {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  isHanpassStaff: boolean;
   canAccessNewSignup: boolean;
   canAccessTelegram: boolean;
   displayName: string;
+  company: string;
   avatarUrl: string | null;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
