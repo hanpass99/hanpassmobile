@@ -295,6 +295,7 @@ function AuthPage() {
                       </option>
                     ))}
                   </select>
+                  <p className="text-[12px] text-muted-foreground">{t("country.signupHint")}</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="signup-email" className="text-[13px] font-medium text-foreground">
