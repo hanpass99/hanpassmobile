@@ -340,7 +340,7 @@ function StaffAdmin() {
 
                   <TableCell>
                     {isAdmin && r.id !== user?.id && r.approval_status !== "pending" ? (
-                      <Select value={r.role} onValueChange={(v) => setRole(r, v as AppRole)}>
+                      <Select value={r.role ?? undefined} onValueChange={(v) => setRole(r, v as AppRole)}>
                         <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">{t("common.admin")}</SelectItem>
