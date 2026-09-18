@@ -12,7 +12,7 @@ export type SettingsRow = {
   department: string | null;
   company: string;
   is_active: boolean;
-  role: AppRole;
+  role: AppRole | null;
   country_ids: string[];
   avatar_url: string | null;
   call_target: number;
@@ -82,7 +82,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           department: p.department,
           company: ((p as any).company as string) ?? "한패스 모바일",
           is_active: p.is_active,
-          role: (r?.role as AppRole) ?? "staff",
+          role: (r?.role as AppRole | undefined) ?? null,
           country_ids: pcMap.get(p.id) ?? [],
           avatar_url: p.avatar_url ?? null,
           call_target: tg?.call_target ?? 0,
@@ -95,7 +95,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           phone: (p as any).phone ?? null,
         };
       });
-      rows.sort((a, b) => a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
+      rows.sort((a, b) => Number(a.role !== null) - Number(b.role !== null) || a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
 
       return { rows, countries: (co ?? []) as Country[] };
     },

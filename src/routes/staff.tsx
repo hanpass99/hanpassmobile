@@ -42,7 +42,7 @@ const M = now.getMonth() + 1;
 
 function StaffAdmin() {
   const { t } = useTranslation();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, loading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading: loading } = useSettingsData({ year: Y, month: M, isAdmin });
   const [rows, setRows] = useState<Row[]>([]);
@@ -65,8 +65,14 @@ function StaffAdmin() {
     }
   }, [data]);
 
-  const roleLabel = (role: AppRole) =>
-    role === "admin" ? t("common.admin") : role === "hanpass_staff" ? t("common.hanpassStaff") : t("common.staff");
+  const roleLabel = (role: AppRole | null) =>
+    role === null
+      ? t("settings.pendingApproval")
+      : role === "admin"
+        ? t("common.admin")
+        : role === "hanpass_staff"
+          ? t("common.hanpassStaff")
+          : t("common.staff");
 
   const setCompany = async (r: Row, company: string) => {
     const { error } = await supabase.rpc("admin_set_profile_company" as any, { _user_id: r.id, _company: company });
@@ -216,6 +222,9 @@ function StaffAdmin() {
     load();
   };
 
+  if (authLoading) {
+    return <div className="py-12 text-center text-sm text-muted-foreground">{t("errors.loading")}</div>;
+  }
   if (!isAdmin) return <Navigate to="/settings" />;
 
   return (
@@ -272,7 +281,7 @@ function StaffAdmin() {
                 </TableRow>
               ))}
               {rows.map((r, idx) => (
-                <TableRow key={r.id} className={r.is_active ? "" : "opacity-50"}>
+                <TableRow key={r.id} className={r.role === null ? "bg-warning/5" : r.is_active ? "" : "opacity-60"}>
                   {isAdmin && (
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -330,7 +339,7 @@ function StaffAdmin() {
                   </TableCell>
 
                   <TableCell>
-                    {isAdmin && r.id !== user?.id ? (
+                    {isAdmin && r.id !== user?.id && r.role !== null ? (
                       <Select value={r.role} onValueChange={(v) => setRole(r, v as AppRole)}>
                         <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -340,7 +349,7 @@ function StaffAdmin() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Badge variant={r.role === "admin" ? "default" : "secondary"}>
+                      <Badge variant={r.role === null ? "outline" : r.role === "admin" ? "default" : "secondary"} className={r.role === null ? "border-warning text-warning" : undefined}>
                         {roleLabel(r.role)}
                       </Badge>
                     )}
@@ -368,7 +377,7 @@ function StaffAdmin() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={r.is_active ? "default" : "outline"}>
-                      {r.is_active ? t("common.active") : t("common.inactive")}
+                      {r.role === null ? t("settings.pendingApproval") : r.is_active ? t("common.active") : t("common.inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell>
