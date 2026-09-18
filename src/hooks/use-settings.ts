@@ -12,6 +12,7 @@ export type SettingsRow = {
   department: string | null;
   company: string;
   is_active: boolean;
+  approval_status: "approved" | "pending" | "disabled";
   role: AppRole | null;
   country_ids: string[];
   avatar_url: string | null;
