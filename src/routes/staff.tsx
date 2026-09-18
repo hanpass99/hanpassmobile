@@ -354,7 +354,9 @@ function StaffAdmin() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {isAdmin ? (
+                    {r.role === "admin" ? (
+                      <Badge variant="secondary" className="text-[10px]">{t("country.allCountries")}</Badge>
+                    ) : isAdmin ? (
                       <MultiCountrySelect
                         options={countries}
                         value={r.country_ids}
@@ -665,6 +667,7 @@ function CreateStaffDialog({
   const submit = async () => {
     if (!email || !password || !displayName) return toast.error(t("settings.createRequired"));
     if (password.length < 6) return toast.error(t("settings.pwdLenError"));
+    if (role !== "admin" && countryIds.length === 0) return toast.error(t("country.selectRequired"));
     setSaving(true);
     const { data: res, error } = await supabase.functions.invoke<AdminCreateStaffResponse>(
       "admin-create-staff",
@@ -748,11 +751,15 @@ function CreateStaffDialog({
           </div>
           <div className="col-span-2 space-y-2">
             <Label>{t("settings.assignedCountry")}</Label>
-            <MultiCountrySelect
-              options={countries}
-              value={countryIds}
-              onChange={setCountryIds}
-            />
+            {role === "admin" ? (
+              <p className="text-[12px] text-muted-foreground">{t("country.allCountries")}</p>
+            ) : (
+              <MultiCountrySelect
+                options={countries}
+                value={countryIds}
+                onChange={setCountryIds}
+              />
+            )}
           </div>
         </div>
         <DialogFooter>

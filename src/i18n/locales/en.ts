@@ -468,6 +468,8 @@ export default {
     setupSub: "You need to pick your assigned country before using the system. Contact an admin to change it later.",
     save: "Save and continue",
     saved: "Assigned country saved",
+    signupHint: "Pick the country you will handle. Admin rights are granted by an admin after sign-up.",
+    allCountries: "Admin – all countries",
   },
   auth: {
     loginTitle: "Admin sign-in",
