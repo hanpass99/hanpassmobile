@@ -83,6 +83,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           department: p.department,
           company: ((p as any).company as string) ?? "한패스 모바일",
           is_active: p.is_active,
+          approval_status: (((p as any).approval_status as string) ?? (p.is_active ? "approved" : "disabled")) as SettingsRow["approval_status"],
           role: (r?.role as AppRole | undefined) ?? null,
           country_ids: pcMap.get(p.id) ?? [],
           avatar_url: p.avatar_url ?? null,
