@@ -639,7 +639,7 @@ function StaffAdmin() {
       </Dialog>
 
       {/* 직원 삭제 확인 (2차) */}
-      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setDeleteConfirmText(""); } }}>
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setDeleteConfirmText(""); setHardDelete(false); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
@@ -653,6 +653,15 @@ function StaffAdmin() {
               <li>{t("settings.deleteUnassign")}</li>
               <li>{t("settings.deleteIrreversible")}</li>
             </ul>
+            <div className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+              <Switch id="hard-delete" checked={hardDelete} onCheckedChange={setHardDelete} />
+              <div className="space-y-1">
+                <Label htmlFor="hard-delete" className="text-xs font-semibold text-destructive">
+                  {t("settings.hardDelete")}
+                </Label>
+                <p className="text-xs text-muted-foreground">{t("settings.hardDeleteWarn")}</p>
+              </div>
+            </div>
             <div className="space-y-1.5 pt-2">
               <Label className="text-xs">{t("settings.deleteTypeName", { name: deleteTarget?.display_name ?? "" })}</Label>
               <Input
@@ -664,7 +673,7 @@ function StaffAdmin() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setDeleteTarget(null); setDeleteConfirmText(""); }} disabled={deleting}>
+            <Button variant="outline" onClick={() => { setDeleteTarget(null); setDeleteConfirmText(""); setHardDelete(false); }} disabled={deleting}>
               {t("common.cancel")}
             </Button>
             <Button
