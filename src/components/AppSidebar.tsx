@@ -25,7 +25,8 @@ function useTelegramUnreadTotal(enabled: boolean) {
     const refresh = async () => {
       const { data } = await supabase
         .from("telegram_chats")
-        .select("unread_count");
+        .select("unread_count")
+        .gt("unread_count", 0);
       if (!mounted) return;
       const sum = (data ?? []).reduce((a, r: any) => a + (r.unread_count ?? 0), 0);
       setTotal(sum);
