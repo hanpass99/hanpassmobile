@@ -354,7 +354,9 @@ function StaffAdmin() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {isAdmin ? (
+                    {r.role === "admin" ? (
+                      <Badge variant="secondary" className="text-[10px]">{t("country.allCountries")}</Badge>
+                    ) : isAdmin ? (
                       <MultiCountrySelect
                         options={countries}
                         value={r.country_ids}
