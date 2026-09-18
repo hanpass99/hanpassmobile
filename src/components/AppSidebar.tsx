@@ -89,8 +89,8 @@ export function AppSidebar() {
             tooltip={item.title}
             className={cn(
               "h-8 rounded-md text-[13px] font-medium text-sidebar-foreground/55 transition-colors",
-              "hover:bg-sidebar-accent hover:text-sidebar-foreground",
-              "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-foreground data-[active=true]:font-semibold",
+              "hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+              "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-semibold",
             )}
           >
             <Link to={item.url} className="flex items-center gap-3">
