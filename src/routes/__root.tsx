@@ -199,7 +199,7 @@ function AuthedShell() {
                 )}
               </nav>
               <div className="flex-1" />
-              <span className="hidden items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-header-foreground/90 lg:inline-flex">
+              <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-[10px] font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 OB Call Management
               </span>
