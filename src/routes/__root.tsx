@@ -133,10 +133,33 @@ function AuthGate() {
   return <AuthedShell />;
 }
 
+const SECTION_TITLES: Array<[string, string]> = [
+  ["/customers", "고객 관리"],
+  ["/sms", "문자 발송"],
+  ["/telegram", "텔레그램 상담"],
+  ["/call-logs", "통화 기록"],
+  ["/channel-performance", "채널 성과"],
+  ["/sla", "SLA 관리"],
+  ["/notifications", "관리자 공지"],
+  ["/broadcast", "브로드캐스트"],
+  ["/ai-faq", "AI 학습"],
+  ["/ai-assistant", "AI 어시스턴트"],
+  ["/staff", "직원 관리"],
+  ["/attendance", "출근 관리"],
+  ["/settings", "설정"],
+];
+
+function useSectionTitle(pathname: string) {
+  if (pathname === "/") return "대시보드";
+  return SECTION_TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "";
+}
+
 function AuthedShell() {
   useCallGoal();
   const { isAdmin, isHanpassStaff } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isNavigating = useRouterState({ select: (s) => s.status === "pending" });
+  const sectionTitle = useSectionTitle(pathname);
   if (isHanpassStaff && !isAdmin && !pathname.startsWith("/customers")) {
     return <Navigate to="/customers" search={{ pool: "activation_request" }} />;
   }
@@ -146,13 +169,30 @@ function AuthedShell() {
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card px-4 md:px-6">
+            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:px-6">
               <SidebarTrigger />
+              <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[13px]">
+                <Link to="/" className="hidden font-medium text-muted-foreground hover:text-foreground sm:inline">
+                  Hanpass Mobile
+                </Link>
+                {sectionTitle && (
+                  <>
+                    <span className="hidden text-muted-foreground/40 sm:inline">/</span>
+                    <span className="truncate font-display font-semibold text-foreground">{sectionTitle}</span>
+                  </>
+                )}
+              </nav>
               <div className="flex-1" />
-              <span className="hidden items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand sm:inline-flex">
+              <span className="hidden items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                Hanpass Mobile · OB Call Management
+                OB Call Management
               </span>
+              <span
+                aria-hidden
+                className={`pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand transition-opacity duration-200 ${
+                  isNavigating ? "animate-pulse opacity-100" : "opacity-0"
+                }`}
+              />
             </header>
 
             <main className="min-w-0 flex-1 p-4 md:p-5">

@@ -190,3 +190,56 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+@layer base {
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-brand) 28%, transparent);
+    color: var(--color-foreground);
+  }
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-ring) 70%, transparent);
+    outline-offset: 2px;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-muted-foreground) 35%, transparent) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--color-muted-foreground) 30%, transparent);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--color-muted-foreground) 50%, transparent);
+  }
+}
+
+/* Scroll container for data tables: sticky header + fixed max height */
+@utility table-scroll {
+  overflow: auto;
+  max-height: var(--table-max-h, 64vh);
+}
+
+@utility sticky-head {
+  & thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: var(--color-card);
+    box-shadow: inset 0 -1px 0 var(--color-border);
+  }
+}
+
+@utility page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
