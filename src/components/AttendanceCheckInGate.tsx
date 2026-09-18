@@ -12,7 +12,7 @@ import { dateKey } from "@/lib/date-range";
  * If they never click, no attendance row exists → SLA logic treats today as absent (exempt).
  */
 export function AttendanceCheckInGate({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, isHanpassStaff, loading } = useAuth();
+  const { user, isAdmin, isHanpass, loading } = useAuth();
   const { t, i18n } = useTranslation();
   const [checked, setChecked] = useState(false);
   const [present, setPresent] = useState(false);
@@ -23,7 +23,7 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (loading || !user) return;
     // Admins bypass the check-in gate.
-    if (isAdmin || isHanpassStaff) {
+    if (isAdmin || isHanpass) {
       setChecked(true);
       setPresent(true);
       return;
@@ -43,7 +43,7 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
     return () => {
       cancelled = true;
     };
-  }, [user, isAdmin, isHanpassStaff, loading, today]);
+  }, [user, isAdmin, isHanpass, loading, today]);
 
   const handleCheckIn = async () => {
     if (!user) return;

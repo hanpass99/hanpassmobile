@@ -50,7 +50,7 @@ function useTelegramUnreadTotal(enabled: boolean) {
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useTranslation();
-  const { isAdmin, canAccessTelegram, isHanpassStaff } = useAuth();
+  const { isAdmin, canAccessTelegram, isHanpass } = useAuth();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const telegramEnabled = isAdmin || canAccessTelegram;
   const telegramUnread = useTelegramUnreadTotal(telegramEnabled);
@@ -109,7 +109,7 @@ export function AppSidebar() {
 
   const groupLabel = "px-2 text-[11px] font-medium tracking-normal text-sidebar-foreground/45";
 
-  if (isHanpassStaff && !isAdmin) {
+  if (isHanpass && !isAdmin) {
     return (
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border">

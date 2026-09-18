@@ -157,7 +157,7 @@ function useSectionTitle(pathname: string) {
 
 function AuthedShell() {
   useCallGoal();
-  const { isAdmin, isHanpassStaff, isActive, signOut, displayName } = useAuth();
+  const { isAdmin, isHanpass, isActive, signOut, displayName } = useAuth();
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isNavigating = useRouterState({ select: (s) => s.status === "pending" });
@@ -175,7 +175,7 @@ function AuthedShell() {
       </div>
     );
   }
-  if (isHanpassStaff && !isAdmin && !pathname.startsWith("/customers")) {
+  if (isHanpass && !isAdmin && !pathname.startsWith("/customers")) {
     return <Navigate to="/customers" search={{ pool: "activation_request" }} />;
   }
   return (
