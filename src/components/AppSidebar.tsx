@@ -136,7 +136,11 @@ export function AppSidebar() {
             <SidebarGroupLabel className={groupLabel}>{t("nav.main")}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {renderItems([{ title: t("nav.customers"), url: "/customers", icon: Users }])}
+                {renderItems([
+                  { title: t("nav.hanpassDash"), url: "/hanpass-dashboard", icon: BarChart3 },
+                  { title: t("nav.customers"), url: "/customers", icon: Users },
+                ])}
+
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
