@@ -193,6 +193,17 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 767px) {
+  [data-slot="card-header"] {
+    padding: 1rem;
+  }
+  [data-slot="card-content"] {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 }
 

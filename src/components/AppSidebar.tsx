@@ -12,6 +12,7 @@ import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 import i18n from "@/i18n";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +56,7 @@ export function AppSidebar() {
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const telegramEnabled = isAdmin || canAccessTelegram;
   const telegramUnread = useTelegramUnreadTotal(telegramEnabled);
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
@@ -94,7 +96,7 @@ export function AppSidebar() {
               "data-[active=true]:bg-primary/8 data-[active=true]:text-primary data-[active=true]:font-medium",
             )}
           >
-            <Link to={item.url} className="flex items-center gap-3">
+            <Link to={item.url} className="flex items-center gap-3" onClick={() => isMobile && setOpenMobile(false)}>
               <item.icon className={cn("h-4 w-4 text-sidebar-foreground/55", active && "text-primary")} />
               <span className="flex-1 truncate">{item.title}</span>
               {item.badge && item.badge > 0 ? (

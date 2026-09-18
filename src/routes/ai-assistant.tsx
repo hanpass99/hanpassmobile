@@ -11,7 +11,7 @@ export const Route = createFileRoute("/ai-assistant")({
 
 function AiAssistantPage() {
   return (
-    <div className="flex h-[calc(100vh-100px)] flex-col gap-4">
+    <div className="flex h-[calc(100dvh-5.5rem)] min-h-[420px] flex-col gap-3 sm:h-[calc(100vh-100px)] sm:gap-4">
       <PageHeader title="AI 어시스턴트" description="CRM 데이터를 대화로 조회하고 작업하세요" />
       <AiChatPanel className="flex-1 min-h-0" />
     </div>

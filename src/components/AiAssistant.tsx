@@ -35,7 +35,7 @@ export function AiAssistant() {
     }
     setPos({
       x: window.innerWidth - BTN_SIZE - 16,
-      y: window.innerHeight - BTN_SIZE - 16,
+      y: window.innerWidth < 768 ? 72 : window.innerHeight - BTN_SIZE - 16,
     });
   }, []);
 
@@ -101,8 +101,8 @@ export function AiAssistant() {
   };
 
   // Panel placement: prefer above, else below; align to button edge
-  const panelWidth = Math.min(400, window.innerWidth - 16);
-  const panelMaxHeight = Math.min(560, window.innerHeight - 32);
+  const panelWidth = Math.min(400, window.innerWidth - 32);
+  const panelMaxHeight = Math.min(560, window.innerHeight - 88);
   const spaceAbove = pos.y - 8;
   const spaceBelow = window.innerHeight - (pos.y + BTN_SIZE) - 8;
   const openAbove = spaceAbove >= 300 || spaceAbove >= spaceBelow;
@@ -111,7 +111,7 @@ export function AiAssistant() {
     Math.max(8, pos.x + BTN_SIZE - panelWidth),
     window.innerWidth - panelWidth - 8,
   );
-  const panelTop = openAbove ? pos.y - panelHeight - 8 : pos.y + BTN_SIZE + 8;
+  const panelTop = Math.max(64, openAbove ? pos.y - panelHeight - 8 : pos.y + BTN_SIZE + 8);
 
   return (
     <>

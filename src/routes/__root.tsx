@@ -188,12 +188,12 @@ function AuthedShell() {
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 bg-header px-4 text-header-foreground shadow-sm md:px-6">
+            <header className="sticky top-0 z-30 grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 bg-header px-3 text-header-foreground shadow-sm md:flex md:gap-3 md:px-6">
               <SidebarTrigger className="text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground" />
               <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[13px]">
-                <Link to="/" className="hidden items-center gap-2 font-medium text-header-foreground/70 hover:text-header-foreground sm:inline-flex">
+                <Link to="/" className="inline-flex shrink-0 items-center gap-2 font-medium text-header-foreground/70 hover:text-header-foreground">
                   <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-[10px] font-black text-brand-foreground">H</span>
-                  Hanpass Mobile
+                  <span className="hidden sm:inline">Hanpass Mobile</span>
                 </Link>
                 {sectionTitle && (
                   <>
@@ -202,7 +202,7 @@ function AuthedShell() {
                   </>
                 )}
               </nav>
-              <div className="flex-1" />
+              <div className="hidden flex-1 md:block" />
               <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-[10px] font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 OB Call Management
@@ -215,7 +215,7 @@ function AuthedShell() {
               />
             </header>
 
-            <main className="min-w-0 flex-1 p-4 md:p-5">
+            <main className="min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-5">
               <Outlet />
             </main>
           </div>
