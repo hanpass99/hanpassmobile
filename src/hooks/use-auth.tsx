@@ -7,6 +7,7 @@ type AuthCtx = {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  isActive: boolean | null;
   isHanpassStaff: boolean;
   canAccessNewSignup: boolean;
   canAccessTelegram: boolean;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isHanpassStaff, setIsHanpassStaff] = useState(false);
+  const [isActive, setIsActive] = useState<boolean | null>(null);
   const [company, setCompany] = useState("");
   const [canAccessNewSignup, setCanAccessNewSignup] = useState(false);
   const [canAccessTelegram, setCanAccessTelegram] = useState(false);
@@ -33,8 +35,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadProfile = async (uid: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
-      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup, can_access_telegram, company").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup, can_access_telegram, company, is_active").eq("id", uid).maybeSingle(),
     ]);
+    setIsActive((profile as any)?.is_active ?? true);
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
     setIsHanpassStaff(!!roles?.some((r) => (r.role as string) === "hanpass_staff"));
     setCompany((profile as any)?.company ?? "");
@@ -54,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setIsAdmin(false);
         setIsHanpassStaff(false);
+        setIsActive(null);
         setCompany("");
         setCanAccessNewSignup(false);
         setCanAccessTelegram(false);
@@ -77,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isAdmin,
         isHanpassStaff,
+        isActive,
         company,
         canAccessNewSignup,
         canAccessTelegram,
