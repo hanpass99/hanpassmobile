@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Users, Radio, AlertTriangle,
+  LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
   Settings, Users2, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
 } from "lucide-react";
+
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -68,9 +69,11 @@ export function AppSidebar() {
     { title: t("nav.callLogs"), url: "/call-logs", icon: PhoneCall },
   ] as Array<{ title: string; url: string; icon: typeof LayoutDashboard; badge?: number }>;
   const analyticsItems = [
+    ...(isAdmin ? [{ title: t("nav.hanpassDash"), url: "/hanpass-dashboard", icon: BarChart3 }] : []),
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
     { title: t("nav.sla"), url: "/sla", icon: AlertTriangle },
   ];
+
   const systemItems = [
     ...(isAdmin ? [{ title: "관리자 공지", url: "/notifications", icon: Bell }] : []),
     ...(isAdmin ? [{ title: "브로드캐스트", url: "/broadcast", icon: Megaphone }] : []),
@@ -133,7 +136,11 @@ export function AppSidebar() {
             <SidebarGroupLabel className={groupLabel}>{t("nav.main")}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {renderItems([{ title: t("nav.customers"), url: "/customers", icon: Users }])}
+                {renderItems([
+                  { title: t("nav.hanpassDash"), url: "/hanpass-dashboard", icon: BarChart3 },
+                  { title: t("nav.customers"), url: "/customers", icon: Users },
+                ])}
+
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

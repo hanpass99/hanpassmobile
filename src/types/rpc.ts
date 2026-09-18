@@ -75,7 +75,71 @@ export interface CustomerPoolCountRow {
   cnt: number | string;
 }
 
+// ---- 한패스 소속 전용 대시보드 ----
+
+export interface HanpassTotals {
+  handled?: number;
+  customers?: number;
+  activated?: number;
+  staff?: number;
+}
+
+export interface HanpassTeamRow {
+  country_id: string | null;
+  code: string;
+  staff: number;
+  handled: number;
+  activated: number;
+  status_counts: Record<string, number>;
+}
+
+export interface HanpassStaffRow {
+  staff_id: string;
+  name: string;
+  teams: string[];
+  handled: number;
+  activated: number;
+  customers: number;
+  active_days: number;
+  last_at: string | null;
+  status_counts: Record<string, number>;
+}
+
+export interface HanpassDailyRow {
+  day: string;
+  handled: number;
+  activated: number;
+}
+
+export interface HanpassHeatRow {
+  staff_id: string;
+  day: string;
+  cnt: number;
+}
+
+export interface HanpassRecentRow {
+  at: string;
+  staff: string;
+  customer: string;
+  phone: string | null;
+  code: string | null;
+  pool: string;
+  status: string;
+}
+
+export interface HanpassDashboard {
+  totals?: HanpassTotals;
+  prev_totals?: HanpassTotals;
+  by_team?: HanpassTeamRow[];
+  by_staff?: HanpassStaffRow[];
+  daily?: HanpassDailyRow[];
+  status_counts?: Record<string, number>;
+  heatmap?: HanpassHeatRow[];
+  recent?: HanpassRecentRow[];
+}
+
 // ---- Edge function payloads ----
+
 
 export interface AdminStaffActivityUser {
   id: string;

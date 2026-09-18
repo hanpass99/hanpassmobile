@@ -2065,6 +2065,16 @@ export type Database = {
         }
         Returns: Json
       }
+      stats_hanpass_dashboard: {
+        Args: {
+          _country_ids?: string[]
+          _date_from: string
+          _date_to: string
+          _pools?: string[]
+          _staff_ids?: string[]
+        }
+        Returns: Json
+      }
       stats_staff_call_completed: {
         Args: { _country_id?: string; _date_from?: string; _date_to?: string }
         Returns: {
