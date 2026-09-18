@@ -6,6 +6,7 @@ export default {
     staff: "직원 성과", country: "국가별 성과", channel: "채널별 성과",
     attendance: "출근 관리", reports: "리포트", settings: "설정",
     sms: "문자 발송", sla: "SLA 관리", callLogs: "통화 로그",
+    staffMgmt: "직원 관리",
   },
   head: {
     dashboard: "대시보드 — Hanpass Mobile OB Call CRM",
@@ -13,6 +14,7 @@ export default {
     sms: "문자 발송 — Hanpass OB CRM",
     sla: "SLA 관리 — Hanpass OB CRM",
     settings: "설정 — Hanpass OB CRM",
+    staff: "직원 관리 — Hanpass OB CRM",
     channel: "채널별 성과 — Hanpass OB CRM",
     attendance: "출근 관리 — Hanpass OB CRM",
   },
