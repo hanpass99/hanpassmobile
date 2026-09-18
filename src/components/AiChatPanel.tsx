@@ -94,10 +94,10 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
 
   return (
     <div style={style} className={cn("flex flex-col overflow-hidden rounded-xl border border-border bg-card", className)}>
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
           <span className="text-sm font-semibold">AI 어시스턴트</span>
-          <span className="text-[10px] text-muted-foreground">한국어 · English · O'zbekcha · Русский</span>
+          <span className="hidden truncate text-[10px] text-muted-foreground sm:inline">한국어 · English · O'zbekcha · Русский</span>
         </div>
         <Button
           variant="ghost"
@@ -113,7 +113,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
         </Button>
       </div>
 
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
         {messages.length === 0 && (
           <div className="mt-6 space-y-2 text-center text-xs text-muted-foreground">
             <p>고객 검색, 오늘 통화 통계, 상태별 조회, 메모 추가 등을 도와드립니다.</p>

@@ -345,7 +345,7 @@ function TemplatesTab() {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <CardTitle className="text-base">{t("sms.templatesTitle", { count: items.length })}</CardTitle>
         <Button size="sm" onClick={startNew}><Plus className="mr-1 h-4 w-4" />{t("sms.newTemplate")}</Button>
       </CardHeader>

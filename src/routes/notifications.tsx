@@ -244,7 +244,7 @@ function NotificationsPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 space-y-0">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="h-4 w-4" /> 수신 직원
             </CardTitle>

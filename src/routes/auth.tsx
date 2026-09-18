@@ -116,7 +116,7 @@ function AuthPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center">
-      <div className="grid w-full max-w-5xl min-h-screen md:min-h-0 md:h-[640px] overflow-hidden md:rounded-xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.15)] md:grid-cols-2">
+      <div className="grid min-h-[100dvh] w-full max-w-5xl overflow-y-auto shadow-[0_8px_32px_-8px_rgba(0,0,0,0.15)] md:h-[640px] md:min-h-0 md:grid-cols-2 md:overflow-hidden md:rounded-xl">
         {/* Left brand panel */}
         <div className="relative hidden flex-col justify-between bg-primary p-10 text-primary-foreground md:flex">
           <div className="flex items-center gap-3">

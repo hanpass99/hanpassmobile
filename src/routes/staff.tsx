@@ -270,8 +270,21 @@ function StaffAdmin() {
               </div>
               {isAdmin && (
                 <div className="mt-3 grid grid-cols-2 gap-2 border-t pt-3">
-                  {r.approval_status === "pending" ? <Button size="sm" onClick={() => approve(r)}><UserCheck className="mr-1 h-4 w-4" />{t("settings.approve")}</Button> : <Button size="sm" variant="outline" onClick={() => setInfoTarget(r)}>{t("common.edit")}</Button>}
+                  {r.approval_status === "pending" ? (
+                    <Button size="sm" onClick={() => approve(r)}><UserCheck className="mr-1 h-4 w-4" />{t("settings.approve")}</Button>
+                  ) : (
+                    <Select value={r.role ?? undefined} onValueChange={(v) => setRole(r, v as AppRole)}>
+                      <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="admin">{t("common.admin")}</SelectItem><SelectItem value="staff">{t("common.staff")}</SelectItem></SelectContent>
+                    </Select>
+                  )}
+                  <Select value={r.company} onValueChange={(v) => setCompany(r, v)}>
+                    <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="한패스">한패스</SelectItem><SelectItem value="한패스 모바일">한패스 모바일</SelectItem></SelectContent>
+                  </Select>
+                  {r.role !== "admin" && <div className="col-span-2"><MultiCountrySelect options={countries} value={r.country_ids} onChange={(next) => setCountries2(r, next)} /></div>}
                   {r.id !== user?.id && <Button size="sm" variant="outline" onClick={() => setResetTarget(r)}><KeyRound className="mr-1 h-4 w-4" />{t("settings.resetPwd")}</Button>}
+                  {r.id !== user?.id && (r.is_active ? <Button size="sm" variant="outline" className="text-destructive" onClick={() => setActive(r, false)}>{t("settings.deactivate")}</Button> : r.approval_status !== "pending" ? <Button size="sm" variant="outline" onClick={() => setActive(r, true)}>{t("settings.activate")}</Button> : null)}
                 </div>
               )}
             </div>

@@ -76,7 +76,7 @@ function SlaPage() {
       />
 
       <Tabs defaultValue="sla" className="space-y-6">
-        <TabsList>
+        <TabsList className="grid h-auto w-full grid-cols-2 sm:w-auto">
           <TabsTrigger value="sla">{t("sla.title")}</TabsTrigger>
           <TabsTrigger value="callfines">직원 콜 벌금</TabsTrigger>
         </TabsList>
@@ -103,7 +103,7 @@ function SlaPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="month">
-            <TabsList>
+            <TabsList className="grid h-auto w-full grid-cols-3 sm:w-auto">
               <TabsTrigger value="today">{t("sla.tabToday")}</TabsTrigger>
               <TabsTrigger value="week">{t("sla.tabWeek")}</TabsTrigger>
               <TabsTrigger value="month">{t("sla.tabMonth")}</TabsTrigger>
@@ -480,7 +480,7 @@ function AdminActionDialog(props: {
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label>{t("sla.periodStart")}</Label>
               <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
