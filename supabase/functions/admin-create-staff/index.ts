@@ -34,13 +34,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, password, display_name, department, country_ids, role } = body as {
+    const { email, password, display_name, department, company, country_ids, role } = body as {
       email: string;
       password: string;
       display_name: string;
       department?: string;
+      company?: string;
       country_ids?: string[];
-      role?: "admin" | "staff";
+      role?: "admin" | "staff" | "hanpass_staff";
     };
 
     if (!email || !password || !display_name) {
@@ -66,6 +67,10 @@ Deno.serve(async (req) => {
 
     const newId = created.user.id;
     const cids = Array.isArray(country_ids) ? country_ids.filter(Boolean) : [];
+    await admin
+      .from("profiles")
+      .update({ company: company === "한패스" ? "한패스" : "한패스 모바일" })
+      .eq("id", newId);
     if (department) {
       await admin.from("profiles").update({ department }).eq("id", newId);
     }

@@ -36,7 +36,7 @@ export default {
     failed: "Failed",
   },
   common: {
-    logout: "Sign out", admin: "Admin", staff: "Staff",
+    logout: "Sign out", admin: "Admin", staff: "Staff", hanpassStaff: "Hanpass staff",
     refresh: "Refresh", cancel: "Cancel", delete: "Delete", remove: "Remove",
     save: "Save", search: "Search", reset: "Reset", confirm: "Confirm",
     language: "Language", theme: "Theme", dark: "Dark", light: "Light",
@@ -392,7 +392,7 @@ export default {
     staffMgmtDesc: "Based on {{y}}/{{m}}. Staff can only view customers in their assigned country.",
     addStaff: "Add staff",
     name: "Name", email: "Email", lastAccess: "Last access",
-    department: "Department", role: "Role", assignedCountry: "Assigned country",
+    department: "Department", role: "Role", assignedCountry: "Assigned country", company: "Company",
     callTarget: "Call target", activationTarget: "Activation target",
     callTargetCount: "Call target (count)", activationTargetCount: "Activation target (count)",
     me: "(me)",

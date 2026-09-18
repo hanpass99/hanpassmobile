@@ -7,9 +7,11 @@ type AuthCtx = {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  isHanpassStaff: boolean;
   canAccessNewSignup: boolean;
   canAccessTelegram: boolean;
   displayName: string;
+  company: string;
   avatarUrl: string | null;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -21,6 +23,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isHanpassStaff, setIsHanpassStaff] = useState(false);
+  const [company, setCompany] = useState("");
   const [canAccessNewSignup, setCanAccessNewSignup] = useState(false);
   const [canAccessTelegram, setCanAccessTelegram] = useState(false);
   const [displayName, setDisplayName] = useState("");
@@ -29,9 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadProfile = async (uid: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
-      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup, can_access_telegram").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("display_name, avatar_url, can_access_new_signup, can_access_telegram, company").eq("id", uid).maybeSingle(),
     ]);
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
+    setIsHanpassStaff(!!roles?.some((r) => (r.role as string) === "hanpass_staff"));
+    setCompany((profile as any)?.company ?? "");
     setDisplayName(profile?.display_name ?? "");
     setAvatarUrl((profile as any)?.avatar_url ?? null);
     setCanAccessNewSignup(!!(profile as any)?.can_access_new_signup);
@@ -47,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setIsAdmin(false);
+        setIsHanpassStaff(false);
+        setCompany("");
         setCanAccessNewSignup(false);
         setCanAccessTelegram(false);
         setDisplayName("");
@@ -68,6 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         isAdmin,
+        isHanpassStaff,
+        company,
         canAccessNewSignup,
         canAccessTelegram,
         displayName,
