@@ -76,7 +76,9 @@ function AuthPage() {
     const fd = new FormData(e.currentTarget);
     const name = String(fd.get("name") ?? "").trim();
     const company = String(fd.get("company") ?? "한패스 모바일");
+    const countryId = String(fd.get("country_id") ?? "").trim();
     if (!name) return toast.error(t("auth.enterName"));
+    if (!countryId) return toast.error(t("country.selectRequired"));
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
     if (!parsed.success) return toast.error(parsed.error.errors[0].message);
     setBusy(true);
@@ -84,7 +86,11 @@ function AuthPage() {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        data: { display_name: name, company: company === "한패스" ? "한패스" : "한패스 모바일" },
+        data: {
+          display_name: name,
+          company: company === "한패스" ? "한패스" : "한패스 모바일",
+          country_id: countryId,
+        },
         emailRedirectTo: window.location.origin,
       },
     });
