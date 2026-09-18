@@ -67,6 +67,10 @@ Deno.serve(async (req) => {
 
     const newId = created.user.id;
     const cids = Array.isArray(country_ids) ? country_ids.filter(Boolean) : [];
+    await admin
+      .from("profiles")
+      .update({ company: company === "한패스" ? "한패스" : "한패스 모바일" })
+      .eq("id", newId);
     if (department) {
       await admin.from("profiles").update({ department }).eq("id", newId);
     }
