@@ -136,7 +136,9 @@ function AuthGate() {
 }
 
 const SECTION_TITLES: Array<[string, string]> = [
+  ["/hanpass-dashboard", "한패스 현황"],
   ["/customers", "고객 관리"],
+
   ["/sms", "문자 발송"],
   ["/telegram", "텔레그램 상담"],
   ["/call-logs", "통화 기록"],
@@ -179,9 +181,10 @@ function AuthedShell() {
   if (needsCountry) {
     return <CountrySetupGate />;
   }
-  if (isHanpass && !pathname.startsWith("/customers")) {
+  if (isHanpass && !pathname.startsWith("/customers") && !pathname.startsWith("/hanpass-dashboard")) {
     return <Navigate to="/customers" search={{ pool: "activation_request" }} />;
   }
+
   return (
     <AttendanceCheckInGate>
       <SidebarProvider>
