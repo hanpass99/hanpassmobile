@@ -2,14 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { AdminStaffActivityResponse, AdminStaffActivityUser } from "@/types/rpc";
 
+export type AppRole = "admin" | "staff" | "hanpass_staff";
+
 export type Country = { id: string; code: string; name_ko: string };
 
 export type SettingsRow = {
   id: string;
   display_name: string;
   department: string | null;
+  company: string;
   is_active: boolean;
-  role: "admin" | "staff";
+  role: AppRole;
   country_ids: string[];
   avatar_url: string | null;
   call_target: number;
@@ -43,7 +46,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
       ] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, department, is_active, country_id, avatar_url, sort_order, can_access_new_signup, can_access_telegram, phone")
+          .select("id, display_name, department, company, is_active, country_id, avatar_url, sort_order, can_access_new_signup, can_access_telegram, phone")
           .order("sort_order")
           .order("display_name"),
         supabase.from("user_roles").select("user_id, role"),
@@ -77,8 +80,9 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           id: p.id,
           display_name: p.display_name,
           department: p.department,
+          company: ((p as any).company as string) ?? "한패스 모바일",
           is_active: p.is_active,
-          role: (r?.role as "admin" | "staff") ?? "staff",
+          role: (r?.role as AppRole) ?? "staff",
           country_ids: pcMap.get(p.id) ?? [],
           avatar_url: p.avatar_url ?? null,
           call_target: tg?.call_target ?? 0,

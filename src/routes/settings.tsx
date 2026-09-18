@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSettingsData, type Country, type SettingsRow as Row } from "@/hooks/use-settings";
+import { useSettingsData, type AppRole, type Country, type SettingsRow as Row } from "@/hooks/use-settings";
 import type {
   AdminResetPasswordResponse,
   AdminDeleteStaffResponse,
@@ -66,6 +66,16 @@ function Settings() {
     }
   }, [data]);
 
+  const roleLabel = (role: AppRole) =>
+    role === "admin" ? t("common.admin") : role === "hanpass_staff" ? t("common.hanpassStaff") : t("common.staff");
+
+  const setCompany = async (r: Row, company: string) => {
+    const { error } = await supabase.rpc("admin_set_profile_company" as any, { _user_id: r.id, _company: company });
+    if (error) { toast.error(error.message); return; }
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, company } : x)));
+    toast.success(t("settings.roleChanged"));
+  };
+
   const load = () => queryClient.invalidateQueries({ queryKey: ["settings", Y, M, isAdmin] });
 
   const resetPassword = async () => {
@@ -104,8 +114,8 @@ function Settings() {
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: active } : x)));
   };
 
-  const setRole = async (r: Row, role: "admin" | "staff") => {
-    const { error } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: role });
+  const setRole = async (r: Row, role: AppRole) => {
+    const { error } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: role as any });
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.roleChanged"));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, role } : x)));
@@ -271,6 +281,7 @@ function Settings() {
                 <TableHead>{t("settings.email")}</TableHead>
                 <TableHead>{t("settings.lastAccess")}</TableHead>
                 <TableHead>{t("settings.department")}</TableHead>
+                <TableHead className="w-36">{t("settings.company")}</TableHead>
                 <TableHead className="w-40">{t("common.phone")}</TableHead>
 
                 <TableHead>{t("settings.role")}</TableHead>
@@ -285,7 +296,7 @@ function Settings() {
             <TableBody>
               {loading && !rows.length && Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={`sk-${i}`}>
-                  {Array.from({ length: isAdmin ? 13 : 11 }).map((__, j) => (
+                  {Array.from({ length: isAdmin ? 14 : 12 }).map((__, j) => (
                     <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                   ))}
                 </TableRow>
@@ -324,6 +335,19 @@ function Settings() {
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.department ?? "-"}</TableCell>
                   <TableCell>
+                    {isAdmin ? (
+                      <Select value={r.company} onValueChange={(v) => setCompany(r, v)}>
+                        <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="한패스">한패스</SelectItem>
+                          <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{r.company}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Input
                       value={r.phone ?? ""}
                       disabled={!isAdmin && r.id !== user?.id}
@@ -337,16 +361,17 @@ function Settings() {
 
                   <TableCell>
                     {isAdmin && r.id !== user?.id ? (
-                      <Select value={r.role} onValueChange={(v) => setRole(r, v as "admin" | "staff")}>
-                        <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
+                      <Select value={r.role} onValueChange={(v) => setRole(r, v as AppRole)}>
+                        <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">{t("common.admin")}</SelectItem>
                           <SelectItem value="staff">{t("common.staff")}</SelectItem>
+                          <SelectItem value="hanpass_staff">{t("common.hanpassStaff")}</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
                       <Badge variant={r.role === "admin" ? "default" : "secondary"}>
-                        {r.role === "admin" ? t("common.admin") : t("common.staff")}
+                        {roleLabel(r.role)}
                       </Badge>
                     )}
                   </TableCell>
@@ -455,7 +480,7 @@ function Settings() {
                 </TableRow>
               ))}
               {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={isAdmin ? 13 : 11} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isAdmin ? 14 : 12} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -498,7 +523,8 @@ function Settings() {
                 [t("settings.email"), infoTarget.email ?? "-"],
                 [t("common.phone"), infoTarget.phone || "-"],
                 [t("settings.department"), infoTarget.department ?? "-"],
-                [t("settings.role"), infoTarget.role],
+                [t("settings.company"), infoTarget.company],
+                [t("settings.role"), roleLabel(infoTarget.role)],
                 [
                   t("settings.lastAccess"),
                   infoTarget.last_sign_in_at
@@ -708,14 +734,15 @@ function CreateStaffDialog({
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [department, setDepartment] = useState("");
+  const [company, setCompany] = useState("한패스 모바일");
   const [countryIds, setCountryIds] = useState<string[]>([]);
-  const [role, setRole] = useState<"admin" | "staff">("staff");
+  const [role, setRole] = useState<AppRole>("staff");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setEmail(""); setPassword(""); setDisplayName(""); setDepartment("");
-      setCountryIds([]); setRole("staff");
+      setCompany("한패스 모바일"); setCountryIds([]); setRole("staff");
     }
   }, [open]);
 
@@ -730,6 +757,7 @@ function CreateStaffDialog({
           email, password,
           display_name: displayName,
           department: department || undefined,
+          company,
           country_ids: countryIds,
           role,
         },
@@ -783,12 +811,23 @@ function CreateStaffDialog({
             <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
           </div>
           <div className="space-y-2">
+            <Label>{t("settings.company")}</Label>
+            <Select value={company} onValueChange={setCompany}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="한패스">한패스</SelectItem>
+                <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label>{t("settings.role")}</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as "admin" | "staff")}>
+            <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="staff">{t("common.staff")}</SelectItem>
                 <SelectItem value="admin">{t("common.admin")}</SelectItem>
+                <SelectItem value="hanpass_staff">{t("common.hanpassStaff")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
