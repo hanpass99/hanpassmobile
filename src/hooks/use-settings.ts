@@ -97,7 +97,12 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           phone: (p as any).phone ?? null,
         };
       });
-      rows.sort((a, b) => Number(a.role !== null) - Number(b.role !== null) || a.sort_order - b.sort_order || a.display_name.localeCompare(b.display_name));
+      rows.sort(
+        (a, b) =>
+          Number(a.approval_status !== "pending") - Number(b.approval_status !== "pending") ||
+          a.sort_order - b.sort_order ||
+          a.display_name.localeCompare(b.display_name),
+      );
 
       return { rows, countries: (co ?? []) as Country[] };
     },
