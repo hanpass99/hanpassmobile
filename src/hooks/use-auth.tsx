@@ -76,6 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         isAdmin,
+        isHanpassStaff,
+        company,
         canAccessNewSignup,
         canAccessTelegram,
         displayName,
