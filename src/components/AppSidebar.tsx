@@ -50,7 +50,7 @@ function useTelegramUnreadTotal(enabled: boolean) {
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useTranslation();
-  const { isAdmin, canAccessTelegram } = useAuth();
+  const { isAdmin, canAccessTelegram, isHanpassStaff } = useAuth();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const telegramEnabled = isAdmin || canAccessTelegram;
   const telegramUnread = useTelegramUnreadTotal(telegramEnabled);
