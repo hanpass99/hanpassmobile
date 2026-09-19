@@ -352,6 +352,7 @@ export const syncQrActivation = createServerFn({ method: "POST" })
       pool: "qr_activation",
       source: "qr",
       notesLabel: "QR 개통 신청 자동 등록",
+      sheetName: QR_SHEET_NAME,
       rangeSuffix: "A2:E",
       columns: { ts: 0, name: 1, country: 2, phone: 3, sns: 4 },
       minDate: "2026-09-10",
