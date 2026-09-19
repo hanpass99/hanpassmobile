@@ -88,7 +88,7 @@ export default {
   common: {
     logout: "Sign out", admin: "Admin", staff: "Staff", hanpassStaff: "Hanpass staff",
     refresh: "Refresh", cancel: "Cancel", delete: "Delete", remove: "Remove",
-    save: "Save", search: "Search", reset: "Reset", confirm: "Confirm",
+    save: "Save", saved: "Saved.", search: "Search", reset: "Reset", confirm: "Confirm",
     language: "Language", theme: "Theme", dark: "Dark", light: "Light",
     selectAll: "Select all", deleteSelected: "Delete selected",
     startDate: "Start date", endDate: "End date", registeredDate: "Registered date", from: "From", to: "To",

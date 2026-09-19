@@ -88,7 +88,7 @@ export default {
   common: {
     logout: "로그아웃", admin: "관리자", staff: "직원", hanpassStaff: "한패스 직원",
     refresh: "새로고침", cancel: "취소", delete: "삭제", remove: "삭제",
-    save: "저장", search: "검색", reset: "초기화", confirm: "확인",
+    save: "저장", saved: "저장되었습니다.", search: "검색", reset: "초기화", confirm: "확인",
     language: "언어", theme: "테마", dark: "다크", light: "라이트",
     selectAll: "전체 선택", deleteSelected: "선택 삭제",
     startDate: "시작일", endDate: "종료일", registeredDate: "데이터 등록일", from: "시작일", to: "종료일",
