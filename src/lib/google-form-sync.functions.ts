@@ -343,6 +343,8 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
 // 2026-09-10 이후 접수 건만 수집, 한국 번호만 등록, 국적 제한 없음
 // ============================================================
 const QR_SPREADSHEET_ID = "16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM";
+// QR 시트 탭 이름이 "설문지 응답 시트1" → "설문지 응답 시트 (AUTOFILL)"로 변경됨
+const QR_SHEET_NAME = "설문지 응답 시트 (AUTOFILL)";
 
 export const syncQrActivation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
