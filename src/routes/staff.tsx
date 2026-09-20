@@ -530,7 +530,7 @@ function StaffAdmin() {
               )}
             </div>
           ))}
-          {!rows.length && !loading && <div className="py-8 text-center text-sm text-muted-foreground">{t("dashboard.noStaff")}</div>}
+          {!view.length && !loading && <div className="py-8 text-center text-sm text-muted-foreground">{t("dashboard.noStaff")}</div>}
         </CardContent>
         <CardContent className="hidden overflow-x-auto p-0 md:block">
           <Table>
