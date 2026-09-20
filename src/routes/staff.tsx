@@ -460,20 +460,32 @@ function StaffAdmin() {
             <TableBody>
               {loading && !rows.length && Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={`sk-${i}`}>
-                  {Array.from({ length: isAdmin ? 14 : 12 }).map((__, j) => (
+                  {Array.from({ length: isAdmin ? 15 : 12 }).map((__, j) => (
                     <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))}
-              {rows.map((r, idx) => (
+              {view.map((r) => {
+                const idx = rows.findIndex((x) => x.id === r.id);
+                return (
                 <TableRow key={r.id} className={r.approval_status === "pending" ? "bg-warning/5" : r.is_active ? "" : "opacity-60"}>
                   {isAdmin && (
                     <TableCell>
+                      <Checkbox
+                        checked={selected.includes(r.id)}
+                        onCheckedChange={(v) =>
+                          setSelected((prev) => (v ? [...prev, r.id] : prev.filter((x) => x !== r.id)))
+                        }
+                      />
+                    </TableCell>
+                  )}
+                  {isAdmin && (
+                    <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveRow(idx, -1)} title={t("settings.moveUp")}>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={!reorderEnabled || idx === 0} onClick={() => moveRow(idx, -1)} title={reorderEnabled ? t("settings.moveUp") : t("settings.reorderDisabled")}>
                           <ArrowUp className="h-3.5 w-3.5" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === rows.length - 1} onClick={() => moveRow(idx, 1)} title={t("settings.moveDown")}>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={!reorderEnabled || idx === rows.length - 1} onClick={() => moveRow(idx, 1)} title={reorderEnabled ? t("settings.moveDown") : t("settings.reorderDisabled")}>
                           <ArrowDown className="h-3.5 w-3.5" />
                         </Button>
                       </div>
