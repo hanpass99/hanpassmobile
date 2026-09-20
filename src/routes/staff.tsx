@@ -1038,7 +1038,10 @@ function CreateStaffDialog({
           </div>
           <div className="space-y-2">
             <Label>{t("settings.department")}</Label>
-            <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
+            <Input value={department} onChange={(e) => setDepartment(e.target.value)} list="dept-options-create" />
+            <datalist id="dept-options-create">
+              {departments.map((d) => <option key={d} value={d} />)}
+            </datalist>
           </div>
           <div className="space-y-2">
             <Label>{t("settings.company")}</Label>
