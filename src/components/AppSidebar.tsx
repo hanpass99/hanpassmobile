@@ -18,6 +18,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import i18n from "@/i18n";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useSystemChecks } from "@/hooks/use-system-health";
 
 
 function useTelegramUnreadTotal(enabled: boolean) {
