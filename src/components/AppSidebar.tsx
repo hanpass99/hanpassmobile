@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
   Settings, Users2, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
+  ShieldAlert,
 } from "lucide-react";
 
 import { useTranslation } from "react-i18next";
