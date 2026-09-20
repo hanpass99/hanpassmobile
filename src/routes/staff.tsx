@@ -985,3 +985,31 @@ function CreateStaffDialog({
     </Dialog>
   );
 }
+
+type SortKey = "default" | "name" | "department" | "company" | "role" | "last" | "target";
+
+function SortHead({
+  label, k, sortKey, sortDir, onSort,
+}: {
+  label: string;
+  k: SortKey;
+  sortKey: SortKey;
+  sortDir: "asc" | "desc";
+  onSort: (k: SortKey) => void;
+}) {
+  const active = sortKey === k;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(k)}
+      className={`inline-flex items-center gap-1 whitespace-nowrap ${active ? "text-foreground font-semibold" : ""}`}
+    >
+      {label}
+      {active ? (
+        sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-40" />
+      )}
+    </button>
+  );
+}
