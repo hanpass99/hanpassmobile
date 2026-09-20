@@ -440,18 +440,26 @@ function StaffAdmin() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                {isAdmin && (
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={view.length > 0 && selected.length === view.length}
+                      onCheckedChange={(v) => setSelected(v ? view.map((r) => r.id) : [])}
+                    />
+                  </TableHead>
+                )}
                 {isAdmin && <TableHead className="w-20">{t("settings.order")}</TableHead>}
-                <TableHead>{t("settings.name")}</TableHead>
+                <TableHead><SortHead label={t("settings.name")} k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
                 <TableHead>{t("settings.email")}</TableHead>
-                <TableHead>{t("settings.lastAccess")}</TableHead>
-                <TableHead>{t("settings.department")}</TableHead>
-                <TableHead className="w-36">{t("settings.company")}</TableHead>
+                <TableHead><SortHead label={t("settings.lastAccess")} k="last" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
+                <TableHead><SortHead label={t("settings.department")} k="department" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
+                <TableHead className="w-36"><SortHead label={t("settings.company")} k="company" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
                 <TableHead className="w-40">{t("common.phone")}</TableHead>
 
-                <TableHead>{t("settings.role")}</TableHead>
+                <TableHead><SortHead label={t("settings.role")} k="role" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
                 <TableHead>{t("settings.assignedCountry")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
-                <TableHead className="w-28">{t("settings.callTarget")}</TableHead>
+                <TableHead className="w-28"><SortHead label={t("settings.callTarget")} k="target" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
                 <TableHead className="w-28">{t("settings.activationTarget")}</TableHead>
                 {isAdmin && <TableHead className="w-32">{t("settings.newSignupAccess")}</TableHead>}
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
