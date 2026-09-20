@@ -951,12 +951,13 @@ function StaffAdmin() {
 
 
 function CreateStaffDialog({
-  open, onClose, onCreated, countries,
+  open, onClose, onCreated, countries, departments,
 }: {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
   countries: Country[];
+  departments: string[];
 }) {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
