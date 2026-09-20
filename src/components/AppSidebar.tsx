@@ -75,6 +75,9 @@ export function AppSidebar() {
   ];
 
   const systemItems = [
+    ...(isAdmin
+      ? [{ title: t("nav.systemHealth"), url: "/system-health", icon: ShieldAlert, badge: healthErrors }]
+      : []),
     ...(isAdmin ? [{ title: "관리자 공지", url: "/notifications", icon: Bell }] : []),
     ...(isAdmin ? [{ title: "브로드캐스트", url: "/broadcast", icon: Megaphone }] : []),
     ...(isAdmin ? [{ title: "AI 학습", url: "/ai-faq", icon: Bot }] : []),
