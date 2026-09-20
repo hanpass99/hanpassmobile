@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
   Settings, Users2, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
+  ShieldAlert,
 } from "lucide-react";
 
 import { useTranslation } from "react-i18next";
@@ -17,6 +18,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import i18n from "@/i18n";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useSystemChecks } from "@/hooks/use-system-health";
 
 
 function useTelegramUnreadTotal(enabled: boolean) {
@@ -58,6 +60,8 @@ export function AppSidebar() {
   const telegramEnabled = isAdmin || canAccessTelegram;
   const telegramUnread = useTelegramUnreadTotal(telegramEnabled);
   const { isMobile, setOpenMobile } = useSidebar();
+  const { data: healthRows } = useSystemChecks(isAdmin);
+  const healthErrors = (healthRows ?? []).filter((r) => r.status === "error").length;
 
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
@@ -75,6 +79,9 @@ export function AppSidebar() {
   ];
 
   const systemItems = [
+    ...(isAdmin
+      ? [{ title: t("nav.systemHealth"), url: "/system-health", icon: ShieldAlert, badge: healthErrors }]
+      : []),
     ...(isAdmin ? [{ title: "관리자 공지", url: "/notifications", icon: Bell }] : []),
     ...(isAdmin ? [{ title: "브로드캐스트", url: "/broadcast", icon: Megaphone }] : []),
     ...(isAdmin ? [{ title: "AI 학습", url: "/ai-faq", icon: Bot }] : []),

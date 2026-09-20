@@ -1392,6 +1392,39 @@ export type Database = {
         }
         Relationships: []
       }
+      system_checks: {
+        Row: {
+          category: string
+          check_key: string
+          checked_at: string
+          details: Json
+          id: string
+          message: string
+          metric: number | null
+          status: string
+        }
+        Insert: {
+          category: string
+          check_key: string
+          checked_at?: string
+          details?: Json
+          id?: string
+          message: string
+          metric?: number | null
+          status: string
+        }
+        Update: {
+          category?: string
+          check_key?: string
+          checked_at?: string
+          details?: Json
+          id?: string
+          message?: string
+          metric?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       targets: {
         Row: {
           activation_target: number
@@ -1809,6 +1842,18 @@ export type Database = {
       }
       is_hanpass_company: { Args: { _uid: string }; Returns: boolean }
       is_hanpass_staff: { Args: { _user_id: string }; Returns: boolean }
+      latest_system_checks: {
+        Args: never
+        Returns: {
+          category: string
+          check_key: string
+          checked_at: string
+          details: Json
+          message: string
+          metric: number
+          status: string
+        }[]
+      }
       match_ai_faq: {
         Args: { match_count?: number; query_embedding: string }
         Returns: {
@@ -1821,6 +1866,7 @@ export type Database = {
         }[]
       }
       normalize_google_form_phone: { Args: { _phone: string }; Returns: string }
+      run_system_checks: { Args: never; Returns: Json }
       search_customers: {
         Args: {
           _assigned_country?: string
