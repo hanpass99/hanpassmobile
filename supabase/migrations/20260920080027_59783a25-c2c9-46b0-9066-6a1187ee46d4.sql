@@ -1,0 +1,1 @@
+SELECT public.run_system_checks();
