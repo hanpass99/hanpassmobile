@@ -846,6 +846,7 @@ function StaffAdmin() {
         onClose={() => setShowCreate(false)}
         onCreated={load}
         countries={countries}
+        departments={departments}
       />
 
       {/* 비밀번호 초기화 확인 */}
