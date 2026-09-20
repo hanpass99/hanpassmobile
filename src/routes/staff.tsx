@@ -659,9 +659,10 @@ function StaffAdmin() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
-              {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={isAdmin ? 14 : 12} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
+                );
+              })}
+              {!view.length && !loading && (
+                <TableRow><TableCell colSpan={isAdmin ? 15 : 12} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
