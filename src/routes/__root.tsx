@@ -136,6 +136,7 @@ function AuthGate() {
 }
 
 const SECTION_TITLES: Array<[string, string]> = [
+  ["/system-health", "시스템 점검"],
   ["/hanpass-dashboard", "한패스 현황"],
   ["/customers", "고객 관리"],
 
