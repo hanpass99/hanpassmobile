@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TelegramRouteImport } from './routes/telegram'
+import { Route as SystemHealthRouteImport } from './routes/system-health'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SmsRouteImport } from './routes/sms'
 import { Route as SlaRouteImport } from './routes/sla'
@@ -39,6 +40,11 @@ import { Route as ApiPublicAiLearnRunRouteImport } from './routes/api/public/ai-
 const TelegramRoute = TelegramRouteImport.update({
   id: '/telegram',
   path: '/telegram',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SystemHealthRoute = SystemHealthRouteImport.update({
+  id: '/system-health',
+  path: '/system-health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffRoute = StaffRouteImport.update({
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
   '/staff': typeof StaffRoute
+  '/system-health': typeof SystemHealthRoute
   '/telegram': typeof TelegramRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
   '/staff': typeof StaffRoute
+  '/system-health': typeof SystemHealthRoute
   '/telegram': typeof TelegramRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/sla': typeof SlaRoute
   '/sms': typeof SmsRoute
   '/staff': typeof StaffRoute
+  '/system-health': typeof SystemHealthRoute
   '/telegram': typeof TelegramRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/sla'
     | '/sms'
     | '/staff'
+    | '/system-health'
     | '/telegram'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/sla'
     | '/sms'
     | '/staff'
+    | '/system-health'
     | '/telegram'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/sla'
     | '/sms'
     | '/staff'
+    | '/system-health'
     | '/telegram'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -361,6 +373,7 @@ export interface RootRouteChildren {
   SlaRoute: typeof SlaRoute
   SmsRoute: typeof SmsRoute
   StaffRoute: typeof StaffRoute
+  SystemHealthRoute: typeof SystemHealthRoute
   TelegramRoute: typeof TelegramRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/telegram'
       fullPath: '/telegram'
       preLoaderRoute: typeof TelegramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/system-health': {
+      id: '/system-health'
+      path: '/system-health'
+      fullPath: '/system-health'
+      preLoaderRoute: typeof SystemHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/staff': {
@@ -577,6 +597,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlaRoute: SlaRoute,
   SmsRoute: SmsRoute,
   StaffRoute: StaffRoute,
+  SystemHealthRoute: SystemHealthRoute,
   TelegramRoute: TelegramRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
