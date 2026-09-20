@@ -59,6 +59,8 @@ export function AppSidebar() {
   const telegramEnabled = isAdmin || canAccessTelegram;
   const telegramUnread = useTelegramUnreadTotal(telegramEnabled);
   const { isMobile, setOpenMobile } = useSidebar();
+  const { data: healthRows } = useSystemChecks(isAdmin);
+  const healthErrors = (healthRows ?? []).filter((r) => r.status === "error").length;
 
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
