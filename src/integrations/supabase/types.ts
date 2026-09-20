@@ -1753,6 +1753,10 @@ export type Database = {
         Args: { _country_id: string; _user_id: string }
         Returns: undefined
       }
+      admin_set_profile_department: {
+        Args: { _department: string; _user_id: string }
+        Returns: undefined
+      }
       admin_set_profile_new_signup_access: {
         Args: { _user_id: string; _value: boolean }
         Returns: undefined

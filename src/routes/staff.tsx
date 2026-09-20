@@ -14,9 +14,10 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Trash2, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
+import { Plus, RefreshCw, UserX, UserCheck, UserPlus, KeyRound, Copy, Trash2, ArrowUp, ArrowDown, AlertTriangle, Search, X, Download, ArrowUpDown } from "lucide-react";
 import { MultiCountrySelect } from "@/components/MultiCountrySelect";
-import { useEffect, useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -59,12 +60,153 @@ function StaffAdmin() {
   const [deleting, setDeleting] = useState(false);
   const [infoTarget, setInfoTarget] = useState<Row | null>(null);
 
+  // 검색 / 필터 / 정렬 / 선택
+  const [q, setQ] = useState("");
+  const [fDept, setFDept] = useState("all");
+  const [fCompany, setFCompany] = useState("all");
+  const [fRole, setFRole] = useState("all");
+  const [fStatus, setFStatus] = useState("all");
+  const [fCountry, setFCountry] = useState("all");
+  const [sortKey, setSortKey] = useState<"default" | "name" | "department" | "company" | "role" | "last" | "target">("default");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkDept, setBulkDept] = useState("");
+
   useEffect(() => {
     if (data) {
       setRows(data.rows);
       setCountries(data.countries);
     }
   }, [data]);
+
+  const NO_DEPT = "__none__";
+  const departments = useMemo(
+    () => Array.from(new Set(rows.map((r) => (r.department ?? "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [rows],
+  );
+
+  const statusOf = (r: Row) => (r.approval_status === "pending" ? "pending" : r.is_active ? "active" : "inactive");
+
+  const summary = useMemo(
+    () => ({
+      all: rows.length,
+      pending: rows.filter((r) => statusOf(r) === "pending").length,
+      active: rows.filter((r) => statusOf(r) === "active").length,
+      inactive: rows.filter((r) => statusOf(r) === "inactive").length,
+    }),
+    [rows],
+  );
+
+  const filterActive = q.trim() !== "" || fDept !== "all" || fCompany !== "all" || fRole !== "all" || fStatus !== "all" || fCountry !== "all";
+  const sortActive = sortKey !== "default";
+  const reorderEnabled = !filterActive && !sortActive;
+
+  const view = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    let out = rows.filter((r) => {
+      if (needle) {
+        const hay = [r.display_name, r.email ?? "", r.phone ?? "", r.department ?? "", r.company].join(" ").toLowerCase();
+        if (!hay.includes(needle)) return false;
+      }
+      if (fDept !== "all") {
+        const d = (r.department ?? "").trim();
+        if (fDept === NO_DEPT ? d !== "" : d !== fDept) return false;
+      }
+      if (fCompany !== "all" && r.company !== fCompany) return false;
+      if (fRole !== "all" && (r.role ?? "none") !== fRole) return false;
+      if (fStatus !== "all" && statusOf(r) !== fStatus) return false;
+      if (fCountry !== "all" && r.role !== "admin" && !r.country_ids.includes(fCountry)) return false;
+      return true;
+    });
+    if (sortActive) {
+      const dir = sortDir === "asc" ? 1 : -1;
+      const val = (r: Row) => {
+        switch (sortKey) {
+          case "name": return r.display_name.toLowerCase();
+          case "department": return (r.department ?? "").toLowerCase();
+          case "company": return r.company;
+          case "role": return r.role ?? "";
+          case "last": return r.last_sign_in_at ?? "";
+          case "target": return r.call_target;
+          default: return 0;
+        }
+      };
+      out = [...out].sort((a, b) => {
+        const va = val(a), vb = val(b);
+        if (va === vb) return a.display_name.localeCompare(b.display_name);
+        return (va > vb ? 1 : -1) * dir;
+      });
+    }
+    return out;
+  }, [rows, q, fDept, fCompany, fRole, fStatus, fCountry, sortKey, sortDir, sortActive]);
+
+  useEffect(() => {
+    setSelected((prev) => prev.filter((id) => view.some((r) => r.id === id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
+  const resetFilters = () => {
+    setQ(""); setFDept("all"); setFCompany("all"); setFRole("all"); setFStatus("all"); setFCountry("all");
+    setSortKey("default"); setSortDir("asc");
+  };
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      if (sortDir === "asc") setSortDir("desc");
+      else { setSortKey("default"); setSortDir("asc"); }
+    } else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const applyBulkDepartment = async () => {
+    const dept = bulkDept.trim();
+    if (!selected.length) return;
+    for (const id of selected) {
+      const { error } = await supabase.rpc("admin_set_profile_department" as any, { _user_id: id, _department: dept });
+      if (error) { toast.error(error.message); return; }
+    }
+    setRows((prev) => prev.map((x) => (selected.includes(x.id) ? { ...x, department: dept || null } : x)));
+    toast.success(t("settings.bulkDeptDone", { count: selected.length }));
+    setSelected([]);
+  };
+
+  const applyBulkCompany = async (company: string) => {
+    if (!selected.length) return;
+    for (const id of selected) {
+      const { error } = await supabase.rpc("admin_set_profile_company" as any, { _user_id: id, _company: company });
+      if (error) { toast.error(error.message); return; }
+    }
+    setRows((prev) => prev.map((x) => (selected.includes(x.id) ? { ...x, company } : x)));
+    toast.success(t("settings.bulkCompanyDone", { count: selected.length }));
+    setSelected([]);
+  };
+
+  const exportCsv = () => {
+    const header = ["이름", "이메일", "전화번호", "부서", "소속", "권한", "상태", "담당 국가", "콜 목표", "개통 목표", "마지막 접속"];
+    const lines = view.map((r) =>
+      [
+        r.display_name,
+        r.email ?? "",
+        r.phone ?? "",
+        r.department ?? "",
+        r.company,
+        roleLabel(r.role),
+        statusOf(r),
+        r.role === "admin" ? "ALL" : r.country_ids.map((id) => countries.find((c) => c.id === id)?.code ?? "?").join(" "),
+        String(r.call_target),
+        String(r.activation_target),
+        r.last_sign_in_at ?? "",
+      ]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    const blob = new Blob(["\uFEFF" + [header.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `staff-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const roleLabel = (role: AppRole | null) =>
     role === null
@@ -254,8 +396,104 @@ function StaffAdmin() {
             </Button>
           </div>
         </CardHeader>
+        <CardContent className="space-y-3 border-b p-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t("settings.searchPlaceholder")}
+              className="h-9 pl-8"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {([
+              ["all", t("common.all"), summary.all],
+              ["pending", t("settings.pendingApproval"), summary.pending],
+              ["active", t("common.active"), summary.active],
+              ["inactive", t("common.inactive"), summary.inactive],
+            ] as const).map(([key, label, count]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFStatus(key)}
+                className={`rounded-full border px-3 py-1 text-xs ${fStatus === key ? "border-primary bg-primary/10 text-primary font-semibold" : "text-muted-foreground"}`}
+              >
+                {label} {count}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <Select value={fDept} onValueChange={setFDept}>
+              <SelectTrigger className="h-9 sm:w-44"><SelectValue placeholder={t("settings.department")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("settings.department")}: {t("common.all")}</SelectItem>
+                <SelectItem value={NO_DEPT}>{t("settings.noDepartment")}</SelectItem>
+                {departments.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={fCompany} onValueChange={setFCompany}>
+              <SelectTrigger className="h-9 sm:w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("settings.company")}: {t("common.all")}</SelectItem>
+                <SelectItem value="한패스">한패스</SelectItem>
+                <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={fRole} onValueChange={setFRole}>
+              <SelectTrigger className="h-9 sm:w-36"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("settings.role")}: {t("common.all")}</SelectItem>
+                <SelectItem value="admin">{t("common.admin")}</SelectItem>
+                <SelectItem value="staff">{t("common.staff")}</SelectItem>
+                <SelectItem value="hanpass_staff">{t("common.hanpassStaff")}</SelectItem>
+                <SelectItem value="none">{t("settings.pendingApproval")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={fCountry} onValueChange={setFCountry}>
+              <SelectTrigger className="h-9 sm:w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("settings.assignedCountry")}: {t("common.all")}</SelectItem>
+                {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" className="h-9" onClick={exportCsv}>
+              <Download className="mr-1.5 h-4 w-4" /> CSV
+            </Button>
+            {(filterActive || sortActive) && (
+              <Button size="sm" variant="ghost" className="h-9" onClick={resetFilters}>
+                <X className="mr-1.5 h-4 w-4" /> {t("settings.resetFilters")}
+              </Button>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">{t("settings.resultCount", { n: view.length, total: rows.length })}</div>
+          {isAdmin && selected.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2">
+              <span className="text-xs font-medium">{t("settings.selectedCount", { n: selected.length })}</span>
+              <Input
+                value={bulkDept}
+                onChange={(e) => setBulkDept(e.target.value)}
+                placeholder={t("settings.department")}
+                list="dept-options"
+                className="h-8 w-40"
+              />
+              <datalist id="dept-options">
+                {departments.map((d) => <option key={d} value={d} />)}
+              </datalist>
+              <Button size="sm" className="h-8" onClick={applyBulkDepartment}>{t("settings.bulkDeptApply")}</Button>
+              <Select onValueChange={(v) => applyBulkCompany(v)}>
+                <SelectTrigger className="h-8 w-40"><SelectValue placeholder={t("settings.bulkCompanyApply")} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="한패스">한패스</SelectItem>
+                  <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="ghost" className="h-8" onClick={() => setSelected([])}>{t("common.cancel")}</Button>
+            </div>
+          )}
+        </CardContent>
         <CardContent className="space-y-3 p-3 md:hidden">
-          {rows.map((r) => (
+          {view.map((r) => (
             <div key={r.id} className="rounded-md border p-3">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                 <button type="button" className="min-w-0 text-left" onClick={() => setInfoTarget(r)}>
@@ -292,24 +530,32 @@ function StaffAdmin() {
               )}
             </div>
           ))}
-          {!rows.length && !loading && <div className="py-8 text-center text-sm text-muted-foreground">{t("dashboard.noStaff")}</div>}
+          {!view.length && !loading && <div className="py-8 text-center text-sm text-muted-foreground">{t("dashboard.noStaff")}</div>}
         </CardContent>
         <CardContent className="hidden overflow-x-auto p-0 md:block">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                {isAdmin && (
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={view.length > 0 && selected.length === view.length}
+                      onCheckedChange={(v) => setSelected(v ? view.map((r) => r.id) : [])}
+                    />
+                  </TableHead>
+                )}
                 {isAdmin && <TableHead className="w-20">{t("settings.order")}</TableHead>}
-                <TableHead>{t("settings.name")}</TableHead>
+                <TableHead><SortHead label={t("settings.name")} k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
                 <TableHead>{t("settings.email")}</TableHead>
-                <TableHead>{t("settings.lastAccess")}</TableHead>
-                <TableHead>{t("settings.department")}</TableHead>
-                <TableHead className="w-36">{t("settings.company")}</TableHead>
+                <TableHead><SortHead label={t("settings.lastAccess")} k="last" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
+                <TableHead><SortHead label={t("settings.department")} k="department" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
+                <TableHead className="w-36"><SortHead label={t("settings.company")} k="company" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
                 <TableHead className="w-40">{t("common.phone")}</TableHead>
 
-                <TableHead>{t("settings.role")}</TableHead>
+                <TableHead><SortHead label={t("settings.role")} k="role" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
                 <TableHead>{t("settings.assignedCountry")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
-                <TableHead className="w-28">{t("settings.callTarget")}</TableHead>
+                <TableHead className="w-28"><SortHead label={t("settings.callTarget")} k="target" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} /></TableHead>
                 <TableHead className="w-28">{t("settings.activationTarget")}</TableHead>
                 {isAdmin && <TableHead className="w-32">{t("settings.newSignupAccess")}</TableHead>}
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
@@ -318,20 +564,32 @@ function StaffAdmin() {
             <TableBody>
               {loading && !rows.length && Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={`sk-${i}`}>
-                  {Array.from({ length: isAdmin ? 14 : 12 }).map((__, j) => (
+                  {Array.from({ length: isAdmin ? 15 : 12 }).map((__, j) => (
                     <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))}
-              {rows.map((r, idx) => (
+              {view.map((r) => {
+                const idx = rows.findIndex((x) => x.id === r.id);
+                return (
                 <TableRow key={r.id} className={r.approval_status === "pending" ? "bg-warning/5" : r.is_active ? "" : "opacity-60"}>
                   {isAdmin && (
                     <TableCell>
+                      <Checkbox
+                        checked={selected.includes(r.id)}
+                        onCheckedChange={(v) =>
+                          setSelected((prev) => (v ? [...prev, r.id] : prev.filter((x) => x !== r.id)))
+                        }
+                      />
+                    </TableCell>
+                  )}
+                  {isAdmin && (
+                    <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveRow(idx, -1)} title={t("settings.moveUp")}>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={!reorderEnabled || idx === 0} onClick={() => moveRow(idx, -1)} title={reorderEnabled ? t("settings.moveUp") : t("settings.reorderDisabled")}>
                           <ArrowUp className="h-3.5 w-3.5" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === rows.length - 1} onClick={() => moveRow(idx, 1)} title={t("settings.moveDown")}>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" disabled={!reorderEnabled || idx === rows.length - 1} onClick={() => moveRow(idx, 1)} title={reorderEnabled ? t("settings.moveDown") : t("settings.reorderDisabled")}>
                           <ArrowDown className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -505,9 +763,10 @@ function StaffAdmin() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
-              {!rows.length && !loading && (
-                <TableRow><TableCell colSpan={isAdmin ? 14 : 12} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
+                );
+              })}
+              {!view.length && !loading && (
+                <TableRow><TableCell colSpan={isAdmin ? 15 : 12} className="text-center text-sm text-muted-foreground py-8">{t("dashboard.noStaff")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -587,6 +846,7 @@ function StaffAdmin() {
         onClose={() => setShowCreate(false)}
         onCreated={load}
         countries={countries}
+        departments={departments}
       />
 
       {/* 비밀번호 초기화 확인 */}
@@ -692,12 +952,13 @@ function StaffAdmin() {
 
 
 function CreateStaffDialog({
-  open, onClose, onCreated, countries,
+  open, onClose, onCreated, countries, departments,
 }: {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
   countries: Country[];
+  departments: string[];
 }) {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
@@ -779,7 +1040,10 @@ function CreateStaffDialog({
           </div>
           <div className="space-y-2">
             <Label>{t("settings.department")}</Label>
-            <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
+            <Input value={department} onChange={(e) => setDepartment(e.target.value)} list="dept-options-create" />
+            <datalist id="dept-options-create">
+              {departments.map((d) => <option key={d} value={d} />)}
+            </datalist>
           </div>
           <div className="space-y-2">
             <Label>{t("settings.company")}</Label>
@@ -820,5 +1084,33 @@ function CreateStaffDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+type SortKey = "default" | "name" | "department" | "company" | "role" | "last" | "target";
+
+function SortHead({
+  label, k, sortKey, sortDir, onSort,
+}: {
+  label: string;
+  k: SortKey;
+  sortKey: SortKey;
+  sortDir: "asc" | "desc";
+  onSort: (k: SortKey) => void;
+}) {
+  const active = sortKey === k;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(k)}
+      className={`inline-flex items-center gap-1 whitespace-nowrap ${active ? "text-foreground font-semibold" : ""}`}
+    >
+      {label}
+      {active ? (
+        sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-40" />
+      )}
+    </button>
   );
 }
