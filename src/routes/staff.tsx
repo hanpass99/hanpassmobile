@@ -60,12 +60,153 @@ function StaffAdmin() {
   const [deleting, setDeleting] = useState(false);
   const [infoTarget, setInfoTarget] = useState<Row | null>(null);
 
+  // 검색 / 필터 / 정렬 / 선택
+  const [q, setQ] = useState("");
+  const [fDept, setFDept] = useState("all");
+  const [fCompany, setFCompany] = useState("all");
+  const [fRole, setFRole] = useState("all");
+  const [fStatus, setFStatus] = useState("all");
+  const [fCountry, setFCountry] = useState("all");
+  const [sortKey, setSortKey] = useState<"default" | "name" | "department" | "company" | "role" | "last" | "target">("default");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkDept, setBulkDept] = useState("");
+
   useEffect(() => {
     if (data) {
       setRows(data.rows);
       setCountries(data.countries);
     }
   }, [data]);
+
+  const NO_DEPT = "__none__";
+  const departments = useMemo(
+    () => Array.from(new Set(rows.map((r) => (r.department ?? "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [rows],
+  );
+
+  const statusOf = (r: Row) => (r.approval_status === "pending" ? "pending" : r.is_active ? "active" : "inactive");
+
+  const summary = useMemo(
+    () => ({
+      all: rows.length,
+      pending: rows.filter((r) => statusOf(r) === "pending").length,
+      active: rows.filter((r) => statusOf(r) === "active").length,
+      inactive: rows.filter((r) => statusOf(r) === "inactive").length,
+    }),
+    [rows],
+  );
+
+  const filterActive = q.trim() !== "" || fDept !== "all" || fCompany !== "all" || fRole !== "all" || fStatus !== "all" || fCountry !== "all";
+  const sortActive = sortKey !== "default";
+  const reorderEnabled = !filterActive && !sortActive;
+
+  const view = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    let out = rows.filter((r) => {
+      if (needle) {
+        const hay = [r.display_name, r.email ?? "", r.phone ?? "", r.department ?? "", r.company].join(" ").toLowerCase();
+        if (!hay.includes(needle)) return false;
+      }
+      if (fDept !== "all") {
+        const d = (r.department ?? "").trim();
+        if (fDept === NO_DEPT ? d !== "" : d !== fDept) return false;
+      }
+      if (fCompany !== "all" && r.company !== fCompany) return false;
+      if (fRole !== "all" && (r.role ?? "none") !== fRole) return false;
+      if (fStatus !== "all" && statusOf(r) !== fStatus) return false;
+      if (fCountry !== "all" && r.role !== "admin" && !r.country_ids.includes(fCountry)) return false;
+      return true;
+    });
+    if (sortActive) {
+      const dir = sortDir === "asc" ? 1 : -1;
+      const val = (r: Row) => {
+        switch (sortKey) {
+          case "name": return r.display_name.toLowerCase();
+          case "department": return (r.department ?? "").toLowerCase();
+          case "company": return r.company;
+          case "role": return r.role ?? "";
+          case "last": return r.last_sign_in_at ?? "";
+          case "target": return r.call_target;
+          default: return 0;
+        }
+      };
+      out = [...out].sort((a, b) => {
+        const va = val(a), vb = val(b);
+        if (va === vb) return a.display_name.localeCompare(b.display_name);
+        return (va > vb ? 1 : -1) * dir;
+      });
+    }
+    return out;
+  }, [rows, q, fDept, fCompany, fRole, fStatus, fCountry, sortKey, sortDir, sortActive]);
+
+  useEffect(() => {
+    setSelected((prev) => prev.filter((id) => view.some((r) => r.id === id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
+  const resetFilters = () => {
+    setQ(""); setFDept("all"); setFCompany("all"); setFRole("all"); setFStatus("all"); setFCountry("all");
+    setSortKey("default"); setSortDir("asc");
+  };
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      if (sortDir === "asc") setSortDir("desc");
+      else { setSortKey("default"); setSortDir("asc"); }
+    } else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const applyBulkDepartment = async () => {
+    const dept = bulkDept.trim();
+    if (!selected.length) return;
+    for (const id of selected) {
+      const { error } = await supabase.rpc("admin_set_profile_department" as any, { _user_id: id, _department: dept });
+      if (error) { toast.error(error.message); return; }
+    }
+    setRows((prev) => prev.map((x) => (selected.includes(x.id) ? { ...x, department: dept || null } : x)));
+    toast.success(t("settings.bulkDeptDone", { count: selected.length }));
+    setSelected([]);
+  };
+
+  const applyBulkCompany = async (company: string) => {
+    if (!selected.length) return;
+    for (const id of selected) {
+      const { error } = await supabase.rpc("admin_set_profile_company" as any, { _user_id: id, _company: company });
+      if (error) { toast.error(error.message); return; }
+    }
+    setRows((prev) => prev.map((x) => (selected.includes(x.id) ? { ...x, company } : x)));
+    toast.success(t("settings.bulkCompanyDone", { count: selected.length }));
+    setSelected([]);
+  };
+
+  const exportCsv = () => {
+    const header = ["이름", "이메일", "전화번호", "부서", "소속", "권한", "상태", "담당 국가", "콜 목표", "개통 목표", "마지막 접속"];
+    const lines = view.map((r) =>
+      [
+        r.display_name,
+        r.email ?? "",
+        r.phone ?? "",
+        r.department ?? "",
+        r.company,
+        roleLabel(r.role),
+        statusOf(r),
+        r.role === "admin" ? "ALL" : r.country_ids.map((id) => countries.find((c) => c.id === id)?.code ?? "?").join(" "),
+        String(r.call_target),
+        String(r.activation_target),
+        r.last_sign_in_at ?? "",
+      ]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    const blob = new Blob(["\uFEFF" + [header.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `staff-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const roleLabel = (role: AppRole | null) =>
     role === null
