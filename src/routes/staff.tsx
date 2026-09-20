@@ -396,8 +396,104 @@ function StaffAdmin() {
             </Button>
           </div>
         </CardHeader>
+        <CardContent className="space-y-3 border-b p-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t("settings.searchPlaceholder")}
+              className="h-9 pl-8"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {([
+              ["all", t("common.all"), summary.all],
+              ["pending", t("settings.pendingApproval"), summary.pending],
+              ["active", t("common.active"), summary.active],
+              ["inactive", t("common.inactive"), summary.inactive],
+            ] as const).map(([key, label, count]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFStatus(key)}
+                className={`rounded-full border px-3 py-1 text-xs ${fStatus === key ? "border-primary bg-primary/10 text-primary font-semibold" : "text-muted-foreground"}`}
+              >
+                {label} {count}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <Select value={fDept} onValueChange={setFDept}>
+              <SelectTrigger className="h-9 sm:w-44"><SelectValue placeholder={t("settings.department")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("settings.department")}: {t("common.all")}</SelectItem>
+                <SelectItem value={NO_DEPT}>{t("settings.noDepartment")}</SelectItem>
+                {departments.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={fCompany} onValueChange={setFCompany}>
+              <SelectTrigger className="h-9 sm:w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("settings.company")}: {t("common.all")}</SelectItem>
+                <SelectItem value="한패스">한패스</SelectItem>
+                <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={fRole} onValueChange={setFRole}>
+              <SelectTrigger className="h-9 sm:w-36"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("settings.role")}: {t("common.all")}</SelectItem>
+                <SelectItem value="admin">{t("common.admin")}</SelectItem>
+                <SelectItem value="staff">{t("common.staff")}</SelectItem>
+                <SelectItem value="hanpass_staff">{t("common.hanpassStaff")}</SelectItem>
+                <SelectItem value="none">{t("settings.pendingApproval")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={fCountry} onValueChange={setFCountry}>
+              <SelectTrigger className="h-9 sm:w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("settings.assignedCountry")}: {t("common.all")}</SelectItem>
+                {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" className="h-9" onClick={exportCsv}>
+              <Download className="mr-1.5 h-4 w-4" /> CSV
+            </Button>
+            {(filterActive || sortActive) && (
+              <Button size="sm" variant="ghost" className="h-9" onClick={resetFilters}>
+                <X className="mr-1.5 h-4 w-4" /> {t("settings.resetFilters")}
+              </Button>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">{t("settings.resultCount", { n: view.length, total: rows.length })}</div>
+          {isAdmin && selected.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2">
+              <span className="text-xs font-medium">{t("settings.selectedCount", { n: selected.length })}</span>
+              <Input
+                value={bulkDept}
+                onChange={(e) => setBulkDept(e.target.value)}
+                placeholder={t("settings.department")}
+                list="dept-options"
+                className="h-8 w-40"
+              />
+              <datalist id="dept-options">
+                {departments.map((d) => <option key={d} value={d} />)}
+              </datalist>
+              <Button size="sm" className="h-8" onClick={applyBulkDepartment}>{t("settings.bulkDeptApply")}</Button>
+              <Select onValueChange={(v) => applyBulkCompany(v)}>
+                <SelectTrigger className="h-8 w-40"><SelectValue placeholder={t("settings.bulkCompanyApply")} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="한패스">한패스</SelectItem>
+                  <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="ghost" className="h-8" onClick={() => setSelected([])}>{t("common.cancel")}</Button>
+            </div>
+          )}
+        </CardContent>
         <CardContent className="space-y-3 p-3 md:hidden">
-          {rows.map((r) => (
+          {view.map((r) => (
             <div key={r.id} className="rounded-md border p-3">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                 <button type="button" className="min-w-0 text-left" onClick={() => setInfoTarget(r)}>
