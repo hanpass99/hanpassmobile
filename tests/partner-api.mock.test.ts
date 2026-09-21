@@ -1,140 +1,191 @@
 /**
- * Mock-based integration tests for the intake semantics.
+ * Mock-based tests for the append-only intake semantics.
  *
- * IMPORTANT: this is a JavaScript in-memory simulation of the intended RPC
- * behaviour. It does NOT exercise PostgreSQL, unique indexes, transactions or
- * real concurrency, and must not be read as proof of database-level
- * correctness. Real concurrency behaviour can only be verified once an
- * independent test database exists and the draft SQL is applied there.
+ * IMPORTANT: this is a JavaScript in-memory simulation of the route logic and
+ * of two PostgreSQL unique indexes. It does NOT exercise PostgreSQL,
+ * transactions, triggers or real concurrency, and must NOT be read as proof of
+ * database-level correctness. No claim about the real database is made here.
  */
 import { describe, expect, it } from "bun:test";
 import {
   applicationRequestSchema,
-  buildApplicantSnapshot,
   buildFullName,
-  buildProductSnapshot,
-  normalizeNameKey,
+  buildHashPayload,
+  buildNotes,
+  deriveCustomerId,
+  encodeMarker,
+  kstDate,
+  mapCustomerStatus,
+  markerMatches,
+  markerScopeMatches,
   normalizePhone,
+  parseMarker,
   requestHash,
+  resolvePartnerId,
+  UNKNOWN_NATIONALITY,
   type ApplicationRequest,
+  type MarkerPayload,
 } from "../src/lib/partner-api";
 
-/* ---------------- in-memory stand-in for the RPC ------------------- */
+/* ---------------- in-memory stand-in for public.customers ---------------- */
 
-type Customer = { id: string; name: string; phone: string; pool: string; status: string };
-type App = {
+type Row = {
   id: string;
-  partnerId: string;
-  externalApplicationId: string;
-  idempotencyKey: string;
-  requestHash: string;
-  customerId: string | null;
-  linkMode: "created" | "linked" | "unlinked_needs_review";
-  applicantSnapshot: ReturnType<typeof buildApplicantSnapshot>;
-  productSnapshot: unknown;
+  name: string;
+  phone: string;
+  pool: string;
   status: string;
-  reviewReason: string | null;
-  assignedToPolicy: null;
-  receivedAt: string;
+  signup_date: string;
+  application_date: string;
+  requested_plan: string | null;
+  monthly_fee: number | null;
+  customer_type: string | null;
+  country_id: string | null;
+  assigned_to: string | null;
+  call_round: number | null;
+  notes: string | null;
+  created_at: string;
 };
 
-class MockStore {
-  customers: Customer[] = [];
-  apps: App[] = [];
-  private seq = 0;
-  private id() {
-    return `id-${++this.seq}`;
+class Db {
+  rows: Row[] = [];
+  countries = [{ id: "country-mn", code: "MN" }];
+  /** Writes the simulation is allowed to observe — used to prove append-only. */
+  ops: string[] = [];
+
+  selectById(id: string) {
+    this.ops.push("select");
+    return this.rows.find((r) => r.id === id) ?? null;
   }
 
-  submit(partnerId: string, idempotencyKey: string, req: ApplicationRequest, hash: string) {
-    const byKey = this.apps.find(
-      (a) => a.partnerId === partnerId && a.idempotencyKey === idempotencyKey
-    );
-    if (byKey) {
-      return byKey.requestHash === hash
-        ? { outcome: "replayed" as const, app: byKey }
-        : { outcome: "conflict" as const, reason: "idempotency_key_conflict" };
-    }
-    const byExt = this.apps.find(
-      (a) => a.partnerId === partnerId && a.externalApplicationId === req.externalApplicationId
-    );
-    if (byExt) {
-      return byExt.requestHash === hash
-        ? { outcome: "replayed" as const, app: byExt }
-        : { outcome: "conflict" as const, reason: "external_application_id_conflict" };
-    }
-
-    const phone = normalizePhone(req.applicant.phone)!;
-    const name = normalizeNameKey(buildFullName(req.applicant));
-    // Existing customers are normalized on the stored side too, so a row saved
-    // as +82 10 ... still compares equal to an incoming 010-... number.
-    const samePhone = this.customers.filter(
-      (c) => c.pool === "activation_request" && normalizePhone(c.phone) === phone
-    );
-    const matches = samePhone.filter((c) => normalizeNameKey(c.name) === name);
-
-    let customerId: string | null;
-    let linkMode: App["linkMode"];
-    let status = "received";
-    let reviewReason: string | null = null;
-    if (matches.length === 1) {
-      customerId = matches[0].id;
-      linkMode = "linked";
-    } else if (matches.length > 1) {
-      customerId = null;
-      linkMode = "unlinked_needs_review";
-      status = "needs_review";
-      reviewReason = "multiple_customer_matches";
-    } else if (samePhone.length > 0) {
-      // Same number, different name: never merge, never create a second person.
-      customerId = null;
-      linkMode = "unlinked_needs_review";
-      status = "needs_review";
-      reviewReason = "phone_match_name_mismatch";
-    } else {
-      const c: Customer = {
-        id: this.id(),
-        name: buildFullName(req.applicant),
-        phone,
-        pool: "activation_request",
-        status: "new",
-      };
-      this.customers.push(c);
-      customerId = c.id;
-      linkMode = "created";
-    }
-
-    const app: App = {
-      id: this.id(),
-      partnerId,
-      externalApplicationId: req.externalApplicationId,
-      idempotencyKey,
-      requestHash: hash,
-      customerId,
-      linkMode,
-      applicantSnapshot: buildApplicantSnapshot(req, phone),
-      productSnapshot: buildProductSnapshot(req),
-      status,
-      reviewReason,
-      assignedToPolicy: null,
-      receivedAt: new Date().toISOString(),
-    };
-    this.apps.push(app);
-    return { outcome: "created" as const, app };
+  countryIdByCode(code: string) {
+    this.ops.push("select");
+    return this.countries.find((c) => c.code === code)?.id ?? null;
   }
 
-  get(partnerId: string, externalApplicationId: string) {
-    return (
-      this.apps.find(
-        (a) => a.partnerId === partnerId && a.externalApplicationId === externalApplicationId
-      ) ?? null
-    );
+  insert(row: Row): { error?: { code: string } } {
+    this.ops.push("insert");
+    if (this.rows.some((r) => r.id === row.id)) return { error: { code: "23505" } };
+    // partial unique index: (name, phone, signup_date) where pool = activation_request
+    if (
+      row.pool === "activation_request" &&
+      this.rows.some(
+        (r) =>
+          r.pool === "activation_request" &&
+          r.name === row.name &&
+          r.phone === row.phone &&
+          r.signup_date === row.signup_date
+      )
+    ) {
+      return { error: { code: "23505" } };
+    }
+    this.rows.push(row);
+    return {};
   }
 }
 
+type Result = { status: number; body: Record<string, unknown> };
+
+/** Mirrors the POST handler, minus HTTP plumbing. */
+async function post(
+  db: Db,
+  opts: { apiKey: string; keySpec: string; idempotencyKey?: string; req: ApplicationRequest }
+): Promise<Result> {
+  const partnerId = resolvePartnerId(opts.keySpec, opts.apiKey);
+  if (!partnerId) return { status: 401, body: { error: "unauthorized" } };
+
+  const data = opts.req;
+  const idem = opts.idempotencyKey ?? data.externalApplicationId;
+  if (idem.toLowerCase() !== data.externalApplicationId.toLowerCase()) {
+    return { status: 400, body: { error: "idempotency_key_mismatch" } };
+  }
+
+  const phone = normalizePhone(data.applicant.phone)!;
+  const hash = await requestHash(buildHashPayload(data, phone));
+  const id = await deriveCustomerId(partnerId, data.externalApplicationId);
+  const expected: MarkerPayload = {
+    partnerId,
+    externalApplicationId: data.externalApplicationId,
+    idempotencyKey: data.externalApplicationId,
+    requestHash: hash,
+  };
+
+  const replayOrConflict = (row: Row): Result =>
+    markerMatches(parseMarker(row.notes), expected)
+      ? {
+          status: 200,
+          body: { result: "replayed", applicationId: row.id, status: mapCustomerStatus(row.status) },
+        }
+      : { status: 409, body: { error: "marker_mismatch" } };
+
+  const existing = db.selectById(id);
+  if (existing) return replayOrConflict(existing);
+
+  const countryId =
+    data.applicant.nationality === UNKNOWN_NATIONALITY
+      ? null
+      : db.countryIdByCode(data.applicant.nationality);
+
+  const day = kstDate(data.submittedAt);
+  const row: Row = {
+    id,
+    name: buildFullName(data.applicant),
+    phone,
+    pool: "activation_request",
+    status: "new",
+    signup_date: day,
+    application_date: day,
+    requested_plan: data.product.name,
+    monthly_fee: data.product.monthlyFee,
+    customer_type: data.product.type,
+    country_id: countryId,
+    assigned_to: null,
+    call_round: null,
+    notes: buildNotes(data, encodeMarker(expected)),
+    created_at: new Date().toISOString(),
+  };
+
+  const { error } = db.insert(row);
+  if (error?.code === "23505") {
+    const raced = db.selectById(id);
+    if (raced) return replayOrConflict(raced);
+    return { status: 409, body: { error: "customer_duplicate" } };
+  }
+  return { status: 201, body: { result: "created", applicationId: id, status: "received" } };
+}
+
+/** Mirrors the GET handler. */
+async function get(
+  db: Db,
+  opts: { apiKey: string; keySpec: string; externalApplicationId: string }
+): Promise<Result> {
+  const partnerId = resolvePartnerId(opts.keySpec, opts.apiKey);
+  if (!partnerId) return { status: 401, body: { error: "unauthorized" } };
+  const id = await deriveCustomerId(partnerId, opts.externalApplicationId);
+  const row = db.selectById(id);
+  if (!row || !markerScopeMatches(parseMarker(row.notes), partnerId, opts.externalApplicationId)) {
+    return { status: 404, body: { error: "not_found" } };
+  }
+  return {
+    status: 200,
+    body: {
+      applicationId: row.id,
+      externalApplicationId: opts.externalApplicationId,
+      status: mapCustomerStatus(row.status),
+      receivedAt: row.created_at,
+    },
+  };
+}
+
+/* ------------------------------ fixtures -------------------------------- */
+
+const EXT_1 = "6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f";
+const EXT_2 = "9b2d7e51-2c3a-4d5b-9e7f-0a1b2c3d4e5f";
+const KEYS = "nh:AAA,nh:AAA2,hp:BBB";
+
 const base = (over: Record<string, unknown> = {}): ApplicationRequest =>
   applicationRequestSchema.parse({
-    externalApplicationId: "hp-0001",
+    externalApplicationId: EXT_1,
     source: "nh_allone",
     locale: "mn",
     applicant: {
@@ -161,187 +212,207 @@ const base = (over: Record<string, unknown> = {}): ApplicationRequest =>
     ...over,
   });
 
-const submit = async (s: MockStore, key: string, req: ApplicationRequest, partner = "nh") =>
-  s.submit(partner, key, req, await requestHash(req));
+/* -------------------------------- tests --------------------------------- */
 
-/* ---------------------------- tests -------------------------------- */
-
-describe("intake semantics (mock)", () => {
-  it("creates a customer and an application on first submit", async () => {
-    const s = new MockStore();
-    const r = await submit(s, "k1", base());
-    expect(r.outcome).toBe("created");
-    expect(s.customers.length).toBe(1);
-    expect(s.apps.length).toBe(1);
-    expect(s.apps[0].linkMode).toBe("created");
+describe("append-only intake (mock)", () => {
+  it("creates exactly one customer row and writes nothing else", async () => {
+    const db = new Db();
+    const r = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    expect(r.status).toBe(201);
+    expect(db.rows.length).toBe(1);
+    expect(db.ops.filter((o) => o === "insert").length).toBe(1);
+    const row = db.rows[0];
+    expect(row.pool).toBe("activation_request");
+    expect(row.status).toBe("new");
+    expect(row.assigned_to).toBeNull();
+    expect(row.call_round).toBeNull();
+    expect(row.requested_plan).toBe("SK Light 49");
+    expect(row.customer_type).toBe("sim");
+    expect(row.country_id).toBe("country-mn");
   });
 
-  it("replays the same key with the same body", async () => {
-    const s = new MockStore();
-    const first = await submit(s, "k1", base());
-    const again = await submit(s, "k1", base());
-    expect(again.outcome).toBe("replayed");
-    expect((again as any).app.id).toBe((first as any).app.id);
-    expect(s.apps.length).toBe(1);
+  it("uses the Korean calendar date of submittedAt", async () => {
+    const db = new Db();
+    // 2026-09-21T16:30Z is already 2026-09-22 in Seoul.
+    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base({ submittedAt: "2026-09-21T16:30:00Z" }) });
+    expect(db.rows[0].signup_date).toBe("2026-09-22");
+    expect(db.rows[0].application_date).toBe("2026-09-22");
   });
 
-  it("rejects the same key with a different body (409)", async () => {
-    const s = new MockStore();
-    await submit(s, "k1", base());
-    const conflict = await submit(
-      s,
-      "k1",
-      base({ product: { ...base().product, code: "lg-hanpass7", name: "LG Hanpass 7" } })
-    );
-    expect(conflict.outcome).toBe("conflict");
-    expect((conflict as any).reason).toBe("idempotency_key_conflict");
+  it("replays an identical resubmit without inserting again", async () => {
+    const db = new Db();
+    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const again = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    expect(again.status).toBe(200);
+    expect(again.body.result).toBe("replayed");
+    expect(db.rows.length).toBe(1);
   });
 
-  it("rejects a reused externalApplicationId with different content", async () => {
-    const s = new MockStore();
-    await submit(s, "k1", base());
-    const conflict = await submit(s, "k2", base({ locale: "vi" }));
-    expect(conflict.outcome).toBe("conflict");
-    expect((conflict as any).reason).toBe("external_application_id_conflict");
+  it("collapses simultaneous submits via the PK collision path (simulation only)", async () => {
+    const db = new Db();
+    const req = base();
+    const results = [] as Result[];
+    for (let i = 0; i < 3; i++) {
+      results.push(await post(db, { apiKey: "AAA", keySpec: KEYS, req }));
+    }
+    expect(results.filter((r) => r.status === 201).length).toBe(1);
+    expect(results.filter((r) => r.body.result === "replayed").length).toBe(2);
+    expect(db.rows.length).toBe(1);
   });
 
-  it("keeps a second, different product application as its own row", async () => {
-    const s = new MockStore();
-    await submit(s, "k1", base());
-    const second = await submit(
-      s,
-      "k2",
-      base({
-        externalApplicationId: "hp-0002",
-        product: {
-          code: "bundle-a175",
-          type: "bundle",
-          name: "Bundle A17 5G",
-          carrier: "LGU+",
-          monthlyFee: 33000,
-          deviceModel: "Galaxy A17 5G",
-          devicePrice: 0,
-          contractMonths: 24,
-          bundledPlanCode: "lg-hanpass7",
-          currency: "KRW",
-        },
-      })
-    );
-    expect(second.outcome).toBe("created");
-    expect(s.apps.length).toBe(2);
-    expect(s.customers.length).toBe(1); // linked, not duplicated
-    expect(s.apps[1].linkMode).toBe("linked");
-    expect((s.apps[1].productSnapshot as any).devicePrice).toBe(0);
+  it("rejects the same external id with a different body (409, nothing overwritten)", async () => {
+    const db = new Db();
+    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const notesBefore = db.rows[0].notes;
+    const conflict = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base({ locale: "vi" }) });
+    expect(conflict.status).toBe(409);
+    expect(conflict.body.error).toBe("marker_mismatch");
+    expect(db.rows.length).toBe(1);
+    expect(db.rows[0].notes).toBe(notesBefore);
   });
 
-  it("sends a same-number/different-name application to needs_review instead of creating a customer", async () => {
-    const s = new MockStore();
-    await submit(s, "k1", base());
-    const other = await submit(
-      s,
-      "k2",
-      base({
-        externalApplicationId: "hp-0003",
-        applicant: {
-          firstName: "Nara",
-          middleName: null,
-          lastName: "Tseren",
-          phone: "010-1234-5678",
-          nationality: "MN",
-        },
-      })
-    );
-    expect(other.outcome).toBe("created");
-    expect(s.customers.length).toBe(1); // no second person on the same number
-    expect(s.apps[1].customerId).toBeNull();
-    expect(s.apps[1].linkMode).toBe("unlinked_needs_review");
-    expect(s.apps[1].status).toBe("needs_review");
-    expect(s.apps[1].reviewReason).toBe("phone_match_name_mismatch");
+  it("keeps the same derived id after an API key rotation", async () => {
+    const db = new Db();
+    const first = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const rotated = await post(db, { apiKey: "AAA2", keySpec: KEYS, req: base() });
+    expect(rotated.status).toBe(200);
+    expect(rotated.body.applicationId).toBe(first.body.applicationId);
+    expect(db.rows.length).toBe(1);
   });
 
-  it("matches an existing customer stored in +82 form through normalization", async () => {
-    const s = new MockStore();
-    s.customers.push({
-      id: "c5",
-      name: "Erdene Bat",
-      phone: "+82 10 1234 5678",
-      pool: "activation_request",
-      status: "new",
+  it("gives a different partner a different id for the same external id", async () => {
+    const db = new Db();
+    const nh = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    // A different applicant, so the pre-existing (name, phone, date) dedup
+    // index is not what this test measures.
+    const hp = await post(db, {
+      apiKey: "BBB",
+      keySpec: KEYS,
+      req: base({
+        applicant: { ...base().applicant, firstName: "Nara", lastName: "Tseren" },
+      }),
     });
-    const r = await submit(s, "k1", base());
-    expect((r as any).app.linkMode).toBe("linked");
-    expect((r as any).app.customerId).toBe("c5");
-    expect(s.customers.length).toBe(1);
+    expect(hp.status).toBe(201);
+    expect(hp.body.applicationId).not.toBe(nh.body.applicationId);
+    expect((await get(db, { apiKey: "BBB", keySpec: KEYS, externalApplicationId: EXT_1 })).body
+      .applicationId).toBe(hp.body.applicationId);
   });
 
-  it("preserves the applicant snapshot when nothing is linked", async () => {
-    const s = new MockStore();
-    s.customers.push(
-      { id: "c1", name: "Erdene Bat", phone: "010-1234-5678", pool: "activation_request", status: "new" },
-      { id: "c2", name: "Erdene Bat", phone: "010-1234-5678", pool: "activation_request", status: "new" }
-    );
-    const r = await submit(s, "k1", base());
-    const app = (r as any).app;
-    expect(app.customerId).toBeNull();
-    expect(app.applicantSnapshot.fullName).toBe("Erdene Bat");
-    expect(app.applicantSnapshot.phone).toBe("010-1234-5678");
-    expect(app.applicantSnapshot.nationality).toBe("MN");
+  it("refuses instead of repairing when an operator edited the marker away", async () => {
+    const db = new Db();
+    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    db.rows[0].notes = "직원이 직접 지운 메모";
+    const again = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    expect(again.status).toBe(409);
+    expect(again.body.error).toBe("marker_mismatch");
+    expect(db.rows[0].notes).toBe("직원이 직접 지운 메모"); // never rewritten
+    const lookup = await get(db, { apiKey: "AAA", keySpec: KEYS, externalApplicationId: EXT_1 });
+    expect(lookup.status).toBe(404);
   });
 
-  it("flags needs_review instead of guessing when several customers match", async () => {
-    const s = new MockStore();
-    s.customers.push(
-      { id: "c1", name: "Erdene Bat", phone: "010-1234-5678", pool: "activation_request", status: "activated" },
-      { id: "c2", name: "Erdene Bat", phone: "010-1234-5678", pool: "activation_request", status: "new" }
-    );
-    const r = await submit(s, "k1", base());
-    expect(r.outcome).toBe("created");
-    expect((r as any).app.linkMode).toBe("unlinked_needs_review");
-    expect((r as any).app.status).toBe("needs_review");
-  });
-
-  it("never reports the linked customer's old status as the new application status", async () => {
-    const s = new MockStore();
-    s.customers.push({
-      id: "c9",
+  it("returns 409 customer_duplicate on an unrelated dedup collision and links nobody", async () => {
+    const db = new Db();
+    db.rows.push({
+      id: "pre-existing-row",
       name: "Erdene Bat",
       phone: "010-1234-5678",
       pool: "activation_request",
       status: "activated",
+      signup_date: "2026-09-21",
+      application_date: "2026-09-21",
+      requested_plan: null,
+      monthly_fee: null,
+      customer_type: null,
+      country_id: null,
+      assigned_to: "staff-1",
+      call_round: null,
+      notes: "기존 고객 메모",
+      created_at: "2026-01-01T00:00:00Z",
     });
-    const r = await submit(s, "k1", base());
-    expect((r as any).app.linkMode).toBe("linked");
-    expect((r as any).app.status).toBe("received");
-    expect(s.customers[0].status).toBe("activated"); // untouched
+    const r = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    expect(r.status).toBe(409);
+    expect(r.body.error).toBe("customer_duplicate");
+    expect(db.rows.length).toBe(1);
+    expect(db.rows[0].id).toBe("pre-existing-row");
+    expect(db.rows[0].notes).toBe("기존 고객 메모"); // untouched
+    expect(db.rows[0].status).toBe("activated");
   });
 
-  it("leaves assignment to operators (no auto-assignment)", async () => {
-    const s = new MockStore();
-    const r = await submit(s, "k1", base());
-    expect((r as any).app.assignedToPolicy).toBeNull();
+  it("never returns another partner's row from GET", async () => {
+    const db = new Db();
+    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    expect((await get(db, { apiKey: "BBB", keySpec: KEYS, externalApplicationId: EXT_1 })).status).toBe(404);
+    expect((await get(db, { apiKey: "AAA", keySpec: KEYS, externalApplicationId: EXT_2 })).status).toBe(404);
   });
 
-  it("scopes lookups to the calling partner", async () => {
-    const s = new MockStore();
-    await submit(s, "k1", base(), "nh");
-    expect(s.get("nh", "hp-0001")).not.toBeNull();
-    expect(s.get("hp", "hp-0001")).toBeNull();
+  it("returns only status and timestamps from GET", async () => {
+    const db = new Db();
+    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const r = await get(db, { apiKey: "AAA", keySpec: KEYS, externalApplicationId: EXT_1 });
+    expect(r.status).toBe(200);
+    expect(Object.keys(r.body).sort()).toEqual(
+      ["applicationId", "externalApplicationId", "receivedAt", "status"].sort()
+    );
+    expect(r.body.status).toBe("received");
   });
 
-  it(
-    "collapses simultaneous identical submits to one row (simulation only, not a PostgreSQL concurrency proof)",
-    async () => {
-      const s = new MockStore();
-      const req = base();
-      const hash = await requestHash(req);
-      const results = [
-        s.submit("nh", "k1", req, hash),
-        s.submit("nh", "k1", req, hash),
-        s.submit("nh", "k1", req, hash),
-      ];
-      expect(results.filter((r) => r.outcome === "created").length).toBe(1);
-      expect(results.filter((r) => r.outcome === "replayed").length).toBe(2);
-      expect(s.apps.length).toBe(1);
-    }
-  );
+  it("requires the idempotency key to equal the external application id", async () => {
+    const db = new Db();
+    const r = await post(db, {
+      apiKey: "AAA",
+      keySpec: KEYS,
+      idempotencyKey: "some-other-key",
+      req: base(),
+    });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toBe("idempotency_key_mismatch");
+    expect(db.rows.length).toBe(0);
+  });
+
+  it("stores a bundle with undecided carrier/fee and a genuinely free device", async () => {
+    const db = new Db();
+    const req = base({
+      externalApplicationId: EXT_2,
+      product: {
+        code: "bundle-a175",
+        type: "bundle",
+        name: "Bundle A17 5G",
+        carrier: null,
+        monthlyFee: null,
+        deviceModel: "Galaxy A17 5G",
+        devicePrice: 0,
+        contractMonths: 24,
+        bundledPlanCode: null,
+        currency: "KRW",
+      },
+    });
+    const r = await post(db, { apiKey: "AAA", keySpec: KEYS, req });
+    expect(r.status).toBe(201);
+    const row = db.rows[0];
+    expect(row.monthly_fee).toBeNull();
+    expect(row.customer_type).toBe("bundle");
+    expect(row.notes).toContain("0원 (무료)");
+    expect(row.notes).toContain("통신사 미정");
+    expect(row.notes).toContain("월요금 미정");
+  });
+
+  it("leaves country_id null for the ZZ nationality instead of guessing", async () => {
+    const db = new Db();
+    const req = base({
+      applicant: { ...base().applicant, nationality: UNKNOWN_NATIONALITY },
+    });
+    await post(db, { apiKey: "AAA", keySpec: KEYS, req });
+    expect(db.rows[0].country_id).toBeNull();
+    expect(db.rows[0].notes).toContain("국적 ZZ");
+  });
+
+  it("shows plan name, language and source to operators in notes", async () => {
+    const db = new Db();
+    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const notes = db.rows[0].notes!;
+    expect(notes.split("\n")[0].startsWith("HANPASS_PARTNER_V1:")).toBe(true);
+    expect(notes).toContain("몽골어");
+    expect(notes).toContain("NH 올원");
+    expect(notes).toContain("SK Light 49");
+  });
 });

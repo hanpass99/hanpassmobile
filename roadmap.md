@@ -9,14 +9,16 @@
 
 # Partner application API (external HANPASS site)
 
-- [x] Contract + validation module (`src/lib/partner-api.ts`)
-- [x] POST/GET public routes, fail-closed behind `PARTNER_API_ENABLED`
-- [x] Draft SQL in `docs/sql/partner-applications-draft.sql` (NOT applied)
-- [x] Unit + mock integration tests (`tests/`)
+Append-only design: no new tables. The ledger/payload/idempotency/failed cases
+stay in the partner's encrypted store (Railway); `public.customers` only gets
+the operational copy of a new application.
+
+- [x] Contract + derivation module (`src/lib/partner-api.ts`): UUIDv4 external id,
+      UUIDv8 derived customer id, notes marker, hash normalization, status map
+- [x] POST/GET routes rewritten to customers SELECT + single INSERT, fail-closed
+- [x] Unit + mock tests (`tests/`, 48 passing) — simulation only, not a DB proof
 - [x] `docs/PARTNER-API.md`
-- [ ] Independent test project/database (blocked: preview and production share one backend)
-- [ ] Apply draft SQL in the test database (blocked: needs the test project)
-- [ ] Register test/production keys (blocked: explicit approval required)
+- [x] `docs/sql/partner-applications-draft.sql` marked OBSOLETE — never run
+- [ ] Register secrets `PARTNER_API_ENABLED` / `PARTNER_API_KEYS` (needs approval)
 - [ ] Per-partner rate limiter (durable counter)
-- [ ] Back-office view of per-application product/locale/source/status, behind the disabled flag
-- [ ] End-to-end verification against real PostgreSQL, then production enable
+- [ ] Publish + end-to-end verification against the real database (needs approval)

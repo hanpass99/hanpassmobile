@@ -1,6 +1,18 @@
 -- =====================================================================
+-- OBSOLETE / ABANDONED — DO NOT RUN, EVER.
+--
+-- Superseded on 2026-09-21 by the append-only design: no new tables are
+-- created in this back office. The application ledger, original payload,
+-- idempotency records and failed/needs-review cases live exclusively in
+-- the partner's own encrypted store (Railway); public.customers only
+-- receives the operational copy of a new application.
+--
+-- This file is retained for history only. It was never applied and was
+-- never verified against a real PostgreSQL database.
+-- =====================================================================
 -- DRAFT ONLY — NOT APPLIED, AND NOT YET VERIFIED AGAINST A REAL
 -- POSTGRESQL DATABASE.
+
 --
 -- This file intentionally lives in docs/sql/ and NOT in supabase/migrations/,
 -- so it is never picked up and applied automatically. Applying it to any
