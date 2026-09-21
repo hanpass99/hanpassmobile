@@ -183,8 +183,9 @@ export function normalizePhone(raw: string | null | undefined): string | null {
 export function buildFullName(a: {
   firstName: string;
   middleName?: string | null;
-  lastName: string;
+  lastName?: string | null;
 }): string {
+
   return [a.lastName, a.middleName, a.firstName]
     .map((p) => (p ?? "").trim())
     .filter(Boolean)
