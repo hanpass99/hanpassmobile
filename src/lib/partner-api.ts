@@ -159,25 +159,35 @@ export type ApplicationRequest = z.infer<typeof applicationRequestSchema>;
 /* ------------------------------------------------------------------ */
 
 /**
- * Normalize a phone number to the back-office display format (010-0000-0000).
- * Returns null when the value is not a recognizable Korean mobile number.
+ * Normalize a Korean mobile number for this partner API only.
  *
- * Uses the same digit rules as the existing Google Form sync, and additionally
- * folds +82 / 0082 forms into the national 010 form so that a partner
- * application and a sheet import of the same number compare equal.
+ * Accepts the national 010 form (11 digits) and the legacy carrier prefixes
+ * 011 / 016 / 017 / 018 / 019 (10 or 11 digits), plus the +82 / 0082
+ * international forms of all of them, and returns the back-office display
+ * format (010-0000-0000 / 011-000-0000). Returns null for anything else.
+ *
+ * This is a NEW function used only by the partner intake. The Google Form
+ * sync and other existing importers keep their own normalizers unchanged.
  */
+const MOBILE_PREFIXES = ["010", "011", "016", "017", "018", "019"] as const;
+
 export function normalizePhone(raw: string | null | undefined): string | null {
-  const digits = (raw ?? "").toString().replace(/\D/g, "");
+  let d = (raw ?? "").toString().replace(/\D/g, "");
   // +82 / 0082 country code -> national form with a leading 0
-  let d = digits;
   if (d.startsWith("0082")) d = d.slice(4);
-  if (d.length === 13 && d.startsWith("82010")) d = d.slice(2);
-  else if (d.length === 12 && d.startsWith("8210")) d = `0${d.slice(2)}`;
-  if (d.length === 11 && d.startsWith("010")) {
+  if (d.startsWith("82") && (d.length === 12 || d.length === 13)) d = d.slice(2);
+  if (!d.startsWith("0")) d = `0${d}`;
+  const prefix = d.slice(0, 3);
+  if (!MOBILE_PREFIXES.includes(prefix as (typeof MOBILE_PREFIXES)[number])) return null;
+  if (prefix === "010") {
+    if (d.length !== 11) return null;
     return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
   }
+  if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
   return null;
 }
+
 
 /** Full display name from the camelCase applicant parts. */
 export function buildFullName(a: {
