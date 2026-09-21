@@ -15,7 +15,7 @@ import {
   resolvePartnerId,
   SUPPORTED_LOCALES,
   timingSafeEqualStr,
-} from "./partner-api";
+} from "../src/lib/partner-api";
 
 const validRequest = () => ({
   externalApplicationId: "hp-20260921-0001",

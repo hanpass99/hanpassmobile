@@ -15,7 +15,7 @@ import {
   normalizePhone,
   requestHash,
   type ApplicationRequest,
-} from "./partner-api";
+} from "../src/lib/partner-api";
 
 /* ---------------- in-memory stand-in for the RPC ------------------- */
 
