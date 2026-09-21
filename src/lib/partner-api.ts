@@ -65,7 +65,13 @@ const isoDateTime = z
 export const applicantSchema = z.object({
   firstName: z.string().trim().min(1).max(60),
   middleName: z.string().trim().max(60).nullable().optional().default(null),
-  lastName: z.string().trim().min(1).max(60),
+  /**
+   * null / omitted is allowed: the partner site collects a single given name
+   * for applicants who have no family name on their ARC. `firstName` alone is
+   * then the full name.
+   */
+  lastName: z.string().trim().max(60).nullable().optional().default(null),
+
   phone: z.string().trim().min(6).max(32),
   /** ISO 3166-1 alpha-2, uppercase (MN, VN, KR, ...). */
   nationality: z
@@ -177,8 +183,9 @@ export function normalizePhone(raw: string | null | undefined): string | null {
 export function buildFullName(a: {
   firstName: string;
   middleName?: string | null;
-  lastName: string;
+  lastName?: string | null;
 }): string {
+
   return [a.lastName, a.middleName, a.firstName]
     .map((p) => (p ?? "").trim())
     .filter(Boolean)
@@ -331,25 +338,38 @@ export function timingSafeEqualStr(a: string, b: string): boolean {
 }
 
 /**
+ * Minimum accepted API key length. Entries shorter than this are ignored
+ * (fail-closed), so a weak or truncated key can never authenticate.
+ */
+export const MIN_API_KEY_LENGTH = 24;
+
+/**
  * Resolve a partner id from a presented API key.
  *
- * `spec` format: "partnerId:key,partnerId:key" (read from the server
- * environment only). Returns null when the key matches nothing; never
- * reveals which partner was attempted.
+ * `spec` is NOT JSON. It is a compact environment string:
+ *   "partnerId:key,partnerId:key"
+ * - partnerId: [a-z0-9_-], no colon, no comma
+ * - key: at least MIN_API_KEY_LENGTH chars, no comma
+ * Read from the server environment only. Returns null when the key matches
+ * nothing, and never reveals which partner was attempted. Every entry is
+ * compared with a constant-time comparison and the loop does not exit early.
  */
 export function resolvePartnerId(spec: string | undefined, presented: string | null): string | null {
   if (!spec || !presented) return null;
+  const candidate = presented.trim();
+  if (candidate.length < MIN_API_KEY_LENGTH) return null;
   let matched: string | null = null;
   for (const entry of spec.split(",")) {
     const idx = entry.indexOf(":");
     if (idx <= 0) continue;
     const partnerId = entry.slice(0, idx).trim();
     const key = entry.slice(idx + 1).trim();
-    if (!partnerId || !key) continue;
-    if (timingSafeEqualStr(key, presented)) matched = partnerId;
+    if (!partnerId || key.length < MIN_API_KEY_LENGTH) continue;
+    if (timingSafeEqualStr(key, candidate)) matched = partnerId;
   }
   return matched;
 }
+
 
 /** The integration is fail-closed: it runs only on an exact "true". */
 export function integrationEnabled(flag: string | undefined): boolean {
