@@ -229,6 +229,74 @@ export function buildProductSnapshot(req: ApplicationRequest) {
   };
 }
 
+/**
+ * Minimal applicant snapshot kept on the application row.
+ *
+ * Rationale: an application that ends up as `needs_review` has no linked
+ * customer, so without this the applicant's identity would be unrecoverable.
+ * It holds only what a reviewer needs — nothing else from the request — is
+ * stored under restricted privileges, and is NEVER returned by the status API.
+ */
+export function buildApplicantSnapshot(req: ApplicationRequest, normalizedPhone: string) {
+  const a = req.applicant;
+  return {
+    firstName: a.firstName,
+    middleName: a.middleName ?? null,
+    lastName: a.lastName,
+    fullName: buildFullName(a),
+    phone: normalizedPhone,
+    nationality: a.nationality,
+  };
+}
+
+/** Result of reading a request body under a hard byte cap. */
+export type LimitedBody =
+  | { ok: true; text: string }
+  | { ok: false; reason: "too_large" };
+
+/**
+ * Read a request body as UTF-8 text, aborting as soon as more than `max`
+ * bytes have arrived. The stream is cancelled instead of buffering the whole
+ * payload first, so an oversized body is never fully loaded into memory.
+ */
+export async function readLimitedText(request: Request, max = MAX_BODY_BYTES): Promise<LimitedBody> {
+  const declared = Number(request.headers.get("content-length") ?? NaN);
+  if (Number.isFinite(declared) && declared > max) return { ok: false, reason: "too_large" };
+
+  const body = request.body;
+  if (!body) return { ok: true, text: "" };
+
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  const chunks: string[] = [];
+  let seen = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      seen += value.byteLength;
+      if (seen > max) {
+        await reader.cancel();
+        return { ok: false, reason: "too_large" };
+      }
+      chunks.push(decoder.decode(value, { stream: true }));
+    }
+  } finally {
+    reader.releaseLock?.();
+  }
+  chunks.push(decoder.decode());
+  return { ok: true, text: chunks.join("") };
+}
+
+/** True when the Content-Type declares a JSON body. */
+export function isJsonContentType(header: string | null): boolean {
+  const v = (header ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+  return v === "application/json";
+}
+
+
+
 /* ------------------------------------------------------------------ */
 /* Timing-safe comparison + partner resolution                         */
 /* ------------------------------------------------------------------ */
