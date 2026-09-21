@@ -181,7 +181,7 @@ async function get(
 
 const EXT_1 = "6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f";
 const EXT_2 = "9b2d7e51-2c3a-4d5b-9e7f-0a1b2c3d4e5f";
-const KEYS = "nh:AAA,nh:AAA2,hp:BBB";
+const KEYS = "nh:KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK,nh:RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR,hp:ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
 
 const base = (over: Record<string, unknown> = {}): ApplicationRequest =>
   applicationRequestSchema.parse({
@@ -274,7 +274,7 @@ describe("append-only intake (mock)", () => {
   it("keeps the same derived id after an API key rotation", async () => {
     const db = new Db();
     const first = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
-    const rotated = await post(db, { apiKey: "AAA2", keySpec: KEYS, req: base() });
+    const rotated = await post(db, { apiKey: "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR", keySpec: KEYS, req: base() });
     expect(rotated.status).toBe(200);
     expect(rotated.body.applicationId).toBe(first.body.applicationId);
     expect(db.rows.length).toBe(1);
