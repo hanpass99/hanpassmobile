@@ -21,7 +21,8 @@ UPDATE·DELETE·upsert·`ON CONFLICT`·DDL은 전혀 없습니다. 추가로 생
 
 - `X-API-Key` → `PARTNER_API_KEYS` 로 partnerId 해석. 실패 시 401.
 - `PARTNER_API_KEYS` 는 **JSON이 아니라** 환경변수 문자열입니다: `partnerId:key,partnerId:key`
-  (partnerId에 `:`·`,` 금지, 키 최소 24자, 짧으면 무시=fail-closed). 한 파트너에 키를 두 개 넣어
+  (partnerId는 ASCII `[a-z0-9_-]{1,64}`, 키 최소 32자, 짧거나 형식이 어긋나면 무시=fail-closed.
+  같은 키가 서로 다른 partnerId에 중복 설정되면 모호하므로 인증 거부). 한 파트너에 키를 두 개 넣어
   무중단 회전이 가능하며, 키가 바뀌어도 고객 id는 바뀌지 않습니다. 비교는 전체 항목을 조기 종료
   없이 도는 상수시간 비교입니다.
 - `PARTNER_API_ENABLED` / `PARTNER_API_KEYS` 는 **서버 라우트 핸들러 안에서 `process.env` 로만**

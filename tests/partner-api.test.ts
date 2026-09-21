@@ -378,10 +378,84 @@ describe("notes", () => {
 });
 
 describe("api key hygiene", () => {
+  const K32 = "K".repeat(32);
+  const Z32 = "Z".repeat(32);
+
   it("ignores keys shorter than the minimum length", () => {
-    expect(MIN_API_KEY_LENGTH).toBe(24);
+    expect(MIN_API_KEY_LENGTH).toBe(32);
     expect(resolvePartnerId("nh:short-key", "short-key")).toBeNull();
-    expect(resolvePartnerId("nh:KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", "KKKKKKKKKKKKKKKKKKKK")).toBeNull();
+    // 31 chars configured and presented: still rejected
+    expect(resolvePartnerId(`nh:${"K".repeat(31)}`, "K".repeat(31))).toBeNull();
+    expect(resolvePartnerId(`nh:${K32}`, "K".repeat(20))).toBeNull();
+  });
+
+  it("accepts a well-formed partner id with a 32-char key", () => {
+    expect(resolvePartnerId(`nh_allone-1:${K32}`, K32)).toBe("nh_allone-1");
+  });
+
+  it("rejects partner ids outside ASCII [a-z0-9_-]{1,64}", () => {
+    expect(resolvePartnerId(`NH:${K32}`, K32)).toBeNull();
+    expect(resolvePartnerId(`한패스:${K32}`, K32)).toBeNull();
+    expect(resolvePartnerId(`${"a".repeat(65)}:${K32}`, K32)).toBeNull();
+  });
+
+  it("fail-closes when the same key is configured for two partners", () => {
+    expect(resolvePartnerId(`nh:${K32},hp:${K32}`, K32)).toBeNull();
+    // duplicate entries for the SAME partner are a no-op, not ambiguous
+    expect(resolvePartnerId(`nh:${K32},nh:${K32}`, K32)).toBe("nh");
+    // an unrelated duplicate does not break other keys
+    expect(resolvePartnerId(`nh:${K32},hp:${K32},zz:${Z32}`, Z32)).toBe("zz");
+  });
+});
+
+describe("relaxed field limits", () => {
+  it("accepts a null last name and 120-char names", () => {
+    const req = validRequest();
+    req.applicant.lastName = null;
+    req.applicant.firstName = "A".repeat(120);
+    const parsed = applicationRequestSchema.safeParse(req);
+    expect(parsed.success).toBe(true);
+    expect(buildFullName(parsed.success ? parsed.data.applicant : req.applicant)).toBe("A".repeat(120));
+  });
+
+  it("rejects names longer than 120 characters", () => {
+    const req = validRequest();
+    req.applicant.lastName = "B".repeat(121);
+    expect(applicationRequestSchema.safeParse(req).success).toBe(false);
+  });
+
+  it("accepts a 120-month contract and rejects 121", () => {
+    const ok = validRequest();
+    ok.product.contractMonths = 120;
+    expect(applicationRequestSchema.safeParse(ok).success).toBe(true);
+    const bad = validRequest();
+    bad.product.contractMonths = 121;
+    expect(applicationRequestSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("normalizes legacy carrier prefixes as well as 010", () => {
+    expect(normalizePhone("01012345678")).toBe("010-1234-5678");
+    expect(normalizePhone("011-123-4567")).toBe("011-123-4567");
+    expect(normalizePhone("0161234567")).toBe("016-123-4567");
+    expect(normalizePhone("01712345678")).toBe("017-1234-5678");
+    expect(normalizePhone("+82 18 123 4567")).toBe("018-123-4567");
+    expect(normalizePhone("019-1234-5678")).toBe("019-1234-5678");
+    expect(normalizePhone("02-123-4567")).toBeNull();
+    expect(normalizePhone("0101234567")).toBeNull();
+  });
+
+  it("folds an uppercase external id to the same id and hash", async () => {
+    const lower = applicationRequestSchema.parse(validRequest());
+    const upper = validRequest();
+    upper.externalApplicationId = upper.externalApplicationId.toUpperCase();
+    const parsedUpper = applicationRequestSchema.parse(upper);
+    expect(parsedUpper.externalApplicationId).toBe(lower.externalApplicationId);
+    expect(await deriveCustomerId("nh", parsedUpper.externalApplicationId)).toBe(
+      await deriveCustomerId("nh", lower.externalApplicationId)
+    );
+    expect(await requestHash(buildHashPayload(parsedUpper, "010-1234-5678"))).toBe(
+      await requestHash(buildHashPayload(lower, "010-1234-5678"))
+    );
   });
 });
 

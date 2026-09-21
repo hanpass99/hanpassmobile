@@ -63,14 +63,14 @@ const isoDateTime = z
   .refine((s) => !Number.isNaN(Date.parse(s)), "must be an ISO-8601 datetime");
 
 export const applicantSchema = z.object({
-  firstName: z.string().trim().min(1).max(60),
-  middleName: z.string().trim().max(60).nullable().optional().default(null),
+  firstName: z.string().trim().min(1).max(120),
+  middleName: z.string().trim().max(120).nullable().optional().default(null),
   /**
    * null / omitted is allowed: the partner site collects a single given name
    * for applicants who have no family name on their ARC. `firstName` alone is
    * then the full name.
    */
-  lastName: z.string().trim().max(60).nullable().optional().default(null),
+  lastName: z.string().trim().max(120).nullable().optional().default(null),
 
   phone: z.string().trim().min(6).max(32),
   /** ISO 3166-1 alpha-2, uppercase (MN, VN, KR, ...). */
@@ -91,7 +91,7 @@ export const productSchema = z
     monthlyFee: money,
     deviceModel: z.string().trim().max(120).nullable().optional().default(null),
     devicePrice: money.optional().default(null),
-    contractMonths: z.number().int().min(0).max(60).nullable().optional().default(null),
+    contractMonths: z.number().int().min(0).max(120).nullable().optional().default(null),
     bundledPlanCode: z.string().trim().max(64).nullable().optional().default(null),
     currency: z.literal("KRW"),
   })
@@ -141,6 +141,7 @@ export const applicationRequestSchema = z.object({
   externalApplicationId: z
     .string()
     .trim()
+    .toLowerCase()
     .refine(isUuidV4, "must be a Railway-issued UUID v4"),
   source: z.enum(SUPPORTED_SOURCES),
   locale: z.enum(SUPPORTED_LOCALES),
@@ -159,25 +160,35 @@ export type ApplicationRequest = z.infer<typeof applicationRequestSchema>;
 /* ------------------------------------------------------------------ */
 
 /**
- * Normalize a phone number to the back-office display format (010-0000-0000).
- * Returns null when the value is not a recognizable Korean mobile number.
+ * Normalize a Korean mobile number for this partner API only.
  *
- * Uses the same digit rules as the existing Google Form sync, and additionally
- * folds +82 / 0082 forms into the national 010 form so that a partner
- * application and a sheet import of the same number compare equal.
+ * Accepts the national 010 form (11 digits) and the legacy carrier prefixes
+ * 011 / 016 / 017 / 018 / 019 (10 or 11 digits), plus the +82 / 0082
+ * international forms of all of them, and returns the back-office display
+ * format (010-0000-0000 / 011-000-0000). Returns null for anything else.
+ *
+ * This is a NEW function used only by the partner intake. The Google Form
+ * sync and other existing importers keep their own normalizers unchanged.
  */
+const MOBILE_PREFIXES = ["010", "011", "016", "017", "018", "019"] as const;
+
 export function normalizePhone(raw: string | null | undefined): string | null {
-  const digits = (raw ?? "").toString().replace(/\D/g, "");
+  let d = (raw ?? "").toString().replace(/\D/g, "");
   // +82 / 0082 country code -> national form with a leading 0
-  let d = digits;
   if (d.startsWith("0082")) d = d.slice(4);
-  if (d.length === 13 && d.startsWith("82010")) d = d.slice(2);
-  else if (d.length === 12 && d.startsWith("8210")) d = `0${d.slice(2)}`;
-  if (d.length === 11 && d.startsWith("010")) {
+  if (d.startsWith("82") && !d.startsWith("820") && d.length >= 11 && d.length <= 13) d = d.slice(2);
+  if (!d.startsWith("0")) d = `0${d}`;
+  const prefix = d.slice(0, 3);
+  if (!MOBILE_PREFIXES.includes(prefix as (typeof MOBILE_PREFIXES)[number])) return null;
+  if (prefix === "010") {
+    if (d.length !== 11) return null;
     return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
   }
+  if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
   return null;
 }
+
 
 /** Full display name from the camelCase applicant parts. */
 export function buildFullName(a: {
@@ -341,33 +352,42 @@ export function timingSafeEqualStr(a: string, b: string): boolean {
  * Minimum accepted API key length. Entries shorter than this are ignored
  * (fail-closed), so a weak or truncated key can never authenticate.
  */
-export const MIN_API_KEY_LENGTH = 24;
+export const MIN_API_KEY_LENGTH = 32;
+
+/** A partner id must be a short, lowercase ASCII slug. */
+export const PARTNER_ID_RE = /^[a-z0-9_-]{1,64}$/;
 
 /**
  * Resolve a partner id from a presented API key.
  *
  * `spec` is NOT JSON. It is a compact environment string:
  *   "partnerId:key,partnerId:key"
- * - partnerId: [a-z0-9_-], no colon, no comma
+ * - partnerId: ASCII [a-z0-9_-]{1,64}, no colon, no comma
  * - key: at least MIN_API_KEY_LENGTH chars, no comma
  * Read from the server environment only. Returns null when the key matches
  * nothing, and never reveals which partner was attempted. Every entry is
  * compared with a constant-time comparison and the loop does not exit early.
+ * If the same key is configured for two different partner ids the resolution
+ * is ambiguous and the request is rejected (fail-closed).
  */
 export function resolvePartnerId(spec: string | undefined, presented: string | null): string | null {
   if (!spec || !presented) return null;
   const candidate = presented.trim();
   if (candidate.length < MIN_API_KEY_LENGTH) return null;
   let matched: string | null = null;
+  let ambiguous = false;
   for (const entry of spec.split(",")) {
     const idx = entry.indexOf(":");
     if (idx <= 0) continue;
     const partnerId = entry.slice(0, idx).trim();
     const key = entry.slice(idx + 1).trim();
-    if (!partnerId || key.length < MIN_API_KEY_LENGTH) continue;
-    if (timingSafeEqualStr(key, candidate)) matched = partnerId;
+    if (!PARTNER_ID_RE.test(partnerId) || key.length < MIN_API_KEY_LENGTH) continue;
+    if (timingSafeEqualStr(key, candidate)) {
+      if (matched !== null && matched !== partnerId) ambiguous = true;
+      matched = partnerId;
+    }
   }
-  return matched;
+  return ambiguous ? null : matched;
 }
 
 
