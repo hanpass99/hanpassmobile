@@ -47,7 +47,7 @@ export const Route = createFileRoute("/api/public/applications/$externalApplicat
           );
           if (!partnerId) return json({ error: "unauthorized", requestId }, 401);
 
-          const externalApplicationId = (params.externalApplicationId ?? "").trim();
+          const externalApplicationId = (params.externalApplicationId ?? "").trim().toLowerCase();
           if (!isUuidV4(externalApplicationId)) {
             return json({ error: "invalid_request", requestId }, 400);
           }
