@@ -80,7 +80,8 @@ export const productSchema = z
     code: z.string().trim().min(1).max(64),
     type: z.enum(["sim", "bundle"]),
     name: z.string().trim().min(1).max(120),
-    carrier: z.string().trim().min(1).max(40),
+    /** null is allowed for a bundle whose carrier is not decided yet. */
+    carrier: z.string().trim().min(1).max(40).nullable().optional().default(null),
     monthlyFee: money,
     deviceModel: z.string().trim().max(120).nullable().optional().default(null),
     devicePrice: money.optional().default(null),
@@ -97,6 +98,20 @@ export const productSchema = z
           message: "sim products must not carry device fields",
         });
       }
+      if (p.carrier === null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["carrier"],
+          message: "sim products require a carrier",
+        });
+      }
+      if (p.monthlyFee === null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["monthlyFee"],
+          message: "sim products require a monthly fee",
+        });
+      }
     }
   });
 
@@ -108,8 +123,19 @@ export const consentSchema = z.object({
   acceptedAt: isoDateTime,
 });
 
+/** Railway-issued UUID v4 (lowercase or uppercase), nothing else. */
+export const UUID_V4_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isUuidV4(value: string): boolean {
+  return UUID_V4_RE.test(value.trim());
+}
+
 export const applicationRequestSchema = z.object({
-  externalApplicationId: z.string().trim().min(1).max(80),
+  externalApplicationId: z
+    .string()
+    .trim()
+    .refine(isUuidV4, "must be a Railway-issued UUID v4"),
   source: z.enum(SUPPORTED_SOURCES),
   locale: z.enum(SUPPORTED_LOCALES),
   applicant: applicantSchema,
@@ -117,6 +143,8 @@ export const applicationRequestSchema = z.object({
   consent: consentSchema,
   submittedAt: isoDateTime,
 });
+
+
 
 export type ApplicationRequest = z.infer<typeof applicationRequestSchema>;
 
