@@ -176,7 +176,7 @@ export function normalizePhone(raw: string | null | undefined): string | null {
   let d = (raw ?? "").toString().replace(/\D/g, "");
   // +82 / 0082 country code -> national form with a leading 0
   if (d.startsWith("0082")) d = d.slice(4);
-  if (d.startsWith("82") && (d.length === 12 || d.length === 13)) d = d.slice(2);
+  if (d.startsWith("82") && !d.startsWith("820") && d.length >= 11 && d.length <= 13) d = d.slice(2);
   if (!d.startsWith("0")) d = `0${d}`;
   const prefix = d.slice(0, 3);
   if (!MOBILE_PREFIXES.includes(prefix as (typeof MOBILE_PREFIXES)[number])) return null;
