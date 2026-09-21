@@ -597,7 +597,7 @@ const SOURCE_LABEL: Record<Source, string> = {
   hanpass_web: "한패스 웹",
 };
 
-const money = (v: number | null | undefined) =>
+const wonText = (v: number | null | undefined) =>
   v === null || v === undefined ? "미정" : `${v.toLocaleString("ko-KR")}원`;
 
 /**
@@ -611,11 +611,11 @@ export function buildNotes(req: ApplicationRequest, marker: string): string {
     `[파트너 신청] ${SOURCE_LABEL[req.source]} · 신청언어 ${LOCALE_LABEL[req.locale]}`,
     `상품코드 ${p.code} (${p.type === "sim" ? "유심" : "묶음"})`,
     `상품명 ${p.name}`,
-    `통신사 ${p.carrier ?? "미정"} · 월요금 ${money(p.monthlyFee)}`,
+    `통신사 ${p.carrier ?? "미정"} · 월요금 ${wonText(p.monthlyFee)}`,
   ];
   if (p.type === "bundle") {
     lines.push(
-      `단말기 ${p.deviceModel ?? "미정"} · 단말기 가격 ${p.devicePrice === 0 ? "0원 (무료)" : money(p.devicePrice)}`
+      `단말기 ${p.deviceModel ?? "미정"} · 단말기 가격 ${p.devicePrice === 0 ? "0원 (무료)" : wonText(p.devicePrice)}`
     );
     lines.push(`결합 요금제 ${p.bundledPlanCode ?? "미정"}`);
   }
