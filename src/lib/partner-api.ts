@@ -141,6 +141,7 @@ export const applicationRequestSchema = z.object({
   externalApplicationId: z
     .string()
     .trim()
+    .toLowerCase()
     .refine(isUuidV4, "must be a Railway-issued UUID v4"),
   source: z.enum(SUPPORTED_SOURCES),
   locale: z.enum(SUPPORTED_LOCALES),
