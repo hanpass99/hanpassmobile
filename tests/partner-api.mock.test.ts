@@ -10,8 +10,10 @@
 import { describe, expect, it } from "bun:test";
 import {
   applicationRequestSchema,
+  buildApplicantSnapshot,
   buildFullName,
   buildProductSnapshot,
+  normalizeNameKey,
   normalizePhone,
   requestHash,
   type ApplicationRequest,
@@ -28,8 +30,10 @@ type App = {
   requestHash: string;
   customerId: string | null;
   linkMode: "created" | "linked" | "unlinked_needs_review";
+  applicantSnapshot: ReturnType<typeof buildApplicantSnapshot>;
   productSnapshot: unknown;
   status: string;
+  reviewReason: string | null;
   assignedToPolicy: null;
   receivedAt: string;
 };
@@ -61,24 +65,36 @@ class MockStore {
     }
 
     const phone = normalizePhone(req.applicant.phone)!;
-    const name = buildFullName(req.applicant);
-    const matches = this.customers.filter(
-      (c) =>
-        c.pool === "activation_request" &&
-        c.phone === phone &&
-        c.name.toLowerCase().replace(/\s+/g, " ") === name.toLowerCase().replace(/\s+/g, " ")
+    const name = normalizeNameKey(buildFullName(req.applicant));
+    // Existing customers are normalized on the stored side too, so a row saved
+    // as +82 10 ... still compares equal to an incoming 010-... number.
+    const samePhone = this.customers.filter(
+      (c) => c.pool === "activation_request" && normalizePhone(c.phone) === phone
     );
+    const matches = samePhone.filter((c) => normalizeNameKey(c.name) === name);
 
     let customerId: string | null;
     let linkMode: App["linkMode"];
     let status = "received";
+    let reviewReason: string | null = null;
     if (matches.length === 1) {
       customerId = matches[0].id;
       linkMode = "linked";
-    } else if (matches.length === 0) {
+    } else if (matches.length > 1) {
+      customerId = null;
+      linkMode = "unlinked_needs_review";
+      status = "needs_review";
+      reviewReason = "multiple_customer_matches";
+    } else if (samePhone.length > 0) {
+      // Same number, different name: never merge, never create a second person.
+      customerId = null;
+      linkMode = "unlinked_needs_review";
+      status = "needs_review";
+      reviewReason = "phone_match_name_mismatch";
+    } else {
       const c: Customer = {
         id: this.id(),
-        name,
+        name: buildFullName(req.applicant),
         phone,
         pool: "activation_request",
         status: "new",
@@ -86,10 +102,6 @@ class MockStore {
       this.customers.push(c);
       customerId = c.id;
       linkMode = "created";
-    } else {
-      customerId = null;
-      linkMode = "unlinked_needs_review";
-      status = "needs_review";
     }
 
     const app: App = {
@@ -100,8 +112,10 @@ class MockStore {
       requestHash: hash,
       customerId,
       linkMode,
+      applicantSnapshot: buildApplicantSnapshot(req, phone),
       productSnapshot: buildProductSnapshot(req),
       status,
+      reviewReason,
       assignedToPolicy: null,
       receivedAt: new Date().toISOString(),
     };
