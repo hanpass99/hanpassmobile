@@ -134,12 +134,13 @@ export type ApplicationRequest = z.infer<typeof applicationRequestSchema>;
  */
 export function normalizePhone(raw: string | null | undefined): string | null {
   const digits = (raw ?? "").toString().replace(/\D/g, "");
-  const d = digits.length === 13 && digits.startsWith("82010") ? `8210${digits.slice(5)}` : digits;
+  // +82 / 0082 country code -> national form with a leading 0
+  let d = digits;
+  if (d.startsWith("0082")) d = d.slice(4);
+  if (d.length === 13 && d.startsWith("82010")) d = d.slice(2);
+  else if (d.length === 12 && d.startsWith("8210")) d = `0${d.slice(2)}`;
   if (d.length === 11 && d.startsWith("010")) {
     return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
-  }
-  if (d.length === 12 && d.startsWith("8210")) {
-    return `${d.slice(0, 4)}-${d.slice(4, 8)}-${d.slice(8)}`;
   }
   return null;
 }
