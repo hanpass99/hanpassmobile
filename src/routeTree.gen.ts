@@ -32,9 +32,11 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ApiPublicCallLogRouteImport } from './routes/api/public/call-log'
+import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as ApiPublicApplicationsExternalApplicationIdRouteImport } from './routes/api/public/applications.$externalApplicationId'
 import { Route as ApiPublicAiLearnRunRouteImport } from './routes/api/public/ai-learn/run'
 
 const TelegramRoute = TelegramRouteImport.update({
@@ -154,6 +156,11 @@ const ApiPublicCallLogRoute = ApiPublicCallLogRouteImport.update({
   path: '/api/public/call-log',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicApplicationsRoute = ApiPublicApplicationsRouteImport.update({
+  id: '/api/public/applications',
+  path: '/api/public/applications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -170,6 +177,12 @@ const ApiPublicTelegramWebhookRoute =
     id: '/api/public/telegram/webhook',
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicApplicationsExternalApplicationIdRoute =
+  ApiPublicApplicationsExternalApplicationIdRouteImport.update({
+    id: '/$externalApplicationId',
+    path: '/$externalApplicationId',
+    getParentRoute: () => ApiPublicApplicationsRoute,
   } as any)
 const ApiPublicAiLearnRunRoute = ApiPublicAiLearnRunRouteImport.update({
   id: '/api/public/ai-learn/run',
@@ -202,8 +215,10 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/applications': typeof ApiPublicApplicationsRouteWithChildren
   '/api/public/call-log': typeof ApiPublicCallLogRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
+  '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -231,8 +246,10 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/applications': typeof ApiPublicApplicationsRouteWithChildren
   '/api/public/call-log': typeof ApiPublicCallLogRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
+  '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -261,8 +278,10 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/applications': typeof ApiPublicApplicationsRouteWithChildren
   '/api/public/call-log': typeof ApiPublicCallLogRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
+  '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
@@ -292,8 +311,10 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/applications'
     | '/api/public/call-log'
     | '/api/public/ai-learn/run'
+    | '/api/public/applications/$externalApplicationId'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -321,8 +342,10 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/applications'
     | '/api/public/call-log'
     | '/api/public/ai-learn/run'
+    | '/api/public/applications/$externalApplicationId'
     | '/api/public/telegram/webhook'
   id:
     | '__root__'
@@ -350,8 +373,10 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/applications'
     | '/api/public/call-log'
     | '/api/public/ai-learn/run'
+    | '/api/public/applications/$externalApplicationId'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -380,6 +405,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicApplicationsRoute: typeof ApiPublicApplicationsRouteWithChildren
   ApiPublicCallLogRoute: typeof ApiPublicCallLogRoute
   ApiPublicAiLearnRunRoute: typeof ApiPublicAiLearnRunRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -548,6 +574,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCallLogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/applications': {
+      id: '/api/public/applications'
+      path: '/api/public/applications'
+      fullPath: '/api/public/applications'
+      preLoaderRoute: typeof ApiPublicApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -569,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/applications/$externalApplicationId': {
+      id: '/api/public/applications/$externalApplicationId'
+      path: '/$externalApplicationId'
+      fullPath: '/api/public/applications/$externalApplicationId'
+      preLoaderRoute: typeof ApiPublicApplicationsExternalApplicationIdRouteImport
+      parentRoute: typeof ApiPublicApplicationsRoute
+    }
     '/api/public/ai-learn/run': {
       id: '/api/public/ai-learn/run'
       path: '/api/public/ai-learn/run'
@@ -578,6 +618,20 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface ApiPublicApplicationsRouteChildren {
+  ApiPublicApplicationsExternalApplicationIdRoute: typeof ApiPublicApplicationsExternalApplicationIdRoute
+}
+
+const ApiPublicApplicationsRouteChildren: ApiPublicApplicationsRouteChildren = {
+  ApiPublicApplicationsExternalApplicationIdRoute:
+    ApiPublicApplicationsExternalApplicationIdRoute,
+}
+
+const ApiPublicApplicationsRouteWithChildren =
+  ApiPublicApplicationsRoute._addFileChildren(
+    ApiPublicApplicationsRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -605,6 +659,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicApplicationsRoute: ApiPublicApplicationsRouteWithChildren,
   ApiPublicCallLogRoute: ApiPublicCallLogRoute,
   ApiPublicAiLearnRunRoute: ApiPublicAiLearnRunRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
