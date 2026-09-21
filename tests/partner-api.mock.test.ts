@@ -217,7 +217,7 @@ const base = (over: Record<string, unknown> = {}): ApplicationRequest =>
 describe("append-only intake (mock)", () => {
   it("creates exactly one customer row and writes nothing else", async () => {
     const db = new Db();
-    const r = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const r = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     expect(r.status).toBe(201);
     expect(db.rows.length).toBe(1);
     expect(db.ops.filter((o) => o === "insert").length).toBe(1);
@@ -234,15 +234,15 @@ describe("append-only intake (mock)", () => {
   it("uses the Korean calendar date of submittedAt", async () => {
     const db = new Db();
     // 2026-09-21T16:30Z is already 2026-09-22 in Seoul.
-    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base({ submittedAt: "2026-09-21T16:30:00Z" }) });
+    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base({ submittedAt: "2026-09-21T16:30:00Z" }) });
     expect(db.rows[0].signup_date).toBe("2026-09-22");
     expect(db.rows[0].application_date).toBe("2026-09-22");
   });
 
   it("replays an identical resubmit without inserting again", async () => {
     const db = new Db();
-    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
-    const again = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
+    const again = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     expect(again.status).toBe(200);
     expect(again.body.result).toBe("replayed");
     expect(db.rows.length).toBe(1);
@@ -253,7 +253,7 @@ describe("append-only intake (mock)", () => {
     const req = base();
     const results = [] as Result[];
     for (let i = 0; i < 3; i++) {
-      results.push(await post(db, { apiKey: "AAA", keySpec: KEYS, req }));
+      results.push(await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req }));
     }
     expect(results.filter((r) => r.status === 201).length).toBe(1);
     expect(results.filter((r) => r.body.result === "replayed").length).toBe(2);
@@ -262,9 +262,9 @@ describe("append-only intake (mock)", () => {
 
   it("rejects the same external id with a different body (409, nothing overwritten)", async () => {
     const db = new Db();
-    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     const notesBefore = db.rows[0].notes;
-    const conflict = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base({ locale: "vi" }) });
+    const conflict = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base({ locale: "vi" }) });
     expect(conflict.status).toBe(409);
     expect(conflict.body.error).toBe("marker_mismatch");
     expect(db.rows.length).toBe(1);
@@ -273,7 +273,7 @@ describe("append-only intake (mock)", () => {
 
   it("keeps the same derived id after an API key rotation", async () => {
     const db = new Db();
-    const first = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const first = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     const rotated = await post(db, { apiKey: "AAA2", keySpec: KEYS, req: base() });
     expect(rotated.status).toBe(200);
     expect(rotated.body.applicationId).toBe(first.body.applicationId);
@@ -282,11 +282,11 @@ describe("append-only intake (mock)", () => {
 
   it("gives a different partner a different id for the same external id", async () => {
     const db = new Db();
-    const nh = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const nh = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     // A different applicant, so the pre-existing (name, phone, date) dedup
     // index is not what this test measures.
     const hp = await post(db, {
-      apiKey: "BBB",
+      apiKey: "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
       keySpec: KEYS,
       req: base({
         applicant: { ...base().applicant, firstName: "Nara", lastName: "Tseren" },
@@ -294,19 +294,19 @@ describe("append-only intake (mock)", () => {
     });
     expect(hp.status).toBe(201);
     expect(hp.body.applicationId).not.toBe(nh.body.applicationId);
-    expect((await get(db, { apiKey: "BBB", keySpec: KEYS, externalApplicationId: EXT_1 })).body
+    expect((await get(db, { apiKey: "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", keySpec: KEYS, externalApplicationId: EXT_1 })).body
       .applicationId).toBe(hp.body.applicationId);
   });
 
   it("refuses instead of repairing when an operator edited the marker away", async () => {
     const db = new Db();
-    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     db.rows[0].notes = "직원이 직접 지운 메모";
-    const again = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const again = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     expect(again.status).toBe(409);
     expect(again.body.error).toBe("marker_mismatch");
     expect(db.rows[0].notes).toBe("직원이 직접 지운 메모"); // never rewritten
-    const lookup = await get(db, { apiKey: "AAA", keySpec: KEYS, externalApplicationId: EXT_1 });
+    const lookup = await get(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, externalApplicationId: EXT_1 });
     expect(lookup.status).toBe(404);
   });
 
@@ -329,7 +329,7 @@ describe("append-only intake (mock)", () => {
       notes: "기존 고객 메모",
       created_at: "2026-01-01T00:00:00Z",
     });
-    const r = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    const r = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     expect(r.status).toBe(409);
     expect(r.body.error).toBe("customer_duplicate");
     expect(db.rows.length).toBe(1);
@@ -340,15 +340,15 @@ describe("append-only intake (mock)", () => {
 
   it("never returns another partner's row from GET", async () => {
     const db = new Db();
-    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
-    expect((await get(db, { apiKey: "BBB", keySpec: KEYS, externalApplicationId: EXT_1 })).status).toBe(404);
-    expect((await get(db, { apiKey: "AAA", keySpec: KEYS, externalApplicationId: EXT_2 })).status).toBe(404);
+    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
+    expect((await get(db, { apiKey: "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", keySpec: KEYS, externalApplicationId: EXT_1 })).status).toBe(404);
+    expect((await get(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, externalApplicationId: EXT_2 })).status).toBe(404);
   });
 
   it("returns only status and timestamps from GET", async () => {
     const db = new Db();
-    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
-    const r = await get(db, { apiKey: "AAA", keySpec: KEYS, externalApplicationId: EXT_1 });
+    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
+    const r = await get(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, externalApplicationId: EXT_1 });
     expect(r.status).toBe(200);
     expect(Object.keys(r.body).sort()).toEqual(
       ["applicationId", "externalApplicationId", "receivedAt", "status"].sort()
@@ -359,7 +359,7 @@ describe("append-only intake (mock)", () => {
   it("requires the idempotency key to equal the external application id", async () => {
     const db = new Db();
     const r = await post(db, {
-      apiKey: "AAA",
+      apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK",
       keySpec: KEYS,
       idempotencyKey: "some-other-key",
       req: base(),
@@ -386,7 +386,7 @@ describe("append-only intake (mock)", () => {
         currency: "KRW",
       },
     });
-    const r = await post(db, { apiKey: "AAA", keySpec: KEYS, req });
+    const r = await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req });
     expect(r.status).toBe(201);
     const row = db.rows[0];
     expect(row.monthly_fee).toBeNull();
@@ -401,14 +401,14 @@ describe("append-only intake (mock)", () => {
     const req = base({
       applicant: { ...base().applicant, nationality: UNKNOWN_NATIONALITY },
     });
-    await post(db, { apiKey: "AAA", keySpec: KEYS, req });
+    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req });
     expect(db.rows[0].country_id).toBeNull();
     expect(db.rows[0].notes).toContain("국적 ZZ");
   });
 
   it("shows plan name, language and source to operators in notes", async () => {
     const db = new Db();
-    await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
+    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req: base() });
     const notes = db.rows[0].notes!;
     expect(notes.split("\n")[0].startsWith("HANPASS_PARTNER_V1:")).toBe(true);
     expect(notes).toContain("몽골어");

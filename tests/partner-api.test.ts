@@ -22,6 +22,7 @@ import {
   normalizeNameKey,
   normalizePhone,
   requestHash,
+  MIN_API_KEY_LENGTH,
   resolvePartnerId,
   SUPPORTED_LOCALES,
   timingSafeEqualStr,
@@ -234,12 +235,12 @@ describe("gating", () => {
   });
 
   it("resolves a partner id only for an exact key match", () => {
-    const spec = "nh:AAA,hp:BBB";
-    expect(resolvePartnerId(spec, "AAA")).toBe("nh");
-    expect(resolvePartnerId(spec, "BBB")).toBe("hp");
-    expect(resolvePartnerId(spec, "aaa")).toBeNull();
+    const spec = "nh:KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK,hp:ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
+    expect(resolvePartnerId(spec, "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")).toBe("nh");
+    expect(resolvePartnerId(spec, "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")).toBe("hp");
+    expect(resolvePartnerId(spec, "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")).toBeNull();
     expect(resolvePartnerId(spec, "")).toBeNull();
-    expect(resolvePartnerId(undefined, "AAA")).toBeNull();
+    expect(resolvePartnerId(undefined, "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")).toBeNull();
   });
 
   it("compares strings without early exit", () => {
@@ -373,5 +374,77 @@ describe("notes", () => {
     expect(lines.slice(1).some((l) => l.startsWith("HANPASS_PARTNER_V1:"))).toBe(false);
     expect(notes).toContain("SK Light 49");
     expect(notes).toContain("privacy-v3");
+  });
+});
+
+describe("api key hygiene", () => {
+  it("ignores keys shorter than the minimum length", () => {
+    expect(MIN_API_KEY_LENGTH).toBe(24);
+    expect(resolvePartnerId("nh:short-key", "short-key")).toBeNull();
+    expect(resolvePartnerId("nh:KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", "KKKKKKKKKKKKKKKKKKKK")).toBeNull();
+  });
+});
+
+describe("Railway contract payloads", () => {
+  const base = () => ({
+    externalApplicationId: "6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f",
+    source: "nh_allone",
+    locale: "mn",
+    applicant: {
+      firstName: "Batbayar",
+      middleName: null,
+      lastName: null,
+      phone: "010-1234-5678",
+      nationality: "MN",
+    },
+    product: {
+      code: "sk-light49",
+      type: "sim",
+      name: "SK Light 49",
+      carrier: "SKT",
+      monthlyFee: 49000,
+      deviceModel: null,
+      devicePrice: null,
+      contractMonths: null,
+      bundledPlanCode: null,
+      currency: "KRW",
+    },
+    consent: { accepted: true, version: "reference-2026-09-14", acceptedAt: "2026-09-21T08:00:00Z" },
+    submittedAt: "2026-09-21T08:00:00Z",
+  }) as any;
+
+  it("accepts the exact SIM payload (SKT, no family name)", () => {
+    const r = applicationRequestSchema.safeParse(base());
+    expect(r.success).toBe(true);
+    expect(buildFullName(base().applicant)).toBe("Batbayar");
+  });
+
+  it("accepts the exact bundle payload (LG U+, undecided fee, free device)", () => {
+    const req = base();
+    req.product = {
+      code: "bundle-a175",
+      type: "bundle",
+      name: "Bundle A175",
+      carrier: "LG U+",
+      monthlyFee: null,
+      deviceModel: "Galaxy A17",
+      devicePrice: 0,
+      contractMonths: 24,
+      bundledPlanCode: null,
+      currency: "KRW",
+    };
+    const r = applicationRequestSchema.safeParse(req);
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.product.monthlyFee).toBeNull();
+      expect(r.data.product.devicePrice).toBe(0);
+      expect(r.data.applicant.lastName).toBeNull();
+    }
+  });
+
+  it("accepts the partner consent version", () => {
+    const req = base();
+    req.consent.version = "reference-2026-09-14";
+    expect(applicationRequestSchema.safeParse(req).success).toBe(true);
   });
 });
