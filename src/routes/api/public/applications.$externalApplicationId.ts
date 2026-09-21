@@ -1,25 +1,27 @@
 /**
- * GET /api/public/applications/{externalApplicationId} — status lookup (DRAFT).
+ * GET /api/public/applications/{externalApplicationId} — status lookup.
  *
- * Fail-closed: disabled unless PARTNER_API_ENABLED === "true" AND the
- * X-API-Key resolves to a partner. Results are partner-scoped; an application
- * belonging to another partner returns 404 so existence is never revealed.
+ * Read-only. The path segment is the partner's own UUID v4; the customer id is
+ * always RE-DERIVED server-side from (partnerId, externalApplicationId), so a
+ * caller can never supply a customer id or look up an arbitrary row.
  *
- * The response carries the APPLICATION status only. It never returns the
- * linked customer's status, name, phone, notes or any other internal data.
+ * The response carries the mapped application status and timestamps only —
+ * never a name, phone number, notes or any other stored field.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  deriveCustomerId,
   integrationEnabled,
+  isUuidV4,
+  mapCustomerStatus,
+  markerScopeMatches,
   newRequestId,
+  parseMarker,
   resolvePartnerId,
   type StatusResponse,
 } from "@/lib/partner-api";
 
-/**
- * Server-to-server only: no CORS allowance is emitted, and responses are
- * never cached.
- */
+/** Server-to-server only: no CORS allowance, never cached. */
 const jsonHeaders = {
   "Content-Type": "application/json",
   "Cache-Control": "no-store",
@@ -46,20 +48,18 @@ export const Route = createFileRoute("/api/public/applications/$externalApplicat
           if (!partnerId) return json({ error: "unauthorized", requestId }, 401);
 
           const externalApplicationId = (params.externalApplicationId ?? "").trim();
-          if (!externalApplicationId || externalApplicationId.length > 80) {
+          if (!isUuidV4(externalApplicationId)) {
             return json({ error: "invalid_request", requestId }, 400);
           }
 
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const rpc = supabaseAdmin.rpc as unknown as (
-            fn: string,
-            args: Record<string, unknown>
-          ) => Promise<{ data: unknown; error: { message: string } | null }>;
+          const customerId = await deriveCustomerId(partnerId, externalApplicationId);
 
-          const { data, error } = await rpc("partner_get_application", {
-            _partner_id: partnerId,
-            _external_application_id: externalApplicationId,
-          });
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data, error } = await supabaseAdmin
+            .from("customers")
+            .select("id, notes, status, created_at")
+            .eq("id", customerId)
+            .maybeSingle();
 
           if (error) {
             console.error(`[partner-api] lookup failed requestId=${requestId}`);
@@ -67,21 +67,24 @@ export const Route = createFileRoute("/api/public/applications/$externalApplicat
           }
 
           const row = data as {
-            application_id?: string;
-            external_application_id?: string;
-            status?: string;
-            received_at?: string;
+            id: string;
+            notes: string | null;
+            status: string | null;
+            created_at: string;
           } | null;
 
-          if (!row || !row.application_id) {
+          // Fail-closed: no row, or a missing/edited/foreign marker, is a 404.
+          // Existence of somebody else's row is never revealed, and a damaged
+          // marker is never repaired.
+          if (!row || !markerScopeMatches(parseMarker(row.notes), partnerId, externalApplicationId)) {
             return json({ error: "not_found", requestId }, 404);
           }
 
           const payload: StatusResponse = {
-            applicationId: row.application_id,
-            externalApplicationId: row.external_application_id!,
-            status: row.status!,
-            receivedAt: row.received_at!,
+            applicationId: row.id,
+            externalApplicationId,
+            status: mapCustomerStatus(row.status),
+            receivedAt: row.created_at,
             requestId,
           };
           return json(payload, 200);
