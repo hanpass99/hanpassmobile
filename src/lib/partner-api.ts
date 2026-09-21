@@ -257,25 +257,14 @@ export function buildProductSnapshot(req: ApplicationRequest) {
   };
 }
 
-/**
- * Minimal applicant snapshot kept on the application row.
- *
- * Rationale: an application that ends up as `needs_review` has no linked
- * customer, so without this the applicant's identity would be unrecoverable.
- * It holds only what a reviewer needs — nothing else from the request — is
- * stored under restricted privileges, and is NEVER returned by the status API.
+/*
+ * No applicant snapshot is kept in this back office. The application ledger,
+ * the original payload and every failed/needs-review case live exclusively in
+ * the partner's own encrypted store (Railway). `public.customers` only ever
+ * receives the operational copy of a NEW application.
  */
-export function buildApplicantSnapshot(req: ApplicationRequest, normalizedPhone: string) {
-  const a = req.applicant;
-  return {
-    firstName: a.firstName,
-    middleName: a.middleName ?? null,
-    lastName: a.lastName,
-    fullName: buildFullName(a),
-    phone: normalizedPhone,
-    nationality: a.nationality,
-  };
-}
+
+
 
 /** Result of reading a request body under a hard byte cap. */
 export type LimitedBody =
