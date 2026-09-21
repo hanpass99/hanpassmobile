@@ -63,14 +63,14 @@ const isoDateTime = z
   .refine((s) => !Number.isNaN(Date.parse(s)), "must be an ISO-8601 datetime");
 
 export const applicantSchema = z.object({
-  firstName: z.string().trim().min(1).max(60),
-  middleName: z.string().trim().max(60).nullable().optional().default(null),
+  firstName: z.string().trim().min(1).max(120),
+  middleName: z.string().trim().max(120).nullable().optional().default(null),
   /**
    * null / omitted is allowed: the partner site collects a single given name
    * for applicants who have no family name on their ARC. `firstName` alone is
    * then the full name.
    */
-  lastName: z.string().trim().max(60).nullable().optional().default(null),
+  lastName: z.string().trim().max(120).nullable().optional().default(null),
 
   phone: z.string().trim().min(6).max(32),
   /** ISO 3166-1 alpha-2, uppercase (MN, VN, KR, ...). */
