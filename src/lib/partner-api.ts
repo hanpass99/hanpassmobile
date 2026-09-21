@@ -11,22 +11,22 @@ import { z } from "zod";
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-/** Supported UI locales (14). */
+/** Supported UI locales (14) — matches the partner application site. */
 export const SUPPORTED_LOCALES = [
   "ko",
   "en",
-  "vi",
-  "mn",
-  "uz",
-  "ru",
   "zh",
-  "th",
-  "km",
-  "my",
+  "vi",
+  "ru",
   "ne",
-  "si",
-  "bn",
+  "km",
   "id",
+  "my",
+  "th",
+  "mn",
+  "si",
+  "ja",
+  "lo",
 ] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 

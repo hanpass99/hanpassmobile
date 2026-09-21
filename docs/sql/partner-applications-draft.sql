@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.partner_applications (
   CONSTRAINT partner_applications_link_mode_chk
     CHECK (customer_link_mode IN ('created', 'linked', 'unlinked_needs_review')),
   CONSTRAINT partner_applications_locale_chk
-    CHECK (locale IN ('ko','en','vi','mn','uz','ru','zh','th','km','my','ne','si','bn','id')),
+    CHECK (locale IN ('ko','en','zh','vi','ru','ne','km','id','my','th','mn','si','ja','lo')),
   CONSTRAINT partner_applications_source_chk
     CHECK (source IN ('nh_allone','hanpass_web'))
 );
