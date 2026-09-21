@@ -125,12 +125,12 @@ export type ApplicationRequest = z.infer<typeof applicationRequestSchema>;
 /* ------------------------------------------------------------------ */
 
 /**
- * Normalize a phone number to the back-office display format
- * (010-0000-0000 / 8210-0000-0000). Returns null when the value is not a
- * recognizable Korean mobile number.
+ * Normalize a phone number to the back-office display format (010-0000-0000).
+ * Returns null when the value is not a recognizable Korean mobile number.
  *
- * Mirrors the existing rule used by the Google Form sync so that a partner
- * application and a sheet import produce the same stored string.
+ * Uses the same digit rules as the existing Google Form sync, and additionally
+ * folds +82 / 0082 forms into the national 010 form so that a partner
+ * application and a sheet import of the same number compare equal.
  */
 export function normalizePhone(raw: string | null | undefined): string | null {
   const digits = (raw ?? "").toString().replace(/\D/g, "");
