@@ -393,3 +393,273 @@ export function safeIssues(err: z.ZodError): Array<{ field: string; message: str
     message: i.message,
   }));
 }
+
+/* ------------------------------------------------------------------ */
+/* Deterministic customer id (UUID v8)                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Domain separator for the derived id. Changing this string changes every
+ * derived id, so it is frozen for contract version 1.
+ */
+export const CUSTOMER_ID_DOMAIN = "hanpass-partner-application-v1\u0000";
+
+/**
+ * Derive the customers.id for a partner application.
+ *
+ * id = UUIDv8(first 16 bytes of SHA-256(domain + partnerId + "\0" + externalApplicationId))
+ *
+ * Properties this relies on:
+ *  - Stable across API key rotation: only the partner id and the partner's own
+ *    external application id feed the hash, never the API key.
+ *  - Space-separated from every other row: the value is not guessable without
+ *    knowing both inputs, and it is re-derived server-side on every call, so a
+ *    caller can never present an arbitrary customer id.
+ */
+export async function deriveCustomerId(
+  partnerId: string,
+  externalApplicationId: string
+): Promise<string> {
+  const input = `${CUSTOMER_ID_DOMAIN}${partnerId}\u0000${externalApplicationId}`;
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input))
+  );
+  const b = digest.slice(0, 16);
+  b[6] = (b[6]! & 0x0f) | 0x80; // version 8
+  b[8] = (b[8]! & 0x3f) | 0x80; // RFC 4122 variant
+  const hex = Array.from(b)
+    .map((x) => x.toString(16).padStart(2, "0"))
+    .join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Machine marker stored on the first line of customers.notes          */
+/* ------------------------------------------------------------------ */
+
+export const MARKER_PREFIX = "HANPASS_PARTNER_V1:";
+
+export interface MarkerPayload {
+  partnerId: string;
+  externalApplicationId: string;
+  idempotencyKey: string;
+  requestHash: string;
+}
+
+function toBase64Url(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let bin = "";
+  for (const byte of bytes) bin += String.fromCharCode(byte);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function fromBase64Url(value: string): string | null {
+  try {
+    const padded = value.replace(/-/g, "+").replace(/_/g, "/");
+    const bin = atob(padded + "=".repeat((4 - (padded.length % 4)) % 4));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return null;
+  }
+}
+
+/** `HANPASS_PARTNER_V1:<base64url(canonical JSON)>` — one line, no spaces. */
+export function encodeMarker(payload: MarkerPayload): string {
+  return `${MARKER_PREFIX}${toBase64Url(canonicalize(payload))}`;
+}
+
+/**
+ * Strict parse of the FIRST line of a notes field. Anything else — a missing
+ * prefix, damaged base64, non-object JSON, a missing field — returns null and
+ * the caller must refuse. The marker is never repaired or rewritten.
+ */
+export function parseMarker(notes: string | null | undefined): MarkerPayload | null {
+  const firstLine = (notes ?? "").split("\n", 1)[0] ?? "";
+  if (!firstLine.startsWith(MARKER_PREFIX)) return null;
+  const decoded = fromBase64Url(firstLine.slice(MARKER_PREFIX.length).trim());
+  if (!decoded) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  const o = parsed as Record<string, unknown>;
+  const fields = ["partnerId", "externalApplicationId", "idempotencyKey", "requestHash"] as const;
+  for (const f of fields) {
+    if (typeof o[f] !== "string" || (o[f] as string).length === 0) return null;
+  }
+  return {
+    partnerId: o.partnerId as string,
+    externalApplicationId: o.externalApplicationId as string,
+    idempotencyKey: o.idempotencyKey as string,
+    requestHash: o.requestHash as string,
+  };
+}
+
+/**
+ * Extra integrity check — NOT an authentication mechanism. Authentication is
+ * the API key; this only confirms that the row found at the derived id really
+ * is this partner's application and carries the same content hash.
+ */
+export function markerMatches(found: MarkerPayload | null, expected: MarkerPayload): boolean {
+  if (!found) return false;
+  return (
+    timingSafeEqualStr(found.partnerId, expected.partnerId) &&
+    timingSafeEqualStr(found.externalApplicationId, expected.externalApplicationId) &&
+    timingSafeEqualStr(found.idempotencyKey, expected.idempotencyKey) &&
+    timingSafeEqualStr(found.requestHash, expected.requestHash)
+  );
+}
+
+/** GET cannot know the body hash, so only the external scope is verified. */
+export function markerScopeMatches(
+  found: MarkerPayload | null,
+  partnerId: string,
+  externalApplicationId: string
+): boolean {
+  if (!found) return false;
+  return (
+    timingSafeEqualStr(found.partnerId, partnerId) &&
+    timingSafeEqualStr(found.externalApplicationId, externalApplicationId) &&
+    timingSafeEqualStr(found.idempotencyKey, externalApplicationId)
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Request hash normalization (frozen definition)                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The hashed value is the VALIDATED request after normalization, never the raw
+ * body. Definition (frozen for v1): schema-parsed request with all optional
+ * fields defaulted, the applicant phone replaced by its normalized form, and
+ * object keys sorted recursively by `canonicalize`. Whitespace, key order and
+ * phone formatting therefore never change the hash.
+ */
+export function buildHashPayload(req: ApplicationRequest, normalizedPhone: string) {
+  return {
+    externalApplicationId: req.externalApplicationId,
+    source: req.source,
+    locale: req.locale,
+    applicant: {
+      firstName: req.applicant.firstName,
+      middleName: req.applicant.middleName ?? null,
+      lastName: req.applicant.lastName,
+      phone: normalizedPhone,
+      nationality: req.applicant.nationality,
+    },
+    product: buildProductSnapshot(req),
+    consent: {
+      version: req.consent.version,
+      acceptedAt: new Date(req.consent.acceptedAt).toISOString(),
+    },
+    submittedAt: new Date(req.submittedAt).toISOString(),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Operational copy helpers                                            */
+/* ------------------------------------------------------------------ */
+
+/** "Other / not listed" nationality — never guessed into a country code. */
+export const UNKNOWN_NATIONALITY = "ZZ";
+
+/** Calendar date of an instant in Korea Standard Time (UTC+9), as YYYY-MM-DD. */
+export function kstDate(iso: string): string {
+  const ms = Date.parse(iso);
+  const kst = new Date(ms + 9 * 60 * 60 * 1000);
+  return kst.toISOString().slice(0, 10);
+}
+
+const LOCALE_LABEL: Record<Locale, string> = {
+  ko: "한국어",
+  en: "영어",
+  zh: "중국어",
+  vi: "베트남어",
+  ru: "러시아어",
+  ne: "네팔어",
+  km: "캄보디아어",
+  id: "인도네시아어",
+  my: "미얀마어",
+  th: "태국어",
+  mn: "몽골어",
+  si: "싱할라어",
+  ja: "일본어",
+  lo: "라오어",
+};
+
+const SOURCE_LABEL: Record<Source, string> = {
+  nh_allone: "NH 올원",
+  hanpass_web: "한패스 웹",
+};
+
+const money = (v: number | null | undefined) =>
+  v === null || v === undefined ? "미정" : `${v.toLocaleString("ko-KR")}원`;
+
+/**
+ * Build the notes value: one strict machine line, then plain Korean lines an
+ * operator can read in the existing 개통 신청자 list. No extra personal data.
+ */
+export function buildNotes(req: ApplicationRequest, marker: string): string {
+  const p = req.product;
+  const lines = [
+    marker,
+    `[파트너 신청] ${SOURCE_LABEL[req.source]} · 신청언어 ${LOCALE_LABEL[req.locale]}`,
+    `상품코드 ${p.code} (${p.type === "sim" ? "유심" : "묶음"})`,
+    `상품명 ${p.name}`,
+    `통신사 ${p.carrier ?? "미정"} · 월요금 ${money(p.monthlyFee)}`,
+  ];
+  if (p.type === "bundle") {
+    lines.push(
+      `단말기 ${p.deviceModel ?? "미정"} · 단말기 가격 ${p.devicePrice === 0 ? "0원 (무료)" : money(p.devicePrice)}`
+    );
+    lines.push(`결합 요금제 ${p.bundledPlanCode ?? "미정"}`);
+  }
+  lines.push(`약정 ${p.contractMonths === null ? "미정" : `${p.contractMonths}개월`}`);
+  lines.push(`동의 ${req.consent.version} · ${req.consent.acceptedAt}`);
+  lines.push(`국적 ${req.applicant.nationality}`);
+  return lines.join("\n");
+}
+
+/* ------------------------------------------------------------------ */
+/* Status mapping                                                      */
+/* ------------------------------------------------------------------ */
+
+export type PartnerStatus =
+  | "received"
+  | "in_progress"
+  | "activated"
+  | "rejected"
+  | "cancelled"
+  | "unknown";
+
+/**
+ * Explicit map from the back-office customer_status enum to the partner-facing
+ * status. Anything not listed is reported as "unknown" — never disguised as
+ * "received", because that would claim a state the row is not in.
+ */
+const STATUS_MAP: Record<string, PartnerStatus> = {
+  new: "received",
+  in_progress: "in_progress",
+  no_answer: "in_progress",
+  callback: "in_progress",
+  certificate_issuing: "in_progress",
+  activated: "activated",
+  contract_active: "activated",
+  rejected: "rejected",
+  not_interested: "rejected",
+  wrong_application: "rejected",
+  minor: "rejected",
+  line_exceeded: "rejected",
+  delinquent: "rejected",
+  stay_expired: "cancelled",
+  suspended_number: "cancelled",
+};
+
+export function mapCustomerStatus(status: string | null | undefined): PartnerStatus {
+  return STATUS_MAP[(status ?? "").trim()] ?? "unknown";
+}
