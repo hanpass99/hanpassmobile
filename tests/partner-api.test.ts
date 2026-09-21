@@ -5,6 +5,16 @@
 import { describe, expect, it } from "bun:test";
 import {
   applicationRequestSchema,
+  buildHashPayload,
+  buildNotes,
+  deriveCustomerId,
+  encodeMarker,
+  isUuidV4,
+  kstDate,
+  mapCustomerStatus,
+  markerMatches,
+  markerScopeMatches,
+  parseMarker,
   buildFullName,
   buildProductSnapshot,
   canonicalize,
@@ -18,7 +28,7 @@ import {
 } from "../src/lib/partner-api";
 
 const validRequest = () => ({
-  externalApplicationId: "hp-20260921-0001",
+  externalApplicationId: "6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f",
   source: "nh_allone",
   locale: "mn",
   applicant: {
@@ -235,5 +245,132 @@ describe("gating", () => {
     expect(timingSafeEqualStr("abc", "abc")).toBe(true);
     expect(timingSafeEqualStr("abc", "abd")).toBe(false);
     expect(timingSafeEqualStr("abc", "abcd")).toBe(false);
+  });
+});
+
+describe("external application id", () => {
+  it("accepts only a UUID v4", () => {
+    expect(isUuidV4("6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f")).toBe(true);
+    for (const bad of [
+      "hp-0001",
+      "",
+      "6f1c9d40-6b9e-1a2f-8f3e-1a2b3c4d5e6f", // v1
+      "6f1c9d40-6b9e-4a2f-cf3e-1a2b3c4d5e6f", // bad variant
+    ]) {
+      expect(isUuidV4(bad)).toBe(false);
+    }
+    const r = validRequest();
+    r.externalApplicationId = "hp-0001";
+    expect(applicationRequestSchema.safeParse(r).success).toBe(false);
+  });
+});
+
+describe("derived customer id", () => {
+  it("is deterministic, UUID v8 shaped and independent of the API key", async () => {
+    const ext = "6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f";
+    const a = await deriveCustomerId("nh", ext);
+    const b = await deriveCustomerId("nh", ext);
+    expect(a).toBe(b);
+    expect(a).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  });
+
+  it("separates partners and external ids into different spaces", async () => {
+    const ext = "6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f";
+    const other = "9b2d7e51-2c3a-4d5b-9e7f-0a1b2c3d4e5f";
+    expect(await deriveCustomerId("nh", ext)).not.toBe(await deriveCustomerId("hp", ext));
+    expect(await deriveCustomerId("nh", ext)).not.toBe(await deriveCustomerId("nh", other));
+  });
+});
+
+describe("marker", () => {
+  const payload = {
+    partnerId: "nh",
+    externalApplicationId: "6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f",
+    idempotencyKey: "6f1c9d40-6b9e-4a2f-8f3e-1a2b3c4d5e6f",
+    requestHash: "a".repeat(64),
+  };
+
+  it("round-trips on the first line of notes", () => {
+    const notes = `${encodeMarker(payload)}\n[파트너 신청] …`;
+    expect(parseMarker(notes)).toEqual(payload);
+    expect(markerMatches(parseMarker(notes), payload)).toBe(true);
+    expect(markerScopeMatches(parseMarker(notes), "nh", payload.externalApplicationId)).toBe(true);
+    expect(markerScopeMatches(parseMarker(notes), "hp", payload.externalApplicationId)).toBe(false);
+  });
+
+  it("refuses anything that is not an intact marker", () => {
+    for (const bad of [null, "", "직원 메모", "HANPASS_PARTNER_V1:###", `HANPASS_PARTNER_V1:${btoa("[]")}`]) {
+      expect(parseMarker(bad as string | null)).toBeNull();
+      expect(markerMatches(parseMarker(bad as string | null), payload)).toBe(false);
+    }
+    const missingField = `HANPASS_PARTNER_V1:${btoa(JSON.stringify({ partnerId: "nh" }))}`;
+    expect(parseMarker(missingField)).toBeNull();
+  });
+
+  it("detects a different request hash", () => {
+    const notes = encodeMarker({ ...payload, requestHash: "b".repeat(64) });
+    expect(markerMatches(parseMarker(notes), payload)).toBe(false);
+  });
+});
+
+describe("request hash normalization", () => {
+  it("ignores phone formatting and key order", async () => {
+    const a = applicationRequestSchema.parse(validRequest());
+    const b = applicationRequestSchema.parse({
+      ...validRequest(),
+      applicant: { ...validRequest().applicant, phone: "+82 10 1234 5678" },
+    });
+    expect(await requestHash(buildHashPayload(a, "010-1234-5678"))).toBe(
+      await requestHash(buildHashPayload(b, "010-1234-5678"))
+    );
+  });
+
+  it("changes when the locale changes", async () => {
+    const a = applicationRequestSchema.parse(validRequest());
+    const b = applicationRequestSchema.parse({ ...validRequest(), locale: "vi" });
+    expect(await requestHash(buildHashPayload(a, "010-1234-5678"))).not.toBe(
+      await requestHash(buildHashPayload(b, "010-1234-5678"))
+    );
+  });
+});
+
+describe("status mapping", () => {
+  it("maps known states explicitly", () => {
+    expect(mapCustomerStatus("new")).toBe("received");
+    expect(mapCustomerStatus("in_progress")).toBe("in_progress");
+    expect(mapCustomerStatus("activated")).toBe("activated");
+    expect(mapCustomerStatus("rejected")).toBe("rejected");
+    expect(mapCustomerStatus("stay_expired")).toBe("cancelled");
+  });
+
+  it("reports unknown as unknown, never as received", () => {
+    for (const v of ["seasonal_worker", "unreachable", "", null, "something_new"]) {
+      expect(mapCustomerStatus(v as string | null)).toBe("unknown");
+    }
+  });
+});
+
+describe("Korean calendar date", () => {
+  it("rolls over at 15:00 UTC", () => {
+    expect(kstDate("2026-09-21T14:59:59Z")).toBe("2026-09-21");
+    expect(kstDate("2026-09-21T15:00:00Z")).toBe("2026-09-22");
+  });
+});
+
+describe("notes", () => {
+  it("puts the machine marker on the first line only", () => {
+    const req = applicationRequestSchema.parse(validRequest());
+    const marker = encodeMarker({
+      partnerId: "nh",
+      externalApplicationId: req.externalApplicationId,
+      idempotencyKey: req.externalApplicationId,
+      requestHash: "c".repeat(64),
+    });
+    const notes = buildNotes(req, marker);
+    const lines = notes.split("\n");
+    expect(lines[0]).toBe(marker);
+    expect(lines.slice(1).some((l) => l.startsWith("HANPASS_PARTNER_V1:"))).toBe(false);
+    expect(notes).toContain("SK Light 49");
+    expect(notes).toContain("privacy-v3");
   });
 });
