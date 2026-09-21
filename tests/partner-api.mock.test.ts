@@ -283,7 +283,15 @@ describe("append-only intake (mock)", () => {
   it("gives a different partner a different id for the same external id", async () => {
     const db = new Db();
     const nh = await post(db, { apiKey: "AAA", keySpec: KEYS, req: base() });
-    const hp = await post(db, { apiKey: "BBB", keySpec: KEYS, req: base() });
+    // A different applicant, so the pre-existing (name, phone, date) dedup
+    // index is not what this test measures.
+    const hp = await post(db, {
+      apiKey: "BBB",
+      keySpec: KEYS,
+      req: base({
+        applicant: { ...base().applicant, firstName: "Nara", lastName: "Tseren" },
+      }),
+    });
     expect(hp.status).toBe(201);
     expect(hp.body.applicationId).not.toBe(nh.body.applicationId);
     expect((await get(db, { apiKey: "BBB", keySpec: KEYS, externalApplicationId: EXT_1 })).body

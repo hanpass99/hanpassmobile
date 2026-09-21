@@ -79,7 +79,8 @@ describe("schema", () => {
     const zero = validRequest();
     zero.product.monthlyFee = 0;
     const nulled = validRequest();
-    (nulled.product as any).monthlyFee = null;
+    // monthlyFee may be undecided only on a bundle
+    (nulled.product as any) = { ...nulled.product, type: "bundle", monthlyFee: null };
     const a = applicationRequestSchema.parse(zero);
     const b = applicationRequestSchema.parse(nulled);
     expect(a.product.monthlyFee).toBe(0);
