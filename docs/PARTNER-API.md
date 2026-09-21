@@ -1,8 +1,11 @@
 # Partner Application API (DRAFT — not active)
 
 Integration for the external HANPASS product application site.
-Status: **code draft only.** No database object exists yet, no key is
-configured, nothing is published. Both endpoints answer `503
+Status: **code draft only, not yet verified against a real PostgreSQL
+database.** No database object exists yet, no key is configured, nothing is
+published. The SQL in `docs/sql/partner-applications-draft.sql` has never been
+executed; only JavaScript unit and mock tests have run, which is not a
+database correctness or concurrency proof. Both endpoints answer `503
 integration_disabled` until they are explicitly enabled.
 
 The partner site owns the product ledger. This back office stores no product
@@ -116,7 +119,8 @@ Errors
 | 401 | `unauthorized` | missing or unknown key |
 | 409 | `idempotency_key_conflict` | same key, different content |
 | 409 | `external_application_id_conflict` | same `externalApplicationId`, different content |
-| 413 | `payload_too_large` | body over 16 KB |
+| 413 | `payload_too_large` | body over 16 KB — the stream is aborted as soon as the cap is passed, so an oversized body is never fully buffered |
+| 415 | `unsupported_media_type` | `Content-Type` is not `application/json` |
 | 503 | `integration_disabled` | feature flag not `true` |
 | 500 | `internal_error` | unexpected failure (correlate via `requestId`) |
 
@@ -153,11 +157,17 @@ name, phone, memo or other internal field is ever returned.
 - The existing customer duplicate index (name + phone + application date) is
   **not** used for idempotency — relying on it would silently drop a second,
   different product application from the same person on the same day.
-- Customer linking is strict: normalized full name **and** phone **and** the
-  activation-request pool must match exactly one existing customer. One match →
-  link (no existing field is ever overwritten). No match → create. Several
-  matches → do not guess: the application is stored with status
-  `needs_review` for manual confirmation. A phone-only match never merges.
+- Customer linking is strict, and the phone is normalized on **both** sides
+  (the stored `customers.phone` as well as the incoming number), so a record
+  saved in `+82 …` form still compares equal to an incoming `010-…` number:
+  - exactly one existing customer with the same normalized name + phone +
+    activation-request pool → link, and no existing field is ever overwritten
+  - no customer with that number → create
+  - same number but a different name → **do not create, do not link**: stored
+    as `needs_review` for manual confirmation
+  - several name+phone matches → `needs_review`
+  A phone-only match never merges and never creates a second person on the
+  same number.
 - Every application is its own row, including repeat applications from an
   existing customer, so each product snapshot is preserved.
 - Concurrency is settled by database unique constraints inside a single
@@ -189,8 +199,21 @@ first activation.
 ## 7. Logging and privacy
 
 Only a `requestId`, an outcome code and the SHA-256 `requestHash` are recorded.
-Raw request bodies, API keys and applicant personal data are never logged or
-stored as free text.
+Raw request bodies, API keys and applicant personal data are never logged.
+Unexpected exceptions are caught and answered as a generic `500
+internal_error`; the exception text is never returned to the caller.
+
+The application row does keep a **minimal `applicantSnapshot`** — first /
+middle / last name, normalized phone, nationality — and nothing else from the
+request. Without it a `needs_review` application (which has no linked
+customer) would leave the reviewer with no way to identify the applicant. It
+is protected by column-level privileges plus an admin-only lookup function,
+and it is **never** returned by either endpoint.
+
+Both endpoints are server-to-server: no `Access-Control-Allow-Origin` header
+is emitted, so browsers on other origins cannot call them. Every response
+carries `Cache-Control: no-store`.
+
 
 ## 8. Rollback
 
