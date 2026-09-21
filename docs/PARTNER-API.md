@@ -19,7 +19,13 @@ UPDATE·DELETE·upsert·`ON CONFLICT`·DDL은 전혀 없습니다. 추가로 생
 
 ## 인증
 
-- `X-API-Key` → `PARTNER_API_KEYS`(`partnerId:key,partnerId:key`)로 partnerId 해석. 실패 시 401.
+- `X-API-Key` → `PARTNER_API_KEYS` 로 partnerId 해석. 실패 시 401.
+- `PARTNER_API_KEYS` 는 **JSON이 아니라** 환경변수 문자열입니다: `partnerId:key,partnerId:key`
+  (partnerId에 `:`·`,` 금지, 키 최소 24자, 짧으면 무시=fail-closed). 한 파트너에 키를 두 개 넣어
+  무중단 회전이 가능하며, 키가 바뀌어도 고객 id는 바뀌지 않습니다. 비교는 전체 항목을 조기 종료
+  없이 도는 상수시간 비교입니다.
+- `PARTNER_API_ENABLED` / `PARTNER_API_KEYS` 는 **서버 라우트 핸들러 안에서 `process.env` 로만**
+  읽습니다(클라이언트 번들·`import.meta.env` 아님).
 - 키는 서버 환경에만 존재하며 코드·응답·로그에 노출되지 않습니다.
 - CORS 헤더 없음(서버 간 전용), 모든 응답 `Cache-Control: no-store`, 요청 본문은 로그에 남기지 않습니다.
 
@@ -54,11 +60,12 @@ GET 404).
 
 본문(camelCase): `externalApplicationId`(Railway가 만든 **UUID v4만** 허용), `source`
 (`nh_allone`|`hanpass_web`), `locale`(14개: ko,en,zh,vi,ru,ne,km,id,my,th,mn,si,ja,lo),
-`applicant{firstName,middleName?,lastName,phone,nationality}`,
+`applicant{firstName, middleName(null 허용), lastName(null 허용), phone, nationality}`,
 `product{code,type,name,carrier,monthlyFee,deviceModel,devicePrice,contractMonths,bundledPlanCode,currency}`,
 `consent{accepted,version,acceptedAt}`, `submittedAt`.
 
 - `bundle`: `carrier`/`monthlyFee`/`bundledPlanCode` 는 미정(null) 허용, `devicePrice: 0` 은 무료로 보존.
+- 성(lastName)이 없는 신청자는 `firstName` 만으로 성명이 구성됩니다.
 - `sim`: 단말기 필드 금지, `contractMonths` 는 null 허용, carrier·monthlyFee 는 필수.
 - `nationality`: ISO 3166-1 alpha-2. **`ZZ` 는 기타**이며 `country_id = null` 로 들어갑니다(코드 추측 없음).
 
