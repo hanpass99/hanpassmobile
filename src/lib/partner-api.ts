@@ -91,7 +91,7 @@ export const productSchema = z
     monthlyFee: money,
     deviceModel: z.string().trim().max(120).nullable().optional().default(null),
     devicePrice: money.optional().default(null),
-    contractMonths: z.number().int().min(0).max(60).nullable().optional().default(null),
+    contractMonths: z.number().int().min(0).max(120).nullable().optional().default(null),
     bundledPlanCode: z.string().trim().max(64).nullable().optional().default(null),
     currency: z.literal("KRW"),
   })
