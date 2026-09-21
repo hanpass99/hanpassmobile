@@ -101,14 +101,29 @@ describe("schema", () => {
 
   it("accepts all 14 locales and rejects others", () => {
     expect(SUPPORTED_LOCALES.length).toBe(14);
+    expect([...SUPPORTED_LOCALES].sort()).toEqual(
+      ["ko", "en", "zh", "vi", "ru", "ne", "km", "id", "my", "th", "mn", "si", "ja", "lo"].sort(),
+    );
     for (const l of SUPPORTED_LOCALES) {
       const r = validRequest();
       r.locale = l;
       expect(applicationRequestSchema.safeParse(r).success).toBe(true);
     }
-    const bad = validRequest();
-    bad.locale = "fr" as any;
-    expect(applicationRequestSchema.safeParse(bad).success).toBe(false);
+    for (const bad of ["fr", "uz", "bn", "KO", ""]) {
+      const r = validRequest();
+      r.locale = bad as any;
+      expect(applicationRequestSchema.safeParse(r).success).toBe(false);
+    }
+  });
+
+  it("accepts Japanese and Lao applications end to end", () => {
+    for (const l of ["ja", "lo"] as const) {
+      const r = validRequest();
+      r.locale = l;
+      const parsed = applicationRequestSchema.safeParse(r);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) expect(parsed.data.locale).toBe(l);
+    }
   });
 
   it("accepts only nh_allone and hanpass_web as source", () => {

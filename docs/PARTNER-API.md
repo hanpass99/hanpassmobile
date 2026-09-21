@@ -71,7 +71,7 @@ Body (camelCase, ≤ 16 KB)
 Field rules
 
 - `source`: `nh_allone` | `hanpass_web`
-- `locale`: one of 14 — `ko, en, vi, mn, uz, ru, zh, th, km, my, ne, si, bn, id`
+- `locale`: one of 14 — `ko, en, zh, vi, ru, ne, km, id, my, th, mn, si, ja, lo`
 - `applicant.nationality`: ISO 3166-1 **alpha-2**, uppercase (`MN`, `VN`, `KR`)
 - `product.code`: partner code, e.g. `sk-light49`, `lg-hanpass7`, `bundle-a175`
 - `product.type`: `sim` | `bundle`. Device fields are allowed only for `bundle`
