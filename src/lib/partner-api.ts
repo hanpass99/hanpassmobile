@@ -352,33 +352,42 @@ export function timingSafeEqualStr(a: string, b: string): boolean {
  * Minimum accepted API key length. Entries shorter than this are ignored
  * (fail-closed), so a weak or truncated key can never authenticate.
  */
-export const MIN_API_KEY_LENGTH = 24;
+export const MIN_API_KEY_LENGTH = 32;
+
+/** A partner id must be a short, lowercase ASCII slug. */
+export const PARTNER_ID_RE = /^[a-z0-9_-]{1,64}$/;
 
 /**
  * Resolve a partner id from a presented API key.
  *
  * `spec` is NOT JSON. It is a compact environment string:
  *   "partnerId:key,partnerId:key"
- * - partnerId: [a-z0-9_-], no colon, no comma
+ * - partnerId: ASCII [a-z0-9_-]{1,64}, no colon, no comma
  * - key: at least MIN_API_KEY_LENGTH chars, no comma
  * Read from the server environment only. Returns null when the key matches
  * nothing, and never reveals which partner was attempted. Every entry is
  * compared with a constant-time comparison and the loop does not exit early.
+ * If the same key is configured for two different partner ids the resolution
+ * is ambiguous and the request is rejected (fail-closed).
  */
 export function resolvePartnerId(spec: string | undefined, presented: string | null): string | null {
   if (!spec || !presented) return null;
   const candidate = presented.trim();
   if (candidate.length < MIN_API_KEY_LENGTH) return null;
   let matched: string | null = null;
+  let ambiguous = false;
   for (const entry of spec.split(",")) {
     const idx = entry.indexOf(":");
     if (idx <= 0) continue;
     const partnerId = entry.slice(0, idx).trim();
     const key = entry.slice(idx + 1).trim();
-    if (!partnerId || key.length < MIN_API_KEY_LENGTH) continue;
-    if (timingSafeEqualStr(key, candidate)) matched = partnerId;
+    if (!PARTNER_ID_RE.test(partnerId) || key.length < MIN_API_KEY_LENGTH) continue;
+    if (timingSafeEqualStr(key, candidate)) {
+      if (matched !== null && matched !== partnerId) ambiguous = true;
+      matched = partnerId;
+    }
   }
-  return matched;
+  return ambiguous ? null : matched;
 }
 
 
