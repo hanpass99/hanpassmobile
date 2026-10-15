@@ -1,3 +1,9 @@
+# Current requests
+
+- [ ] 대출자 명단 메뉴 (국적 2자리, 국가별 보기, 전체 직원)
+- [ ] USIM 바로가기 버튼을 상단 파란 헤더 우측으로 이동
+- [ ] 글꼴/크기를 hanpassusim.lovable.app/agency-activation 과 동일하게
+
 # Mobile UI audit
 
 - [ ] Audit every sidebar menu screen at 440px mobile width
