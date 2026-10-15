@@ -1527,21 +1527,6 @@ function CustomersPage() {
                     <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.googleFormSheet")}
                   </a>
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => syncGoogleFormMut.mutate()}
-                  disabled={syncGoogleFormMut.isPending}
-                  aria-busy={syncGoogleFormMut.isPending}
-                  title={t("customers.googleFormSyncTitle")}
-                >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending ? "animate-spin" : ""}`} />
-                  {t("customers.googleFormSync")}
-                </Button>
-              </>
-            )}
-            {tab === "google_form_activation_inter" && (
-              <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL_INTER} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.googleFormInterSheet")}
@@ -1550,13 +1535,13 @@ function CustomersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => syncGoogleFormInterMut.mutate()}
-                  disabled={syncGoogleFormInterMut.isPending}
-                  aria-busy={syncGoogleFormInterMut.isPending}
-                  title={t("customers.googleFormInterSyncTitle")}
+                  onClick={() => { syncGoogleFormMut.mutate(); syncGoogleFormInterMut.mutate(); }}
+                  disabled={syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending}
+                  aria-busy={syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending}
+                  title={t("customers.googleFormSyncTitle")}
                 >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
-                  {t("customers.googleFormInterSync")}
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
+                  {t("customers.googleFormSync")}
                 </Button>
               </>
             )}
@@ -2517,7 +2502,7 @@ function AddCustomerDialog({
   const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "google_form_activation_inter" || pool === "qr_activation";
+  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "qr_activation";
 
   useEffect(() => {
     if (open) {
