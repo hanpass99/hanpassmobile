@@ -15,6 +15,13 @@
       "when": 1792042396307,
       "tag": "0001_loan_borrowers_temp_import",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792042449359,
+      "tag": "0002_drop_loan_import_function",
+      "breakpoints": true
     }
   ]
 }

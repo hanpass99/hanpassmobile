@@ -1871,10 +1871,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      import_loan_borrowers: {
-        Args: { _rows: Json; _token: string }
-        Returns: number
-      }
       is_hanpass_company: { Args: { _uid: string }; Returns: boolean }
       is_hanpass_staff: { Args: { _user_id: string }; Returns: boolean }
       latest_system_checks: {
