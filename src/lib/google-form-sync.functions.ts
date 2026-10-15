@@ -331,7 +331,7 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
   .handler(async (): Promise<SyncResult> => {
     return runSync({
       spreadsheetId: INTER_SPREADSHEET_ID,
-      pool: "google_form_activation_inter",
+      pool: "google_form_activation",
       source: "inter",
       notesLabel: "구글폼 인터 자동 등록",
     });

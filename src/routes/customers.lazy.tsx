@@ -991,7 +991,7 @@ function CustomersPage() {
     if (effPool === "existing") {
       header = ["고객명", "전화번호", "개통일", "요금제", "국적", "메모"];
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
-    } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "google_form_activation_inter" || effPool === "qr_activation") {
+    } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "qr_activation") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
 
@@ -1404,7 +1404,11 @@ function CustomersPage() {
   useEffect(() => {
     if (tab === "google_form_activation") {
       syncMutRef.current.mutate();
-      const timer = setInterval(() => syncMutRef.current.mutate(), 30_000);
+      syncInterMutRef.current.mutate();
+      const timer = setInterval(() => {
+        syncMutRef.current.mutate();
+        syncInterMutRef.current.mutate();
+      }, 30_000);
       return () => clearInterval(timer);
     }
     if (tab === "activation_request") {
@@ -1415,7 +1419,7 @@ function CustomersPage() {
   }, [tab]);
 
 
-  // === 구글폼 인터 자동 동기화 (활성화: google_form_activation_inter 탭) ===
+  // === 구글폼 인터 자동 동기화 (통합: google_form_activation 탭에서 함께 실행) ===
   const syncGoogleFormInterFn = useServerFn(syncGoogleFormApplicationsInter);
   const syncGoogleFormInterMut = useMutation({
     mutationFn: () => syncGoogleFormInterFn(),
@@ -1433,12 +1437,6 @@ function CustomersPage() {
   });
   const syncInterMutRef = useRef(syncGoogleFormInterMut);
   syncInterMutRef.current = syncGoogleFormInterMut;
-  useEffect(() => {
-    if (tab !== "google_form_activation_inter") return;
-    syncInterMutRef.current.mutate();
-    const timer = setInterval(() => syncInterMutRef.current.mutate(), 30_000);
-    return () => clearInterval(timer);
-  }, [tab]);
 
   // === QR 개통 신청 자동 동기화 (활성화: qr_activation 탭) ===
   const syncQrFn = useServerFn(syncQrActivation);
@@ -1529,21 +1527,6 @@ function CustomersPage() {
                     <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.googleFormSheet")}
                   </a>
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => syncGoogleFormMut.mutate()}
-                  disabled={syncGoogleFormMut.isPending}
-                  aria-busy={syncGoogleFormMut.isPending}
-                  title={t("customers.googleFormSyncTitle")}
-                >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending ? "animate-spin" : ""}`} />
-                  {t("customers.googleFormSync")}
-                </Button>
-              </>
-            )}
-            {tab === "google_form_activation_inter" && (
-              <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL_INTER} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-1 h-4 w-4" /> {t("customers.googleFormInterSheet")}
@@ -1552,13 +1535,13 @@ function CustomersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => syncGoogleFormInterMut.mutate()}
-                  disabled={syncGoogleFormInterMut.isPending}
-                  aria-busy={syncGoogleFormInterMut.isPending}
-                  title={t("customers.googleFormInterSyncTitle")}
+                  onClick={() => { syncGoogleFormMut.mutate(); syncGoogleFormInterMut.mutate(); }}
+                  disabled={syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending}
+                  aria-busy={syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending}
+                  title={t("customers.googleFormSyncTitle")}
                 >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
-                  {t("customers.googleFormInterSync")}
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
+                  {t("customers.googleFormSync")}
                 </Button>
               </>
             )}
@@ -2519,7 +2502,7 @@ function AddCustomerDialog({
   const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "google_form_activation_inter" || pool === "qr_activation";
+  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "qr_activation";
 
   useEffect(() => {
     if (open) {
