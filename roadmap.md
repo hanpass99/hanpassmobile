@@ -5,6 +5,7 @@
 - [x] 글꼴/크기를 hanpassusim.lovable.app/agency-activation 과 동일하게
 - [x] USIM 개통 버튼을 고객 관리(참조 이미지)와 같은 위치·형태(테두리+아이콘)로
 - [x] 고객 관리 상태 집계 박스 크기 축소 (작게)
+- [x] 탭 이름 변경: 구글폼 개통 신청자→페이스북 신청자, 개통 신청자→한패스앱 신청자
 
 # Mobile UI audit
 
