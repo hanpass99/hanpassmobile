@@ -44,7 +44,7 @@ function monthStartStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
-/** 탭 라벨용軽量 카운트 — 행을 내리지 않고 총건수만 세는 조회 */
+/** 탭 라벨용轻量 카운트 — 행을 내리지 않고 총건수만 세는 조회 */
 export function useLoanBorrowerCount() {
   const { data } = useQuery({
     queryKey: ["loan-borrowers", "count"],
