@@ -7,7 +7,7 @@ export default {
     attendance: "출근 관리", reports: "리포트", settings: "설정",
     sms: "문자 발송", sla: "SLA 관리", callLogs: "통화 로그",
     staffMgmt: "직원 관리", hanpassDash: "한패스 현황", systemHealth: "시스템 점검",
-    usim: "USIM 개통",
+    usim: "USIM 개통", loans: "대출자 관리",
   },
   systemHealth: {
     headTitle: "시스템 점검 — Hanpass OB CRM",
