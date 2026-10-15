@@ -1,5 +1,7 @@
 # Current requests
 
+- [x] 대출자 목록을 다른 고객 탭과 같은 집계·필터·표·페이지 구성으로 정리
+
 - [x] 대출자 명단 메뉴 (국적 2자리, 국가별 보기, 전체 직원)
 - [x] USIM 바로가기 버튼을 상단 파란 헤더 우측으로 이동
 - [x] 글꼴/크기를 hanpassusim.lovable.app/agency-activation 과 동일하게
