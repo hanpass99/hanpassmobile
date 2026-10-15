@@ -9,119 +9,39 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TelegramRouteImport } from './routes/telegram'
-import { Route as SystemHealthRouteImport } from './routes/system-health'
-import { Route as StaffRouteImport } from './routes/staff'
-import { Route as SmsRouteImport } from './routes/sms'
-import { Route as SlaRouteImport } from './routes/sla'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as HanpassDashboardRouteImport } from './routes/hanpass-dashboard'
-import { Route as CustomersRouteImport } from './routes/customers'
-import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
-import { Route as CallLogsRouteImport } from './routes/call-logs'
-import { Route as BroadcastRouteImport } from './routes/broadcast'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AttendanceRouteImport } from './routes/attendance'
-import { Route as AiFaqRouteImport } from './routes/ai-faq'
-import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
+import { Route as AiFaqRouteImport } from './routes/ai-faq'
+import { Route as AttendanceRouteImport } from './routes/attendance'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BroadcastRouteImport } from './routes/broadcast'
+import { Route as CallLogsRouteImport } from './routes/call-logs'
+import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
+import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as HanpassDashboardRouteImport } from './routes/hanpass-dashboard'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SlaRouteImport } from './routes/sla'
+import { Route as SmsRouteImport } from './routes/sms'
+import { Route as StaffRouteImport } from './routes/staff'
+import { Route as SystemHealthRouteImport } from './routes/system-health'
+import { Route as TelegramRouteImport } from './routes/telegram'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as ApiPublicCallLogRouteImport } from './routes/api/public/call-log'
-import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
-import { Route as ApiPublicApplicationsExternalApplicationIdRouteImport } from './routes/api/public/applications.$externalApplicationId'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
+import { Route as ApiPublicCallLogRouteImport } from './routes/api/public/call-log'
 import { Route as ApiPublicAiLearnRunRouteImport } from './routes/api/public/ai-learn/run'
+import { Route as ApiPublicApplicationsExternalApplicationIdRouteImport } from './routes/api/public/applications.$externalApplicationId'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
-const TelegramRoute = TelegramRouteImport.update({
-  id: '/telegram',
-  path: '/telegram',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SystemHealthRoute = SystemHealthRouteImport.update({
-  id: '/system-health',
-  path: '/system-health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StaffRoute = StaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SmsRoute = SmsRouteImport.update({
-  id: '/sms',
-  path: '/sms',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/sms.lazy').then((d) => d.Route))
-const SlaRoute = SlaRouteImport.update({
-  id: '/sla',
-  path: '/sla',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotificationsRoute = NotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HanpassDashboardRoute = HanpassDashboardRouteImport.update({
-  id: '/hanpass-dashboard',
-  path: '/hanpass-dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CustomersRoute = CustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/customers.lazy').then((d) => d.Route))
-const ChannelPerformanceRoute = ChannelPerformanceRouteImport.update({
-  id: '/channel-performance',
-  path: '/channel-performance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CallLogsRoute = CallLogsRouteImport.update({
-  id: '/call-logs',
-  path: '/call-logs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BroadcastRoute = BroadcastRouteImport.update({
-  id: '/broadcast',
-  path: '/broadcast',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AttendanceRoute = AttendanceRouteImport.update({
-  id: '/attendance',
-  path: '/attendance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AiFaqRoute = AiFaqRouteImport.update({
-  id: '/ai-faq',
-  path: '/ai-faq',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiAssistantRoute = AiAssistantRouteImport.update({
@@ -129,36 +49,111 @@ const AiAssistantRoute = AiAssistantRouteImport.update({
   path: '/ai-assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AiFaqRoute = AiFaqRouteImport.update({
+  id: '/ai-faq',
+  path: '/ai-faq',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const AttendanceRoute = AttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BroadcastRoute = BroadcastRouteImport.update({
+  id: '/broadcast',
+  path: '/broadcast',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallLogsRoute = CallLogsRouteImport.update({
+  id: '/call-logs',
+  path: '/call-logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChannelPerformanceRoute = ChannelPerformanceRouteImport.update({
+  id: '/channel-performance',
+  path: '/channel-performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomersRoute = CustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/customers.lazy').then((d) => d.Route))
+const HanpassDashboardRoute = HanpassDashboardRouteImport.update({
+  id: '/hanpass-dashboard',
+  path: '/hanpass-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlaRoute = SlaRouteImport.update({
+  id: '/sla',
+  path: '/sla',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SmsRoute = SmsRouteImport.update({
+  id: '/sms',
+  path: '/sms',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/sms.lazy').then((d) => d.Route))
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SystemHealthRoute = SystemHealthRouteImport.update({
+  id: '/system-health',
+  path: '/system-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TelegramRoute = TelegramRouteImport.update({
+  id: '/telegram',
+  path: '/telegram',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93ListToolsRoute =
   Char91DotmcpChar93ListToolsRouteImport.update({
     id: '/.mcp/list-tools',
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicCallLogRoute = ApiPublicCallLogRouteImport.update({
-  id: '/api/public/call-log',
-  path: '/api/public/call-log',
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicApplicationsRoute = ApiPublicApplicationsRouteImport.update({
-  id: '/api/public/applications',
-  path: '/api/public/applications',
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -167,28 +162,33 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
+const ApiPublicApplicationsRoute = ApiPublicApplicationsRouteImport.update({
+  id: '/api/public/applications',
+  path: '/api/public/applications',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicTelegramWebhookRoute =
-  ApiPublicTelegramWebhookRouteImport.update({
-    id: '/api/public/telegram/webhook',
-    path: '/api/public/telegram/webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const ApiPublicCallLogRoute = ApiPublicCallLogRouteImport.update({
+  id: '/api/public/call-log',
+  path: '/api/public/call-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAiLearnRunRoute = ApiPublicAiLearnRunRouteImport.update({
+  id: '/api/public/ai-learn/run',
+  path: '/api/public/ai-learn/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicApplicationsExternalApplicationIdRoute =
   ApiPublicApplicationsExternalApplicationIdRouteImport.update({
     id: '/$externalApplicationId',
     path: '/$externalApplicationId',
     getParentRoute: () => ApiPublicApplicationsRoute,
   } as any)
-const ApiPublicAiLearnRunRoute = ApiPublicAiLearnRunRouteImport.update({
-  id: '/api/public/ai-learn/run',
-  path: '/api/public/ai-learn/run',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -413,123 +413,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/telegram': {
-      id: '/telegram'
-      path: '/telegram'
-      fullPath: '/telegram'
-      preLoaderRoute: typeof TelegramRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/system-health': {
-      id: '/system-health'
-      path: '/system-health'
-      fullPath: '/system-health'
-      preLoaderRoute: typeof SystemHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/staff': {
-      id: '/staff'
-      path: '/staff'
-      fullPath: '/staff'
-      preLoaderRoute: typeof StaffRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sms': {
-      id: '/sms'
-      path: '/sms'
-      fullPath: '/sms'
-      preLoaderRoute: typeof SmsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sla': {
-      id: '/sla'
-      path: '/sla'
-      fullPath: '/sla'
-      preLoaderRoute: typeof SlaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notifications': {
-      id: '/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hanpass-dashboard': {
-      id: '/hanpass-dashboard'
-      path: '/hanpass-dashboard'
-      fullPath: '/hanpass-dashboard'
-      preLoaderRoute: typeof HanpassDashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/customers': {
-      id: '/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof CustomersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/channel-performance': {
-      id: '/channel-performance'
-      path: '/channel-performance'
-      fullPath: '/channel-performance'
-      preLoaderRoute: typeof ChannelPerformanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/call-logs': {
-      id: '/call-logs'
-      path: '/call-logs'
-      fullPath: '/call-logs'
-      preLoaderRoute: typeof CallLogsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/broadcast': {
-      id: '/broadcast'
-      path: '/broadcast'
-      fullPath: '/broadcast'
-      preLoaderRoute: typeof BroadcastRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/attendance': {
-      id: '/attendance'
-      path: '/attendance'
-      fullPath: '/attendance'
-      preLoaderRoute: typeof AttendanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ai-faq': {
-      id: '/ai-faq'
-      path: '/ai-faq'
-      fullPath: '/ai-faq'
-      preLoaderRoute: typeof AiFaqRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai-assistant': {
@@ -539,25 +427,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiAssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/ai-faq': {
+      id: '/ai-faq'
+      path: '/ai-faq'
+      fullPath: '/ai-faq'
+      preLoaderRoute: typeof AiFaqRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/attendance': {
+      id: '/attendance'
+      path: '/attendance'
+      fullPath: '/attendance'
+      preLoaderRoute: typeof AttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/broadcast': {
+      id: '/broadcast'
+      path: '/broadcast'
+      fullPath: '/broadcast'
+      preLoaderRoute: typeof BroadcastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/call-logs': {
+      id: '/call-logs'
+      path: '/call-logs'
+      fullPath: '/call-logs'
+      preLoaderRoute: typeof CallLogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/channel-performance': {
+      id: '/channel-performance'
+      path: '/channel-performance'
+      fullPath: '/channel-performance'
+      preLoaderRoute: typeof ChannelPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customers': {
+      id: '/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof CustomersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hanpass-dashboard': {
+      id: '/hanpass-dashboard'
+      path: '/hanpass-dashboard'
+      fullPath: '/hanpass-dashboard'
+      preLoaderRoute: typeof HanpassDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sla': {
+      id: '/sla'
+      path: '/sla'
+      fullPath: '/sla'
+      preLoaderRoute: typeof SlaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sms': {
+      id: '/sms'
+      path: '/sms'
+      fullPath: '/sms'
+      preLoaderRoute: typeof SmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/system-health': {
+      id: '/system-health'
+      path: '/system-health'
+      fullPath: '/system-health'
+      preLoaderRoute: typeof SystemHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/telegram': {
+      id: '/telegram'
+      path: '/telegram'
+      fullPath: '/telegram'
+      preLoaderRoute: typeof TelegramRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -567,25 +553,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/call-log': {
-      id: '/api/public/call-log'
-      path: '/api/public/call-log'
-      fullPath: '/api/public/call-log'
-      preLoaderRoute: typeof ApiPublicCallLogRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/applications': {
-      id: '/api/public/applications'
-      path: '/api/public/applications'
-      fullPath: '/api/public/applications'
-      preLoaderRoute: typeof ApiPublicApplicationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
@@ -595,11 +574,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/telegram/webhook': {
-      id: '/api/public/telegram/webhook'
-      path: '/api/public/telegram/webhook'
-      fullPath: '/api/public/telegram/webhook'
-      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/applications': {
+      id: '/api/public/applications'
+      path: '/api/public/applications'
+      fullPath: '/api/public/applications'
+      preLoaderRoute: typeof ApiPublicApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/call-log': {
+      id: '/api/public/call-log'
+      path: '/api/public/call-log'
+      fullPath: '/api/public/call-log'
+      preLoaderRoute: typeof ApiPublicCallLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-learn/run': {
+      id: '/api/public/ai-learn/run'
+      path: '/api/public/ai-learn/run'
+      fullPath: '/api/public/ai-learn/run'
+      preLoaderRoute: typeof ApiPublicAiLearnRunRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/applications/$externalApplicationId': {
@@ -609,11 +609,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicApplicationsExternalApplicationIdRouteImport
       parentRoute: typeof ApiPublicApplicationsRoute
     }
-    '/api/public/ai-learn/run': {
-      id: '/api/public/ai-learn/run'
-      path: '/api/public/ai-learn/run'
-      fullPath: '/api/public/ai-learn/run'
-      preLoaderRoute: typeof ApiPublicAiLearnRunRouteImport
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
