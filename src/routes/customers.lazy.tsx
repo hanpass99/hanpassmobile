@@ -396,7 +396,7 @@ function CustomersPage() {
   const {
     rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
   } = useCustomersList({
-    pool: tab,
+    pool: tab === "loan_borrowers" ? "existing" : tab,
     search: debouncedSearch,
     countryIds,
     assignedCountry,
@@ -412,7 +412,7 @@ function CustomersPage() {
   });
 
   const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
-    pool: tab,
+    pool: tab === "loan_borrowers" ? "existing" : tab,
     countryIds,
     dateFromIso: fromIso,
     dateToIso: toIso,
@@ -985,7 +985,7 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
-    const effPool: CustomerPool = (tab === "all") ? "existing" : tab;
+    const effPool: CustomerPool = (tab === "all" || tab === "loan_borrowers") ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
@@ -1038,7 +1038,7 @@ function CustomersPage() {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         const { data, error } = await supabase.rpc("search_customers", {
-          _pool: tab === "all" ? undefined : tab,
+          _pool: tab === "all" || tab === "loan_borrowers" ? undefined : tab,
           _search: debouncedSearch?.trim() || undefined,
           _country_ids: countryIds.length ? countryIds : undefined,
           _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
