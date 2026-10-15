@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, type ErrorComponentProps } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
@@ -63,8 +63,8 @@ export const Route = createFileRoute("/hanpass-dashboard")({
     ],
   }),
   component: HanpassDashboardPage,
-  errorComponent: ({ error }) => (
-    <Card role="alert"><CardContent className="p-6 text-center text-sm">{error.message}</CardContent></Card>
+  errorComponent: ({ error }: ErrorComponentProps) => (
+    <Card role="alert"><CardContent className="p-6 text-center text-sm">{error instanceof Error ? error.message : String(error)}</CardContent></Card>
   ),
   notFoundComponent: () => <div className="p-6 text-sm text-muted-foreground">—</div>,
 });
