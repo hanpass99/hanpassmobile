@@ -68,7 +68,7 @@ GET 404).
 - `bundle`: `carrier`/`monthlyFee`/`bundledPlanCode` 는 미정(null) 허용, `devicePrice: 0` 은 무료로 보존.
 - 성(lastName)이 없는 신청자는 `firstName` 만으로 성명이 구성됩니다.
 - `sim`: 단말기 필드 금지, `contractMonths` 는 null 허용, carrier·monthlyFee 는 필수.
-- `nationality`: ISO 3166-1 alpha-2. **`ZZ` 는 기타**이며 `country_id = null` 로 들어갑니다(코드 추측 없음).
+- `nationality`: ISO 3166-1 alpha-2. UZ/KZ/KG/TJ/RU 는 `CIS` 국가 행으로, 나머지는 같은 코드의 **활성** countries 행으로 매칭합니다(원문 코드는 해시·메모에 그대로). 신규 신청에서 `ZZ`·미등록·비활성 국가는 `422 unsupported_nationality`(INSERT 0회), 국가 조회 실패는 500입니다. 기존 신청 재전송은 국가 검사 전에 그대로 재생(replayed)됩니다.
 
 동작:
 
@@ -77,7 +77,7 @@ GET 404).
 2. 없으면 INSERT 1행:
    `id`(파생), `name`, `phone`(정규화), `pool=activation_request`, `status=new`,
    `application_date`/`signup_date` = `submittedAt` 의 **한국시간 날짜**, `requested_plan`=상품명,
-   `monthly_fee`=월요금 또는 null, `customer_type`=`sim`|`bundle`, `country_id`=코드 정확 매칭,
+   `monthly_fee`=월요금 또는 null, `customer_type`=`sim`|`bundle`, `country_id`=CIS 규칙 적용 후 활성 국가 매칭,
    `assigned_to`=null, `call_round`=null, `notes`=표식+설명. → `201 created`.
 3. `23505` 발생 시 **파생 id만** 다시 조회 — 우리 행이면 표식·해시 일치 시 `200 replayed`,
    그 외 기존 중복이면 `409 customer_duplicate`. **어떤 기존 고객도 자동 연결하지 않습니다.**
