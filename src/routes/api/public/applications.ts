@@ -35,7 +35,7 @@ import {
   requestHash,
   resolvePartnerId,
   safeIssues,
-  UNKNOWN_NATIONALITY,
+  resolveNationalityCountry,
   type ApplicationResponse,
   type MarkerPayload,
 } from "@/lib/partner-api";
