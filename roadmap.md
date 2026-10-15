@@ -20,5 +20,6 @@ the operational copy of a new application.
 - [x] `docs/PARTNER-API.md`
 - [x] `docs/sql/partner-applications-draft.sql` marked OBSOLETE — never run
 - [ ] Register secrets `PARTNER_API_ENABLED` / `PARTNER_API_KEYS` (needs approval)
+- [x] Nationality: CIS mapping + 422 unsupported_nationality for new rows (replay unaffected)
 - [ ] Per-partner rate limiter (durable counter)
 - [ ] Publish + end-to-end verification against the real database (needs approval)

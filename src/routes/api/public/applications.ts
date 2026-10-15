@@ -35,7 +35,7 @@ import {
   requestHash,
   resolvePartnerId,
   safeIssues,
-  UNKNOWN_NATIONALITY,
+  resolveNationalityCountry,
   type ApplicationResponse,
   type MarkerPayload,
 } from "@/lib/partner-api";
@@ -155,17 +155,25 @@ export const Route = createFileRoute("/api/public/applications")({
           const existing = await selectDerived();
           if (existing) return replayOrConflict(existing);
 
-          // ---- 7. Country lookup (exact code match, read-only) -------------
-          let countryId: string | null = null;
-          if (data.applicant.nationality !== UNKNOWN_NATIONALITY) {
-            const { data: country, error: countryErr } = await supabaseAdmin
+          // ---- 7. Country lookup — NEW rows only (replays returned above) ---
+          // ZZ or no active countries row → 422, zero INSERTs. A lookup error
+          // throws → generic 500, never reported as unsupported.
+          const country = await resolveNationalityCountry(data.applicant.nationality, async (code) => {
+            const { data: c, error: countryErr } = await supabaseAdmin
               .from("countries")
               .select("id")
-              .eq("code", data.applicant.nationality)
+              .eq("code", code)
+              .eq("is_active", true)
               .maybeSingle();
             if (countryErr) throw new Error("country_lookup_failed");
-            countryId = (country as { id: string } | null)?.id ?? null;
+            return (c as { id: string } | null)?.id ?? null;
+          });
+          if (!country.ok) {
+            return fail("unsupported_nationality", requestId, 422, [
+              { field: "applicant.nationality", message: "unsupported nationality" },
+            ]);
           }
+          const countryId = country.countryId;
 
           // ---- 8. Single INSERT of the operational copy --------------------
           const day = kstDate(data.submittedAt);

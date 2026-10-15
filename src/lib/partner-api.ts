@@ -608,6 +608,35 @@ export function buildHashPayload(req: ApplicationRequest, normalizedPhone: strin
 /** "Other / not listed" nationality — never guessed into a country code. */
 export const UNKNOWN_NATIONALITY = "ZZ";
 
+/**
+ * CIS nationalities stored under the shared "CIS" country row — the same rule
+ * the Google Form intake uses. Partner-API-only copy; the payload nationality,
+ * the hash and the notes keep the original ISO code.
+ */
+export const PARTNER_CIS_CODES: ReadonlySet<string> = new Set(["UZ", "KZ", "KG", "TJ", "RU"]);
+
+/** countries.code to look up for an ISO nationality. */
+export function countryLookupCode(nationality: string): string {
+  const n = nationality.trim().toUpperCase();
+  return PARTNER_CIS_CODES.has(n) ? "CIS" : n;
+}
+
+export type CountryResolution = { ok: true; countryId: string } | { ok: false };
+
+/**
+ * Resolves the country for a NEW application only. ZZ and codes without an
+ * active countries row are unsupported. `findActiveCountryId` must THROW on a
+ * database failure so it is never mistaken for an unsupported nationality.
+ */
+export async function resolveNationalityCountry(
+  nationality: string,
+  findActiveCountryId: (code: string) => Promise<string | null>
+): Promise<CountryResolution> {
+  if (nationality.trim().toUpperCase() === UNKNOWN_NATIONALITY) return { ok: false };
+  const id = await findActiveCountryId(countryLookupCode(nationality));
+  return id ? { ok: true, countryId: id } : { ok: false };
+}
+
 /** Calendar date of an instant in Korea Standard Time (UTC+9), as YYYY-MM-DD. */
 export function kstDate(iso: string): string {
   const ms = Date.parse(iso);

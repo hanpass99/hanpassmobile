@@ -21,6 +21,7 @@ import {
   normalizePhone,
   parseMarker,
   requestHash,
+  resolveNationalityCountry,
   resolvePartnerId,
   UNKNOWN_NATIONALITY,
   type ApplicationRequest,
@@ -49,7 +50,14 @@ type Row = {
 
 class Db {
   rows: Row[] = [];
-  countries = [{ id: "country-mn", code: "MN" }];
+  countries = [
+    { id: "country-mn", code: "MN", is_active: true },
+    { id: "country-cis", code: "CIS", is_active: true },
+    { id: "country-vn", code: "VN", is_active: true },
+    { id: "country-kr", code: "KR", is_active: true },
+    { id: "country-old", code: "XO", is_active: false },
+  ];
+  countryLookupFails = false;
   /** Writes the simulation is allowed to observe — used to prove append-only. */
   ops: string[] = [];
 
@@ -58,9 +66,10 @@ class Db {
     return this.rows.find((r) => r.id === id) ?? null;
   }
 
-  countryIdByCode(code: string) {
+  async activeCountryId(code: string) {
     this.ops.push("select");
-    return this.countries.find((c) => c.code === code)?.id ?? null;
+    if (this.countryLookupFails) throw new Error("country_lookup_failed");
+    return this.countries.find((c) => c.code === code && c.is_active)?.id ?? null;
   }
 
   insert(row: Row): { error?: { code: string } } {
@@ -121,10 +130,14 @@ async function post(
   const existing = db.selectById(id);
   if (existing) return replayOrConflict(existing);
 
-  const countryId =
-    data.applicant.nationality === UNKNOWN_NATIONALITY
-      ? null
-      : db.countryIdByCode(data.applicant.nationality);
+  let country;
+  try {
+    country = await resolveNationalityCountry(data.applicant.nationality, (c) => db.activeCountryId(c));
+  } catch {
+    return { status: 500, body: { error: "internal_error" } };
+  }
+  if (!country.ok) return { status: 422, body: { error: "unsupported_nationality" } };
+  const countryId = country.countryId;
 
   const day = kstDate(data.submittedAt);
   const row: Row = {
@@ -396,14 +409,73 @@ describe("append-only intake (mock)", () => {
     expect(row.notes).toContain("월요금 미정");
   });
 
-  it("leaves country_id null for the ZZ nationality instead of guessing", async () => {
-    const db = new Db();
-    const req = base({
-      applicant: { ...base().applicant, nationality: UNKNOWN_NATIONALITY },
+  const K = "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK";
+  const withNat = (n: string) => base({ applicant: { ...base().applicant, nationality: n } });
+  const inserts = (db: Db) => db.ops.filter((o) => o === "insert").length;
+
+  for (const n of ["UZ", "RU", "KZ", "KG", "TJ"]) {
+    it(`stores ${n} under the CIS country row, keeping the original code in notes`, async () => {
+      const db = new Db();
+      const r = await post(db, { apiKey: K, keySpec: KEYS, req: withNat(n) });
+      expect(r.status).toBe(201);
+      expect(db.rows[0].country_id).toBe("country-cis");
+      expect(db.rows[0].notes).toContain(`국적 ${n}`);
     });
-    await post(db, { apiKey: "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", keySpec: KEYS, req });
-    expect(db.rows[0].country_id).toBeNull();
-    expect(db.rows[0].notes).toContain("국적 ZZ");
+  }
+
+  for (const [n, id] of [["VN", "country-vn"], ["KR", "country-kr"]]) {
+    it(`matches ${n} directly`, async () => {
+      const db = new Db();
+      await post(db, { apiKey: K, keySpec: KEYS, req: withNat(n) });
+      expect(db.rows[0].country_id).toBe(id);
+    });
+  }
+
+  for (const n of [UNKNOWN_NATIONALITY, "XX", "XO"]) {
+    it(`rejects a new ${n} application with 422 and zero inserts`, async () => {
+      const db = new Db();
+      const r = await post(db, { apiKey: K, keySpec: KEYS, req: withNat(n) });
+      expect(r.status).toBe(422);
+      expect(r.body.error).toBe("unsupported_nationality");
+      expect(inserts(db)).toBe(0);
+      expect(db.rows.length).toBe(0);
+    });
+  }
+
+  it("fails with 5xx (not 422) and zero inserts when the country lookup errors", async () => {
+    const db = new Db();
+    db.countryLookupFails = true;
+    const r = await post(db, { apiKey: K, keySpec: KEYS, req: withNat("VN") });
+    expect(r.status).toBe(500);
+    expect(inserts(db)).toBe(0);
+  });
+
+  it("still replays a legacy ZZ row (country_id null) without touching it", async () => {
+    const db = new Db();
+    const req = withNat(UNKNOWN_NATIONALITY);
+    const phone = normalizePhone(req.applicant.phone)!;
+    const hash = await requestHash(buildHashPayload(req, phone));
+    const id = await deriveCustomerId("nh", req.externalApplicationId);
+    const marker = encodeMarker({
+      partnerId: "nh",
+      externalApplicationId: req.externalApplicationId,
+      idempotencyKey: req.externalApplicationId,
+      requestHash: hash,
+    });
+    const legacy: Row = {
+      id, name: "x", phone, pool: "activation_request", status: "new",
+      signup_date: "2026-09-21", application_date: "2026-09-21",
+      requested_plan: null, monthly_fee: null, customer_type: "sim",
+      country_id: null, assigned_to: null, call_round: null,
+      notes: buildNotes(req, marker), created_at: "2026-09-21T07:00:05Z",
+    };
+    db.rows.push({ ...legacy });
+    const r = await post(db, { apiKey: K, keySpec: KEYS, req });
+    expect(r.status).toBe(200);
+    expect(r.body.result).toBe("replayed");
+    expect(r.body.applicationId).toBe(id);
+    expect(inserts(db)).toBe(0);
+    expect(db.rows[0]).toEqual(legacy);
   });
 
   it("shows plan name, language and source to operators in notes", async () => {
