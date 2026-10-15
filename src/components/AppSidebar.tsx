@@ -2,8 +2,10 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
   Settings, Users2, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
-  ShieldAlert,
+  ShieldAlert, ExternalLink,
 } from "lucide-react";
+
+const USIM_URL = "https://hanpassusim.lovable.app/usim-activation";
 
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -65,13 +67,14 @@ export function AppSidebar() {
 
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
+    { title: t("nav.usim"), url: USIM_URL, icon: ExternalLink, external: USIM_URL },
     { title: t("nav.customers"), url: "/customers", icon: Users },
     { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
     ...(telegramEnabled
       ? [{ title: "텔레그램 상담", url: "/telegram", icon: Send, badge: telegramUnread }]
       : []),
     { title: t("nav.callLogs"), url: "/call-logs", icon: PhoneCall },
-  ] as Array<{ title: string; url: string; icon: typeof LayoutDashboard; badge?: number }>;
+  ] as Array<{ title: string; url: string; icon: typeof LayoutDashboard; badge?: number; external?: string }>;
   const analyticsItems = [
     ...(isAdmin ? [{ title: t("nav.hanpassDash"), url: "/hanpass-dashboard", icon: BarChart3 }] : []),
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
@@ -93,7 +96,18 @@ export function AppSidebar() {
 
   const renderItems = (items: typeof mainItems) =>
     items.map((item) => {
-      const active = isActive(item.url);
+      const active = item.external ? false : isActive(item.url);
+      const inner = (
+        <>
+          <item.icon className={cn("h-4 w-4 text-sidebar-foreground/55", active && "text-primary")} />
+          <span className="flex-1 truncate">{item.title}</span>
+          {item.badge && item.badge > 0 ? (
+            <span className="ml-auto rounded-full bg-sidebar-primary px-1.5 text-[10px] font-bold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
+              {item.badge > 99 ? "99+" : item.badge}
+            </span>
+          ) : null}
+        </>
+      );
       return (
         <SidebarMenuItem key={item.url}>
           <SidebarMenuButton
@@ -106,15 +120,15 @@ export function AppSidebar() {
               "data-[active=true]:bg-primary/8 data-[active=true]:text-primary data-[active=true]:font-medium",
             )}
           >
-            <Link to={item.url} className="flex items-center gap-3" onClick={() => isMobile && setOpenMobile(false)}>
-              <item.icon className={cn("h-4 w-4 text-sidebar-foreground/55", active && "text-primary")} />
-              <span className="flex-1 truncate">{item.title}</span>
-              {item.badge && item.badge > 0 ? (
-                <span className="ml-auto rounded-full bg-sidebar-primary px-1.5 text-[10px] font-bold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
-                  {item.badge > 99 ? "99+" : item.badge}
-                </span>
-              ) : null}
-            </Link>
+            {item.external ? (
+              <a href={item.external} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3">
+                {inner}
+              </a>
+            ) : (
+              <Link to={item.url} className="flex items-center gap-3" onClick={() => isMobile && setOpenMobile(false)}>
+                {inner}
+              </Link>
+            )}
           </SidebarMenuButton>
         </SidebarMenuItem>
       );
