@@ -18,6 +18,7 @@ import { AiAssistant } from "@/components/AiAssistant";
 import { AdminPushListener } from "@/components/AdminPushListener";
 import { AttendanceCheckInGate } from "@/components/AttendanceCheckInGate";
 import { CountrySetupGate } from "@/components/CountrySetupGate";
+import { LayoutPanelLeft } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -207,18 +208,19 @@ function AuthedShell() {
                 )}
               </nav>
               <div className="hidden flex-1 md:block" />
-              <a
-                href="https://hanpassusim.lovable.app/usim-activation"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-[12px] font-semibold text-brand-foreground transition-opacity hover:opacity-90"
-              >
-                USIM 개통
-              </a>
               <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-[10px] font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 OB Call Management
               </span>
+              <a
+                href="https://hanpassusim.lovable.app/usim-activation"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-header-foreground/20 bg-header-foreground/5 px-3 py-1.5 text-[13px] font-medium text-header-foreground transition-colors hover:bg-header-foreground/15"
+              >
+                <LayoutPanelLeft className="h-4 w-4 text-header-foreground/80" />
+                USIM 개통
+              </a>
               <span
                 aria-hidden
                 className={`pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand transition-opacity duration-200 ${
