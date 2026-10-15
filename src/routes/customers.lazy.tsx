@@ -7,7 +7,7 @@ import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
   StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X, Phone, ExternalLink,
 } from "lucide-react";
-import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals, syncGoogleFormReceived, syncQrActivation } from "@/lib/google-form-sync.functions";
+import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals, syncGoogleFormReceived } from "@/lib/google-form-sync.functions";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -301,7 +301,7 @@ function CustomersPage() {
   const visiblePools = useMemo<readonly CustomerPool[]>(
     () =>
       hanpassOnly
-        ? (["activation_request", "qr_activation", "friend_referral", "prepaid_charge"] as const)
+        ? (["activation_request", "friend_referral", "prepaid_charge"] as const)
         : POOLS,
     [hanpassOnly],
   );
@@ -383,9 +383,6 @@ function CustomersPage() {
     } else if (tab === "friend_referral") {
       setSortKey("signup_date");
       setSortDir("desc");
-    } else if (tab === "qr_activation") {
-      setSortKey("imported_at");
-      setSortDir("asc");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
@@ -991,7 +988,7 @@ function CustomersPage() {
     if (effPool === "existing") {
       header = ["고객명", "전화번호", "개통일", "요금제", "국적", "메모"];
       sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
-    } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "qr_activation") {
+    } else if (effPool === "activation_request" || effPool === "google_form_activation") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
 
