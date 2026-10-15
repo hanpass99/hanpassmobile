@@ -1556,9 +1556,25 @@ function CustomersPage() {
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
+          {showLoanTab && (
+            <TabsTrigger value="loan_borrowers" className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm">
+              {t("nav.loans")} <span className="ml-1 text-muted-foreground">({loanCount.toLocaleString()})</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {([tab] as TabValue[]).map((tv) => {
+          if (tv === "loan_borrowers") {
+            return (
+              <TabsContent key={tv} value={tv} className="mt-4">
+                <Card>
+                  <CardContent className="p-3 sm:p-4">
+                    <LoanBorrowerList />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            );
+          }
           const p: CustomerPool = (tv === "all") ? "existing" : tv;
           return (
           <TabsContent key={tv} value={tv} className="mt-4">
