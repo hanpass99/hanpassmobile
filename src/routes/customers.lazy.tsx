@@ -1435,31 +1435,6 @@ function CustomersPage() {
   const syncInterMutRef = useRef(syncGoogleFormInterMut);
   syncInterMutRef.current = syncGoogleFormInterMut;
 
-  // === QR 개통 신청 자동 동기화 (활성화: qr_activation 탭) ===
-  const syncQrFn = useServerFn(syncQrActivation);
-  const syncQrMut = useMutation({
-    mutationFn: () => syncQrFn(),
-    onSuccess: (r) => {
-      if (r.inserted > 0) {
-        toast.success(`QR 개통 신청 ${r.inserted}건을 가져왔습니다`);
-        void refetchList();
-        void refetchPoolCounts();
-      }
-      if (r.errors && r.errors.length > 0) {
-        toast.error(`QR 개통 신청 동기화 오류: ${r.errors[0]}`);
-      }
-    },
-    onError: (e: Error) => toast.error(`QR 개통 신청 동기화 실패: ${e.message}`),
-  });
-  const syncQrMutRef = useRef(syncQrMut);
-  syncQrMutRef.current = syncQrMut;
-  useEffect(() => {
-    if (tab !== "qr_activation") return;
-    syncQrMutRef.current.mutate();
-    const timer = setInterval(() => syncQrMutRef.current.mutate(), 30_000);
-    return () => clearInterval(timer);
-  }, [tab]);
-
   // === 친구 추천 자동 동기화 (활성화: friend_referral 탭) ===
   const syncFriendReferralsFn = useServerFn(syncFriendReferrals);
   const syncFriendReferralsMut = useMutation({
@@ -1508,7 +1483,6 @@ function CustomersPage() {
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
   const SHEET_URL_INTER = "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
   const SHEET_URL_FRIEND = "https://docs.google.com/spreadsheets/d/1OwC6pQ2as5VsyDTYVzUSGsNru9ki2jFvScn5kk2zZ1w/edit";
-  const SHEET_URL_QR = "https://docs.google.com/spreadsheets/d/16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM/edit";
 
   return (
     <div className="space-y-5">
@@ -1539,26 +1513,6 @@ function CustomersPage() {
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
                   {t("customers.googleFormSync")}
-                </Button>
-              </>
-            )}
-            {tab === "qr_activation" && (
-              <>
-                <Button variant="outline" size="sm" asChild>
-                  <a href={SHEET_URL_QR} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-1 h-4 w-4" /> QR 시트 열기
-                  </a>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => syncQrMut.mutate()}
-                  disabled={syncQrMut.isPending}
-                  aria-busy={syncQrMut.isPending}
-                  title="QR 개통 신청 시트 동기화"
-                >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${syncQrMut.isPending ? "animate-spin" : ""}`} />
-                  동기화
                 </Button>
               </>
             )}
@@ -2499,7 +2453,7 @@ function AddCustomerDialog({
   const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "qr_activation";
+  const requiresApplication = pool === "activation_request" || pool === "google_form_activation";
 
   useEffect(() => {
     if (open) {
