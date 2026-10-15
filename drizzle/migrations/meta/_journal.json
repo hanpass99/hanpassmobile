@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792042086032,
+      "tag": "0000_create_loan_borrowers",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792042396307,
+      "tag": "0001_loan_borrowers_temp_import",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792042449359,
+      "tag": "0002_drop_loan_import_function",
+      "breakpoints": true
+    }
+  ]
+}

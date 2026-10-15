@@ -2,10 +2,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
   Settings, Users2, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
-  ShieldAlert, ExternalLink,
+  ShieldAlert, Wallet,
 } from "lucide-react";
-
-const USIM_URL = "https://hanpassusim.lovable.app/usim-activation";
 
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -67,8 +65,8 @@ export function AppSidebar() {
 
   const mainItems = [
     { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
-    { title: t("nav.usim"), url: USIM_URL, icon: ExternalLink, external: USIM_URL },
     { title: t("nav.customers"), url: "/customers", icon: Users },
+    { title: t("nav.loans"), url: "/loans", icon: Wallet },
     { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
     ...(telegramEnabled
       ? [{ title: "텔레그램 상담", url: "/telegram", icon: Send, badge: telegramUnread }]

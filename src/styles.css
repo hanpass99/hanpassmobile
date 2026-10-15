@@ -14,8 +14,8 @@
 }
 
 @theme inline {
-  --font-sans: "Noto Sans KR", "Pretendard", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
-  --font-display: "Noto Sans KR", "Pretendard", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+  --font-sans: "Manrope", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+  --font-display: "Sora", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);

@@ -7,7 +7,7 @@ export default {
     attendance: "Attendance", reports: "Reports", settings: "Settings",
     sms: "SMS", sla: "SLA", callLogs: "Call Logs",
     staffMgmt: "Staff Management", hanpassDash: "Hanpass Overview", systemHealth: "System Health",
-    usim: "USIM Activation",
+    usim: "USIM Activation", loans: "Loan Borrowers",
   },
   systemHealth: {
     headTitle: "System Health — Hanpass OB CRM",

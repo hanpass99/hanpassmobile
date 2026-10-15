@@ -92,7 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap",
       },
     ],
   }),
@@ -207,6 +207,14 @@ function AuthedShell() {
                 )}
               </nav>
               <div className="hidden flex-1 md:block" />
+              <a
+                href="https://hanpassusim.lovable.app/usim-activation"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-[12px] font-semibold text-brand-foreground transition-opacity hover:opacity-90"
+              >
+                USIM 개통
+              </a>
               <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-[10px] font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 OB Call Management

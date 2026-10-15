@@ -945,6 +945,33 @@ export type Database = {
           },
         ]
       }
+      loan_borrowers: {
+        Row: {
+          created_at: string
+          id: string
+          loan_start_date: string
+          name: string
+          nationality: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          loan_start_date: string
+          name: string
+          nationality: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          loan_start_date?: string
+          name?: string
+          nationality?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       pending_calls: {
         Row: {
           consumed_at: string | null
