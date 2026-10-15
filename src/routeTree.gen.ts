@@ -18,7 +18,6 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as McpRouteImport } from './routes/mcp'
-import { Route as LoansRouteImport } from './routes/loans'
 import { Route as HanpassDashboardRouteImport } from './routes/hanpass-dashboard'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as ChannelPerformanceRouteImport } from './routes/channel-performance'
@@ -83,11 +82,6 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoansRoute = LoansRouteImport.update({
-  id: '/loans',
-  path: '/loans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HanpassDashboardRoute = HanpassDashboardRouteImport.update({
@@ -207,7 +201,6 @@ export interface FileRoutesByFullPath {
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/hanpass-dashboard': typeof HanpassDashboardRoute
-  '/loans': typeof LoansRoute
   '/mcp': typeof McpRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -239,7 +232,6 @@ export interface FileRoutesByTo {
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/hanpass-dashboard': typeof HanpassDashboardRoute
-  '/loans': typeof LoansRoute
   '/mcp': typeof McpRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -272,7 +264,6 @@ export interface FileRoutesById {
   '/channel-performance': typeof ChannelPerformanceRoute
   '/customers': typeof CustomersRoute
   '/hanpass-dashboard': typeof HanpassDashboardRoute
-  '/loans': typeof LoansRoute
   '/mcp': typeof McpRoute
   '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -306,7 +297,6 @@ export interface FileRouteTypes {
     | '/channel-performance'
     | '/customers'
     | '/hanpass-dashboard'
-    | '/loans'
     | '/mcp'
     | '/notifications'
     | '/reset-password'
@@ -338,7 +328,6 @@ export interface FileRouteTypes {
     | '/channel-performance'
     | '/customers'
     | '/hanpass-dashboard'
-    | '/loans'
     | '/mcp'
     | '/notifications'
     | '/reset-password'
@@ -370,7 +359,6 @@ export interface FileRouteTypes {
     | '/channel-performance'
     | '/customers'
     | '/hanpass-dashboard'
-    | '/loans'
     | '/mcp'
     | '/notifications'
     | '/reset-password'
@@ -403,7 +391,6 @@ export interface RootRouteChildren {
   ChannelPerformanceRoute: typeof ChannelPerformanceRoute
   CustomersRoute: typeof CustomersRoute
   HanpassDashboardRoute: typeof HanpassDashboardRoute
-  LoansRoute: typeof LoansRoute
   McpRoute: typeof McpRoute
   NotificationsRoute: typeof NotificationsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -487,13 +474,6 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/loans': {
-      id: '/loans'
-      path: '/loans'
-      fullPath: '/loans'
-      preLoaderRoute: typeof LoansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hanpass-dashboard': {
@@ -664,7 +644,6 @@ const rootRouteChildren: RootRouteChildren = {
   ChannelPerformanceRoute: ChannelPerformanceRoute,
   CustomersRoute: CustomersRoute,
   HanpassDashboardRoute: HanpassDashboardRoute,
-  LoansRoute: LoansRoute,
   McpRoute: McpRoute,
   NotificationsRoute: NotificationsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
