@@ -391,7 +391,8 @@ function CustomersPage() {
   }, [tab]);
 
   const fromIso = dateFrom ? dayStartIso(dateFrom) : null;
-  const toIso = dateTo ? dayEndIso(dateTo) : null;
+  // 시작일만 선택하면 그날 하루만 조회 (종료일을 시작일과 같은 날로 간주)
+  const toIso = dateTo ? dayEndIso(dateTo) : dateFrom ? dayEndIso(dateFrom) : null;
 
   const {
     rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
