@@ -2,8 +2,10 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
   Settings, Users2, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
-  ShieldAlert,
+  ShieldAlert, ExternalLink,
 } from "lucide-react";
+
+const USIM_URL = "https://hanpassusim.lovable.app/usim-activation";
 
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
