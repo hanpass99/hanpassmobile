@@ -192,7 +192,7 @@ export function LoanBorrowerList() {
         <div className="flex flex-col items-center gap-2 pt-3">
           {totalPages > 1 && <div className="max-w-full overflow-x-auto pb-1"><Pagination><PaginationContent>
             <PaginationItem><PaginationPrevious href="#" aria-disabled={currentPage <= 1} className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""} onClick={(e) => { e.preventDefault(); setPage(Math.max(1, currentPage - 1)); }} /></PaginationItem>
-            {pageNumbers.map((n, i) => <PaginationItem key={n}>{i > 0 && n - pageNumbers[i - 1] > 1 && <PaginationEllipsis /> }<PaginationLink href="#" isActive={n === currentPage} onClick={(e) => { e.preventDefault(); setPage(n); }}>{n}</PaginationLink></PaginationItem>)}
+            {pageNumbers.map((n, i) => <PaginationItem key={n} className="flex items-center">{i > 0 && n - pageNumbers[i - 1] > 1 && <PaginationEllipsis /> }<PaginationLink href="#" isActive={n === currentPage} onClick={(e) => { e.preventDefault(); setPage(n); }}>{n}</PaginationLink></PaginationItem>)}
             <PaginationItem><PaginationNext href="#" aria-disabled={currentPage >= totalPages} className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""} onClick={(e) => { e.preventDefault(); setPage(Math.min(totalPages, currentPage + 1)); }} /></PaginationItem>
           </PaginationContent></Pagination></div>}
           <p className="text-xs text-muted-foreground">{currentPage} / {totalPages} 페이지 · {filtered.length.toLocaleString()}건 · {pageSize}건씩</p>
