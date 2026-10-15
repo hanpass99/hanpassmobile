@@ -223,9 +223,9 @@ export default {
     one_year_activation: "1-Year activated",
     short: {
       existing: "Existing",
-      activation_request: "Activation",
-      google_form_activation: "Google Form Activation",
-      google_form_activation_inter: "Google Form Inter",
+      activation_request: "Hanpass App",
+      google_form_activation: "Facebook",
+      google_form_activation_inter: "Facebook Inter",
       new_signup: "New signup",
       friend_referral: "Friend referral",
       prepaid_charge: "Prepaid charge",
