@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+// 대출자 명단 — 고객 관리 화면의 "대출자" 탭에서 표시되는 목록.
+// 국가별 탭, 조회 기간(오늘/이번 주/이번 달), 이름·전화번호 검색을 제공합니다.
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PageHeader } from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,21 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 
-export const Route = createFileRoute("/loans")({
-  head: () => ({
-    meta: [
-      { title: "대출자 관리 — Hanpass OB CRM" },
-      { name: "description", content: "대출자 명단을 국가별로 조회" },
-      { property: "og:title", content: "대출자 관리 — Hanpass OB CRM" },
-      { property: "og:description", content: "대출자 명단을 국가별로 조회" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: LoansPage,
-});
-
-type LoanBorrower = {
+export type LoanBorrower = {
   id: string;
   name: string;
   phone: string;
@@ -58,15 +44,28 @@ function monthStartStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
-function LoansPage() {
-  const [country, setCountry] = useState<string>("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [search, setSearch] = useState("");
+/** 탭 라벨용 경량 카운트 — 행을 내리지 않고 총건수만 세는 조회 */
+export function useLoanBorrowerCount() {
+  const { data } = useQuery({
+    queryKey: ["loan-borrowers", "count"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("loan_borrowers")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  return data ?? 0;
+}
 
-  const { data: rows, isLoading } = useQuery({
+/** 대출자 명단 전체(2,819건 수준)를 페이지네이션 없이 읽어온다. */
+export function useLoanBorrowers(enabled: boolean) {
+  return useQuery({
     queryKey: ["loan-borrowers"],
     staleTime: 60_000,
+    enabled,
     queryFn: async () => {
       const all: LoanBorrower[] = [];
       let from = 0;
@@ -84,6 +83,15 @@ function LoansPage() {
       return all;
     },
   });
+}
+
+export function LoanBorrowerList() {
+  const [country, setCountry] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [search, setSearch] = useState("");
+
+  const { data: rows, isLoading } = useLoanBorrowers(true);
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -109,11 +117,11 @@ function LoansPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="대출자 관리"
-        description={`총 ${(rows?.length ?? 0).toLocaleString()}명 · 표시 ${filtered.length.toLocaleString()}건${isLoading ? " · 불러오는 중" : ""}`}
-      />
+    <div className="space-y-4">
+      <div className="text-sm text-muted-foreground">
+        총 {(rows?.length ?? 0).toLocaleString()}명 · 표시 {filtered.length.toLocaleString()}건
+        {isLoading ? " · 불러오는 중" : ""}
+      </div>
 
       {/* 국가별 탭 */}
       <div className="flex flex-wrap gap-2">
@@ -182,7 +190,7 @@ function LoansPage() {
       </div>
 
       {/* 목록 */}
-      <div className="rounded-md border">
+      <div className="table-scroll rounded-lg border border-border/60 [--table-max-h:70dvh]">
         <Table>
           <TableHeader>
             <TableRow>

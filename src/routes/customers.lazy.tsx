@@ -56,6 +56,7 @@ import {
   type Country, type Channel, type CustomerRow,
   SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
+import { LoanBorrowerList, useLoanBorrowerCount } from "@/components/LoanBorrowerList";
 
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
@@ -72,7 +73,7 @@ export const Route = createLazyFileRoute("/customers")({
   component: CustomersPage,
 });
 
-type TabValue = CustomerPool | "all";
+type TabValue = CustomerPool | "all" | "loan_borrowers";
 
 type Profile = { id: string; display_name: string; country_id: string | null; is_active: boolean };
 
@@ -305,6 +306,8 @@ function CustomersPage() {
         : POOLS,
     [hanpassOnly],
   );
+  const showLoanTab = !hanpassOnly;
+  const loanCount = useLoanBorrowerCount();
   const initialSearch = Route.useSearch();
   const initialStatus = (() => {
     const s = initialSearch.status;
@@ -393,7 +396,7 @@ function CustomersPage() {
   const {
     rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
   } = useCustomersList({
-    pool: tab,
+    pool: tab === "loan_borrowers" ? "existing" : tab,
     search: debouncedSearch,
     countryIds,
     assignedCountry,
@@ -409,7 +412,7 @@ function CustomersPage() {
   });
 
   const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
-    pool: tab,
+    pool: tab === "loan_borrowers" ? "existing" : tab,
     countryIds,
     dateFromIso: fromIso,
     dateToIso: toIso,
@@ -436,7 +439,7 @@ function CustomersPage() {
 
   // 권한 변경/로드 시 비허용 풀이 선택돼 있으면 안전한 탭으로 리셋
   useEffect(() => {
-    if (tab !== "all" && !visiblePools.includes(tab as CustomerPool)) {
+    if (tab !== "all" && tab !== "loan_borrowers" && !visiblePools.includes(tab as CustomerPool)) {
       setTab(visiblePools[0] ?? "existing");
     }
   }, [visiblePools, tab]);
@@ -982,7 +985,7 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
-    const effPool: CustomerPool = (tab === "all") ? "existing" : tab;
+    const effPool: CustomerPool = (tab === "all" || tab === "loan_borrowers") ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
@@ -1035,7 +1038,7 @@ function CustomersPage() {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         const { data, error } = await supabase.rpc("search_customers", {
-          _pool: tab === "all" ? undefined : tab,
+          _pool: tab === "all" || tab === "loan_borrowers" ? undefined : tab,
           _search: debouncedSearch?.trim() || undefined,
           _country_ids: countryIds.length ? countryIds : undefined,
           _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
@@ -1553,9 +1556,25 @@ function CustomersPage() {
               {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
+          {showLoanTab && (
+            <TabsTrigger value="loan_borrowers" className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm">
+              {t("nav.loans")} <span className="ml-1 text-muted-foreground">({loanCount.toLocaleString()})</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {([tab] as TabValue[]).map((tv) => {
+          if (tv === "loan_borrowers") {
+            return (
+              <TabsContent key={tv} value={tv} className="mt-4">
+                <Card>
+                  <CardContent className="p-3 sm:p-4">
+                    <LoanBorrowerList />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            );
+          }
           const p: CustomerPool = (tv === "all") ? "existing" : tv;
           return (
           <TabsContent key={tv} value={tv} className="mt-4">
