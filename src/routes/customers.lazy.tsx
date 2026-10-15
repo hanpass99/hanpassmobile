@@ -56,6 +56,7 @@ import {
   type Country, type Channel, type CustomerRow,
   SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
+import { LoanBorrowerList, useLoanBorrowerCount } from "@/components/LoanBorrowerList";
 
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
@@ -72,7 +73,7 @@ export const Route = createLazyFileRoute("/customers")({
   component: CustomersPage,
 });
 
-type TabValue = CustomerPool | "all";
+type TabValue = CustomerPool | "all" | "loan_borrowers";
 
 type Profile = { id: string; display_name: string; country_id: string | null; is_active: boolean };
 
