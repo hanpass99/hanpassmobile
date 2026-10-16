@@ -10,8 +10,6 @@ export function dayStartIso(date: Date) {
 }
 
 export function dayEndIso(date: Date) {
-  // KST 23:59:59.999 on D = UTC 14:59:59.999 on D+1
-  const d = new Date(date);
-  d.setDate(d.getDate() + 1);
-  return `${dateKey(d)}T14:59:59.999Z`;
+  // KST 23:59:59.999 on D = UTC 14:59:59.999 on the same day D
+  return `${dateKey(date)}T14:59:59.999Z`;
 }
