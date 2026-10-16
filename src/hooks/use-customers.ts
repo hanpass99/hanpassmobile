@@ -46,6 +46,7 @@ export type CustomerRow = {
   birth_date: string | null;
   monthly_fee: number | null;
   customer_type: string | null;
+  id_number?: string | null;
 };
 
 export type CustomersSearchParams = {
