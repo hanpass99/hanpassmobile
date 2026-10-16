@@ -19,7 +19,6 @@ import { AiAssistant } from "@/components/AiAssistant";
 import { AdminPushListener } from "@/components/AdminPushListener";
 import { AttendanceCheckInGate } from "@/components/AttendanceCheckInGate";
 import { CountrySetupGate } from "@/components/CountrySetupGate";
-import { LayoutPanelLeft } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -137,37 +136,12 @@ function AuthGate() {
   return <AuthedShell />;
 }
 
-const SECTION_TITLES: Array<[string, string]> = [
-  ["/system-health", "시스템 점검"],
-  ["/hanpass-dashboard", "한패스 현황"],
-  ["/customers", "고객 관리"],
-
-  ["/sms", "문자 발송"],
-  ["/telegram", "텔레그램 상담"],
-  ["/call-logs", "통화 기록"],
-  ["/channel-performance", "채널 성과"],
-  ["/sla", "SLA 관리"],
-  ["/notifications", "관리자 공지"],
-  ["/broadcast", "브로드캐스트"],
-  ["/ai-faq", "AI 학습"],
-  ["/ai-assistant", "AI 어시스턴트"],
-  ["/staff", "직원 관리"],
-  ["/attendance", "출근 관리"],
-  ["/settings", "설정"],
-];
-
-function useSectionTitle(pathname: string) {
-  if (pathname === "/") return "대시보드";
-  return SECTION_TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "";
-}
-
 function AuthedShell() {
   useCallGoal();
   const { isAdmin, isHanpass, isActive, needsCountry, signOut, displayName } = useAuth();
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isNavigating = useRouterState({ select: (s) => s.status === "pending" });
-  const sectionTitle = useSectionTitle(pathname);
   if (isActive === false) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
@@ -201,27 +175,21 @@ function AuthedShell() {
                   <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-[10px] font-black text-brand-foreground">H</span>
                   <span className="hidden sm:inline">Hanpass Mobile</span>
                 </Link>
-                {sectionTitle && (
-                  <>
-                    <span className="hidden text-header-foreground/30 sm:inline">/</span>
-                    <span className="truncate font-display font-semibold text-header-foreground">{sectionTitle}</span>
-                  </>
-                )}
+                <span className="hidden text-header-foreground/30 sm:inline">/</span>
+                <a
+                  href="https://hanpassusim.lovable.app/usim-activation"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate font-display font-semibold text-header-foreground hover:underline"
+                >
+                  USIM 개통
+                </a>
               </nav>
               <div className="hidden flex-1 md:block" />
               <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-[10px] font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 OB Call Management
               </span>
-              <a
-                href="https://hanpassusim.lovable.app/usim-activation"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-header-foreground/20 bg-header-foreground/5 px-3 py-1.5 text-[13px] font-medium text-header-foreground transition-colors hover:bg-header-foreground/15"
-              >
-                <LayoutPanelLeft className="h-4 w-4 text-header-foreground/80" />
-                USIM 개통
-              </a>
               <span
                 aria-hidden
                 className={`pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand transition-opacity duration-200 ${
