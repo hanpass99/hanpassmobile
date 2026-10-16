@@ -136,30 +136,6 @@ function AuthGate() {
   return <AuthedShell />;
 }
 
-const SECTION_TITLES: Array<[string, string]> = [
-  ["/system-health", "시스템 점검"],
-  ["/hanpass-dashboard", "한패스 현황"],
-  ["/customers", "고객 관리"],
-
-  ["/sms", "문자 발송"],
-  ["/telegram", "텔레그램 상담"],
-  ["/call-logs", "통화 기록"],
-  ["/channel-performance", "채널 성과"],
-  ["/sla", "SLA 관리"],
-  ["/notifications", "관리자 공지"],
-  ["/broadcast", "브로드캐스트"],
-  ["/ai-faq", "AI 학습"],
-  ["/ai-assistant", "AI 어시스턴트"],
-  ["/staff", "직원 관리"],
-  ["/attendance", "출근 관리"],
-  ["/settings", "설정"],
-];
-
-function useSectionTitle(pathname: string) {
-  if (pathname === "/") return "대시보드";
-  return SECTION_TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "";
-}
-
 function AuthedShell() {
   useCallGoal();
   const { isAdmin, isHanpass, isActive, needsCountry, signOut, displayName } = useAuth();
