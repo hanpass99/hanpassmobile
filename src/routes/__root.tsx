@@ -19,7 +19,6 @@ import { AiAssistant } from "@/components/AiAssistant";
 import { AdminPushListener } from "@/components/AdminPushListener";
 import { AttendanceCheckInGate } from "@/components/AttendanceCheckInGate";
 import { CountrySetupGate } from "@/components/CountrySetupGate";
-import { LayoutPanelLeft } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -167,7 +166,6 @@ function AuthedShell() {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isNavigating = useRouterState({ select: (s) => s.status === "pending" });
-  const sectionTitle = useSectionTitle(pathname);
   if (isActive === false) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
