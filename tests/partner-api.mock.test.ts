@@ -423,7 +423,7 @@ describe("append-only intake (mock)", () => {
     });
   }
 
-  for (const [n, id] of [["VN", "country-vn"], ["KR", "country-kr"]]) {
+  for (const [n, id] of [["VN", "country-vn"]]) {
     it(`matches ${n} directly`, async () => {
       const db = new Db();
       await post(db, { apiKey: K, keySpec: KEYS, req: withNat(n) });
@@ -431,7 +431,7 @@ describe("append-only intake (mock)", () => {
     });
   }
 
-  for (const n of [UNKNOWN_NATIONALITY, "XX", "XO"]) {
+  for (const n of [UNKNOWN_NATIONALITY, "XX", "XO", "KR"]) {
     it(`rejects a new ${n} application with 422 and zero inserts`, async () => {
       const db = new Db();
       const r = await post(db, { apiKey: K, keySpec: KEYS, req: withNat(n) });
