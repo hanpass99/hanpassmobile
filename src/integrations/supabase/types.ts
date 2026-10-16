@@ -761,6 +761,7 @@ export type Database = {
           customer_type: string | null
           email: string | null
           id: string
+          id_number: string | null
           imported_at: string
           monthly_fee: number | null
           name: string
@@ -791,6 +792,7 @@ export type Database = {
           customer_type?: string | null
           email?: string | null
           id?: string
+          id_number?: string | null
           imported_at?: string
           monthly_fee?: number | null
           name: string
@@ -821,6 +823,7 @@ export type Database = {
           customer_type?: string | null
           email?: string | null
           id?: string
+          id_number?: string | null
           imported_at?: string
           monthly_fee?: number | null
           name?: string

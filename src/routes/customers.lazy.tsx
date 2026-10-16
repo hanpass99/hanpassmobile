@@ -78,6 +78,7 @@ type TabValue = CustomerPool | "all" | "loan_borrowers";
 type Profile = { id: string; display_name: string; country_id: string | null; is_active: boolean };
 
 type ImportCustomer = {
+  id_number?: string | null;
   name: string;
   phone: string;
   country_id: string | null;
@@ -743,7 +744,8 @@ function CustomersPage() {
         storeName: pickHeader("판매점", "매장", "store", "store_name"),
         birthDate: pickHeader("생년월일", "생일", "birth", "birth_date", "dob"),
         monthlyFee: pickHeader("월요금", "월 요금", "monthly_fee", "월납금"),
-        customerType: pickHeader("구분", "고객유형", "고객 유형", "유형", "customer_type", "type"),
+        customerType: pickHeader("선후불", "선/후불", "구분", "고객유형", "고객 유형", "유형", "customer_type", "type"),
+        idNumber: pickHeader("신분증번호", "신분증 번호", "외국인등록번호", "id_number"),
       };
       const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
       // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
@@ -871,6 +873,8 @@ function CustomersPage() {
           if (birth_date) base.birth_date = birth_date;
           if (monthly_fee !== null) base.monthly_fee = monthly_fee;
           if (customer_type) base.customer_type = customer_type;
+          const id_number = norm(valueOf(row, headers.idNumber));
+          if (id_number) base.id_number = id_number;
           return base;
         })
         .filter((x): x is ImportCustomer => x !== null);
@@ -990,8 +994,8 @@ function CustomersPage() {
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
-      header = ["고객명", "전화번호", "개통일", "요금제", "국적", "메모"];
-      sample = [{ 고객명: "홍길동", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "KR", 메모: "" }];
+      header = ["고객명", "선후불", "전화번호", "개통일", "요금제", "국적", "신분증번호"];
+      sample = [{ 고객명: "Nguyen Van A", 선후불: "선불", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "VN", 신분증번호: "900512-5123456" }];
     } else if (effPool === "activation_request" || effPool === "google_form_activation") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
@@ -1083,6 +1087,7 @@ function CustomersPage() {
         이메일: c.email ?? "",
         충전번호: c.charge_phone ?? "",
         "데이터 등록일": c.imported_at ? new Date(c.imported_at).toLocaleString("ko-KR") : "",
+        ...(tab === "existing" ? { 선후불: c.customer_type ?? "", 신분증번호: c.id_number ?? "" } : {}),
         메모: c.notes ?? "",
       }));
       const ws = XLSX.utils.json_to_sheet(rowsForXlsx);
@@ -1162,10 +1167,12 @@ function CustomersPage() {
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+              <TableHead>선후불</TableHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
               <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationDate")}</SortHead>
               <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.carrierPlan")}</SortHead>
               <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
+              <TableHead>신분증번호</TableHead>
               <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
               <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
               {CallRoundHead}
@@ -1180,10 +1187,12 @@ function CustomersPage() {
               <TableRow key={c.id} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
                 <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
+                <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
                 <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
                 <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
+                <TableCell className="font-mono text-xs">{c.id_number ?? "-"}</TableCell>
                 <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
@@ -1193,7 +1202,7 @@ function CustomersPage() {
                 {renderActions(c)}
               </TableRow>
             ))}
-            {filtered.length === 0 && <EmptyRow cols={12 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={14 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
