@@ -635,7 +635,8 @@ export async function resolveNationalityCountry(
   nationality: string,
   findActiveCountryId: (code: string) => Promise<string | null>
 ): Promise<CountryResolution> {
-  if (nationality.trim().toUpperCase() === UNKNOWN_NATIONALITY) return { ok: false };
+  const n = nationality.trim().toUpperCase();
+  if (n === UNKNOWN_NATIONALITY || PARTNER_BLOCKED_NATIONALITIES.has(n)) return { ok: false };
   const id = await findActiveCountryId(countryLookupCode(nationality));
   return id ? { ok: true, countryId: id } : { ok: false };
 }
