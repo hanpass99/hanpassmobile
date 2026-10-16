@@ -110,7 +110,9 @@ export function LoanBorrowerList() {
     return (rows ?? []).filter((r) => {
       if (countries.length && !countries.includes(r.nationality)) return false;
       if (dateFrom && r.loan_start_date < dateFrom) return false;
-      if (dateTo && r.loan_start_date > dateTo) return false;
+      // 시작일만 선택하면 그날 하루만 조회 (고객 탭과 동일)
+      const effectiveTo = dateTo || dateFrom;
+      if (effectiveTo && r.loan_start_date > effectiveTo) return false;
       return !q || r.name.toLowerCase().includes(q) || r.phone.includes(q);
     }).sort((a, b) => (sort.asc ? 1 : -1) * a[sort.key].localeCompare(b[sort.key], "ko", { numeric: true }) || a.id.localeCompare(b.id));
   }, [rows, countries, dateFrom, dateTo, search, sort]);
