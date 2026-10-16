@@ -615,6 +615,9 @@ export const UNKNOWN_NATIONALITY = "ZZ";
  */
 export const PARTNER_CIS_CODES: ReadonlySet<string> = new Set(["UZ", "KZ", "KG", "TJ", "RU"]);
 
+/** Nationalities never accepted for NEW applications (KR = Korean nationals). */
+export const PARTNER_BLOCKED_NATIONALITIES: ReadonlySet<string> = new Set(["KR"]);
+
 /** countries.code to look up for an ISO nationality. */
 export function countryLookupCode(nationality: string): string {
   const n = nationality.trim().toUpperCase();
