@@ -68,7 +68,7 @@ GET 404).
 - `bundle`: `carrier`/`monthlyFee`/`bundledPlanCode` 는 미정(null) 허용, `devicePrice: 0` 은 무료로 보존.
 - 성(lastName)이 없는 신청자는 `firstName` 만으로 성명이 구성됩니다.
 - `sim`: 단말기 필드 금지, `contractMonths` 는 null 허용, carrier·monthlyFee 는 필수.
-- `nationality`: ISO 3166-1 alpha-2. UZ/KZ/KG/TJ/RU 는 `CIS` 국가 행으로, 나머지는 같은 코드의 **활성** countries 행으로 매칭합니다(원문 코드는 해시·메모에 그대로). 신규 신청에서 `ZZ`·미등록·비활성 국가는 `422 unsupported_nationality`(INSERT 0회), 국가 조회 실패는 500입니다. 기존 신청 재전송은 국가 검사 전에 그대로 재생(replayed)됩니다.
+- `nationality`: ISO 3166-1 alpha-2. UZ/KZ/KG/TJ/RU 는 `CIS` 국가 행으로, 나머지는 같은 코드의 **활성** countries 행으로 매칭합니다(원문 코드는 해시·메모에 그대로). 신규 신청에서 `ZZ`·`KR`(한국 국적 차단)·미등록·비활성 국가는 `422 unsupported_nationality`(INSERT 0회), 국가 조회 실패는 500입니다. 기존 신청 재전송은 국가 검사 전에 그대로 재생(replayed)됩니다.
 
 동작:
 

@@ -615,6 +615,9 @@ export const UNKNOWN_NATIONALITY = "ZZ";
  */
 export const PARTNER_CIS_CODES: ReadonlySet<string> = new Set(["UZ", "KZ", "KG", "TJ", "RU"]);
 
+/** Nationalities never accepted for NEW applications (KR = Korean nationals). */
+export const PARTNER_BLOCKED_NATIONALITIES: ReadonlySet<string> = new Set(["KR"]);
+
 /** countries.code to look up for an ISO nationality. */
 export function countryLookupCode(nationality: string): string {
   const n = nationality.trim().toUpperCase();
@@ -632,7 +635,8 @@ export async function resolveNationalityCountry(
   nationality: string,
   findActiveCountryId: (code: string) => Promise<string | null>
 ): Promise<CountryResolution> {
-  if (nationality.trim().toUpperCase() === UNKNOWN_NATIONALITY) return { ok: false };
+  const n = nationality.trim().toUpperCase();
+  if (n === UNKNOWN_NATIONALITY || PARTNER_BLOCKED_NATIONALITIES.has(n)) return { ok: false };
   const id = await findActiveCountryId(countryLookupCode(nationality));
   return id ? { ok: true, countryId: id } : { ok: false };
 }
