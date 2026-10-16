@@ -201,27 +201,21 @@ function AuthedShell() {
                   <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-[10px] font-black text-brand-foreground">H</span>
                   <span className="hidden sm:inline">Hanpass Mobile</span>
                 </Link>
-                {sectionTitle && (
-                  <>
-                    <span className="hidden text-header-foreground/30 sm:inline">/</span>
-                    <span className="truncate font-display font-semibold text-header-foreground">{sectionTitle}</span>
-                  </>
-                )}
+                <span className="hidden text-header-foreground/30 sm:inline">/</span>
+                <a
+                  href="https://hanpassusim.lovable.app/usim-activation"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate font-display font-semibold text-header-foreground hover:underline"
+                >
+                  USIM 개통
+                </a>
               </nav>
               <div className="hidden flex-1 md:block" />
               <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-[10px] font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 OB Call Management
               </span>
-              <a
-                href="https://hanpassusim.lovable.app/usim-activation"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-header-foreground/20 bg-header-foreground/5 px-3 py-1.5 text-[13px] font-medium text-header-foreground transition-colors hover:bg-header-foreground/15"
-              >
-                <LayoutPanelLeft className="h-4 w-4 text-header-foreground/80" />
-                USIM 개통
-              </a>
               <span
                 aria-hidden
                 className={`pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand transition-opacity duration-200 ${
