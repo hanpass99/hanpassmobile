@@ -119,7 +119,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function AuthGate() {
-  const { session, loading } = useAuth();
+  const { session, loading, mustChangePassword } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isPublicRoute = pathname === "/auth" || pathname === "/reset-password";
 
@@ -131,6 +131,7 @@ function AuthGate() {
     );
   }
 
+  if (session && mustChangePassword && pathname !== "/reset-password") return <Navigate to="/reset-password" />;
   if (isPublicRoute) return <Outlet />;
   if (!session) return <Navigate to="/auth" search={{ next: pathname === "/" ? "" : pathname }} />;
 

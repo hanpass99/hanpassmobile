@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { isApprovedStaff } from "@/lib/staff-security";
+import { mustChangePassword } from "@/lib/password-change";
 
 type AuthCtx = {
   session: Session | null;
@@ -9,6 +10,7 @@ type AuthCtx = {
   loading: boolean;
   isAdmin: boolean;
   isActive: boolean | null;
+  mustChangePassword: boolean;
   isHanpass: boolean;
   countryIds: string[];
   needsCountry: boolean;
@@ -28,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isActive, setIsActive] = useState<boolean | null>(null);
+  const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
   const [company, setCompany] = useState("");
   const [countryIds, setCountryIds] = useState<string[]>([]);
   const [canAccessNewSignup, setCanAccessNewSignup] = useState(false);
@@ -36,6 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const loadProfile = async (uid: string) => {
+    const { data: verified, error } = await supabase.auth.getUser();
+    if (error || verified.user?.id !== uid) throw new Error("unauthorized");
+    const required = mustChangePassword(verified.user.app_metadata);
+    setRequiresPasswordChange(required);
+    if (required) return;
     const [{ data: roles }, { data: profile }, { data: pcs }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
       supabase
@@ -68,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setIsAdmin(false);
         setIsActive(null);
+        setRequiresPasswordChange(false);
         setCompany("");
         setCountryIds([]);
         setCanAccessNewSignup(false);
@@ -96,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         isHanpass,
         isActive,
+        mustChangePassword: requiresPasswordChange,
         company,
         countryIds,
         needsCountry: !!session && !isAdmin && isActive !== false && countryIds.length === 0,

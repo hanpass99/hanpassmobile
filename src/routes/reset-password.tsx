@@ -10,7 +10,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import logo from "@/assets/hanpass-logo.png";
 
-export const Route = createFileRoute("/reset-password")({ component: ResetPasswordPage });
+export const Route = createFileRoute("/reset-password")({
+  component: ResetPasswordPage,
+  head: () => ({ meta: [
+    { title: "Set a new password | Hanpass Mobile" },
+    { name: "description", content: "Securely replace your Hanpass Mobile staff password." },
+    { property: "og:title", content: "Set a new password | Hanpass Mobile" },
+    { property: "og:description", content: "Securely replace your Hanpass Mobile staff password." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+});
 
 function ResetPasswordPage() {
   const { t } = useTranslation();
@@ -36,9 +46,16 @@ function ResetPasswordPage() {
     if (password.length < 6) return toast.error(t("resetPwd.pwdMin"));
     if (password !== confirm) return toast.error(t("resetPwd.mismatch"));
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) { setBusy(false); return toast.error(t("resetPwd.invalid")); }
+    const response = await fetch("/api/public/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ password }),
+    }).catch(() => null);
     setBusy(false);
-    if (error) return toast.error(t("resetPwd.failed", { msg: error.message }));
+    if (!response?.ok) return toast.error(t("resetPwd.failed", { msg: "password_update_failed" }));
     toast.success(t("resetPwd.success"));
     await supabase.auth.signOut();
     navigate({ to: "/auth", search: { next: "" } });
