@@ -1115,7 +1115,7 @@ export default {
     "copy64fe8ca0f0": "No phone number available. Link a customer first.",
     "copyb222714d61": " is replying · Time remaining",
     "copy858d7ba806": "Reply to {{value0}}",
-    "copy28768b393d": "Reply to {{value0}}",
+    "copy28768b393d": "Reply to customer",
     "copy7e9ffb5351": "Cancel reply",
     "copy6be533674d": "Templates",
     "copybc4b2107e6": "My quick replies",

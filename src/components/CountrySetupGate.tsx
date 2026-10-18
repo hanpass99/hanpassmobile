@@ -1,3 +1,4 @@
+import { countryName } from "@/i18n/display-values";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -48,7 +49,7 @@ export function CountrySetupGate() {
           <SelectContent>
             {countries.map((c) => (
               <SelectItem key={c.id} value={c.id}>
-                {c.name_ko} ({c.code})
+                {countryName(c)} ({c.code})
               </SelectItem>
             ))}
           </SelectContent>

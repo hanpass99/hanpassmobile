@@ -527,7 +527,7 @@ function StaffAdmin() {
                       <SelectContent><SelectItem value="admin">{t("common.admin")}</SelectItem><SelectItem value="staff">{t("common.staff")}</SelectItem></SelectContent>
                     </Select>
                   )}
-                  <Select value={companyName(r.company)} onValueChange={(v) => setCompany(r, v)}>
+                  <Select value={r.company} onValueChange={(v) => setCompany(r, v)}>
                     <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem><SelectItem value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</SelectItem></SelectContent>
                   </Select>
@@ -624,7 +624,7 @@ function StaffAdmin() {
                   <TableCell className="text-xs text-muted-foreground">{r.department ?? "-"}</TableCell>
                   <TableCell>
                     {isAdmin ? (
-                      <Select value={companyName(r.company)} onValueChange={(v) => setCompany(r, v)}>
+                      <Select value={r.company} onValueChange={(v) => setCompany(r, v)}>
                         <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem>
