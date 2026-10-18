@@ -323,6 +323,24 @@ function CustomersPage() {
     return "existing";
   })();
   const [tab, setTab] = useState<TabValue>(initialTab);
+  const tabRestoredRef = useRef(false);
+  useEffect(() => {
+    if (tabRestoredRef.current) return;
+    tabRestoredRef.current = true;
+    if (initialSearch.pool) return;
+    try {
+      const saved = window.localStorage.getItem("customers.lastTab");
+      if (!saved) return;
+      if (visiblePools.includes(saved as CustomerPool) || (saved === "loan_borrowers" && showLoanTab)) {
+        setTab(saved as TabValue);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!tabRestoredRef.current) return;
+    try { window.localStorage.setItem("customers.lastTab", tab); } catch { /* ignore */ }
+  }, [tab]);
   const [page, setPage] = useState(1);
   const [jumpPage, setJumpPage] = useState("");
 
