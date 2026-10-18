@@ -54,7 +54,7 @@ suite("actual signup trigger and RLS, isolated PostgreSQL", () => {
         expect((await tx`SELECT id FROM storage.objects`).length).toBe(0);
         expect((await tx`UPDATE profiles SET approval_status='approved',is_active=true WHERE id=${pending} RETURNING id`).length).toBe(0);
         await expect(tx`INSERT INTO storage.objects(id,bucket_id) VALUES (${pending},'telegram-media')`.execute()).rejects.toThrow();
-      }).catch((error) => { if (!String(error).includes("current transaction is aborted")) throw error; });
+      }).catch((error) => { if (!String(error).includes("row-level security")) throw error; });
       await db.begin(async (tx) => {
         await tx`SELECT set_config('request.jwt.claim.sub',${staff},true)`;
         await tx.unsafe("SET LOCAL ROLE authenticated");
@@ -62,7 +62,7 @@ suite("actual signup trigger and RLS, isolated PostgreSQL", () => {
         expect((await tx`UPDATE ai_reply_settings SET enabled=false RETURNING id`).length).toBe(0);
         expect((await tx`DELETE FROM ai_reply_settings RETURNING id`).length).toBe(0);
         await expect(tx`INSERT INTO ai_reply_settings(id,enabled) VALUES (${pending},true)`.execute()).rejects.toThrow();
-      }).catch((error) => { if (!String(error).includes("current transaction is aborted")) throw error; });
+      }).catch((error) => { if (!String(error).includes("row-level security")) throw error; });
       // Approval transaction grants the requested country, without changing existing staff.
       await db`INSERT INTO user_roles(user_id,role) VALUES (${pending},'staff')`;
       await db`UPDATE profiles SET approval_status='approved',is_active=true WHERE id=${pending}`;
