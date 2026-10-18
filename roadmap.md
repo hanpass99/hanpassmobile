@@ -1,5 +1,10 @@
 # Current requests
 
+- [x] UX batch 2: equal-period KPI comparisons using existing RPC/filters and one call-completed definition
+- [x] UX batch 2: searchable top-10 staff ranking, country bars with others, and date presets
+- [x] UX batch 2: dashboard changed-file lint, 114 regression tests, automatic type-check/build, and desktop/mobile mock browser verification
+- [ ] UX batch 2: real staff dashboard verification requires preview sign-in (self-session mint found no matching account); incidental pre-existing channel chart duplicate attribute fixed, channel lint still has existing any/dependency debt
+
 - [x] UX batch 1: Korean/English locale coverage and matching-key verification; preserve Korean copy and all behavior
 - [x] UX batch 1: real Hanpass logo in sidebar and login
 - [x] UX batch 1: semantic chart palette in light and dark themes
