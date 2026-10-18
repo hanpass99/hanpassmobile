@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         setTimeout(() => {
           loadProfile(s.user.id)
-            .catch(console.error)
+            .catch(() => { setIsActive(false); setRequiresPasswordChange(true); })
             .finally(() => setLoading(false));
         }, 0);
       } else {
@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
       if (data.session?.user) await loadProfile(data.session.user.id);
+    }).catch(() => { setIsActive(false); setRequiresPasswordChange(true); }).finally(() => {
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
