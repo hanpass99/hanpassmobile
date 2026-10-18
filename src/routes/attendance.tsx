@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
@@ -72,7 +73,7 @@ function AttendancePage() {
 
   const changeAttendance = async (userId: string, status: AttendanceStatus) => {
     if (!isAdmin && user?.id !== userId) {
-      toast.error(t("attendance.forbidden"));
+      toast.error(localizeError(t("attendance.forbidden")));
       return;
     }
     const { error } = await supabase.rpc("set_staff_attendance", {
@@ -80,13 +81,13 @@ function AttendancePage() {
       _date: dateKey,
       _status: status,
     });
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(localizeError(error.message)); return; }
     toast.success(t("attendance.updated"));
     invalidate();
   };
 
   const applyBulk = async () => {
-    if (!isAdmin) return toast.error(t("attendance.forbidden"));
+    if (!isAdmin) return toast.error(localizeError(t("attendance.forbidden")));
     const targets = rows.map((r) => r.id);
     const results = await Promise.all(targets.map((id) => supabase.rpc("set_staff_attendance", {
       _user_id: id,
@@ -94,7 +95,7 @@ function AttendancePage() {
       _status: bulkStatus,
     })));
     const failed = results.find((r) => r.error);
-    if (failed?.error) return toast.error(failed.error.message);
+    if (failed?.error) return toast.error(localizeError(failed.error.message));
     toast.success(t("attendance.savedCount", { count: targets.length }));
     invalidate();
   };

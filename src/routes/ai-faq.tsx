@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
@@ -76,7 +77,7 @@ function AiFaqPage() {
       toast.success(uiCopy("ux.copy4da97e6606", { value0: r.removed }));
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(localizeError(e.message)),
   });
 
   const autoApprove = useMutation({
@@ -86,7 +87,7 @@ function AiFaqPage() {
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
       qc.invalidateQueries({ queryKey: ["ai-faq-candidates"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(localizeError(e.message)),
   });
 
   const { data: listData } = useQuery({
@@ -112,7 +113,7 @@ function AiFaqPage() {
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(localizeError(e.message)),
   });
   const remove = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
@@ -120,7 +121,7 @@ function AiFaqPage() {
       toast.success(uiCopy("ux.copya4c5ac4e6b"));
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(localizeError(e.message)),
   });
   const toggleGlobal = useMutation({
     mutationFn: (enabled: boolean) => toggleGlobalFn({ data: { enabled } }),
@@ -363,8 +364,8 @@ function FaqEditor({
           <Button
             onClick={() => {
               const cleaned = examples.map((s) => s.trim()).filter(Boolean);
-              if (cleaned.length === 0) return toast.error(uiCopy("ux.copybf93e916b1"));
-              if (!uz.trim() || !ru.trim()) return toast.error(uiCopy("ux.copy3cde346460"));
+              if (cleaned.length === 0) return toast.error(localizeError(uiCopy("ux.copybf93e916b1")));
+              if (!uz.trim() || !ru.trim()) return toast.error(localizeError(uiCopy("ux.copy3cde346460")));
               onSave({
                 id: initial.id ?? null,
                 category: category.trim() || null,
@@ -406,7 +407,7 @@ function CandidatesSection() {
       qc.invalidateQueries({ queryKey: ["ai-faqs"] });
       toast.success(uiCopy("ux.copy7d70447c36"));
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(localizeError(e.message)),
   });
 
   if (candidates.length === 0) return null;

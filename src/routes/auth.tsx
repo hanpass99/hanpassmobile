@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { countryName, companyName } from "@/i18n/display-values";
 import hanpassLogo from "@/assets/hanpass-logo.png";
 import { uiCopy } from "@/i18n/ui-copy";
@@ -72,11 +73,11 @@ function AuthPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
-    if (!parsed.success) return toast.error(parsed.error.errors[0].message);
+    if (!parsed.success) return toast.error(localizeError(parsed.error.errors[0].message));
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setBusy(false);
-    if (error) return toast.error(t("auth.loginFailed", { msg: error.message }));
+    if (error) return toast.error(localizeError(t("auth.loginFailed", { msg: error.message })));
     toast.success(t("auth.welcome"));
     if (target !== "/") window.location.href = target;
     else navigate({ to: "/" });
@@ -88,10 +89,10 @@ function AuthPage() {
     const name = String(fd.get("name") ?? "").trim();
     const company = String(fd.get("company") ?? "한패스 모바일");
     const countryId = String(fd.get("country_id") ?? "").trim();
-    if (!name) return toast.error(t("auth.enterName"));
-    if (!countryId) return toast.error(t("country.selectRequired"));
+    if (!name) return toast.error(localizeError(t("auth.enterName")));
+    if (!countryId) return toast.error(localizeError(t("country.selectRequired")));
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
-    if (!parsed.success) return toast.error(parsed.error.errors[0].message);
+    if (!parsed.success) return toast.error(localizeError(parsed.error.errors[0].message));
     setBusy(true);
     const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
@@ -106,7 +107,7 @@ function AuthPage() {
       },
     });
     setBusy(false);
-    if (error) return toast.error(t("auth.signupFailed", { msg: error.message }));
+    if (error) return toast.error(localizeError(t("auth.signupFailed", { msg: error.message })));
     setMode("signupDone");
   };
 
@@ -114,13 +115,13 @@ function AuthPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email") ?? "").trim();
-    if (!email) return toast.error(t("auth.enterEmail"));
+    if (!email) return toast.error(localizeError(t("auth.enterEmail")));
     setBusy(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("auth.linkSent"));
     setMode("login");
   };

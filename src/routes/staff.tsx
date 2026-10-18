@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { countryName, companyName } from "@/i18n/display-values";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
@@ -172,7 +173,7 @@ function StaffAdmin() {
     if (!selected.length) return;
     for (const id of selected) {
       const { error } = await supabase.rpc("admin_set_profile_department" as any, { _user_id: id, _department: dept });
-      if (error) { toast.error(error.message); return; }
+      if (error) { toast.error(localizeError(error.message)); return; }
     }
     setRows((prev) => prev.map((x) => (selected.includes(x.id) ? { ...x, department: dept || null } : x)));
     toast.success(t("settings.bulkDeptDone", { count: selected.length }));
@@ -183,7 +184,7 @@ function StaffAdmin() {
     if (!selected.length) return;
     for (const id of selected) {
       const { error } = await supabase.rpc("admin_set_profile_company" as any, { _user_id: id, _company: company });
-      if (error) { toast.error(error.message); return; }
+      if (error) { toast.error(localizeError(error.message)); return; }
     }
     setRows((prev) => prev.map((x) => (selected.includes(x.id) ? { ...x, company } : x)));
     toast.success(t("settings.bulkCompanyDone", { count: selected.length }));
@@ -229,7 +230,7 @@ function StaffAdmin() {
 
   const setCompany = async (r: Row, company: string) => {
     const { error } = await supabase.rpc("admin_set_profile_company" as any, { _user_id: r.id, _company: company });
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(localizeError(error.message)); return; }
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, company } : x)));
     toast.success(t("settings.roleChanged"));
   };
@@ -245,7 +246,7 @@ function StaffAdmin() {
     );
     setResetting(false);
     if (error || res?.error) {
-      return toast.error(t("settings.resetFailed", { msg: res?.error ?? error?.message }));
+      return toast.error(localizeError(t("settings.resetFailed", { msg: res?.error ?? error?.message })));
     }
     setResetResult({ name: resetTarget.display_name, tempPassword: res?.temp_password ?? "" });
     setResetTarget(null);
@@ -258,30 +259,30 @@ function StaffAdmin() {
       { user_id: r.id, year: Y, month: M, call_target: r.call_target, activation_target: r.activation_target },
       { onConflict: "user_id,year,month" }
     );
-    if (error) { toast.error(t("settings.targetSaveFailed", { msg: error.message })); return; }
+    if (error) { toast.error(localizeError(t("settings.targetSaveFailed", { msg: error.message }))); return; }
     const { error: pErr } = await supabase.rpc("admin_set_profile_phone" as any, { _user_id: r.id, _phone: r.phone ?? "" });
-    if (pErr) { toast.error(pErr.message); return; }
+    if (pErr) { toast.error(localizeError(pErr.message)); return; }
     toast.success(t("settings.targetSaved", { name: r.display_name }));
   };
 
 
   const setActive = async (r: Row, active: boolean) => {
     const error = await setStaffActive({ data: { user_id: r.id, active, approve: false } }).then(() => null).catch(() => ({ message: "staff_update_failed" }));
-    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
+    if (error) { toast.error(localizeError(t("settings.actionFailed", { msg: error.message }))); return; }
     toast.success(active ? t("settings.activated") : t("settings.deactivated"));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: active, approval_status: (active ? "approved" : "disabled") as Row["approval_status"] } : x)));
   };
 
   const approve = async (r: Row) => {
     const error = await setStaffActive({ data: { user_id: r.id, active: true, approve: true } }).then(() => null).catch(() => ({ message: "staff_update_failed" }));
-    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
+    if (error) { toast.error(localizeError(t("settings.actionFailed", { msg: error.message }))); return; }
     toast.success(t("settings.approved", { name: r.display_name }));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: true, approval_status: "approved" as const, role: "staff" as AppRole } : x)));
   };
 
   const setRole = async (r: Row, role: AppRole) => {
     const { error } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: role as any });
-    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
+    if (error) { toast.error(localizeError(t("settings.actionFailed", { msg: error.message }))); return; }
     toast.success(t("settings.roleChanged"));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, role } : x)));
   };
@@ -291,7 +292,7 @@ function StaffAdmin() {
       _user_id: r.id,
       _country_ids: country_ids,
     });
-    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
+    if (error) { toast.error(localizeError(t("settings.actionFailed", { msg: error.message }))); return; }
     toast.success(t("settings.countryChanged"));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, country_ids } : x)));
   };
@@ -303,7 +304,7 @@ function StaffAdmin() {
       _value: value,
     });
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_new_signup: !value } : x)));
       return;
     }
@@ -317,7 +318,7 @@ function StaffAdmin() {
       _value: value,
     });
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_telegram: !value } : x)));
       return;
     }
@@ -335,13 +336,13 @@ function StaffAdmin() {
     const { error } = await supabase.rpc("admin_set_profile_sort_orders", {
       _user_ids: reordered.map((r) => r.id),
     });
-    if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); load(); return; }
+    if (error) { toast.error(localizeError(t("settings.actionFailed", { msg: error.message }))); load(); return; }
   };
 
   const deleteStaff = async () => {
     if (!deleteTarget) return;
     if (deleteConfirmText !== deleteTarget.display_name) {
-      toast.error(t("settings.deleteNameMismatch"));
+      toast.error(localizeError(t("settings.deleteNameMismatch")));
       return;
     }
     setDeleting(true);
@@ -352,7 +353,7 @@ function StaffAdmin() {
     setDeleting(false);
     const errMsg = res?.error ?? error?.message;
     if (errMsg) {
-      toast.error(t("settings.deleteFailed", { msg: errMsg }));
+      toast.error(localizeError(t("settings.deleteFailed", { msg: errMsg })));
       return;
     }
     toast.success(t("settings.deleteDone", { name: deleteTarget.display_name }));
@@ -370,7 +371,7 @@ function StaffAdmin() {
       .map((r) => ({ user_id: r.id, year: Y, month: M, call_target: bulkCall, activation_target: bulkAct }));
     if (!payload.length) return toast.info(t("settings.noStaffToApply"));
     const { error } = await supabase.from("targets").upsert(payload, { onConflict: "user_id,year,month" });
-    if (error) return toast.error(t("settings.actionFailed", { msg: error.message }));
+    if (error) return toast.error(localizeError(t("settings.actionFailed", { msg: error.message })));
     toast.success(t("settings.bulkApplyDone", { n: payload.length }));
     load();
   };
@@ -986,9 +987,9 @@ function CreateStaffDialog({
   }, [open]);
 
   const submit = async () => {
-    if (!email || !password || !displayName) return toast.error(t("settings.createRequired"));
-    if (password.length < 6) return toast.error(t("settings.pwdLenError"));
-    if (role !== "admin" && countryIds.length === 0) return toast.error(t("country.selectRequired"));
+    if (!email || !password || !displayName) return toast.error(localizeError(t("settings.createRequired")));
+    if (password.length < 6) return toast.error(localizeError(t("settings.pwdLenError")));
+    if (role !== "admin" && countryIds.length === 0) return toast.error(localizeError(t("country.selectRequired")));
     setSaving(true);
     const { res, error } = await createStaff({
         data: {
@@ -1019,7 +1020,7 @@ function CreateStaffDialog({
     }
 
     if (errMsg) {
-      return toast.error(t("settings.createFailed", { msg: errMsg }));
+      return toast.error(localizeError(t("settings.createFailed", { msg: errMsg })));
     }
     toast.success(t("settings.createDone", { name: displayName }));
     onCreated();

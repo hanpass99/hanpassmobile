@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { countryName, companyName } from "@/i18n/display-values";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createLazyFileRoute } from "@tanstack/react-router";
@@ -443,7 +444,7 @@ function CustomersPage() {
   });
 
   useEffect(() => {
-    if (listError) toast.error(t("customers.loadFailed", { msg: (listError as Error).message }));
+    if (listError) toast.error(localizeError(t("customers.loadFailed", { msg: (listError as Error).message })));
   }, [listError]);
 
   // 페이지 전환 시 선택 초기화
@@ -580,7 +581,7 @@ function CustomersPage() {
       _status: status,
     } as never);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       load();
       return;
     }
@@ -592,7 +593,7 @@ function CustomersPage() {
     cache.patchRow(id, { call_round: value });
     const { error } = await supabase.from("customers").update({ call_round: value }).eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       load();
       return;
     }
@@ -604,7 +605,7 @@ function CustomersPage() {
     cache.patchRow(id, { country_id: countryId });
     const { error } = await supabase.from("customers").update({ country_id: countryId }).eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       load();
       return;
     }
@@ -616,7 +617,7 @@ function CustomersPage() {
     cache.patchRow(id, { assigned_to: userId });
     const { error } = await supabase.from("customers").update({ assigned_to: userId }).eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       load();
       return;
     }
@@ -627,7 +628,7 @@ function CustomersPage() {
     if (!deleteId) return;
     const { error } = await supabase.from("customers").delete().eq("id", deleteId);
     setDeleteId(null);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("common.deleted"));
     load();
   };
@@ -648,7 +649,7 @@ function CustomersPage() {
       const { error } = await supabase.from("customers").delete().in("id", chunk);
       if (error) {
         setBulkOpen(false);
-        return toast.error(error.message);
+        return toast.error(localizeError(error.message));
       }
     }
     setBulkOpen(false);
@@ -665,7 +666,7 @@ function CustomersPage() {
     try {
       const { error } = await supabase.from("customers").delete().eq("pool", p);
       if (error) {
-        toast.error(t("customers.toastDeleteFail", { msg: error.message }), { id: toastId });
+        toast.error(localizeError(t("customers.toastDeleteFail", { msg: error.message })), { id: toastId });
         return;
       }
       toast.success(t("customers.toastPoolDeleteDone", { pool: POOL_LABEL[p] }), { id: toastId });
@@ -704,7 +705,7 @@ function CustomersPage() {
         toast.dismiss(toastId);
         setBulkStatusRunning(false);
         setBulkStatusOpen(false);
-        return toast.error(error.message);
+        return toast.error(localizeError(error.message));
       }
       done += chunk.length;
       toast.loading(t("customers.toastStatusChangeLoading", { done, total }), { id: toastId });
@@ -902,7 +903,7 @@ function CustomersPage() {
         .filter((x): x is ImportCustomer => x !== null);
 
       if (!parsed.length) {
-        toast.error(t("customers.toastNoUploadDataDetail", { dup: dupInFile, n: invalid }), { id: toastId });
+        toast.error(localizeError(t("customers.toastNoUploadDataDetail", { dup: dupInFile, n: invalid })), { id: toastId });
         return;
       }
 
@@ -972,7 +973,7 @@ function CustomersPage() {
               if (!rowErr) inserted++;
               else if (isDupErr(rowErr.message)) skippedDup++;
               else {
-                toast.error(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: rowErr.message }), { id: toastId });
+                toast.error(localizeError(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: rowErr.message })), { id: toastId });
                 await refetchPoolCounts();
                 setPage(1);
                 await refetchList();
@@ -982,7 +983,7 @@ function CustomersPage() {
             toast.loading(t("customers.toastUploading", { done: inserted.toLocaleString(), total: totalToInsert.toLocaleString() }), { id: toastId });
             continue;
           }
-          toast.error(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: error.message }), { id: toastId });
+          toast.error(localizeError(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: error.message })), { id: toastId });
           await refetchPoolCounts();
           setPage(1);
           await refetchList();
@@ -1003,7 +1004,7 @@ function CustomersPage() {
       setPage(1);
       await refetchList();
     } catch (e: any) {
-      toast.error(t("customers.toastExcelParseFail", { msg: e.message }), { id: toastId });
+      toast.error(localizeError(t("customers.toastExcelParseFail", { msg: e.message })), { id: toastId });
     } finally {
       importingRef.current = false;
       setImporting(false);
@@ -1089,7 +1090,7 @@ function CustomersPage() {
         p += 1;
       }
       if (!all.length) {
-        toast.error(t("customers.toastNoDownloadData"), { id: toastId });
+        toast.error(localizeError(t("customers.toastNoDownloadData")), { id: toastId });
         return;
       }
       const rowsForXlsx = tab === "one_year_activation" ? all.map((c) => ({
@@ -1123,7 +1124,7 @@ function CustomersPage() {
       XLSX.writeFile(wb, `고객목록_${POOL_SHORT[(tab === "all" ? "existing" : tab) as CustomerPool]}_${ts}.xlsx`);
       toast.success(t("customers.toastDownloadDone", { n: all.length.toLocaleString() }), { id: toastId });
     } catch (e: any) {
-      toast.error(t("customers.toastDownloadFail", { msg: e.message }), { id: toastId });
+      toast.error(localizeError(t("customers.toastDownloadFail", { msg: e.message })), { id: toastId });
     } finally {
       setDownloading(false);
     }
@@ -1403,10 +1404,10 @@ function CustomersPage() {
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(t("customers.googleFormSyncErr", { msg: r.errors[0] }));
+        toast.error(localizeError(t("customers.googleFormSyncErr", { msg: r.errors[0] })));
       }
     },
-    onError: (e: Error) => toast.error(t("customers.googleFormSyncFail", { msg: e.message })),
+    onError: (e: Error) => toast.error(localizeError(t("customers.googleFormSyncFail", { msg: e.message }))),
   });
   const syncMutRef = useRef(syncGoogleFormMut);
   syncMutRef.current = syncGoogleFormMut;
@@ -1420,10 +1421,10 @@ function CustomersPage() {
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(t("customers.googleFormSyncErr", { msg: r.errors[0] }));
+        toast.error(localizeError(t("customers.googleFormSyncErr", { msg: r.errors[0] })));
       }
     },
-    onError: (e: Error) => toast.error(t("customers.googleFormSyncFail", { msg: e.message })),
+    onError: (e: Error) => toast.error(localizeError(t("customers.googleFormSyncFail", { msg: e.message }))),
   });
   // === QR 개통 신청 자동 동기화 ===
   const syncQrFn = useServerFn(syncQrActivation);
@@ -1435,9 +1436,9 @@ function CustomersPage() {
         void refetchList();
         void refetchPoolCounts();
       }
-      if (r.errors && r.errors.length > 0) toast.error(`QR 개통 신청 동기화 오류: ${r.errors[0]}`);
+      if (r.errors && r.errors.length > 0) toast.error(localizeError(`QR 개통 신청 동기화 오류: ${r.errors[0]}`));
     },
-    onError: (e: Error) => toast.error(`QR 개통 신청 동기화 실패: ${e.message}`),
+    onError: (e: Error) => toast.error(localizeError(`QR 개통 신청 동기화 실패: ${e.message}`)),
   });
   const syncQrMutRef = useRef(syncQrMut);
   syncQrMutRef.current = syncQrMut;
@@ -1478,10 +1479,10 @@ function CustomersPage() {
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(t("customers.googleFormInterSyncErr", { msg: r.errors[0] }));
+        toast.error(localizeError(t("customers.googleFormInterSyncErr", { msg: r.errors[0] })));
       }
     },
-    onError: (e: Error) => toast.error(t("customers.googleFormInterSyncFail", { msg: e.message })),
+    onError: (e: Error) => toast.error(localizeError(t("customers.googleFormInterSyncFail", { msg: e.message }))),
   });
   const syncInterMutRef = useRef(syncGoogleFormInterMut);
   syncInterMutRef.current = syncGoogleFormInterMut;
@@ -1497,10 +1498,10 @@ function CustomersPage() {
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(t("customers.friendReferralSyncErr", { msg: r.errors[0] }));
+        toast.error(localizeError(t("customers.friendReferralSyncErr", { msg: r.errors[0] })));
       }
     },
-    onError: (e: Error) => toast.error(t("customers.friendReferralSyncFail", { msg: e.message })),
+    onError: (e: Error) => toast.error(localizeError(t("customers.friendReferralSyncFail", { msg: e.message }))),
   });
   const syncFriendMutRef = useRef(syncFriendReferralsMut);
   syncFriendMutRef.current = syncFriendReferralsMut;
@@ -2147,7 +2148,7 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
       content: content.trim(),
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     setContent("");
     toast.success(t("customers.memoSaved"));
     load(customer.id);
@@ -2257,7 +2258,7 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
       is_activation: isActivation,
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("customers.callLog.saved"));
     setNotes("");
     setDuration("");
@@ -2413,7 +2414,7 @@ function CustomerDetailSheet({
         ? await supabase.from("customers").update(extraPatch).eq("id", customer.id)
         : { error: null };
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     onSaved(form);
     toast.success(t("customers.detail.saved"));
   };
@@ -2551,9 +2552,9 @@ function AddCustomerDialog({
   }, [open, defaultPool]);
 
   const save = async () => {
-    if (!name || !phone) return toast.error(t("customers.required"));
+    if (!name || !phone) return toast.error(localizeError(t("customers.required")));
     if (requiresApplication && (!applicationDate || !requestedPlan.trim())) {
-      return toast.error(t("customers.add.applicationRequired"));
+      return toast.error(localizeError(t("customers.add.applicationRequired")));
     }
     setSaving(true);
     const { error } = await supabase.from("customers").insert({
@@ -2565,7 +2566,7 @@ function AddCustomerDialog({
       requested_plan: requestedPlan.trim() || null,
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("customers.customerAdded"));
     onAdded(); onClose();
   };
@@ -2651,7 +2652,7 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
   if (!customer) return null;
 
   const save = async () => {
-    if (!user) return toast.error(t("customers.quickCall.loginRequired"));
+    if (!user) return toast.error(localizeError(t("customers.quickCall.loginRequired")));
     setSaving(true);
     const { error } = await supabase.from("call_logs").insert({
       customer_id: customer.id,
@@ -2663,7 +2664,7 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
       is_activation: result === "activated",
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("customers.callLog.saved"));
     onClose();
   };

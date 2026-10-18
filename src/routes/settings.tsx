@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
@@ -77,7 +78,7 @@ function ProfilePhotoSection() {
 
   const onPick = async (file: File) => {
     if (!user) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error(t("settings.photoSizeLimit"));
+    if (file.size > 5 * 1024 * 1024) return toast.error(localizeError(t("settings.photoSizeLimit")));
     setBusy(true);
     try {
       const blob = await resizeImage(file, 512, 0.85);
@@ -93,7 +94,7 @@ function ProfilePhotoSection() {
       toast.success(t("settings.photoUpdated"));
       await refresh();
     } catch (e: any) {
-      toast.error(t("settings.photoFailed", { msg: e.message }));
+      toast.error(localizeError(t("settings.photoFailed", { msg: e.message })));
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";

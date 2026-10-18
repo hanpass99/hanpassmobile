@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { MessageSquare, Send, FileText, History, Plus, Trash2, Edit3, Search, Users as UsersIcon } from "lucide-react";
@@ -111,7 +112,7 @@ function SendTab() {
 
   async function send() {
     if (!user) return;
-    if (!message.trim()) { toast.error(t("sms.needMessage")); return; }
+    if (!message.trim()) { toast.error(localizeError(t("sms.needMessage"))); return; }
 
     const recv: { customer_id?: string | null; name?: string | null; phone: string }[] = [];
     selected.forEach((id) => {
@@ -124,8 +125,8 @@ function SendTab() {
       .filter(Boolean)
       .forEach((p) => recv.push({ phone: p }));
 
-    if (recv.length === 0) { toast.error(t("sms.needReceiver")); return; }
-    if (isLms && !title.trim()) { toast.error(t("sms.needTitle")); return; }
+    if (recv.length === 0) { toast.error(localizeError(t("sms.needReceiver"))); return; }
+    if (isLms && !title.trim()) { toast.error(localizeError(t("sms.needTitle"))); return; }
 
     try {
       const data = await sendMutation.mutateAsync({ receivers: recv, message, title: title || undefined });
@@ -137,10 +138,10 @@ function SendTab() {
         setManualPhones("");
         setPickTpl("");
       } else {
-        toast.error(t("sms.sendFail", { msg: data?.aligo?.message || JSON.stringify(data?.aligo) }));
+        toast.error(localizeError(t("sms.sendFail", { msg: data?.aligo?.message || JSON.stringify(data?.aligo) })));
       }
     } catch (e) {
-      toast.error(t("sms.sendFail", { msg: (e as Error).message }));
+      toast.error(localizeError(t("sms.sendFail", { msg: (e as Error).message })));
     }
   }
 
@@ -314,17 +315,17 @@ function TemplatesTab() {
 
   async function save() {
     if (!user) return;
-    if (!form.title.trim() || !form.content.trim()) { toast.error(t("sms.saveRequired")); return; }
+    if (!form.title.trim() || !form.content.trim()) { toast.error(localizeError(t("sms.saveRequired"))); return; }
     if (editing) {
       const { error } = await supabase.from("sms_templates")
         .update({ title: form.title, content: form.content, is_shared: form.is_shared })
         .eq("id", editing.id);
-      if (error) return toast.error(t("sms.editFailed", { msg: error.message }));
+      if (error) return toast.error(localizeError(t("sms.editFailed", { msg: error.message })));
       toast.success(t("sms.edited"));
     } else {
       const { error } = await supabase.from("sms_templates")
         .insert({ user_id: user.id, title: form.title, content: form.content, is_shared: form.is_shared });
-      if (error) return toast.error(t("sms.saveFailed", { msg: error.message }));
+      if (error) return toast.error(localizeError(t("sms.saveFailed", { msg: error.message })));
       toast.success(t("sms.saved"));
     }
     setOpen(false);
@@ -334,7 +335,7 @@ function TemplatesTab() {
   async function remove(id: string) {
     if (!confirm(t("sms.confirmDelete"))) return;
     const { error } = await supabase.from("sms_templates").delete().eq("id", id);
-    if (error) return toast.error(t("sms.deleteFailed", { msg: error.message }));
+    if (error) return toast.error(localizeError(t("sms.deleteFailed", { msg: error.message })));
     toast.success(t("sms.deleted"));
     void invalidateTemplates();
   }

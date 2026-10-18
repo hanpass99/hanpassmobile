@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -684,7 +685,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy7851126014")),
+    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy7851126014"))),
   });
 
   const editMut = useMutation({
@@ -695,14 +696,14 @@ function ConversationPane({ chat }: { chat: Chat }) {
       setEditingText("");
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copydb8be469b3")),
+    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copydb8be469b3"))),
   });
 
   const uploadAndSend = async (file: File) => {
     if (!file) return;
     const MAX = 20 * 1024 * 1024;
     if (file.size > MAX) {
-      toast.error(uiCopy("ux.copy858605d9a8"));
+      toast.error(localizeError(uiCopy("ux.copy858605d9a8")));
       return;
     }
     setIsUploading(true);
@@ -735,7 +736,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : uiCopy("ux.copy1938fe147b"));
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy1938fe147b")));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -758,7 +759,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       toast.success(banned ? uiCopy("ux.copy4be81ba004") : uiCopy("ux.copy1bc5eca1e4"));
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy6b16fe43fd")),
+    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy6b16fe43fd"))),
   });
 
   const statusMut = useMutation({
@@ -767,7 +768,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copydc766aa667")),
+    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copydc766aa667"))),
   });
 
   const onSubmit = () => {
@@ -1053,7 +1054,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                             onClick={() => {
                               const t = editingText.trim();
                               if (!t) {
-                                toast.error(uiCopy("ux.copy8f12bb567d"));
+                                toast.error(localizeError(uiCopy("ux.copy8f12bb567d")));
                                 return;
                               }
                               editMut.mutate({ messageId: m.id, text: t });
@@ -1630,7 +1631,7 @@ function MediaTemplateConfirmDialog({
               try {
                 await onSend(caption);
               } catch (e) {
-                toast.error(e instanceof Error ? e.message : uiCopy("ux.copy7851126014"));
+                toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy7851126014")));
               } finally {
                 setSending(false);
               }
@@ -1876,7 +1877,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       resetForm();
       qc.invalidateQueries({ queryKey: ["telegram-templates", user?.id] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1")),
+    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
   });
 
   const deleteMut = useMutation({
@@ -1889,7 +1890,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       qc.invalidateQueries({ queryKey: ["telegram-templates", user?.id] });
       resetForm();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1")),
+    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
   });
 
   const startEdit = (t: Template) => {
@@ -1920,7 +1921,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       setMediaSize(file.size);
       setMediaType(file.type.startsWith("image/") ? "image" : "document");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : uiCopy("ux.copya40a00757b"));
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copya40a00757b")));
     } finally {
       setUploadingMedia(false);
     }
@@ -2143,7 +2144,7 @@ function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
       onClose();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1")),
+    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
   });
 
   useEffect(() => {
@@ -2229,11 +2230,11 @@ function SendSmsDialog({
   const handleSend = async () => {
     const msg = message.trim();
     if (!msg) {
-      toast.error(uiCopy("ux.copy591df23695"));
+      toast.error(localizeError(uiCopy("ux.copy591df23695")));
       return;
     }
     if (!isValidKrPhone) {
-      toast.error(uiCopy("ux.copyf405af215e"));
+      toast.error(localizeError(uiCopy("ux.copyf405af215e")));
       return;
     }
     try {
@@ -2249,7 +2250,7 @@ function SendSmsDialog({
         title: title.trim() || undefined,
       });
       if (res?.ok === false) {
-        toast.error(res?.aligo?.message || uiCopy("ux.copy0efbf5e456"));
+        toast.error(localizeError(res?.aligo?.message || uiCopy("ux.copy0efbf5e456")));
         return;
       }
       // Mark chat as read even though we replied via SMS (Telegram delivery is blocked)
@@ -2262,7 +2263,7 @@ function SendSmsDialog({
       toast.success(uiCopy("ux.copyd7b6a39358"));
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : uiCopy("ux.copy0efbf5e456"));
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy0efbf5e456")));
     }
   };
 
@@ -2360,7 +2361,7 @@ function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
       setResult(data);
       toast.success(uiCopy("ux.copy01fe455170", { value0: (data as any).bot?.username }));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1")),
+    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
   });
 
   return (

@@ -1330,4 +1330,26 @@ export default {
     "description": "Securely replace your Hanpass Mobile staff password."
   }
 },
+  uiErrors: {
+  "messagef92e262bfa": "Only administrators can use this feature.",
+  "message0d8e84cb65": "A message or attachment is required.",
+  "messagebbc95f3538": "Sending record not found.",
+  "message478f48c8a1": "Unable to load the attachment.",
+  "messagea787036014": "Google Sheets is not connected.",
+  "message54efda37f6": "Google Sheets request limit (1,500/min) exceeded. Try again in 1–2 minutes.",
+  "messageb3bfcbfc33": "Google Sheets request limit exceeded. Please try again shortly.",
+  "message48014060f9": "The customer has blocked the bot. Send an SMS instead.",
+  "messageca85a8b0f0": "Message not found",
+  "message0b9781c75c": "You can only edit your own messages",
+  "messagef0dc271f59": "Cannot edit: Telegram message ID is missing",
+  "message7fe092e0c7": "This message cannot be edited in Telegram (time expired or policy restriction).",
+  "messagede33f64f55": "Another staff member",
+  "messagedbba99bb8e": "{{value0}} is replying. You can send in {{value1}} seconds.",
+  "message2f77e9c3a7": "Telegram delivery failed: {{value0}}",
+  "message63230696b6": "Unable to load the stored file: {{value0}}",
+  "messagea8ffa91741": "Failed to save the completion notice: {{value0}}",
+  "message7973145e0c": "Google Sheets request failed [{{value0}}]: {{value1}}",
+  "message2f3ab529cf": "Google Sheets request failed: {{value0}}",
+  "messageb419d7d8fc": "{{value0}} (record): {{value1}}"
+},
 } as const;

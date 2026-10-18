@@ -1330,4 +1330,26 @@ export default {
     "description": "Securely replace your Hanpass Mobile staff password."
   }
 },
+  uiErrors: {
+  "messagef92e262bfa": "관리자만 사용할 수 있습니다.",
+  "message0d8e84cb65": "메시지 또는 첨부파일이 필요합니다.",
+  "messagebbc95f3538": "발송 기록을 찾을 수 없습니다.",
+  "message478f48c8a1": "첨부파일을 불러올 수 없습니다.",
+  "messagea787036014": "Google Sheets 커넥터가 연결되지 않았습니다.",
+  "message54efda37f6": "구글 시트 분당 요청 한도(1,500/min)를 초과했습니다. 1~2분 후 다시 시도해 주세요.",
+  "messageb3bfcbfc33": "구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.",
+  "message48014060f9": "고객이 봇을 차단했습니다. SMS로 발송하세요.",
+  "messageca85a8b0f0": "메시지를 찾을 수 없습니다",
+  "message0b9781c75c": "본인이 보낸 메시지만 수정할 수 있습니다",
+  "messagef0dc271f59": "텔레그램 메시지 ID가 없어 수정할 수 없습니다",
+  "message7fe092e0c7": "이 메시지는 텔레그램에서 수정할 수 없습니다 (시간 초과 또는 정책 제한).",
+  "messagede33f64f55": "다른 담당자",
+  "messagedbba99bb8e": "{{value0}} 님이 답변 중입니다. {{value1}}초 후에 보낼 수 있습니다.",
+  "message2f77e9c3a7": "텔레그램 전송 실패: {{value0}}",
+  "message63230696b6": "저장 파일을 불러올 수 없습니다: {{value0}}",
+  "messagea8ffa91741": "완료 안내 저장 실패: {{value0}}",
+  "message7973145e0c": "Google Sheets 요청 실패 [{{value0}}]: {{value1}}",
+  "message2f3ab529cf": "Google Sheets 요청 실패: {{value0}}",
+  "messageb419d7d8fc": "{{value0}} (기록): {{value1}}"
+},
 } as const;

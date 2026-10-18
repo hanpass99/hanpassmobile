@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
@@ -44,19 +45,19 @@ function ResetPasswordPage() {
     const fd = new FormData(e.currentTarget);
     const password = String(fd.get("password") ?? "");
     const confirm = String(fd.get("confirm") ?? "");
-    if (password.length < 6) return toast.error(t("resetPwd.pwdMin"));
-    if (password !== confirm) return toast.error(t("resetPwd.mismatch"));
+    if (password.length < 6) return toast.error(localizeError(t("resetPwd.pwdMin")));
+    if (password !== confirm) return toast.error(localizeError(t("resetPwd.mismatch")));
     setBusy(true);
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
-    if (!token) { setBusy(false); return toast.error(t("resetPwd.invalid")); }
+    if (!token) { setBusy(false); return toast.error(localizeError(t("resetPwd.invalid"))); }
     const response = await fetch("/api/public/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ password }),
     }).catch(() => null);
     setBusy(false);
-    if (!response?.ok) return toast.error(t("resetPwd.failed", { msg: "password_update_failed" }));
+    if (!response?.ok) return toast.error(localizeError(t("resetPwd.failed", { msg: "password_update_failed" })));
     toast.success(t("resetPwd.success"));
     await supabase.auth.signOut();
     navigate({ to: "/auth", search: { next: "" } });

@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
@@ -105,7 +106,7 @@ function BroadcastPage() {
         kind: file.type.startsWith("image/") ? "photo" : "document",
       });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : uiCopy("ux.copya40a00757b"));
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copya40a00757b")));
     } finally {
       setUploading(false);
     }
@@ -139,7 +140,7 @@ function BroadcastPage() {
       qc.invalidateQueries({ queryKey: ["broadcast-history"] });
       qc.invalidateQueries({ queryKey: ["broadcast-audience"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : uiCopy("ux.copyc7df7ab9d2"));
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copyc7df7ab9d2")));
     } finally {
       setSending(false);
     }

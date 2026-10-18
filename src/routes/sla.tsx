@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { useMemo, useState } from "react";
@@ -475,7 +476,7 @@ function AdminActionDialog(props: {
       }
       props.onClose();
     } catch (e) {
-      toast.error((e as Error).message || t("sla.toastFail"));
+      toast.error(localizeError((e as Error).message || t("sla.toastFail")));
     }
   };
 
@@ -553,7 +554,7 @@ function StaffCallFinesCard(props: {
           : uiCopy("ux.copy8e9278e6f7", { value0: name, value1: focusDate }),
       );
     } catch (e) {
-      toast.error((e as Error).message || uiCopy("ux.copyfa4ae245c4"));
+      toast.error(localizeError((e as Error).message || uiCopy("ux.copyfa4ae245c4")));
     }
   };
 
@@ -563,7 +564,7 @@ function StaffCallFinesCard(props: {
       await setGoal.mutateAsync({ userId, goal: next });
       toast.success(uiCopy("ux.copy1bc80e57f6", { value0: name, value1: next }));
     } catch (e) {
-      toast.error((e as Error).message || uiCopy("ux.copyd114a46691"));
+      toast.error(localizeError((e as Error).message || uiCopy("ux.copyd114a46691")));
     }
   };
 

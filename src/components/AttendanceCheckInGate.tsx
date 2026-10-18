@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -57,7 +58,7 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
       );
     setSaving(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       return;
     }
     toast.success(i18n.language === "ko" ? uiCopy("ux.copya19230634f") : "Check-in confirmed");

@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
@@ -139,8 +140,8 @@ function NotificationsPage() {
 
   const send = async () => {
     if (!user) return;
-    if (!message.trim()) return toast.error(uiCopy("ux.copy639327aa73"));
-    if (selectedStaff.length === 0) return toast.error(uiCopy("ux.copy17e717e325"));
+    if (!message.trim()) return toast.error(localizeError(uiCopy("ux.copy639327aa73")));
+    if (selectedStaff.length === 0) return toast.error(localizeError(uiCopy("ux.copy17e717e325")));
     setSending(true);
     try {
       const { data: noti, error: nErr } = await supabase
@@ -186,7 +187,7 @@ function NotificationsPage() {
       setSelected(new Set());
       qc.invalidateQueries({ queryKey: ["noti-history"] });
     } catch (e: any) {
-      toast.error(uiCopy("ux.copybf7e58346d", { value0: e?.message ?? e }));
+      toast.error(localizeError(uiCopy("ux.copybf7e58346d", { value0: e?.message ?? e })));
     } finally {
       setSending(false);
     }

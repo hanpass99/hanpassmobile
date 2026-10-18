@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
@@ -102,7 +103,7 @@ export function CallLogPopupDialog({
 
   const save = async () => {
     if (!status) {
-      toast.error(t("callLogs.selectStatus", { }));
+      toast.error(localizeError(t("callLogs.selectStatus", { })));
       return;
     }
     setSaving(true);
@@ -127,7 +128,7 @@ export function CallLogPopupDialog({
       onSaved?.();
       onClose();
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to save");
+      toast.error(localizeError(err?.message ?? "Failed to save"));
     } finally {
       setSaving(false);
     }

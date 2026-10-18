@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { useMemo, useState } from "react";
@@ -92,7 +93,7 @@ export function CallLogIngestPanel() {
     const { error } = await (supabase.from("call_log_ingest" as any) as any)
       .update({ matched_employee_id: linkStaff, error_reason: null })
       .eq("id", linkRow.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(localizeError(error.message)); return; }
     if (linkRow.phone_call_log_id) {
       await supabase
         .from("phone_call_logs")

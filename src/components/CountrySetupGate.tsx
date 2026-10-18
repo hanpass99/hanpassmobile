@@ -1,3 +1,4 @@
+import { localizeError } from "@/i18n/localize-error";
 import { countryName } from "@/i18n/display-values";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,11 +27,11 @@ export function CountrySetupGate() {
   }, []);
 
   const save = async () => {
-    if (!value) return toast.error(t("country.selectRequired"));
+    if (!value) return toast.error(localizeError(t("country.selectRequired")));
     setBusy(true);
     const { error } = await supabase.rpc("set_own_country" as any, { _country_id: value });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("country.saved"));
     await refresh();
   };
