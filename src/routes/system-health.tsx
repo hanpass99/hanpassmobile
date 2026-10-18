@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -18,16 +19,14 @@ import {
 } from "@/hooks/use-system-health";
 
 export const Route = createFileRoute("/system-health")({
-  head: () => ({
-    meta: [
-      { title: i18n.t("systemHealth.headTitle") },
-      { name: "description", content: i18n.t("systemHealth.headDesc") },
-      { property: "og:title", content: i18n.t("systemHealth.headTitle") },
-      { property: "og:description", content: i18n.t("systemHealth.headDesc") },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.system-health.title") },
+{ name: "description", content: uiCopy("pages.system-health.description") },
+{ property: "og:title", content: uiCopy("pages.system-health.title") },
+{ property: "og:description", content: uiCopy("pages.system-health.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: SystemHealthPage,
 });
 

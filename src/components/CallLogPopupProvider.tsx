@@ -102,7 +102,7 @@ export function CallLogPopupDialog({
 
   const save = async () => {
     if (!status) {
-      toast.error(t("callLogs.selectStatus", { defaultValue: "상태를 선택하세요." }));
+      toast.error(t("callLogs.selectStatus", { }));
       return;
     }
     setSaving(true);
@@ -123,7 +123,7 @@ export function CallLogPopupDialog({
         } as never);
         if (e2) throw e2;
       }
-      toast.success(t("common.saved", { defaultValue: "저장되었습니다." }));
+      toast.success(t("common.saved", { }));
       onSaved?.();
       onClose();
     } catch (err: any) {
@@ -137,16 +137,16 @@ export function CallLogPopupDialog({
     <Dialog open={!!row} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("callLogs.newCall", { defaultValue: "새 통화" })}</DialogTitle>
+          <DialogTitle>{t("callLogs.newCall", { })}</DialogTitle>
           <DialogDescription>
-            {t("callLogs.newCallDesc", { defaultValue: "통화 상태와 메모를 기록하세요." })}
+            {t("callLogs.newCallDesc", { })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 text-sm">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.customer", { defaultValue: "고객" })}</Label>
+              <Label className="text-xs text-muted-foreground">{t("callLogs.customer", { })}</Label>
               <Input
                 className="mt-1 h-8"
                 value={customerName}
@@ -156,24 +156,24 @@ export function CallLogPopupDialog({
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.customerPhone", { defaultValue: "고객 번호" })}</Label>
+              <Label className="text-xs text-muted-foreground">{t("callLogs.customerPhone", { })}</Label>
               <div className="mt-1 font-mono text-xs">{row.customer_phone ?? "—"}</div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.startedAt", { defaultValue: "시작 시각" })}</Label>
+              <Label className="text-xs text-muted-foreground">{t("callLogs.startedAt", { })}</Label>
               <div className="mt-1">{format(new Date(row.started_at), "yyyy-MM-dd HH:mm:ss")}</div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.duration", { defaultValue: "통화 시간" })}</Label>
+              <Label className="text-xs text-muted-foreground">{t("callLogs.duration", { })}</Label>
               <div className="mt-1 font-mono">{formatDuration(row.duration_sec)}</div>
             </div>
           </div>
 
           <div>
-            <Label>{t("callLogs.callStatus", { defaultValue: "통화 상태" })}</Label>
+            <Label>{t("callLogs.callStatus", { })}</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as CustomerStatus)}>
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder={t("callLogs.selectStatus", { defaultValue: "상태를 선택하세요." })} />
+                <SelectValue placeholder={t("callLogs.selectStatus", { })} />
               </SelectTrigger>
               <SelectContent>
                 {CUSTOMER_STATUSES.map((s) => (
@@ -184,29 +184,29 @@ export function CallLogPopupDialog({
           </div>
 
           <div>
-            <Label>{t("callLogs.memo", { defaultValue: "메모" })}</Label>
+            <Label>{t("callLogs.memo", { })}</Label>
             <Textarea
               className="mt-1"
               rows={4}
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              placeholder={t("callLogs.memoPlaceholder", { defaultValue: "통화 내용을 입력하세요." })}
+              placeholder={t("callLogs.memoPlaceholder", { })}
             />
           </div>
 
           {!row.customer_id && (
             <p className="text-xs text-muted-foreground">
-              {t("callLogs.noCustomerLink", { defaultValue: "이 통화에는 연결된 고객이 없어 고객 상태는 업데이트되지 않습니다." })}
+              {t("callLogs.noCustomerLink", { })}
             </p>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>
-            {t("common.cancel", { defaultValue: "취소" })}
+            {t("common.cancel", { })}
           </Button>
           <Button onClick={save} disabled={saving}>
-            {saving ? t("common.saving", { defaultValue: "저장 중..." }) : t("common.save", { defaultValue: "저장" })}
+            {saving ? t("common.saving", { }) : t("common.save", { })}
           </Button>
         </DialogFooter>
       </DialogContent>

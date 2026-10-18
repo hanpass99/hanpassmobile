@@ -28,7 +28,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSlaViolationCount } from "@/hooks/use-sla";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: i18n.t("head.dashboard") }] }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.dashboard.title") },
+{ name: "description", content: uiCopy("pages.dashboard.description") },
+{ property: "og:title", content: uiCopy("pages.dashboard.title") },
+{ property: "og:description", content: uiCopy("pages.dashboard.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   loader: ({ context: { queryClient } }) => {
     const today = new Date();
     const from = new Date(today.getFullYear(), today.getMonth(), 1);

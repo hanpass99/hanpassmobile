@@ -26,16 +26,14 @@ import {
 } from "@/lib/broadcast.functions";
 
 export const Route = createFileRoute("/broadcast")({
-  head: () => ({
-    meta: [
-      { title: uiCopy("ux.copy984c947a44") },
-      { name: "description", content: uiCopy("ux.copy449b7fbd9c") },
-      { property: "og:title", content: uiCopy("ux.copy984c947a44") },
-      { property: "og:description", content: uiCopy("ux.copy82d23d7fc8") },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.broadcast.title") },
+{ name: "description", content: uiCopy("pages.broadcast.description") },
+{ property: "og:title", content: uiCopy("pages.broadcast.title") },
+{ property: "og:description", content: uiCopy("pages.broadcast.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: BroadcastPage,
 });
 

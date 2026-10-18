@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Lock } from "lucide-react";
@@ -13,13 +14,13 @@ import logo from "@/assets/hanpass-logo.png";
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
   head: () => ({ meta: [
-    { title: "Set a new password | Hanpass Mobile" },
-    { name: "description", content: "Securely replace your Hanpass Mobile staff password." },
-    { property: "og:title", content: "Set a new password | Hanpass Mobile" },
-    { property: "og:description", content: "Securely replace your Hanpass Mobile staff password." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-  ] }),
+{ title: uiCopy("pages.reset-password.title") },
+{ name: "description", content: uiCopy("pages.reset-password.description") },
+{ property: "og:title", content: uiCopy("pages.reset-password.title") },
+{ property: "og:description", content: uiCopy("pages.reset-password.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
 });
 
 function ResetPasswordPage() {

@@ -29,7 +29,14 @@ import { STATUS_LABEL } from "@/lib/labels";
 
 
 export const Route = createFileRoute("/sla")({
-  head: () => ({ meta: [{ title: i18n.t("head.sla") }] }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.sla.title") },
+{ name: "description", content: uiCopy("pages.sla.description") },
+{ property: "og:title", content: uiCopy("pages.sla.title") },
+{ property: "og:description", content: uiCopy("pages.sla.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: SlaPage,
 });
 

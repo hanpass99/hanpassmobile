@@ -37,12 +37,14 @@ import {
 
 export const Route = createFileRoute("/ai-faq")({
   component: AiFaqPage,
-  head: () => ({
-    meta: [
-      { title: uiCopy("ux.copy5588dfa7bc") },
-      { name: "description", content: uiCopy("ux.copy603aa27652") },
-    ],
-  }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.ai-faq.title") },
+{ name: "description", content: uiCopy("pages.ai-faq.description") },
+{ property: "og:title", content: uiCopy("pages.ai-faq.title") },
+{ property: "og:description", content: uiCopy("pages.ai-faq.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
 });
 
 type Faq = {

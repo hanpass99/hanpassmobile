@@ -21,12 +21,14 @@ import { Bell, Send, Users, Eye } from "lucide-react";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/notifications")({
-  head: () => ({
-    meta: [
-      { title: uiCopy("ux.copye44079b91e") },
-      { name: "description", content: uiCopy("ux.copy506b6ddb92") },
-    ],
-  }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.notifications.title") },
+{ name: "description", content: uiCopy("pages.notifications.description") },
+{ property: "og:title", content: uiCopy("pages.notifications.title") },
+{ property: "og:description", content: uiCopy("pages.notifications.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: NotificationsPage,
 });
 

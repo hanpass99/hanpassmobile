@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -23,7 +24,14 @@ import { ATTENDANCE_STATUSES, ATTENDANCE_CLASS, type AttendanceStatus } from "@/
 import { useAttendance } from "@/hooks/use-attendance";
 
 export const Route = createFileRoute("/attendance")({
-  head: () => ({ meta: [{ title: i18n.t("head.attendance") }] }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.attendance.title") },
+{ name: "description", content: uiCopy("pages.attendance.description") },
+{ property: "og:title", content: uiCopy("pages.attendance.title") },
+{ property: "og:description", content: uiCopy("pages.attendance.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: AttendancePage,
 });
 

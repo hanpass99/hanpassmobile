@@ -1,3 +1,4 @@
+import { countryName, companyName } from "@/i18n/display-values";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
@@ -34,7 +35,14 @@ import type {
 } from "@/types/rpc";
 
 export const Route = createFileRoute("/staff")({
-  head: () => ({ meta: [{ title: i18n.t("head.staff") }] }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.staff.title") },
+{ name: "description", content: uiCopy("pages.staff.description") },
+{ property: "og:title", content: uiCopy("pages.staff.title") },
+{ property: "og:description", content: uiCopy("pages.staff.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: StaffAdmin,
 });
 
@@ -454,7 +462,7 @@ function StaffAdmin() {
               <SelectTrigger className="h-9 sm:w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("settings.assignedCountry")}: {t("common.all")}</SelectItem>
-                {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {countryName(c)}</SelectItem>)}
               </SelectContent>
             </Select>
             <Button size="sm" variant="outline" className="h-9" onClick={exportCsv}>
@@ -505,7 +513,7 @@ function StaffAdmin() {
                 </Badge>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div><span className="text-muted-foreground">{t("settings.company")}</span><div className="mt-0.5 font-medium">{r.company}</div></div>
+                <div><span className="text-muted-foreground">{t("settings.company")}</span><div className="mt-0.5 font-medium">{companyName(r.company)}</div></div>
                 <div><span className="text-muted-foreground">{t("settings.role")}</span><div className="mt-0.5 font-medium">{roleLabel(r.role)}</div></div>
                 <div className="col-span-2"><span className="text-muted-foreground">{t("settings.assignedCountry")}</span><div className="mt-1 flex flex-wrap gap-1">{r.role === "admin" ? <Badge variant="secondary">{t("country.allCountries")}</Badge> : r.country_ids.map((id) => <Badge key={id} variant="secondary">{countries.find((c) => c.id === id)?.code ?? "?"}</Badge>)}</div></div>
               </div>
@@ -519,7 +527,7 @@ function StaffAdmin() {
                       <SelectContent><SelectItem value="admin">{t("common.admin")}</SelectItem><SelectItem value="staff">{t("common.staff")}</SelectItem></SelectContent>
                     </Select>
                   )}
-                  <Select value={r.company} onValueChange={(v) => setCompany(r, v)}>
+                  <Select value={companyName(r.company)} onValueChange={(v) => setCompany(r, v)}>
                     <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem><SelectItem value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</SelectItem></SelectContent>
                   </Select>
@@ -616,7 +624,7 @@ function StaffAdmin() {
                   <TableCell className="text-xs text-muted-foreground">{r.department ?? "-"}</TableCell>
                   <TableCell>
                     {isAdmin ? (
-                      <Select value={r.company} onValueChange={(v) => setCompany(r, v)}>
+                      <Select value={companyName(r.company)} onValueChange={(v) => setCompany(r, v)}>
                         <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem>
@@ -624,7 +632,7 @@ function StaffAdmin() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="text-xs text-muted-foreground">{r.company}</span>
+                      <span className="text-xs text-muted-foreground">{companyName(r.company)}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -809,7 +817,7 @@ function StaffAdmin() {
                 [t("settings.email"), infoTarget.email ?? "-"],
                 [t("common.phone"), infoTarget.phone || "-"],
                 [t("settings.department"), infoTarget.department ?? "-"],
-                [t("settings.company"), infoTarget.company],
+                [t("settings.company"), companyName(infoTarget.company)],
                 [t("settings.role"), roleLabel(infoTarget.role)],
                 [
                   t("settings.lastAccess"),

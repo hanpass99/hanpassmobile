@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
@@ -12,7 +13,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: i18n.t("head.settings") }] }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.settings.title") },
+{ name: "description", content: uiCopy("pages.settings.description") },
+{ property: "og:title", content: uiCopy("pages.settings.title") },
+{ property: "og:description", content: uiCopy("pages.settings.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: Settings,
 });
 

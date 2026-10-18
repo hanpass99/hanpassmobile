@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +13,14 @@ type CustomersSearch = {
 };
 
 export const Route = createFileRoute("/customers")({
-  head: () => ({ meta: [{ title: i18n.t("head.customers") }] }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.customers.title") },
+{ name: "description", content: uiCopy("pages.customers.description") },
+{ property: "og:title", content: uiCopy("pages.customers.title") },
+{ property: "og:description", content: uiCopy("pages.customers.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   validateSearch: (search: Record<string, unknown>): CustomersSearch => ({
     status: typeof search.status === "string" ? search.status : undefined,
     country: typeof search.country === "string" ? search.country : undefined,

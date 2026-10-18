@@ -25,7 +25,14 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/channel-performance")({
-  head: () => ({ meta: [{ title: i18n.t("head.channel") }] }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.channel-performance.title") },
+{ name: "description", content: uiCopy("pages.channel-performance.description") },
+{ property: "og:title", content: uiCopy("pages.channel-performance.title") },
+{ property: "og:description", content: uiCopy("pages.channel-performance.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: ChannelPerf,
 });
 

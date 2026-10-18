@@ -1,3 +1,4 @@
+import { countryName, companyName } from "@/i18n/display-values";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -1740,7 +1741,7 @@ function CustomersPage() {
                     <SelectContent>
                       <SelectItem value="all">{t("customers.col.assignedCountry")} · {t("dashboard.allCountries")}</SelectItem>
                       <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
-                      {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                      {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {countryName(c)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={statusF} onValueChange={(v) => setStatusF(v as typeof statusF)}>
@@ -2430,7 +2431,7 @@ function CustomerDetailSheet({
           <SheetDescription asChild>
             <div className="flex items-center gap-2 text-sm">
               <PhoneLink phone={customer.phone} onCall={() => onCall(customer)} />
-              {country ? <span className="text-muted-foreground">· {country.code} {country.name_ko}</span> : null}
+              {country ? <span className="text-muted-foreground">· {country.code} {countryName(country)}</span> : null}
             </div>
           </SheetDescription>
         </SheetHeader>
@@ -2473,7 +2474,7 @@ function CustomerDetailSheet({
               <Select value={form.country_id ?? ""} onValueChange={(v) => setForm({ ...form, country_id: v || null })}>
                 <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
                 <SelectContent>
-                  {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                  {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {countryName(c)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -2600,7 +2601,7 @@ function AddCustomerDialog({
             <Select value={countryId} onValueChange={setCountryId}>
               <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
               <SelectContent>
-                {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {countryName(c)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

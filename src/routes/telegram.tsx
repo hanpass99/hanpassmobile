@@ -169,12 +169,14 @@ const STATUS_BADGE: Record<ChatStatus, string> = {
 };
 
 export const Route = createFileRoute("/telegram")({
-  head: () => ({
-    meta: [
-      { title: uiCopy("ux.copy44805994d0") },
-      { name: "description", content: uiCopy("ux.copy9c7d21aa5e") },
-    ],
-  }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.telegram.title") },
+{ name: "description", content: uiCopy("pages.telegram.description") },
+{ property: "og:title", content: uiCopy("pages.telegram.title") },
+{ property: "og:description", content: uiCopy("pages.telegram.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: TelegramPage,
 });
 

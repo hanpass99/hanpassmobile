@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, Link, type ErrorComponentProps } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,16 +53,14 @@ export const Route = createFileRoute("/hanpass-dashboard")({
     pool: typeof search["pool"] === "string" ? search["pool"] : "all",
     status: typeof search["status"] === "string" ? search["status"] : "all",
   }),
-  head: () => ({
-    meta: [
-      { title: i18n.t("hanpassDash.headTitle") },
-      { name: "description", content: i18n.t("hanpassDash.headDesc") },
-      { property: "og:title", content: i18n.t("hanpassDash.headTitle") },
-      { property: "og:description", content: i18n.t("hanpassDash.headDesc") },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.hanpass-dashboard.title") },
+{ name: "description", content: uiCopy("pages.hanpass-dashboard.description") },
+{ property: "og:title", content: uiCopy("pages.hanpass-dashboard.title") },
+{ property: "og:description", content: uiCopy("pages.hanpass-dashboard.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: HanpassDashboardPage,
   errorComponent: ({ error }: ErrorComponentProps) => (
     <Card role="alert"><CardContent className="p-6 text-center text-sm">{error instanceof Error ? error.message : String(error)}</CardContent></Card>

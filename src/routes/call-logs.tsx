@@ -25,7 +25,14 @@ import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/call-logs")({
-  head: () => ({ meta: [{ title: i18n.t("head.callLogs", { }) }] }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.call-logs.title") },
+{ name: "description", content: uiCopy("pages.call-logs.description") },
+{ property: "og:title", content: uiCopy("pages.call-logs.title") },
+{ property: "og:description", content: uiCopy("pages.call-logs.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: CallLogsPage,
 });
 

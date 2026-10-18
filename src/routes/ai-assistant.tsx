@@ -6,9 +6,14 @@ import { PageHeader } from "@/components/PageHeader";
 
 export const Route = createFileRoute("/ai-assistant")({
   component: AiAssistantPage,
-  head: () => ({
-    meta: [{ title: uiCopy("ux.copybf3be4bbb0") }],
-  }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.ai-assistant.title") },
+{ name: "description", content: uiCopy("pages.ai-assistant.description") },
+{ property: "og:title", content: uiCopy("pages.ai-assistant.title") },
+{ property: "og:description", content: uiCopy("pages.ai-assistant.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
 });
 
 function AiAssistantPage() {

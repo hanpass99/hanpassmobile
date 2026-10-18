@@ -1208,4 +1208,126 @@ export default {
     "copy9ace4cd899": "Registering...",
     "copy08151dbbb3": "Register webhook"
 },
+  brand: {
+  "logoAlt": "Hanpass Mobile logo",
+  "hanpass": "Hanpass",
+  "hanpassMobile": "Hanpass Mobile"
+},
+  accessibility: {
+  "close": "Close",
+  "toggleSidebar": "Toggle Sidebar",
+  "sidebar": "Sidebar",
+  "mobileSidebar": "Displays the mobile sidebar.",
+  "previousSlide": "Previous slide",
+  "nextSlide": "Next slide",
+  "pagination": "pagination",
+  "previousPage": "Go to previous page",
+  "nextPage": "Go to next page",
+  "previous": "Previous",
+  "next": "Next",
+  "morePages": "More pages",
+  "breadcrumb": "breadcrumb",
+  "more": "More",
+  "assistant": "AI Assistant"
+},
+  countryNames: {
+  "TH": "Thailand",
+  "UZ": "Uzbekistan",
+  "KH": "Cambodia",
+  "VN": "Vietnam",
+  "ID": "Indonesia",
+  "LK": "Sri Lanka",
+  "PH": "Philippines",
+  "BD": "Bangladesh",
+  "MM": "Myanmar",
+  "NP": "Nepal",
+  "MN": "Mongolia",
+  "TL": "Timor-Leste",
+  "PK": "Pakistan",
+  "RU": "Russia",
+  "KG": "Kyrgyzstan",
+  "IN": "India",
+  "LA": "Laos",
+  "TJ": "Tajikistan",
+  "KZ": "Kazakhstan",
+  "KR": "South Korea",
+  "CN": "China",
+  "CIS": "CIS",
+  "US": "United States",
+  "JP": "Japan"
+},
+  pages: {
+  "dashboard": {
+    "title": "Dashboard — Hanpass Mobile OB Call CRM",
+    "description": "Hanpass Mobile outbound-call CRM"
+  },
+  "customers": {
+    "title": "Customers — Hanpass OB CRM",
+    "description": "Hanpass customer management"
+  },
+  "sms": {
+    "title": "SMS — Hanpass OB CRM",
+    "description": "Send SMS/LMS to customers · manage templates · view history"
+  },
+  "sla": {
+    "title": "SLA — Hanpass OB CRM",
+    "description": "Track SLA compliance and fines per activation-request team in real time."
+  },
+  "settings": {
+    "title": "Settings — Hanpass OB CRM",
+    "description": "My account · Staff accounts · Monthly targets"
+  },
+  "staff": {
+    "title": "Staff Management — Hanpass OB CRM",
+    "description": "Staff account management"
+  },
+  "channel-performance": {
+    "title": "Channel Performance — Hanpass OB CRM",
+    "description": "Customer status by acquisition channel"
+  },
+  "attendance": {
+    "title": "Attendance — Hanpass OB CRM",
+    "description": "Manage daily staff attendance status and history"
+  },
+  "call-logs": {
+    "title": "Call Logs — Hanpass OB CRM",
+    "description": "Review call history by staff, newest first."
+  },
+  "hanpass-dashboard": {
+    "title": "Hanpass Overview — Hanpass OB CRM",
+    "description": "Work overview of Hanpass staff by country, staff, status and date"
+  },
+  "system-health": {
+    "title": "System Health — Hanpass OB CRM",
+    "description": "Automatic checks for data consistency, integrations and system state"
+  },
+  "ai-assistant": {
+    "title": "AI Assistant — Hanpass OB CRM",
+    "description": "Query and manage CRM data through conversation"
+  },
+  "ai-faq": {
+    "title": "AI Training · Hanpass Mobile OB",
+    "description": "Telegram auto-reply FAQ management and AI training"
+  },
+  "telegram": {
+    "title": "Telegram Support — Hanpass OB CRM",
+    "description": "Unified Telegram customer support chat"
+  },
+  "notifications": {
+    "title": "Admin Notices · Hanpass Mobile OB CRM",
+    "description": "Admins send pop-up notices and SMS messages to staff."
+  },
+  "broadcast": {
+    "title": "Broadcasts · Hanpass Mobile OB CRM",
+    "description": "Safely send bulk plan and promotion announcements to opted-in Telegram customers."
+  },
+  "auth": {
+    "title": "Admin sign-in — Hanpass Mobile",
+    "description": "Enter your account details"
+  },
+  "reset-password": {
+    "title": "Set a new password | Hanpass Mobile",
+    "description": "Securely replace your Hanpass Mobile staff password."
+  }
+},
 } as const;

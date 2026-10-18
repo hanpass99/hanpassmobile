@@ -1,3 +1,4 @@
+import { countryName, companyName } from "@/i18n/display-values";
 import hanpassLogo from "@/assets/hanpass-logo.png";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
@@ -16,6 +17,14 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : "",
   }),
+  head: () => ({ meta: [
+{ title: uiCopy("pages.auth.title") },
+{ name: "description", content: uiCopy("pages.auth.description") },
+{ property: "og:title", content: uiCopy("pages.auth.title") },
+{ property: "og:description", content: uiCopy("pages.auth.description") },
+{ property: "og:type", content: "website" },
+{ name: "twitter:card", content: "summary" }
+] }),
   component: AuthPage,
 });
 
@@ -291,7 +300,7 @@ function AuthPage() {
                     </option>
                     {countries.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name_ko} ({c.code})
+                        {countryName(c)} ({c.code})
                       </option>
                     ))}
                   </select>

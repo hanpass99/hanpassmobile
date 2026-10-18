@@ -1208,4 +1208,126 @@ export default {
     "copy9ace4cd899": "등록 중...",
     "copy08151dbbb3": "웹훅 등록"
 },
+  brand: {
+  "logoAlt": "Hanpass Mobile logo",
+  "hanpass": "한패스",
+  "hanpassMobile": "한패스 모바일"
+},
+  accessibility: {
+  "close": "Close",
+  "toggleSidebar": "Toggle Sidebar",
+  "sidebar": "Sidebar",
+  "mobileSidebar": "Displays the mobile sidebar.",
+  "previousSlide": "Previous slide",
+  "nextSlide": "Next slide",
+  "pagination": "pagination",
+  "previousPage": "Go to previous page",
+  "nextPage": "Go to next page",
+  "previous": "Previous",
+  "next": "Next",
+  "morePages": "More pages",
+  "breadcrumb": "breadcrumb",
+  "more": "More",
+  "assistant": "AI Assistant"
+},
+  countryNames: {
+  "TH": "태국",
+  "UZ": "우즈베키스탄",
+  "KH": "캄보디아",
+  "VN": "베트남",
+  "ID": "인도네시아",
+  "LK": "스리랑카",
+  "PH": "필리핀",
+  "BD": "방글라데시",
+  "MM": "미얀마",
+  "NP": "네팔",
+  "MN": "몽골",
+  "TL": "동티모르",
+  "PK": "파키스탄",
+  "RU": "러시아",
+  "KG": "키르기스스탄",
+  "IN": "인도",
+  "LA": "라오스",
+  "TJ": "타지키스탄",
+  "KZ": "카자흐스탄",
+  "KR": "대한민국",
+  "CN": "중국",
+  "CIS": "CIS",
+  "US": "미국",
+  "JP": "일본"
+},
+  pages: {
+  "dashboard": {
+    "title": "대시보드 — Hanpass Mobile OB Call CRM",
+    "description": "한패스 모바일 아웃바운드 콜 관리 시스템"
+  },
+  "customers": {
+    "title": "고객 관리 — Hanpass OB CRM",
+    "description": "한패스 고객 관리"
+  },
+  "sms": {
+    "title": "문자 발송 — Hanpass OB CRM",
+    "description": "고객에게 SMS/LMS 발송 · 템플릿 관리 · 발송 내역"
+  },
+  "sla": {
+    "title": "SLA 관리 — Hanpass OB CRM",
+    "description": "한패스앱 신청자 팀별 SLA 준수 현황과 벌금을 실시간으로 관리합니다."
+  },
+  "settings": {
+    "title": "설정 — Hanpass OB CRM",
+    "description": "내 계정 · 직원 계정 · 월 목표 관리"
+  },
+  "staff": {
+    "title": "직원 관리 — Hanpass OB CRM",
+    "description": "직원 계정 관리"
+  },
+  "channel-performance": {
+    "title": "채널별 성과 — Hanpass OB CRM",
+    "description": "유입 채널별 고객 상태 통계"
+  },
+  "attendance": {
+    "title": "출근 관리 — Hanpass OB CRM",
+    "description": "날짜별 직원 출근 상태와 이력을 관리합니다"
+  },
+  "call-logs": {
+    "title": "통화 로그 — Hanpass OB CRM",
+    "description": "직원별 통화 이력을 최신순으로 확인합니다."
+  },
+  "hanpass-dashboard": {
+    "title": "한패스 현황 — Hanpass OB CRM",
+    "description": "한패스 소속 직원의 나라·직원·상태·날짜별 업무 현황"
+  },
+  "system-health": {
+    "title": "시스템 점검 — Hanpass OB CRM",
+    "description": "앱 데이터 정합성·연동 상태·시스템 상태 자동 점검"
+  },
+  "ai-assistant": {
+    "title": "AI 어시스턴트 — Hanpass OB CRM",
+    "description": "CRM 데이터를 대화로 조회하고 작업하세요"
+  },
+  "ai-faq": {
+    "title": "AI 학습 · Hanpass Mobile OB",
+    "description": "텔레그램 자동 응답 FAQ 관리 및 AI 학습"
+  },
+  "telegram": {
+    "title": "텔레그램 상담 — Hanpass OB CRM",
+    "description": "텔레그램 고객 상담 통합 채팅"
+  },
+  "notifications": {
+    "title": "관리자 공지 · Hanpass Mobile OB CRM",
+    "description": "관리자가 직원에게 공지 팝업과 SMS를 발송합니다."
+  },
+  "broadcast": {
+    "title": "브로드캐스트 · Hanpass Mobile OB CRM",
+    "description": "수신 동의한 텔레그램 고객에게 요금제·이벤트 안내를 안전하게 단체 발송합니다."
+  },
+  "auth": {
+    "title": "관리자 로그인 — Hanpass Mobile",
+    "description": "계정 정보를 입력해 주세요"
+  },
+  "reset-password": {
+    "title": "Set a new password | Hanpass Mobile",
+    "description": "Securely replace your Hanpass Mobile staff password."
+  }
+},
 } as const;
