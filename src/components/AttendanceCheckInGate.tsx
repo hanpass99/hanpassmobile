@@ -90,9 +90,7 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
           className="mt-6 w-full h-12 text-base font-semibold"
         >
           <CheckCircle2 className="mr-2 h-5 w-5" />
-          {saving
-            ? uiCopy("ux.copye6e1a2914f")
-            : uiCopy("ux.copy950de9eee8")}
+          {saving ? uiCopy("ux.copye6e1a2914f") : uiCopy("ux.copy950de9eee8")}
         </Button>
       </div>
     </div>

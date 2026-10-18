@@ -1535,10 +1535,10 @@ export default {
     messageb419d7d8fc: "{{value0}} (기록): {{value1}}",
   },
   interfaceExtra: {
-  "noPreview": "(no preview)",
-  "saveFailed": "Failed to save",
-  "shortcut": "salom",
-  "english": "English",
-  "appTitle": "Hanpass Mobile OB Call CRM"
-},
+    noPreview: "(no preview)",
+    saveFailed: "Failed to save",
+    shortcut: "salom",
+    english: "English",
+    appTitle: "Hanpass Mobile OB Call CRM",
+  },
 } as const;
