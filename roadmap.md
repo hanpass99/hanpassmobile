@@ -1,5 +1,9 @@
 # Current requests
 
+- [ ] UX batch 2: equal-period KPI comparisons using existing RPC/filters and one call-completed definition
+- [ ] UX batch 2: searchable top-10 staff ranking, country bars with others, and date presets
+- [ ] UX batch 2: changed-file lint, regression tests, automatic type-check/build, and browser verification
+
 - [x] UX batch 1: Korean/English locale coverage and matching-key verification; preserve Korean copy and all behavior
 - [x] UX batch 1: real Hanpass logo in sidebar and login
 - [x] UX batch 1: semantic chart palette in light and dark themes
