@@ -140,7 +140,7 @@ export function AiChatPanel({
           >
             <div
               className={cn(
-                "max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm",
+                "max-w-[85%] break-words whitespace-pre-wrap rounded-lg px-3 py-2 text-sm",
                 m.role === "user"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-foreground",
@@ -158,7 +158,7 @@ export function AiChatPanel({
       </div>
 
       <form
-        className="flex items-end gap-2 border-t border-border p-3"
+        className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 border-t border-border p-3 sm:flex"
         onSubmit={(e) => {
           e.preventDefault();
           void send();
@@ -176,7 +176,7 @@ export function AiChatPanel({
           }}
           rows={1}
           placeholder={uiCopy("ux.copy342b610a52")}
-          className="max-h-40 min-h-9 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="max-h-40 min-h-11 min-w-0 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           disabled={loading}
         />
         <Button type="submit" size="icon" disabled={loading || !input.trim()}>

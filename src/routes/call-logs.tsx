@@ -1,3 +1,4 @@
+import { MobileFilters } from "@/components/MobileFilters";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -187,59 +188,60 @@ function CallLogsPage() {
       />
 
       {/* Date range filter */}
-      <div className="grid grid-cols-2 items-end gap-3 rounded-lg border bg-card p-4 sm:flex sm:flex-wrap">
-        <div>
-          <Label className="text-xs">{t("common.from", {})}</Label>
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="mt-1 w-full sm:w-[160px]"
-          />
+      <MobileFilters>
+        <div className="grid grid-cols-2 items-end gap-3 rounded-lg border bg-card p-4 sm:flex sm:flex-wrap">
+          <div>
+            <Label className="text-xs">{t("common.from", {})}</Label>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="mt-1 w-full sm:w-[160px]"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">{t("common.to", {})}</Label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="mt-1 w-full sm:w-[160px]"
+            />
+          </div>
+          <div className="col-span-2 flex flex-wrap gap-1 text-sm sm:ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setDateFrom(todayStr());
+                setDateTo(todayStr());
+              }}
+            >
+              {t("callLogs.today", {})}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setDateFrom(daysAgoStr(6));
+                setDateTo(todayStr());
+              }}
+            >
+              {t("callLogs.last7", {})}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setDateFrom(daysAgoStr(29));
+                setDateTo(todayStr());
+              }}
+            >
+              {t("callLogs.last30", {})}
+            </Button>
+          </div>
         </div>
-        <div>
-          <Label className="text-xs">{t("common.to", {})}</Label>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="mt-1 w-full sm:w-[160px]"
-          />
-        </div>
-        <div className="col-span-2 flex flex-wrap gap-1 text-sm sm:ml-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setDateFrom(todayStr());
-              setDateTo(todayStr());
-            }}
-          >
-            {t("callLogs.today", {})}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setDateFrom(daysAgoStr(6));
-              setDateTo(todayStr());
-            }}
-          >
-            {t("callLogs.last7", {})}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setDateFrom(daysAgoStr(29));
-              setDateTo(todayStr());
-            }}
-          >
-            {t("callLogs.last30", {})}
-          </Button>
-        </div>
-      </div>
-
+      </MobileFilters>
       {/* Dashboard summary */}
       <div className="grid grid-cols-3 gap-2 md:gap-4">
         <Card>

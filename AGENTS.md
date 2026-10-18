@@ -16,3 +16,5 @@
 - Dashboard presentation calculations live in a shared pure module; both current and previous KPIs use status counts rather than the legacy RPC call-round field so the existing customer-status rule stays consistent without backend changes.
 - Customer workflow preferences use user-scoped browser storage with URL-filter precedence and hydration-safe restoration; quick status actions confirm before the existing RPC because status transitions can mutate assignment and activation fields.
 - Customer SMS shortcuts use a one-time user-scoped session-storage handoff into the existing manual receiver flow, keeping phone numbers out of URLs and leaving sending permissions unchanged.
+
+- Mobile layouts share a hydration-safe MobileFilters wrapper and mobile-scoped control/overlay/table CSS; desktop markup and page-owned filter state remain unchanged.

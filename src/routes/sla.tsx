@@ -1,3 +1,4 @@
+import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
@@ -674,21 +675,23 @@ function StaffCallFinesCard(props: {
             {uiCopy("ux.copy6fc2ec7491")} <span className="font-semibold">{won(focusDayFine)}</span>
           </span>
         </CardDescription>
-        <div className="flex flex-wrap items-center gap-2 pt-2">
-          <Label className="text-xs">{uiCopy("ux.copy1664ccf1cd")}</Label>
-          <Input
-            type="date"
-            value={focusDate}
-            max={props.today}
-            onChange={(e) => setFocusDate(e.target.value)}
-            className="h-8 w-40"
-          />
-          {!isFocusToday && (
-            <Button size="sm" variant="ghost" onClick={() => setFocusDate(props.today)}>
-              {uiCopy("ux.copya14409f042")}
-            </Button>
-          )}
-        </div>
+        <MobileFilters>
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <Label className="text-xs">{uiCopy("ux.copy1664ccf1cd")}</Label>
+            <Input
+              type="date"
+              value={focusDate}
+              max={props.today}
+              onChange={(e) => setFocusDate(e.target.value)}
+              className="h-8 w-40"
+            />
+            {!isFocusToday && (
+              <Button size="sm" variant="ghost" onClick={() => setFocusDate(props.today)}>
+                {uiCopy("ux.copya14409f042")}
+              </Button>
+            )}
+          </div>
+        </MobileFilters>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         {fines.isLoading ? (
