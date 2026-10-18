@@ -64,6 +64,13 @@
       "when": 1792328492351,
       "tag": "0008_approved_staff_access_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792328619581,
+      "tag": "0009_close_approval_rpc_bypasses",
+      "breakpoints": true
     }
   ]
 }
