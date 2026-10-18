@@ -44,7 +44,7 @@ export function StatCard({
       )}
     >
       <div className="flex min-w-0 flex-col gap-1">
-        <span className={cn("truncate text-[11px] font-medium tracking-normal", labels[tone])}>
+        <span className={cn("truncate text-xs font-medium tracking-normal", labels[tone])}>
           {label}
         </span>
         <span className="font-display text-[22px] font-semibold leading-none tracking-normal tabular-nums text-foreground">
@@ -53,7 +53,7 @@ export function StatCard({
             <span className="ml-1 text-xs font-medium text-muted-foreground">{suffix}</span>
           )}
         </span>
-        {hint && <span className="text-[11px] font-medium text-muted-foreground">{hint}</span>}
+        {hint && <span className="text-xs font-medium text-muted-foreground">{hint}</span>}
       </div>
       {Icon && (
         <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-card/80", labels[tone])}>

@@ -400,7 +400,7 @@ function TelegramPage() {
                   <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
                   신규
                   {counts.new > 0 && (
-                    <span className="ml-1 rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
+                    <span className="ml-1 rounded-full bg-green-500 px-1.5 text-xs font-bold text-white">
                       {counts.new}
                     </span>
                   )}
@@ -444,7 +444,7 @@ function TelegramPage() {
                         )}
                       />
                       {unreadCount > 0 && (
-                        <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-card">
+                        <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-xs font-bold leading-none text-white shadow-sm ring-2 ring-card">
                           {unreadCount > 99 ? "99+" : unreadCount}
                         </span>
                       )}
@@ -454,12 +454,12 @@ function TelegramPage() {
                         <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", unreadCount > 0 && "font-semibold text-foreground")}>{chatDisplayName(c)}</span>
                         <div className="flex shrink-0 items-center gap-1.5">
                           {unreadCount > 0 && (
-                            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm">
+                            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1.5 text-xs font-bold leading-none text-white shadow-sm">
                               {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
                           )}
                           {c.last_message_at && (
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-xs text-muted-foreground">
                               {formatDistanceToNow(new Date(c.last_message_at), { addSuffix: false, locale })}
                             </span>
                           )}
@@ -471,30 +471,30 @@ function TelegramPage() {
                         </p>
                       </div>
                       <div className="mt-0.5 flex items-center gap-1 flex-wrap">
-                        <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-[9px]", STATUS_BADGE[c.status])}>
+                        <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-xs", STATUS_BADGE[c.status])}>
                           {STATUS_LABEL[c.status]}
                         </Badge>
                         {c.needs_human && (
                           <Badge
                             variant="outline"
                             title={c.needs_human_reason ?? undefined}
-                            className="h-4 gap-0.5 border-red-500/50 bg-red-500/15 px-1 text-[9px] font-semibold text-red-700 dark:text-red-300"
+                            className="h-4 gap-0.5 border-red-500/50 bg-red-500/15 px-1 text-xs font-semibold text-red-700 dark:text-red-300"
                           >
                             <AlertTriangle className="h-2.5 w-2.5" /> AI 응답 불가 · 담당자 확인 필요
                           </Badge>
                         )}
                         {c.banned && (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-red-600/50 bg-red-600/15 px-1 text-[9px] font-semibold text-red-700 dark:text-red-300">
+                          <Badge variant="outline" className="h-4 gap-0.5 border-red-600/50 bg-red-600/15 px-1 text-xs font-semibold text-red-700 dark:text-red-300">
                             ⛔ 차단한 고객
                           </Badge>
                         )}
                         {c.is_blocked && (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-[9px] text-red-700 dark:text-red-300">
+                          <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-xs text-red-700 dark:text-red-300">
                             🚫 차단됨
                           </Badge>
                         )}
                         {replyLockSecondsLeft(c, user?.id, nowMs) > 0 && (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-[9px] text-amber-700 dark:text-amber-300">
+                          <Badge variant="outline" className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-xs text-amber-700 dark:text-amber-300">
                             🔒 답변 중 ({replyLockSecondsLeft(c, user?.id, nowMs)}초)
                           </Badge>
                         )}
@@ -503,15 +503,15 @@ function TelegramPage() {
                         {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
                           <Badge
                             variant="outline"
-                            className="h-4 gap-0.5 border-blue-500/30 bg-blue-500/10 px-1 text-[9px] text-blue-700 dark:text-blue-300"
+                            className="h-4 gap-0.5 border-blue-500/30 bg-blue-500/10 px-1 text-xs text-blue-700 dark:text-blue-300"
                           >
                             담당: {operatorMap[c.assigned_operator_id]?.display_name ?? "직원"}
                           </Badge>
                         ) : (
-                          <span className="text-[9px] text-muted-foreground">담당: 없음</span>
+                          <span className="text-xs text-muted-foreground">담당: 없음</span>
                         )}
                         {c.telegram_username && (
-                          <span className="text-[10px] text-muted-foreground">@{c.telegram_username}</span>
+                          <span className="text-xs text-muted-foreground">@{c.telegram_username}</span>
                         )}
                       </div>
                     </div>
@@ -853,16 +853,16 @@ function ConversationPane({ chat }: { chat: Chat }) {
             {chat.telegram_username && (
               <span className="text-xs text-muted-foreground">@{chat.telegram_username}</span>
             )}
-            <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", STATUS_BADGE[chat.status])}>
+            <Badge variant="outline" className={cn("h-5 px-1.5 text-xs", STATUS_BADGE[chat.status])}>
               {STATUS_LABEL[chat.status]}
             </Badge>
             {chat.banned && (
-              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-red-600/50 bg-red-600/15 text-red-700 dark:text-red-300">
+              <Badge variant="outline" className="h-5 px-1.5 text-xs border-red-600/50 bg-red-600/15 text-red-700 dark:text-red-300">
                 ⛔ 차단한 고객
               </Badge>
             )}
             {chat.is_blocked && (
-              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300">
+              <Badge variant="outline" className="h-5 px-1.5 text-xs border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300">
                 🚫 차단됨
               </Badge>
             )}
@@ -980,7 +980,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                 <div className={cn("max-w-[88%] sm:max-w-[75%]", isOut && "flex flex-col items-end")}>
                   <div
                     className={cn(
-                      "mb-0.5 flex items-center gap-1.5 text-[10px] font-medium",
+                      "mb-0.5 flex items-center gap-1.5 text-xs font-medium",
                       isOut ? "justify-end text-primary/80" : "justify-start text-muted-foreground",
                     )}
                   >
@@ -1205,12 +1205,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs font-medium truncate">{t.title}</span>
                               {t.media_type !== "none" && (
-                                <span className="rounded bg-primary/10 px-1 py-0.5 text-[9px] text-primary">
+                                <span className="rounded bg-primary/10 px-1 py-0.5 text-xs text-primary">
                                   {t.media_type === "image" ? "🖼️" : "📎"}
                                 </span>
                               )}
                             </div>
-                            <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                            <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap break-words">
                               {t.content}
                             </div>
                           </div>
@@ -1227,7 +1227,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
         <div className="relative flex items-end gap-2">
           {slashOpen && (
             <div className="absolute bottom-full left-0 right-14 mb-1 z-20 rounded-md border bg-popover shadow-lg">
-              <div className="border-b px-3 py-1.5 text-[11px] text-muted-foreground">
+              <div className="border-b px-3 py-1.5 text-xs text-muted-foreground">
                 템플릿 자동완성 {slashQuery ? `· "/${slashQuery}"` : ""} — ↑/↓ 이동, Enter 삽입, Esc 취소
               </div>
               <div className="max-h-64 overflow-y-auto">
@@ -1254,18 +1254,18 @@ function ConversationPane({ chat }: { chat: Chat }) {
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
                                 {t.shortcut && (
-                                  <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                                  <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
                                     /{t.shortcut}
                                   </span>
                                 )}
                                 <span className="font-medium">{t.title}</span>
                                 {t.media_type !== "none" && (
-                                  <span className="rounded bg-primary/10 px-1 py-0.5 text-[9px] text-primary">
+                                  <span className="rounded bg-primary/10 px-1 py-0.5 text-xs text-primary">
                                     {t.media_type === "image" ? "🖼️" : "📎"}
                                   </span>
                                 )}
                               </div>
-                              <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                              <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap break-words">
                                 {t.content}
                               </div>
                             </div>
@@ -1280,7 +1280,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
           )}
           {chat.ai_suggestion && (
             <div className="mb-2 rounded-lg border border-violet-500/40 bg-violet-500/10 p-2.5">
-              <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+              <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
                 <Sparkles className="h-3 w-3" /> AI 제안
                 {typeof chat.ai_suggestion_confidence === "number" && (
                   <span className="font-normal opacity-70">
@@ -1294,7 +1294,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
               <div className="mt-2 flex gap-1.5">
                 <Button
                   size="sm"
-                  className="h-6 px-2 text-[11px]"
+                  className="h-6 px-2 text-xs"
                   onClick={() => {
                     setText(chat.ai_suggestion ?? "");
                     setTimeout(() => textareaRef.current?.focus(), 0);
@@ -1308,7 +1308,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-[11px]"
+                  className="h-6 px-2 text-xs"
                   onClick={() =>
                     void dismissSuggestionFn({ data: { chatRowId: chat.id } })
                       .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
@@ -1510,7 +1510,7 @@ function ParticipationHistory({
     });
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-b bg-muted/30 px-4 py-1.5 text-[11px]">
+    <div className="flex flex-wrap items-center gap-1.5 border-b bg-muted/30 px-4 py-1.5 text-xs">
       <span className="font-medium text-muted-foreground">응대 이력:</span>
       {runs.map((r, i) => (
         <span
@@ -1604,7 +1604,7 @@ function MediaTemplateConfirmDialog({
             )}
           </div>
           <div>
-            <label className="text-[11px] text-muted-foreground">캡션 (내용 텍스트)</label>
+            <label className="text-xs text-muted-foreground">캡션 (내용 텍스트)</label>
             <Textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
@@ -1663,7 +1663,7 @@ function QuotedReplyPreview({
     return (
       <div
         className={cn(
-          "mb-1.5 rounded border-l-2 px-2 py-1 text-[11px] opacity-70",
+          "mb-1.5 rounded border-l-2 px-2 py-1 text-xs opacity-70",
           isOut ? "border-primary-foreground/60 bg-black/10" : "border-primary/50 bg-black/5",
         )}
       >
@@ -1679,7 +1679,7 @@ function QuotedReplyPreview({
   return (
     <div
       className={cn(
-        "mb-1.5 rounded border-l-2 px-2 py-1 text-[11px]",
+        "mb-1.5 rounded border-l-2 px-2 py-1 text-xs",
         isOut
           ? "border-primary-foreground/70 bg-black/10"
           : "border-primary/50 bg-black/5",
@@ -1954,13 +1954,13 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                       >
                         <div className="flex items-center gap-1.5">
                           {t.shortcut && (
-                            <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                            <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
                               /{t.shortcut}
                             </span>
                           )}
                           <span className="text-xs font-medium">{t.title}</span>
                         </div>
-                        <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                        <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap break-words">
                           {t.content}
                         </div>
                       </button>
@@ -1997,7 +1997,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
             </div>
             <div className="space-y-2">
               <div>
-                <label className="text-[11px] text-muted-foreground">제목 (짧은 이름)</label>
+                <label className="text-xs text-muted-foreground">제목 (짧은 이름)</label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -2006,7 +2006,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-muted-foreground">
+                <label className="text-xs text-muted-foreground">
                   단축어 (선택, 공백 없이 짧은 단어 — 예: salom, tarif)
                 </label>
                 <Input
@@ -2015,12 +2015,12 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                   placeholder="salom"
                   maxLength={32}
                 />
-                <div className="mt-1 text-[10px] text-muted-foreground">
+                <div className="mt-1 text-xs text-muted-foreground">
                   입력창에 "/" 를 치면 자동완성 목록이 나타납니다.
                 </div>
               </div>
               <div>
-                <label className="text-[11px] text-muted-foreground">내용 (실제 전송될 메시지)</label>
+                <label className="text-xs text-muted-foreground">내용 (실제 전송될 메시지)</label>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -2030,7 +2030,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-muted-foreground">
+                <label className="text-xs text-muted-foreground">
                   미디어 첨부 (선택 — 이미지 또는 파일)
                 </label>
                 <div className="flex items-center gap-2">
@@ -2061,7 +2061,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                   )}
                 </div>
                 {uploadingMedia && (
-                  <div className="mt-1 text-[10px] text-muted-foreground">업로드 중...</div>
+                  <div className="mt-1 text-xs text-muted-foreground">업로드 중...</div>
                 )}
                 {mediaStoragePath && (
                   <div className="mt-2 flex items-center gap-2 rounded border bg-muted/30 p-2">
@@ -2076,7 +2076,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                         📎
                       </div>
                     )}
-                    <div className="min-w-0 flex-1 text-[11px]">
+                    <div className="min-w-0 flex-1 text-xs">
                       <div className="truncate">{mediaFileName}</div>
                       <div className="text-muted-foreground">{humanSize(mediaSize)}</div>
                     </div>
@@ -2286,7 +2286,7 @@ function SendSmsDialog({
               className={!phone || isValidKrPhone ? "" : "border-destructive"}
             />
             {phone && !isValidKrPhone && (
-              <div className="text-[10px] text-destructive">
+              <div className="text-xs text-destructive">
                 올바른 한국 휴대폰 번호를 입력하세요 (010으로 시작하는 10-11자리)
               </div>
             )}
@@ -2294,7 +2294,7 @@ function SendSmsDialog({
               <button
                 type="button"
                 onClick={() => setPhone(customerPhone)}
-                className="text-[10px] text-primary hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 원본 번호로 되돌리기
               </button>
@@ -2312,7 +2312,7 @@ function SendSmsDialog({
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
           />
-          <div className="text-[10px] text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             90바이트 초과 시 자동으로 LMS로 전환됩니다.
           </div>
         </div>
@@ -2364,7 +2364,7 @@ function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
           <div>
             <label className="text-xs font-medium">Webhook URL</label>
             <Input value={url} onChange={(e) => setUrl(e.target.value)} />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               팁: 배포된 URL(예: https://hanpassmobile.lovable.app/api/public/telegram/webhook)을 사용하세요.
             </p>
           </div>
@@ -2372,7 +2372,7 @@ function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
             {mut.isPending ? "등록 중..." : "웹훅 등록"}
           </Button>
           {result && (
-            <pre className="max-h-48 overflow-auto rounded bg-muted p-2 text-[11px]">
+            <pre className="max-h-48 overflow-auto rounded bg-muted p-2 text-xs">
               {JSON.stringify(result, null, 2)}
             </pre>
           )}

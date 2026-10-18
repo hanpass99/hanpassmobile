@@ -656,7 +656,7 @@ function StaffAdmin() {
                   </TableCell>
                   <TableCell>
                     {r.role === "admin" ? (
-                      <Badge variant="secondary" className="text-[10px]">{t("country.allCountries")}</Badge>
+                      <Badge variant="secondary" className="text-xs">{t("country.allCountries")}</Badge>
                     ) : isAdmin ? (
                       <MultiCountrySelect
                         options={countries}
@@ -669,7 +669,7 @@ function StaffAdmin() {
                           <span className="text-xs text-muted-foreground">{t("common.all")}</span>
                         ) : (
                           r.country_ids.map((id) => (
-                            <Badge key={id} variant="secondary" className="text-[10px]">
+                            <Badge key={id} variant="secondary" className="text-xs">
                               {countries.find((c) => c.id === id)?.code ?? "?"}
                             </Badge>
                           ))
