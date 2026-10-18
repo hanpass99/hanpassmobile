@@ -347,6 +347,7 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
 // ============================================================
 const RECEIVED_SPREADSHEET_ID = "1LsuShEg0vq1iiq_EZJ0KuvVvQ8f_YlMr7aJcEVwf-UY";
 const RECEIVED_SHEET_NAME = "접수완료";
+const RECEIVED_MIN_DATE = "2026-10-01";
 
 function normalizeReceivedPhone(raw: string): string | null {
   let digits = (raw || "").toString().replace(/\D/g, "");
@@ -470,6 +471,11 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
       const country_id = codeToId.get(mapped) ?? null;
 
       const signup_date = parseReceivedDate(receivedAt) ?? today;
+      // 2026-10-18: 10월 이전 접수분은 운영에서 정리(삭제)됨 → 다시 가져오지 않음
+      if (signup_date < RECEIVED_MIN_DATE) {
+        result.skipped++;
+        continue;
+      }
 
       const custKey = `${name}|${phone}|${signup_date}`;
       const existing = existingCustByKey.get(custKey);
