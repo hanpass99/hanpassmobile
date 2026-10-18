@@ -56,7 +56,8 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { display_name, department: department ?? null, created_by_admin: true, company: company === "한패스" ? "한패스" : "한패스 모바일" },
+      app_metadata: { created_by_admin: true },
+      user_metadata: { display_name, department: department ?? null, company: company === "한패스" ? "한패스" : "한패스 모바일" },
     });
     if (createErr || !created.user) {
       return new Response(JSON.stringify({ error: createErr?.message ?? "create failed" }), {

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { isApprovedStaff } from "@/lib/staff-security";
 
 type AuthCtx = {
   session: Session | null;
@@ -44,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle(),
       supabase.from("profile_countries").select("country_id").eq("user_id", uid),
     ]);
-    setIsActive((profile as any)?.approval_status ? (profile as any).approval_status !== "pending" : ((profile as any)?.is_active ?? true));
+    setIsActive(isApprovedStaff(profile));
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
     setCompany((profile as any)?.company ?? "");
     setCountryIds((pcs ?? []).map((r: any) => r.country_id as string));

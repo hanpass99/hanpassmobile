@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { createStaff, setStaffActive } from "@/lib/staff-admin.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettingsData, type AppRole, type Country, type SettingsRow as Row } from "@/hooks/use-settings";
@@ -256,16 +257,14 @@ function StaffAdmin() {
 
 
   const setActive = async (r: Row, active: boolean) => {
-    const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: active });
+    const error = await setStaffActive({ data: { user_id: r.id, active, approve: false } }).then(() => null).catch(() => ({ message: "staff_update_failed" }));
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(active ? t("settings.activated") : t("settings.deactivated"));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: active, approval_status: (active ? "approved" : "disabled") as Row["approval_status"] } : x)));
   };
 
   const approve = async (r: Row) => {
-    const { error: roleErr } = await supabase.rpc("admin_set_user_role", { _user_id: r.id, _role: "staff" as any });
-    if (roleErr) { toast.error(t("settings.actionFailed", { msg: roleErr.message })); return; }
-    const { error } = await supabase.rpc("admin_set_profile_active", { _user_id: r.id, _active: true });
+    const error = await setStaffActive({ data: { user_id: r.id, active: true, approve: true } }).then(() => null).catch(() => ({ message: "staff_update_failed" }));
     if (error) { toast.error(t("settings.actionFailed", { msg: error.message })); return; }
     toast.success(t("settings.approved", { name: r.display_name }));
     setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, is_active: true, approval_status: "approved" as const, role: "staff" as AppRole } : x)));
@@ -982,10 +981,8 @@ function CreateStaffDialog({
     if (password.length < 6) return toast.error(t("settings.pwdLenError"));
     if (role !== "admin" && countryIds.length === 0) return toast.error(t("country.selectRequired"));
     setSaving(true);
-    const { data: res, error } = await supabase.functions.invoke<AdminCreateStaffResponse>(
-      "admin-create-staff",
-      {
-        body: {
+    const { res, error } = await createStaff({
+        data: {
           email, password,
           display_name: displayName,
           department: department || undefined,
@@ -993,8 +990,7 @@ function CreateStaffDialog({
           country_ids: countryIds,
           role,
         },
-      },
-    );
+    }).then((res) => ({ res: res as AdminCreateStaffResponse, error: null })).catch(() => ({ res: null, error: { message: "staff_create_failed" } }));
     setSaving(false);
     let errMsg: string | undefined = res?.error;
     if (error) {

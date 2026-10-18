@@ -34,6 +34,9 @@ Deno.serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
+    const { error: banErr } = await admin.auth.admin.updateUserById(user_id, { ban_duration: "876000h" });
+    if (banErr && !/not found/i.test(banErr.message)) return json({ error: "staff_auth_update_failed" }, 400);
+
     // Common cleanup: revoke access artifacts.
     await admin.from("user_roles").delete().eq("user_id", user_id);
     await admin.from("profile_countries").delete().eq("user_id", user_id);
@@ -46,7 +49,7 @@ Deno.serve(async (req) => {
       await admin.from("profiles").delete().eq("id", user_id);
     } else {
       // Soft-delete: keep the profile row so past performance stays attributed.
-      await admin.from("profiles").update({ is_active: false }).eq("id", user_id);
+      await admin.from("profiles").update({ is_active: false, approval_status: "disabled" }).eq("id", user_id);
     }
 
     // Delete the auth user to revoke sign-in.
