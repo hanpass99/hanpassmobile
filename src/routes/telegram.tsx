@@ -499,7 +499,7 @@ function TelegramPage() {
                                 : "text-muted-foreground",
                             )}
                           >
-                            {c.last_message_preview ?? "(no preview)"}
+                            {c.last_message_preview ?? uiCopy("interfaceExtra.noPreview")}
                           </p>
                         </div>
                         <div className="mt-0.5 flex items-center gap-1 flex-wrap">
@@ -2120,7 +2120,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                 <Input
                   value={shortcut}
                   onChange={(e) => setShortcut(e.target.value.replace(/\s/g, ""))}
-                  placeholder="salom"
+                  placeholder={uiCopy("interfaceExtra.shortcut")}
                   maxLength={32}
                 />
                 <div className="mt-1 text-xs text-muted-foreground">

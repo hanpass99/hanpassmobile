@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { localizeError } from "@/i18n/localize-error";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -135,7 +136,7 @@ export function CallLogPopupDialog({
       onSaved?.();
       onClose();
     } catch (err: any) {
-      toast.error(localizeError(err?.message ?? "Failed to save"));
+      toast.error(localizeError(err?.message ?? uiCopy("interfaceExtra.saveFailed")));
     } finally {
       setSaving(false);
     }

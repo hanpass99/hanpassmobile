@@ -61,7 +61,7 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
       toast.error(localizeError(error.message));
       return;
     }
-    toast.success(i18n.language === "ko" ? uiCopy("ux.copya19230634f") : "Check-in confirmed");
+    toast.success(uiCopy("ux.copya19230634f"));
     setPresent(true);
   };
 
@@ -76,17 +76,13 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
           <Sun className="h-8 w-8" />
         </div>
         <h2 className="text-center text-xl font-bold text-foreground">
-          {isKo ? uiCopy("ux.copy77c83d8823") : "Are you here today?"}
+          {uiCopy("ux.copy77c83d8823")}
         </h2>
         <p className="mt-2 text-center text-sm text-muted-foreground leading-relaxed">
-          {isKo
-            ? uiCopy("ux.copydccf36b376")
-            : "Click Check In to unlock the system. Today's SLA (daily call goal) applies from the moment you check in."}
+          {uiCopy("ux.copydccf36b376")}
         </p>
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          {isKo
-            ? uiCopy("ux.copyd2a99ada84")
-            : "Days without check-in count as absent and are exempt from SLA fines."}
+          {uiCopy("ux.copyd2a99ada84")}
         </p>
         <Button
           onClick={handleCheckIn}
@@ -95,12 +91,8 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
         >
           <CheckCircle2 className="mr-2 h-5 w-5" />
           {saving
-            ? isKo
-              ? uiCopy("ux.copye6e1a2914f")
-              : "Processing..."
-            : isKo
-              ? uiCopy("ux.copy950de9eee8")
-              : "Check In"}
+            ? uiCopy("ux.copye6e1a2914f")
+            : uiCopy("ux.copy950de9eee8")}
         </Button>
       </div>
     </div>

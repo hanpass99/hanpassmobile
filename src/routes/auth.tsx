@@ -205,7 +205,7 @@ function AuthPage() {
               title={t("common.language")}
             >
               <Languages className="h-4 w-4" />
-              {i18nInst.language === "ko" ? uiCopy("ux.copy6e081b5948") : "English"}
+              {i18nInst.language === "ko" ? uiCopy("ux.copy6e081b5948") : uiCopy("interfaceExtra.english")}
             </button>
           </div>
 

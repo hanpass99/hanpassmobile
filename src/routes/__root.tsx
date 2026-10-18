@@ -79,10 +79,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Hanpass Mobile OB Call CRM" },
+      { title: uiCopy("interfaceExtra.appTitle") },
       { name: "description", content: i18n.t("app.desc") },
-      { property: "og:title", content: "Hanpass Mobile OB Call CRM" },
-      { name: "twitter:title", content: "Hanpass Mobile OB Call CRM" },
+      { property: "og:title", content: uiCopy("interfaceExtra.appTitle") },
+      { name: "twitter:title", content: uiCopy("interfaceExtra.appTitle") },
       { property: "og:description", content: i18n.t("app.desc") },
       { name: "twitter:description", content: i18n.t("app.desc") },
       { name: "twitter:card", content: "summary_large_image" },

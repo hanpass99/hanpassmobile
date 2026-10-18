@@ -304,7 +304,7 @@ function SidebarPrefs() {
         title={uiCopy("ux.copy89b86ab0e6")}
       >
         <Languages className="h-4 w-4" />
-        {i18nInst.language === "ko" ? uiCopy("ux.copy6e081b5948") : "English"}
+        {i18nInst.language === "ko" ? uiCopy("ux.copy6e081b5948") : uiCopy("interfaceExtra.english")}
       </Button>
       <Button
         variant="ghost"
