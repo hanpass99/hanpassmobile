@@ -171,7 +171,7 @@ const Sidebar = React.forwardRef<
     },
     ref,
   ) => {
-useTranslation();
+    useTranslation();
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
     if (collapsible === "none") {
@@ -264,7 +264,7 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-useTranslation();
+  useTranslation();
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -289,7 +289,7 @@ SidebarTrigger.displayName = "SidebarTrigger";
 
 const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"button">>(
   ({ className, ...props }, ref) => {
-useTranslation();
+    useTranslation();
     const { toggleSidebar } = useSidebar();
 
     return (

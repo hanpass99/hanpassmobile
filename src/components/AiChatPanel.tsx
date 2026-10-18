@@ -12,7 +12,13 @@ type Msg = {
   text: string;
 };
 
-export function AiChatPanel({ className, style }: { className?: string; style?: React.CSSProperties }) {
+export function AiChatPanel({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   useTranslation();
   const { session } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -64,9 +70,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
       if (!res.ok || !res.body) {
         const err = await res.text().catch(() => "");
         setMessages((m) =>
-          m.map((x) =>
-            x.id === assistantId ? { ...x, text: `⚠️ ${err || res.statusText}` } : x,
-          ),
+          m.map((x) => (x.id === assistantId ? { ...x, text: `⚠️ ${err || res.statusText}` } : x)),
         );
         return;
       }
@@ -77,9 +81,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
         const { value, done } = await reader.read();
         if (done) break;
         acc += decoder.decode(value, { stream: true });
-        setMessages((m) =>
-          m.map((x) => (x.id === assistantId ? { ...x, text: acc } : x)),
-        );
+        setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, text: acc } : x)));
       }
     } catch (e) {
       setMessages((m) =>
@@ -96,11 +98,19 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
   };
 
   return (
-    <div style={style} className={cn("flex flex-col overflow-hidden rounded-xl border border-border bg-card", className)}>
+    <div
+      style={style}
+      className={cn(
+        "flex flex-col overflow-hidden rounded-xl border border-border bg-card",
+        className,
+      )}
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           <span className="text-sm font-semibold">{uiCopy("ux.copy6eb7d86174")}</span>
-          <span className="hidden truncate text-xs text-muted-foreground sm:inline">{uiCopy("ux.copy9615c5793f")}</span>
+          <span className="hidden truncate text-xs text-muted-foreground sm:inline">
+            {uiCopy("ux.copy9615c5793f")}
+          </span>
         </div>
         <Button
           variant="ghost"
@@ -124,7 +134,10 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
           </div>
         )}
         {messages.map((m) => (
-          <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+          <div
+            key={m.id}
+            className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
+          >
             <div
               className={cn(
                 "max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm",

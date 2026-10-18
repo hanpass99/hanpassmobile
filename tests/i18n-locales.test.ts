@@ -5,7 +5,12 @@ import en from "../src/i18n/locales/en";
 function leaves(value: unknown, prefix = ""): Record<string, string> {
   if (typeof value === "string") return { [prefix]: value };
   if (!value || typeof value !== "object") return {};
-  return Object.assign({}, ...Object.entries(value).map(([key, child]) => leaves(child, prefix ? `${prefix}.${key}` : key)));
+  return Object.assign(
+    {},
+    ...Object.entries(value).map(([key, child]) =>
+      leaves(child, prefix ? `${prefix}.${key}` : key),
+    ),
+  );
 }
 
 describe("Korean and English interface locales", () => {

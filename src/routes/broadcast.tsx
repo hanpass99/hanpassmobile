@@ -16,35 +16,70 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  createBroadcast, getBroadcastAudience, listBroadcasts, sendBroadcastBatch,
+  createBroadcast,
+  getBroadcastAudience,
+  listBroadcasts,
+  sendBroadcastBatch,
 } from "@/lib/broadcast.functions";
 
 export const Route = createFileRoute("/broadcast")({
-  head: () => ({ meta: [
-{ title: uiCopy("pages.broadcast.title") },
-{ name: "description", content: uiCopy("pages.broadcast.description") },
-{ property: "og:title", content: uiCopy("pages.broadcast.title") },
-{ property: "og:description", content: uiCopy("pages.broadcast.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.broadcast.title") },
+      { name: "description", content: uiCopy("pages.broadcast.description") },
+      { property: "og:title", content: uiCopy("pages.broadcast.title") },
+      { property: "og:description", content: uiCopy("pages.broadcast.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: BroadcastPage,
 });
 
 type LangFilter = "all" | "uz" | "ru";
-type MediaState = { storagePath: string; fileName: string; mime: string; kind: "photo" | "document" } | null;
+type MediaState = {
+  storagePath: string;
+  fileName: string;
+  mime: string;
+  kind: "photo" | "document";
+} | null;
 
 const LANG_LABEL: Record<LangFilter, string> = {
-  get all() { return uiCopy("ux.copy934dd25ec5"); },
-  get uz() { return uiCopy("ux.copy915cb7fbc7"); },
-  get ru() { return uiCopy("ux.copy368c007214"); },
+  get all() {
+    return uiCopy("ux.copy934dd25ec5");
+  },
+  get uz() {
+    return uiCopy("ux.copy915cb7fbc7");
+  },
+  get ru() {
+    return uiCopy("ux.copy368c007214");
+  },
 };
 
 function BroadcastPage() {
@@ -150,10 +185,7 @@ function BroadcastPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title={uiCopy("ux.copyc4da70b633")}
-        description={uiCopy("ux.copyab1bf4947f")}
-      />
+      <PageHeader title={uiCopy("ux.copyc4da70b633")} description={uiCopy("ux.copyab1bf4947f")} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card>
@@ -172,15 +204,15 @@ function BroadcastPage() {
                 maxLength={3500}
                 placeholder={uiCopy("ux.copy80f2eff975")}
               />
-              <p className="text-xs text-muted-foreground">
-                {uiCopy("ux.copy882a2fcef1")}
-              </p>
+              <p className="text-xs text-muted-foreground">{uiCopy("ux.copy882a2fcef1")}</p>
             </div>
 
             <div className="space-y-2">
               <Label>{uiCopy("ux.copya09e9a6dbb")}</Label>
               <Select value={langFilter} onValueChange={(v) => setLangFilter(v as LangFilter)}>
-                 <SelectTrigger className="w-full sm:w-56"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-56">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{uiCopy("ux.copy934dd25ec5")}</SelectItem>
                   <SelectItem value="uz">{uiCopy("ux.copy521fd56509")}</SelectItem>
@@ -195,7 +227,12 @@ function BroadcastPage() {
                 <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
                   <Paperclip className="h-4 w-4 text-muted-foreground" />
                   <span className="flex-1 truncate">{media.fileName}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setMedia(null)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setMedia(null)}
+                  >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -217,24 +254,30 @@ function BroadcastPage() {
               <div className="space-y-2">
                 <Progress value={progress.total ? (progress.done / progress.total) * 100 : 0} />
                 <p className="text-xs text-muted-foreground">
-                  {uiCopy("ux.copy8321f5ba42")} {progress.done}/{progress.total} {uiCopy("ux.copy70d898c46c")} {progress.ok} {uiCopy("ux.copyb2a76f8a46")} {progress.fail}
+                  {uiCopy("ux.copy8321f5ba42")} {progress.done}/{progress.total}{" "}
+                  {uiCopy("ux.copy70d898c46c")} {progress.ok} {uiCopy("ux.copyb2a76f8a46")}{" "}
+                  {progress.fail}
                 </p>
               </div>
             )}
 
             {result && (
               <div className="rounded-md border bg-muted/40 p-3 text-sm">
-                {uiCopy("ux.copy523c3ace86")} <strong>{result.ok}</strong>{uiCopy("ux.copyabdc9c407b")} <strong>{result.fail}</strong>{uiCopy("ux.copy5a62fd50d2")}
+                {uiCopy("ux.copy523c3ace86")} <strong>{result.ok}</strong>
+                {uiCopy("ux.copyabdc9c407b")} <strong>{result.fail}</strong>
+                {uiCopy("ux.copy5a62fd50d2")}
               </div>
             )}
 
-             <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button disabled={!canSend} onClick={() => setConfirmOpen(true)}>
                 <Send className="mr-2 h-4 w-4" />
                 {sending ? uiCopy("ux.copy8321f5ba42") : uiCopy("ux.copy6979bfc484")}
               </Button>
               <span className="text-sm text-muted-foreground">
-                {uiCopy("ux.copy78bac16426")} <strong>{audienceCount}</strong>{uiCopy("ux.copyfddd3e1176")}{LANG_LABEL[langFilter]})
+                {uiCopy("ux.copy78bac16426")} <strong>{audienceCount}</strong>
+                {uiCopy("ux.copyfddd3e1176")}
+                {LANG_LABEL[langFilter]})
               </span>
             </div>
           </CardContent>
@@ -257,7 +300,7 @@ function BroadcastPage() {
         <CardHeader>
           <CardTitle className="text-base">{uiCopy("ux.copyed11019be9")}</CardTitle>
         </CardHeader>
-         <CardContent className="overflow-x-auto">
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -279,13 +322,17 @@ function BroadcastPage() {
                   <TableCell className="max-w-[360px] truncate text-xs">
                     {b.message || (b.media_file_name ?? uiCopy("ux.copy3809a0592f"))}
                   </TableCell>
-                  <TableCell className="text-xs">{LANG_LABEL[(b.lang_filter as LangFilter) ?? "all"]}</TableCell>
+                  <TableCell className="text-xs">
+                    {LANG_LABEL[(b.lang_filter as LangFilter) ?? "all"]}
+                  </TableCell>
                   <TableCell className="text-right text-xs">{b.target_count}</TableCell>
                   <TableCell className="text-right text-xs">{b.success_count}</TableCell>
                   <TableCell className="text-right text-xs">{b.failed_count}</TableCell>
                   <TableCell>
                     <Badge variant={b.status === "completed" ? "secondary" : "outline"}>
-                      {b.status === "completed" ? uiCopy("ux.copy8d8680373c") : uiCopy("ux.copy0dae9079ff")}
+                      {b.status === "completed"
+                        ? uiCopy("ux.copy8d8680373c")
+                        : uiCopy("ux.copy0dae9079ff")}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -307,12 +354,15 @@ function BroadcastPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{uiCopy("ux.copy99441fe7d5")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {uiCopy("ux.copye800876038")} {audienceCount}{uiCopy("ux.copy5626f026c0")}
+              {uiCopy("ux.copye800876038")} {audienceCount}
+              {uiCopy("ux.copy5626f026c0")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{uiCopy("ux.copy19b2d19bc1")}</AlertDialogCancel>
-            <AlertDialogAction onClick={runBroadcast}>{uiCopy("ux.copy6979bfc484")}</AlertDialogAction>
+            <AlertDialogAction onClick={runBroadcast}>
+              {uiCopy("ux.copy6979bfc484")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

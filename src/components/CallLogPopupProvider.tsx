@@ -10,14 +10,21 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import {
-  CUSTOMER_STATUSES, STATUS_LABEL, type CustomerStatus,
-} from "@/lib/labels";
+import { CUSTOMER_STATUSES, STATUS_LABEL, type CustomerStatus } from "@/lib/labels";
 
 type Row = {
   id: string;
@@ -103,7 +110,7 @@ export function CallLogPopupDialog({
 
   const save = async () => {
     if (!status) {
-      toast.error(localizeError(t("callLogs.selectStatus", { })));
+      toast.error(localizeError(t("callLogs.selectStatus", {})));
       return;
     }
     setSaving(true);
@@ -124,7 +131,7 @@ export function CallLogPopupDialog({
         } as never);
         if (e2) throw e2;
       }
-      toast.success(t("common.saved", { }));
+      toast.success(t("common.saved", {}));
       onSaved?.();
       onClose();
     } catch (err: any) {
@@ -135,19 +142,22 @@ export function CallLogPopupDialog({
   };
 
   return (
-    <Dialog open={!!row} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={!!row}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("callLogs.newCall", { })}</DialogTitle>
-          <DialogDescription>
-            {t("callLogs.newCallDesc", { })}
-          </DialogDescription>
+          <DialogTitle>{t("callLogs.newCall", {})}</DialogTitle>
+          <DialogDescription>{t("callLogs.newCallDesc", {})}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 text-sm">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.customer", { })}</Label>
+              <Label className="text-xs text-muted-foreground">{t("callLogs.customer", {})}</Label>
               <Input
                 className="mt-1 h-8"
                 value={customerName}
@@ -157,57 +167,59 @@ export function CallLogPopupDialog({
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.customerPhone", { })}</Label>
+              <Label className="text-xs text-muted-foreground">
+                {t("callLogs.customerPhone", {})}
+              </Label>
               <div className="mt-1 font-mono text-xs">{row.customer_phone ?? "—"}</div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.startedAt", { })}</Label>
+              <Label className="text-xs text-muted-foreground">{t("callLogs.startedAt", {})}</Label>
               <div className="mt-1">{format(new Date(row.started_at), "yyyy-MM-dd HH:mm:ss")}</div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">{t("callLogs.duration", { })}</Label>
+              <Label className="text-xs text-muted-foreground">{t("callLogs.duration", {})}</Label>
               <div className="mt-1 font-mono">{formatDuration(row.duration_sec)}</div>
             </div>
           </div>
 
           <div>
-            <Label>{t("callLogs.callStatus", { })}</Label>
+            <Label>{t("callLogs.callStatus", {})}</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as CustomerStatus)}>
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder={t("callLogs.selectStatus", { })} />
+                <SelectValue placeholder={t("callLogs.selectStatus", {})} />
               </SelectTrigger>
               <SelectContent>
                 {CUSTOMER_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                  <SelectItem key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label>{t("callLogs.memo", { })}</Label>
+            <Label>{t("callLogs.memo", {})}</Label>
             <Textarea
               className="mt-1"
               rows={4}
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              placeholder={t("callLogs.memoPlaceholder", { })}
+              placeholder={t("callLogs.memoPlaceholder", {})}
             />
           </div>
 
           {!row.customer_id && (
-            <p className="text-xs text-muted-foreground">
-              {t("callLogs.noCustomerLink", { })}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("callLogs.noCustomerLink", {})}</p>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>
-            {t("common.cancel", { })}
+            {t("common.cancel", {})}
           </Button>
           <Button onClick={save} disabled={saving}>
-            {saving ? t("common.saving", { }) : t("common.save", { })}
+            {saving ? t("common.saving", {}) : t("common.save", {})}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -4,10 +4,24 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import {
-  ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
 } from "recharts";
 import {
-  CalendarIcon, Users2, PhoneCall, Award, TrendingUp, ChevronDown, ChevronRight, Search,
+  CalendarIcon,
+  Users2,
+  PhoneCall,
+  Award,
+  TrendingUp,
+  ChevronDown,
+  ChevronRight,
+  Search,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { PageHeader } from "@/components/PageHeader";
@@ -19,13 +33,22 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { dateKey } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  HANPASS_POOLS, useHanpassCountries, useHanpassDashboard, useHanpassStaff,
+  HANPASS_POOLS,
+  useHanpassCountries,
+  useHanpassDashboard,
+  useHanpassStaff,
 } from "@/hooks/use-hanpass-dashboard";
 import type { HanpassStaffRow, HanpassTeamRow } from "@/types/rpc";
 
@@ -53,17 +76,23 @@ export const Route = createFileRoute("/hanpass-dashboard")({
     pool: typeof search["pool"] === "string" ? search["pool"] : "all",
     status: typeof search["status"] === "string" ? search["status"] : "all",
   }),
-  head: () => ({ meta: [
-{ title: uiCopy("pages.hanpass-dashboard.title") },
-{ name: "description", content: uiCopy("pages.hanpass-dashboard.description") },
-{ property: "og:title", content: uiCopy("pages.hanpass-dashboard.title") },
-{ property: "og:description", content: uiCopy("pages.hanpass-dashboard.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.hanpass-dashboard.title") },
+      { name: "description", content: uiCopy("pages.hanpass-dashboard.description") },
+      { property: "og:title", content: uiCopy("pages.hanpass-dashboard.title") },
+      { property: "og:description", content: uiCopy("pages.hanpass-dashboard.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: HanpassDashboardPage,
   errorComponent: ({ error }: ErrorComponentProps) => (
-    <Card role="alert"><CardContent className="p-6 text-center text-sm">{error instanceof Error ? error.message : String(error)}</CardContent></Card>
+    <Card role="alert">
+      <CardContent className="p-6 text-center text-sm">
+        {error instanceof Error ? error.message : String(error)}
+      </CardContent>
+    </Card>
   ),
   notFoundComponent: () => <div className="p-6 text-sm text-muted-foreground">—</div>,
 });
@@ -172,9 +201,11 @@ function HanpassDashboardPage() {
 
   if (!allowed) {
     return (
-      <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-        {t("hanpassDash.noAccess")}
-      </CardContent></Card>
+      <Card>
+        <CardContent className="p-8 text-center text-sm text-muted-foreground">
+          {t("hanpassDash.noAccess")}
+        </CardContent>
+      </Card>
     );
   }
 
@@ -202,21 +233,33 @@ function HanpassDashboardPage() {
           <div className="space-y-1.5">
             <div className="text-xs font-medium text-muted-foreground">{t("hanpassDash.team")}</div>
             <Select value={sp.country} onValueChange={(v) => setSearch({ country: v })}>
-              <SelectTrigger className="w-full lg:w-[150px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full lg:w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("hanpassDash.allTeams")}</SelectItem>
-                {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code}</SelectItem>)}
+                {countries.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.code}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">{t("hanpassDash.staff")}</div>
+            <div className="text-xs font-medium text-muted-foreground">
+              {t("hanpassDash.staff")}
+            </div>
             <Select value={sp.staff} onValueChange={(v) => setSearch({ staff: v })}>
-              <SelectTrigger className="w-full lg:w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full lg:w-[190px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("hanpassDash.allStaff")}</SelectItem>
                 {staffList.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.display_name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -224,26 +267,47 @@ function HanpassDashboardPage() {
           <div className="space-y-1.5">
             <div className="text-xs font-medium text-muted-foreground">{t("hanpassDash.pool")}</div>
             <Select value={sp.pool} onValueChange={(v) => setSearch({ pool: v })}>
-              <SelectTrigger className="w-full lg:w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full lg:w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("hanpassDash.allPools")}</SelectItem>
                 {HANPASS_POOLS.map((p) => (
-                  <SelectItem key={p} value={p}>{t(`pool.${p}`)}</SelectItem>
+                  <SelectItem key={p} value={p}>
+                    {t(`pool.${p}`)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="col-span-2 flex flex-wrap gap-2 lg:ml-auto">
-            <Button variant="outline" size="sm" onClick={() => setSearch({ from: todayKey(), to: todayKey() })}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSearch({ from: todayKey(), to: todayKey() })}
+            >
               {t("hanpassDash.today")}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setSearch({ from: monthStartKey(), to: todayKey() })}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSearch({ from: monthStartKey(), to: todayKey() })}
+            >
               {t("hanpassDash.thisMonth")}
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSearch({ from: monthStartKey(), to: todayKey(), country: "all", staff: "all", pool: "all", status: "all" })}
+              onClick={() =>
+                setSearch({
+                  from: monthStartKey(),
+                  to: todayKey(),
+                  country: "all",
+                  staff: "all",
+                  pool: "all",
+                  status: "all",
+                })
+              }
             >
               {t("common.reset")}
             </Button>
@@ -254,7 +318,9 @@ function HanpassDashboardPage() {
       {/* 핵심 지표 */}
       {loading ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[104px] w-full" />)}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[104px] w-full" />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -295,7 +361,9 @@ function HanpassDashboardPage() {
           <CardContent className="space-y-3 p-6 text-center">
             <div className="text-sm font-semibold">{t("dashboard.loadError")}</div>
             <div className="text-xs text-muted-foreground">{(q.error as Error)?.message}</div>
-            <Button size="sm" onClick={() => void q.refetch()}>{t("dashboard.retry")}</Button>
+            <Button size="sm" onClick={() => void q.refetch()}>
+              {t("dashboard.retry")}
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -307,13 +375,28 @@ function HanpassDashboardPage() {
           <CardDescription>{t("hanpassDash.trendDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="h-[260px] px-1 sm:px-5">
-          {loading ? <Skeleton className="h-full w-full" /> : (
+          {loading ? (
+            <Skeleton className="h-full w-full" />
+          ) : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="date" fontSize={11} /><YAxis fontSize={11} /><Tooltip /><Legend />
-                <Line type="monotone" dataKey={t("hanpassDash.handled")} stroke="var(--chart-1)" strokeWidth={2} />
-                <Line type="monotone" dataKey={t("hanpassDash.activated")} stroke="var(--success)" strokeWidth={2} />
+                <XAxis dataKey="date" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey={t("hanpassDash.handled")}
+                  stroke="var(--chart-1)"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey={t("hanpassDash.activated")}
+                  stroke="var(--success)"
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -360,7 +443,9 @@ function HanpassDashboardPage() {
         <CardContent className="space-y-2">
           {loading && <Skeleton className="h-24 w-full" />}
           {!loading && !byTeam.length && (
-            <div className="py-6 text-center text-sm text-muted-foreground">{t("common.empty")}</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              {t("common.empty")}
+            </div>
           )}
           {byTeam.map((teamRow: HanpassTeamRow) => {
             const key = teamRow.country_id ?? "none";
@@ -373,10 +458,17 @@ function HanpassDashboardPage() {
                   onClick={() => setOpenTeam(open ? null : key)}
                   className="flex w-full items-center gap-3 p-3 text-left"
                 >
-                  {open ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
-                  <span className="w-12 shrink-0 font-display text-sm font-bold">{teamRow.code}</span>
+                  {open ? (
+                    <ChevronDown className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 shrink-0" />
+                  )}
+                  <span className="w-12 shrink-0 font-display text-sm font-bold">
+                    {teamRow.code}
+                  </span>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {teamRow.staff}{t("hanpassDash.personUnit")}
+                    {teamRow.staff}
+                    {t("hanpassDash.personUnit")}
                   </span>
                   <div className="ml-auto flex shrink-0 items-center gap-3 text-xs sm:gap-5">
                     <Metric label={t("hanpassDash.handled")} value={teamRow.handled} />
@@ -391,7 +483,11 @@ function HanpassDashboardPage() {
                   <div className="space-y-2 border-t border-border/60 p-3">
                     <div className="flex flex-wrap gap-1.5">
                       {Object.entries(teamRow.status_counts ?? {}).map(([s, n]) => (
-                        <Badge key={s} variant="outline" className={cn("text-xs", STATUS_CLASS[s as CustomerStatus])}>
+                        <Badge
+                          key={s}
+                          variant="outline"
+                          className={cn("text-xs", STATUS_CLASS[s as CustomerStatus])}
+                        >
                           {t(`status.${s}`)} {n}
                         </Badge>
                       ))}
@@ -428,7 +524,9 @@ function HanpassDashboardPage() {
               />
             </div>
             <Select value={sortKey} onValueChange={(v) => setSortKey(v as typeof sortKey)}>
-              <SelectTrigger className="h-9 w-[130px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 w-[130px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="handled">{t("hanpassDash.handled")}</SelectItem>
                 <SelectItem value="activated">{t("hanpassDash.activated")}</SelectItem>
@@ -441,9 +539,13 @@ function HanpassDashboardPage() {
         <CardContent className="space-y-2">
           {loading && <Skeleton className="h-40 w-full" />}
           {!loading && !staffRows.length && (
-            <div className="py-6 text-center text-sm text-muted-foreground">{t("common.empty")}</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              {t("common.empty")}
+            </div>
           )}
-          {staffRows.map((r) => <StaffLine key={r.staff_id} row={r} statusSel={statusSel} detailed />)}
+          {staffRows.map((r) => (
+            <StaffLine key={r.staff_id} row={r} statusSel={statusSel} detailed />
+          ))}
         </CardContent>
       </Card>
 
@@ -454,7 +556,9 @@ function HanpassDashboardPage() {
           <CardDescription>{t("hanpassDash.heatmapDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          {loading ? <Skeleton className="h-40 w-full" /> : (
+          {loading ? (
+            <Skeleton className="h-40 w-full" />
+          ) : (
             <table className="w-full min-w-[640px] border-separate border-spacing-0.5 text-xs">
               <thead>
                 <tr>
@@ -462,14 +566,18 @@ function HanpassDashboardPage() {
                     {t("hanpassDash.name")}
                   </th>
                   {days.map((day) => (
-                    <th key={day} className="p-1 font-normal text-muted-foreground">{day.slice(8)}</th>
+                    <th key={day} className="p-1 font-normal text-muted-foreground">
+                      {day.slice(8)}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {staffRows.map((r) => (
                   <tr key={r.staff_id}>
-                    <td className="sticky left-0 z-10 max-w-[140px] truncate bg-card p-1 font-medium">{r.name}</td>
+                    <td className="sticky left-0 z-10 max-w-[140px] truncate bg-card p-1 font-medium">
+                      {r.name}
+                    </td>
                     {days.map((day) => {
                       const n = heat.get(`${r.staff_id}|${day}`) ?? 0;
                       const alpha = n ? 0.15 + 0.75 * (n / heatMax) : 0;
@@ -479,7 +587,9 @@ function HanpassDashboardPage() {
                           title={`${r.name} · ${day} · ${n}`}
                           className="h-7 w-7 rounded text-center"
                           style={{
-                            backgroundColor: n ? `color-mix(in srgb, var(--chart-1) ${alpha * 100}%, var(--card))` : "var(--muted)",
+                            backgroundColor: n
+                              ? `color-mix(in srgb, var(--chart-1) ${alpha * 100}%, var(--card))`
+                              : "var(--muted)",
                             color: alpha > 0.6 ? "var(--primary-foreground)" : undefined,
                           }}
                         >
@@ -493,7 +603,9 @@ function HanpassDashboardPage() {
             </table>
           )}
           {!loading && !staffRows.length && (
-            <div className="py-6 text-center text-sm text-muted-foreground">{t("common.empty")}</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              {t("common.empty")}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -521,13 +633,18 @@ function HanpassDashboardPage() {
                   <span>{r.customer}</span>
                   {r.code && <span className="ml-1 text-muted-foreground">({r.code})</span>}
                 </span>
-                <Badge variant="outline" className={cn("text-xs", STATUS_CLASS[r.status as CustomerStatus])}>
+                <Badge
+                  variant="outline"
+                  className={cn("text-xs", STATUS_CLASS[r.status as CustomerStatus])}
+                >
                   {t(`status.${r.status}`)}
                 </Badge>
               </div>
             ))}
           {!loading && !(d.recent ?? []).length && (
-            <div className="py-6 text-center text-sm text-muted-foreground">{t("common.empty")}</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              {t("common.empty")}
+            </div>
           )}
           <div className="pt-2 text-center">
             <Link
@@ -553,14 +670,22 @@ function Metric({ label, value }: { label: string; value: number | string }) {
   return (
     <span className="flex flex-col items-end leading-tight">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="font-semibold">{typeof value === "number" ? value.toLocaleString() : value}</span>
+      <span className="font-semibold">
+        {typeof value === "number" ? value.toLocaleString() : value}
+      </span>
     </span>
   );
 }
 
 function StaffLine({
-  row, statusSel, detailed,
-}: { row: HanpassStaffRow; statusSel: string | null; detailed?: boolean }) {
+  row,
+  statusSel,
+  detailed,
+}: {
+  row: HanpassStaffRow;
+  statusSel: string | null;
+  detailed?: boolean;
+}) {
   const { t } = useTranslation();
   const rate = pct(row.activated, row.handled);
   const selCount = statusSel ? Number(row.status_counts?.[statusSel] ?? 0) : null;
@@ -569,7 +694,9 @@ function StaffLine({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{row.name}</span>
         {(row.teams ?? []).map((c) => (
-          <Badge key={c} variant="secondary" className="text-xs">{c}</Badge>
+          <Badge key={c} variant="secondary" className="text-xs">
+            {c}
+          </Badge>
         ))}
         {selCount !== null && (
           <Badge variant="outline" className="text-xs">
@@ -589,7 +716,11 @@ function StaffLine({
             {row.last_at ? format(new Date(row.last_at), "MM.dd HH:mm") : "—"}
           </span>
           {Object.entries(row.status_counts ?? {}).map(([s, n]) => (
-            <Badge key={s} variant="outline" className={cn("text-xs", STATUS_CLASS[s as CustomerStatus])}>
+            <Badge
+              key={s}
+              variant="outline"
+              className={cn("text-xs", STATUS_CLASS[s as CustomerStatus])}
+            >
               {t(`status.${s}`)} {n}
             </Badge>
           ))}
@@ -603,7 +734,10 @@ function DatePick({ value, onChange }: { value: Date; onChange: (d: Date) => voi
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className={cn("w-full justify-start text-left font-normal lg:w-[150px]")}>
+        <Button
+          variant="outline"
+          className={cn("w-full justify-start text-left font-normal lg:w-[150px]")}
+        >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {format(value, "yyyy.MM.dd")}
         </Button>

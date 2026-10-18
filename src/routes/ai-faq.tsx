@@ -35,17 +35,18 @@ import {
   rejectAiFaqCandidate,
 } from "@/lib/ai-faq.functions";
 
-
 export const Route = createFileRoute("/ai-faq")({
   component: AiFaqPage,
-  head: () => ({ meta: [
-{ title: uiCopy("pages.ai-faq.title") },
-{ name: "description", content: uiCopy("pages.ai-faq.description") },
-{ property: "og:title", content: uiCopy("pages.ai-faq.title") },
-{ property: "og:description", content: uiCopy("pages.ai-faq.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.ai-faq.title") },
+      { name: "description", content: uiCopy("pages.ai-faq.description") },
+      { property: "og:title", content: uiCopy("pages.ai-faq.title") },
+      { property: "og:description", content: uiCopy("pages.ai-faq.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 type Faq = {
@@ -83,7 +84,13 @@ function AiFaqPage() {
   const autoApprove = useMutation({
     mutationFn: () => autoApproveFn(),
     onSuccess: (r) => {
-      toast.success(uiCopy("ux.copye75bacf87c", { value0: r.scanned, value1: r.approved, value2: r.duplicates }));
+      toast.success(
+        uiCopy("ux.copye75bacf87c", {
+          value0: r.scanned,
+          value1: r.approved,
+          value2: r.duplicates,
+        }),
+      );
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
       qc.invalidateQueries({ queryKey: ["ai-faq-candidates"] });
     },
@@ -129,9 +136,7 @@ function AiFaqPage() {
   });
 
   if (!isAdmin) {
-    return (
-      <div className="p-6 text-sm text-muted-foreground">{uiCopy("ux.copy5a5a3d6567")}</div>
-    );
+    return <div className="p-6 text-sm text-muted-foreground">{uiCopy("ux.copy5a5a3d6567")}</div>;
   }
 
   const faqs = (listData?.faqs ?? []) as Faq[];
@@ -139,71 +144,63 @@ function AiFaqPage() {
 
   return (
     <div className="space-y-5 p-0 md:p-2">
-      <PageHeader
-        title={uiCopy("ux.copyc68ac7e1fd")}
-        description={uiCopy("ux.copya7ccc6ac52")}
-      />
+      <PageHeader title={uiCopy("ux.copyc68ac7e1fd")} description={uiCopy("ux.copya7ccc6ac52")} />
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border bg-card p-4">
         <div className="min-w-0">
           <div className="text-sm font-medium">{uiCopy("ux.copy20f53c3789")}</div>
-          <div className="text-xs text-muted-foreground">
-            {uiCopy("ux.copy8c97ffcf3a")}
-          </div>
+          <div className="text-xs text-muted-foreground">{uiCopy("ux.copy8c97ffcf3a")}</div>
         </div>
         <div className="flex items-center gap-3">
           <Label className="text-xs">{globalEnabled ? "ON" : "OFF"}</Label>
-          <Switch
-            checked={globalEnabled}
-            onCheckedChange={(v) => toggleGlobal.mutate(v)}
-          />
+          <Switch checked={globalEnabled} onCheckedChange={(v) => toggleGlobal.mutate(v)} />
         </div>
       </div>
 
       <CandidatesSection />
 
-
-
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm text-muted-foreground">{uiCopy("ux.copy10d96eb939")} {faqs.length}{uiCopy("ux.copy11600c9ada")}</div>
+        <div className="text-sm text-muted-foreground">
+          {uiCopy("ux.copy10d96eb939")} {faqs.length}
+          {uiCopy("ux.copy11600c9ada")}
+        </div>
         <div className="flex flex-wrap items-center gap-2">
-        {isAdmin && (
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={dedupe.isPending}
-              onClick={() => dedupe.mutate()}
-            >
-              {uiCopy("ux.copyf58cc5e289")}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={autoApprove.isPending}
-              onClick={() => autoApprove.mutate()}
-            >
-              {uiCopy("ux.copy437bf161a0")}
-            </Button>
-          </>
-        )}
-        <Button
-          size="sm"
-          onClick={() =>
-            setEditing({
-              question_examples: [""],
-              answer_uz: "",
-              answer_ru: "",
-              is_active: true,
-              category: "",
-            })
-          }
-        >
-          <Plus className="mr-1 h-4 w-4" /> {uiCopy("ux.copy2b625e9172")}
-        </Button>
+          {isAdmin && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={dedupe.isPending}
+                onClick={() => dedupe.mutate()}
+              >
+                {uiCopy("ux.copyf58cc5e289")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={autoApprove.isPending}
+                onClick={() => autoApprove.mutate()}
+              >
+                {uiCopy("ux.copy437bf161a0")}
+              </Button>
+            </>
+          )}
+          <Button
+            size="sm"
+            onClick={() =>
+              setEditing({
+                question_examples: [""],
+                answer_uz: "",
+                answer_ru: "",
+                is_active: true,
+                category: "",
+              })
+            }
+          >
+            <Plus className="mr-1 h-4 w-4" /> {uiCopy("ux.copy2b625e9172")}
+          </Button>
         </div>
       </div>
-
 
       <div className="space-y-3">
         {faqs.map((f) => (
@@ -229,7 +226,9 @@ function AiFaqPage() {
               </div>
             </div>
             <div className="mb-2 space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copyf2c154a161")}</div>
+              <div className="text-xs font-medium text-muted-foreground">
+                {uiCopy("ux.copyf2c154a161")}
+              </div>
               <div className="flex flex-wrap gap-1">
                 {f.question_examples.map((q, i) => (
                   <Badge key={i} variant="outline" className="whitespace-normal">
@@ -240,11 +239,15 @@ function AiFaqPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <div className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copy43872d3c38")}</div>
+                <div className="text-xs font-medium text-muted-foreground">
+                  {uiCopy("ux.copy43872d3c38")}
+                </div>
                 <div className="whitespace-pre-wrap text-sm">{f.answer_uz}</div>
               </div>
               <div>
-                <div className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copy65f6cc9300")}</div>
+                <div className="text-xs font-medium text-muted-foreground">
+                  {uiCopy("ux.copy65f6cc9300")}
+                </div>
                 <div className="whitespace-pre-wrap text-sm">{f.answer_ru}</div>
               </div>
             </div>
@@ -300,7 +303,9 @@ function FaqEditor({
     <Dialog open onOpenChange={(o) => !o && onCancel()}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initial.id ? uiCopy("ux.copy031319a2ee") : uiCopy("ux.copy2b625e9172")}</DialogTitle>
+          <DialogTitle>
+            {initial.id ? uiCopy("ux.copy031319a2ee") : uiCopy("ux.copy2b625e9172")}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
@@ -335,11 +340,7 @@ function FaqEditor({
                   </Button>
                 </div>
               ))}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setExamples([...examples, ""])}
-              >
+              <Button size="sm" variant="outline" onClick={() => setExamples([...examples, ""])}>
                 <Plus className="mr-1 h-4 w-4" /> {uiCopy("ux.copy9b4b700ffa")}
               </Button>
             </div>
@@ -364,8 +365,10 @@ function FaqEditor({
           <Button
             onClick={() => {
               const cleaned = examples.map((s) => s.trim()).filter(Boolean);
-              if (cleaned.length === 0) return toast.error(localizeError(uiCopy("ux.copybf93e916b1")));
-              if (!uz.trim() || !ru.trim()) return toast.error(localizeError(uiCopy("ux.copy3cde346460")));
+              if (cleaned.length === 0)
+                return toast.error(localizeError(uiCopy("ux.copybf93e916b1")));
+              if (!uz.trim() || !ru.trim())
+                return toast.error(localizeError(uiCopy("ux.copy3cde346460")));
               onSave({
                 id: initial.id ?? null,
                 category: category.trim() || null,
@@ -415,16 +418,18 @@ function CandidatesSection() {
   return (
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
       <div className="text-sm font-semibold">
-        {uiCopy("ux.copy04655172b4")} <span className="text-muted-foreground">({candidates.length})</span>
+        {uiCopy("ux.copy04655172b4")}{" "}
+        <span className="text-muted-foreground">({candidates.length})</span>
       </div>
-      <p className="text-xs text-muted-foreground">
-        {uiCopy("ux.copyd1f28b0825")}
-      </p>
+      <p className="text-xs text-muted-foreground">{uiCopy("ux.copyd1f28b0825")}</p>
       {candidates.map((c) => (
         <div key={c.id} className="rounded-md border bg-card p-3">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <Badge variant="outline">{c.category ?? uiCopy("ux.copy3c1db0337a")}</Badge>
-            <span className="text-xs text-muted-foreground">{c.occurrences}{uiCopy("ux.copycb41b51aeb")}</span>
+            <span className="text-xs text-muted-foreground">
+              {c.occurrences}
+              {uiCopy("ux.copycb41b51aeb")}
+            </span>
           </div>
           <div className="mb-2 flex flex-wrap gap-1">
             {(c.question_examples ?? []).map((qe: string, i: number) => (
@@ -438,7 +443,11 @@ function CandidatesSection() {
             <div className="whitespace-pre-wrap rounded bg-muted/50 p-2">🇷🇺 {c.answer_ru}</div>
           </div>
           <div className="mt-2 flex gap-2">
-            <Button size="sm" disabled={act.isPending} onClick={() => act.mutate({ id: c.id, approve: true })}>
+            <Button
+              size="sm"
+              disabled={act.isPending}
+              onClick={() => act.mutate({ id: c.id, approve: true })}
+            >
               {uiCopy("ux.copy0d1cd67197")}
             </Button>
             <Button

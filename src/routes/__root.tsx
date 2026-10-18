@@ -57,7 +57,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold">{t("errors.errorTitle")}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : String(error)}
+        </p>
         <button
           onClick={() => {
             router.invalidate();
@@ -89,7 +91,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "stylesheet", href: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" },
+      {
+        rel: "stylesheet",
+        href: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css",
+      },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
@@ -130,7 +135,8 @@ function AuthGate() {
     );
   }
 
-  if (session && mustChangePassword && pathname !== "/reset-password") return <Navigate to="/reset-password" />;
+  if (session && mustChangePassword && pathname !== "/reset-password")
+    return <Navigate to="/reset-password" />;
   if (isPublicRoute) return <Outlet />;
   if (!session) return <Navigate to="/auth" search={{ next: pathname === "/" ? "" : pathname }} />;
 
@@ -146,7 +152,9 @@ function AuthedShell() {
   if (isActive === false) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
-        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">{uiCopy("ux.copy7cf184f4c6")}</span>
+        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">
+          {uiCopy("ux.copy7cf184f4c6")}
+        </span>
         <h1 className="text-xl font-bold text-foreground">{t("auth.pendingTitle")}</h1>
         <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t("auth.pendingSub")}</p>
         {displayName && <p className="mt-1 text-xs text-muted-foreground/70">{displayName}</p>}
@@ -159,7 +167,11 @@ function AuthedShell() {
   if (needsCountry) {
     return <CountrySetupGate />;
   }
-  if (isHanpass && !pathname.startsWith("/customers") && !pathname.startsWith("/hanpass-dashboard")) {
+  if (
+    isHanpass &&
+    !pathname.startsWith("/customers") &&
+    !pathname.startsWith("/hanpass-dashboard")
+  ) {
     return <Navigate to="/customers" search={{ pool: "activation_request" }} />;
   }
 
@@ -171,9 +183,17 @@ function AuthedShell() {
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="sticky top-0 z-30 grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 bg-header px-3 text-header-foreground shadow-sm md:flex md:gap-3 md:px-6">
               <SidebarTrigger className="text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground" />
-              <nav aria-label={uiCopy("ux.copy6e5ce570b4")} className="flex min-w-0 items-center gap-1.5 text-[13px]">
-                <Link to="/" className="inline-flex shrink-0 items-center gap-2 font-medium text-header-foreground/70 hover:text-header-foreground">
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-xs font-black text-brand-foreground">{uiCopy("ux.copy7cf184f4c6")}</span>
+              <nav
+                aria-label={uiCopy("ux.copy6e5ce570b4")}
+                className="flex min-w-0 items-center gap-1.5 text-[13px]"
+              >
+                <Link
+                  to="/"
+                  className="inline-flex shrink-0 items-center gap-2 font-medium text-header-foreground/70 hover:text-header-foreground"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-xs font-black text-brand-foreground">
+                    {uiCopy("ux.copy7cf184f4c6")}
+                  </span>
                   <span className="hidden sm:inline">{uiCopy("ux.copyca8c605ac7")}</span>
                 </Link>
                 <span className="hidden text-header-foreground/30 sm:inline">/</span>

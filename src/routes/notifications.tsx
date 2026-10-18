@@ -15,21 +15,36 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Bell, Send, Users, Eye } from "lucide-react";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/notifications")({
-  head: () => ({ meta: [
-{ title: uiCopy("pages.notifications.title") },
-{ name: "description", content: uiCopy("pages.notifications.description") },
-{ property: "og:title", content: uiCopy("pages.notifications.title") },
-{ property: "og:description", content: uiCopy("pages.notifications.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.notifications.title") },
+      { name: "description", content: uiCopy("pages.notifications.description") },
+      { property: "og:title", content: uiCopy("pages.notifications.title") },
+      { property: "og:description", content: uiCopy("pages.notifications.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: NotificationsPage,
 });
 
@@ -119,7 +134,6 @@ function NotificationsPage() {
           recipients,
         };
       });
-
     },
   });
 
@@ -158,7 +172,10 @@ function NotificationsPage() {
       let smsInfo = "";
       if (sendSms && withPhone.length) {
         const smsText = (title.trim() ? `[${title.trim()}] ` : "[공지] ") + message.trim();
-        const receivers = withPhone.map((s) => ({ name: s.display_name, phone: s.phone!.replace(/[^0-9]/g, "") }));
+        const receivers = withPhone.map((s) => ({
+          name: s.display_name,
+          phone: s.phone!.replace(/[^0-9]/g, ""),
+        }));
         const { data: smsRes, error: sErr } = await supabase.functions.invoke("send-sms", {
           body: { receivers, message: smsText, title: title.trim() || "공지" },
         });
@@ -175,7 +192,9 @@ function NotificationsPage() {
               "user_id",
               withPhone.map((s) => s.id),
             );
-          smsInfo = ok ? uiCopy("ux.copyfe5acbf748", { value0: withPhone.length }) : uiCopy("ux.copy3484da77e2");
+          smsInfo = ok
+            ? uiCopy("ux.copyfe5acbf748", { value0: withPhone.length })
+            : uiCopy("ux.copy3484da77e2");
         }
         const skipped = selectedStaff.length - withPhone.length;
         if (skipped > 0) smsInfo += uiCopy("ux.copyb2c7761573", { value0: skipped });
@@ -215,7 +234,12 @@ function NotificationsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>{uiCopy("ux.copy7cbc093002")}</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={uiCopy("ux.copy47ab900319")} maxLength={44} />
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={uiCopy("ux.copy47ab900319")}
+                maxLength={44}
+              />
             </div>
             <div className="space-y-2">
               <Label>{uiCopy("ux.copycd2f267c0d")}</Label>
@@ -225,9 +249,7 @@ function NotificationsPage() {
                 placeholder={uiCopy("ux.copy29d8a0aedf")}
                 rows={6}
               />
-              <p className="text-xs text-muted-foreground">
-                {uiCopy("ux.copyc6f35041b3")}
-              </p>
+              <p className="text-xs text-muted-foreground">{uiCopy("ux.copyc6f35041b3")}</p>
             </div>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border p-3">
               <div className="min-w-0">
@@ -238,10 +260,15 @@ function NotificationsPage() {
             </div>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t pt-3">
               <div className="text-sm text-muted-foreground">
-                {uiCopy("ux.copy8b497e8a54")} <b className="text-foreground">{selectedStaff.length}</b>{uiCopy("ux.copy5a62fd50d2")}
+                {uiCopy("ux.copy8b497e8a54")}{" "}
+                <b className="text-foreground">{selectedStaff.length}</b>
+                {uiCopy("ux.copy5a62fd50d2")}
                 {sendSms ? uiCopy("ux.copyaecf3e3a33", { value0: withPhone.length }) : ""}
               </div>
-              <Button onClick={send} disabled={sending || !message.trim() || selectedStaff.length === 0}>
+              <Button
+                onClick={send}
+                disabled={sending || !message.trim() || selectedStaff.length === 0}
+              >
                 <Send className="mr-2 h-4 w-4" />
                 {sending ? uiCopy("ux.copya1cdc12999") : uiCopy("ux.copy6979bfc484")}
               </Button>
@@ -256,7 +283,9 @@ function NotificationsPage() {
             </CardTitle>
             <div className="flex items-center gap-2 text-xs">
               <Checkbox checked={allSelected} onCheckedChange={(v) => toggleAll(!!v)} id="all" />
-              <label htmlFor="all" className="cursor-pointer">{uiCopy("ux.copy426ad8878a")}</label>
+              <label htmlFor="all" className="cursor-pointer">
+                {uiCopy("ux.copy426ad8878a")}
+              </label>
             </div>
           </CardHeader>
           <CardContent className="max-h-[420px] overflow-y-auto space-y-1">
@@ -267,18 +296,25 @@ function NotificationsPage() {
                   key={s.id}
                   className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-2 py-2 hover:bg-muted/50"
                 >
-                  <Checkbox checked={selected.has(s.id)} onCheckedChange={(v) => toggleOne(s.id, !!v)} />
-                   <span className="min-w-0 truncate text-sm">{s.display_name}</span>
+                  <Checkbox
+                    checked={selected.has(s.id)}
+                    onCheckedChange={(v) => toggleOne(s.id, !!v)}
+                  />
+                  <span className="min-w-0 truncate text-sm">{s.display_name}</span>
                   {hasPhone ? (
                     <span className="text-xs text-muted-foreground">{s.phone}</span>
                   ) : (
-                    <Badge variant="outline" className="text-xs">{uiCopy("ux.copy56005390d1")}</Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {uiCopy("ux.copy56005390d1")}
+                    </Badge>
                   )}
                 </label>
               );
             })}
             {staff.length === 0 ? (
-              <p className="p-3 text-center text-sm text-muted-foreground">{uiCopy("ux.copy9cc3d9dd53")}</p>
+              <p className="p-3 text-center text-sm text-muted-foreground">
+                {uiCopy("ux.copy9cc3d9dd53")}
+              </p>
             ) : null}
           </CardContent>
         </Card>
@@ -306,7 +342,9 @@ function NotificationsPage() {
                     {new Date(h.created_at).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-sm">{h.title ?? "-"}</TableCell>
-                  <TableCell className="max-w-md truncate text-sm text-muted-foreground">{h.message}</TableCell>
+                  <TableCell className="max-w-md truncate text-sm text-muted-foreground">
+                    {h.message}
+                  </TableCell>
                   <TableCell className="text-right text-sm">
                     <Button
                       variant="outline"
@@ -319,9 +357,19 @@ function NotificationsPage() {
                     </Button>
                   </TableCell>
                   <TableCell className="text-right text-xs">
-                    {h.sms_ok > 0 ? <span className="text-emerald-600">{uiCopy("ux.copy23b6441130")} {h.sms_ok}</span> : null}
-                    {h.sms_fail > 0 ? <span className="ml-2 text-red-600">{uiCopy("ux.copy732fe33ab1")} {h.sms_fail}</span> : null}
-                    {h.sms_ok === 0 && h.sms_fail === 0 ? <span className="text-muted-foreground">-</span> : null}
+                    {h.sms_ok > 0 ? (
+                      <span className="text-emerald-600">
+                        {uiCopy("ux.copy23b6441130")} {h.sms_ok}
+                      </span>
+                    ) : null}
+                    {h.sms_fail > 0 ? (
+                      <span className="ml-2 text-red-600">
+                        {uiCopy("ux.copy732fe33ab1")} {h.sms_fail}
+                      </span>
+                    ) : null}
+                    {h.sms_ok === 0 && h.sms_fail === 0 ? (
+                      <span className="text-muted-foreground">-</span>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}
@@ -344,19 +392,22 @@ function NotificationsPage() {
             <DialogDescription>
               {detailNoti ? (
                 <>
-                  {new Date(detailNoti.created_at).toLocaleString()} · {detailNoti.title ?? uiCopy("ux.copy79500c9b6b")}
+                  {new Date(detailNoti.created_at).toLocaleString()} ·{" "}
+                  {detailNoti.title ?? uiCopy("ux.copy79500c9b6b")}
                 </>
               ) : null}
             </DialogDescription>
           </DialogHeader>
           {detailNoti ? (
             <div className="space-y-4">
-               <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="rounded-md bg-emerald-50 px-3 py-1 text-emerald-700">
-                  {uiCopy("ux.copy7331dcc71c")} {detailNoti.acked}{uiCopy("ux.copy5a62fd50d2")}
+                  {uiCopy("ux.copy7331dcc71c")} {detailNoti.acked}
+                  {uiCopy("ux.copy5a62fd50d2")}
                 </div>
                 <div className="rounded-md bg-red-50 px-3 py-1 text-red-700">
-                  {uiCopy("ux.copy46bf0c9447")} {detailNoti.total - detailNoti.acked}{uiCopy("ux.copy5a62fd50d2")}
+                  {uiCopy("ux.copy46bf0c9447")} {detailNoti.total - detailNoti.acked}
+                  {uiCopy("ux.copy5a62fd50d2")}
                 </div>
               </div>
 
@@ -375,13 +426,18 @@ function NotificationsPage() {
                         <TableRow key={r.user_id}>
                           <TableCell className="text-sm font-medium">{r.display_name}</TableCell>
                           <TableCell className="text-right">
-                            <Badge variant="destructive" className="text-xs">{uiCopy("ux.copy46a79618eb")}</Badge>
+                            <Badge variant="destructive" className="text-xs">
+                              {uiCopy("ux.copy46a79618eb")}
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
                     {detailNoti.recipients.filter((r) => !r.acknowledged_at).length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={2} className="p-4 text-center text-sm text-muted-foreground">
+                        <TableCell
+                          colSpan={2}
+                          className="p-4 text-center text-sm text-muted-foreground"
+                        >
                           {uiCopy("ux.copy19edd1e4d9")}
                         </TableCell>
                       </TableRow>

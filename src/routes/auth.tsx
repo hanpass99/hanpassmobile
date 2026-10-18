@@ -16,16 +16,21 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
-    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : "",
+    next:
+      typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//")
+        ? s.next
+        : "",
   }),
-  head: () => ({ meta: [
-{ title: uiCopy("pages.auth.title") },
-{ name: "description", content: uiCopy("pages.auth.description") },
-{ property: "og:title", content: uiCopy("pages.auth.title") },
-{ property: "og:description", content: uiCopy("pages.auth.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.auth.title") },
+      { name: "description", content: uiCopy("pages.auth.description") },
+      { property: "og:title", content: uiCopy("pages.auth.title") },
+      { property: "og:description", content: uiCopy("pages.auth.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: AuthPage,
 });
 
@@ -43,7 +48,9 @@ function AuthPage() {
   const target = safeNext(next);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
-  const [countries, setCountries] = useState<Array<{ id: string; code: string; name_ko: string }>>([]);
+  const [countries, setCountries] = useState<Array<{ id: string; code: string; name_ko: string }>>(
+    [],
+  );
 
   useEffect(() => {
     if (mode !== "signup" || countries.length) return;
@@ -52,15 +59,24 @@ function AuthPage() {
       .select("id, code, name_ko")
       .eq("is_active", true)
       .order("code")
-      .then(({ data }) => setCountries((data ?? []) as Array<{ id: string; code: string; name_ko: string }>));
+      .then(({ data }) =>
+        setCountries((data ?? []) as Array<{ id: string; code: string; name_ko: string }>),
+      );
   }, [mode, countries.length]);
 
   if (loading) return null;
   if (session) return <Navigate to={target} />;
 
   const loginSchema = z.object({
-    email: z.string().trim().email({ message: t("auth.invalidEmail") }).max(255),
-    password: z.string().min(6, { message: t("auth.pwdMin") }).max(100),
+    email: z
+      .string()
+      .trim()
+      .email({ message: t("auth.invalidEmail") })
+      .max(255),
+    password: z
+      .string()
+      .min(6, { message: t("auth.pwdMin") })
+      .max(100),
   });
 
   const switchLang = () => {
@@ -133,11 +149,21 @@ function AuthPage() {
         <div className="relative hidden flex-col justify-between bg-primary p-10 text-primary-foreground md:flex">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-foreground text-primary">
-              <img src={hanpassLogo} alt={uiCopy("brand.logoAlt")} width={40} height={40} className="h-10 w-10 object-contain" />
+              <img
+                src={hanpassLogo}
+                alt={uiCopy("brand.logoAlt")}
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
             </div>
             <div>
-              <div className="text-[20px] font-bold leading-tight">{uiCopy("ux.copyca8c605ac7")}</div>
-              <div className="text-[13px] text-primary-foreground/50">{uiCopy("ux.copy36e1723e1c")}</div>
+              <div className="text-[20px] font-bold leading-tight">
+                {uiCopy("ux.copyca8c605ac7")}
+              </div>
+              <div className="text-[13px] text-primary-foreground/50">
+                {uiCopy("ux.copy36e1723e1c")}
+              </div>
             </div>
           </div>
 
@@ -161,7 +187,13 @@ function AuthPage() {
         <div className="flex flex-col bg-card p-8 md:p-12">
           <div className="flex items-center justify-between mb-8">
             <div className="md:hidden flex items-center gap-3">
-              <img src={hanpassLogo} alt={uiCopy("brand.logoAlt")} width={40} height={40} className="h-10 w-10 object-contain" />
+              <img
+                src={hanpassLogo}
+                alt={uiCopy("brand.logoAlt")}
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
               <div>
                 <div className="text-sm font-bold text-primary">{uiCopy("ux.copyca8c605ac7")}</div>
                 <div className="text-xs text-muted-foreground">{uiCopy("ux.copybfcfd42d77")}</div>
@@ -180,7 +212,9 @@ function AuthPage() {
           {mode === "login" ? (
             <div className="flex-1 flex flex-col">
               <div className="mb-8">
-                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">{t("auth.loginTitle")}</h2>
+                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">
+                  {t("auth.loginTitle")}
+                </h2>
                 <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.loginSub")}</p>
               </div>
               <form onSubmit={handleLogin} className="space-y-5 flex-1">
@@ -203,7 +237,10 @@ function AuthPage() {
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password" className="text-[13px] font-medium text-foreground">
+                    <Label
+                      htmlFor="login-password"
+                      className="text-[13px] font-medium text-foreground"
+                    >
                       {t("auth.password")}
                     </Label>
                     <button
@@ -254,7 +291,9 @@ function AuthPage() {
                 <ArrowLeft className="h-3.5 w-3.5" /> {t("auth.backToLogin")}
               </button>
               <div className="mb-8">
-                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">{t("auth.signupTitle")}</h2>
+                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">
+                  {t("auth.signupTitle")}
+                </h2>
                 <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.signupSub")}</p>
               </div>
               <form onSubmit={handleSignup} className="space-y-4 flex-1">
@@ -272,7 +311,10 @@ function AuthPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-company" className="text-[13px] font-medium text-foreground">
+                  <Label
+                    htmlFor="signup-company"
+                    className="text-[13px] font-medium text-foreground"
+                  >
                     {t("auth.company")}
                   </Label>
                   <select
@@ -286,7 +328,10 @@ function AuthPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-country" className="text-[13px] font-medium text-foreground">
+                  <Label
+                    htmlFor="signup-country"
+                    className="text-[13px] font-medium text-foreground"
+                  >
                     {t("country.label")}
                   </Label>
                   <select
@@ -325,7 +370,10 @@ function AuthPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-password" className="text-[13px] font-medium text-foreground">
+                  <Label
+                    htmlFor="signup-password"
+                    className="text-[13px] font-medium text-foreground"
+                  >
                     {t("auth.password")}
                   </Label>
                   <div className="relative">
@@ -360,7 +408,9 @@ function AuthPage() {
                 <ShieldCheck className="h-7 w-7 text-primary" />
               </span>
               <h2 className="text-[22px] font-medium text-primary">{t("auth.signupDoneTitle")}</h2>
-              <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-muted-foreground">{t("auth.signupDoneSub")}</p>
+              <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
+                {t("auth.signupDoneSub")}
+              </p>
               <Button
                 className="mt-8 h-11 rounded-lg bg-primary px-8 text-[14px] font-semibold text-primary-foreground hover:bg-primary/90"
                 onClick={() => setMode("login")}

@@ -25,15 +25,22 @@ export function AdminPushListener() {
     if (!user) return;
     const { data, error } = await supabase
       .from("admin_notification_recipients")
-      .select("id, notification_id, admin_notifications!inner(id, title, message, created_at, sender_id)")
+      .select(
+        "id, notification_id, admin_notifications!inner(id, title, message, created_at, sender_id)",
+      )
       .eq("user_id", user.id)
       .is("acknowledged_at", null)
       .order("created_at", { ascending: true });
     if (error || !data) return;
-    const senderIds = Array.from(new Set(data.map((r: any) => r.admin_notifications?.sender_id).filter(Boolean)));
+    const senderIds = Array.from(
+      new Set(data.map((r: any) => r.admin_notifications?.sender_id).filter(Boolean)),
+    );
     let senderMap = new Map<string, string>();
     if (senderIds.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, display_name").in("id", senderIds);
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", senderIds);
       senderMap = new Map((profs ?? []).map((p: any) => [p.id, p.display_name]));
     }
     setQueue(
@@ -55,7 +62,12 @@ export function AdminPushListener() {
       .channel(`admin-push-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "admin_notification_recipients", filter: `user_id=eq.${user.id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "admin_notification_recipients",
+          filter: `user_id=eq.${user.id}`,
+        },
         () => {
           load();
           try {

@@ -11,33 +11,55 @@ import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  useSlaAdjustments, useSlaAdminActions, useSlaRealtime,
-  useSlaTeamSummary, useSlaViolations, useSlaUpcoming,
-  useStaffCallFines, useToggleCallWaiver, useSetCallGoal,
-  monthStartKstIso, todayKstIso, weekStartKstIso,
+  useSlaAdjustments,
+  useSlaAdminActions,
+  useSlaRealtime,
+  useSlaTeamSummary,
+  useSlaViolations,
+  useSlaUpcoming,
+  useStaffCallFines,
+  useToggleCallWaiver,
+  useSetCallGoal,
+  monthStartKstIso,
+  todayKstIso,
+  weekStartKstIso,
   type SlaTeamRow,
 } from "@/hooks/use-sla";
 import { STATUS_LABEL } from "@/lib/labels";
 
-
 export const Route = createFileRoute("/sla")({
-  head: () => ({ meta: [
-{ title: uiCopy("pages.sla.title") },
-{ name: "description", content: uiCopy("pages.sla.description") },
-{ property: "og:title", content: uiCopy("pages.sla.title") },
-{ property: "og:description", content: uiCopy("pages.sla.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.sla.title") },
+      { name: "description", content: uiCopy("pages.sla.description") },
+      { property: "og:title", content: uiCopy("pages.sla.title") },
+      { property: "og:description", content: uiCopy("pages.sla.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: SlaPage,
 });
 
@@ -79,10 +101,7 @@ function SlaPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={t("sla.title")}
-        description={t("sla.subtitle")}
-      />
+      <PageHeader title={t("sla.title")} description={t("sla.subtitle")} />
 
       <Tabs defaultValue="sla" className="space-y-6">
         <TabsList className="grid h-auto w-full grid-cols-2 sm:w-auto">
@@ -91,259 +110,296 @@ function SlaPage() {
         </TabsList>
 
         <TabsContent value="sla" className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard
-          label={t("sla.currentViolations")}
-          value={activeCount.toLocaleString()}
-          icon={AlertTriangle}
-          tone="destructive"
-          hint={t("sla.currentViolationsHint")}
-        />
-        <StatCard label={t("sla.todayFine")} value={won(totalToday)} icon={AlertTriangle} tone="warning" />
-        <StatCard label={t("sla.weekFine")} value={won(totalWeek)} icon={AlertTriangle} tone="warning" />
-        <StatCard label={t("sla.monthFine")} value={won(totalMonth)} icon={AlertTriangle} tone="warning" />
-      </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <StatCard
+              label={t("sla.currentViolations")}
+              value={activeCount.toLocaleString()}
+              icon={AlertTriangle}
+              tone="destructive"
+              hint={t("sla.currentViolationsHint")}
+            />
+            <StatCard
+              label={t("sla.todayFine")}
+              value={won(totalToday)}
+              icon={AlertTriangle}
+              tone="warning"
+            />
+            <StatCard
+              label={t("sla.weekFine")}
+              value={won(totalWeek)}
+              icon={AlertTriangle}
+              tone="warning"
+            />
+            <StatCard
+              label={t("sla.monthFine")}
+              value={won(totalMonth)}
+              icon={AlertTriangle}
+              tone="warning"
+            />
+          </div>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("sla.teamStatus")}</CardTitle>
+              <CardDescription>{t("sla.teamStatusDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="month">
+                <TabsList className="grid h-auto w-full grid-cols-3 sm:w-auto">
+                  <TabsTrigger value="today">{t("sla.tabToday")}</TabsTrigger>
+                  <TabsTrigger value="week">{t("sla.tabWeek")}</TabsTrigger>
+                  <TabsTrigger value="month">{t("sla.tabMonth")}</TabsTrigger>
+                </TabsList>
+                <TabsContent value="today">
+                  <TeamTable
+                    data={todayQ.data ?? []}
+                    loading={todayQ.isLoading}
+                    isAdmin={isAdmin}
+                    selectedCountry={selectedCountry}
+                    onSelect={setSelectedCountry}
+                    onAction={(type, team) => setAction({ type, team })}
+                  />
+                </TabsContent>
+                <TabsContent value="week">
+                  <TeamTable
+                    data={weekQ.data ?? []}
+                    loading={weekQ.isLoading}
+                    isAdmin={isAdmin}
+                    selectedCountry={selectedCountry}
+                    onSelect={setSelectedCountry}
+                    onAction={(type, team) => setAction({ type, team })}
+                  />
+                </TabsContent>
+                <TabsContent value="month">
+                  <TeamTable
+                    data={monthQ.data ?? []}
+                    loading={monthQ.isLoading}
+                    isAdmin={isAdmin}
+                    selectedCountry={selectedCountry}
+                    onSelect={setSelectedCountry}
+                    onAction={(type, team) => setAction({ type, team })}
+                  />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("sla.teamStatus")}</CardTitle>
-          <CardDescription>{t("sla.teamStatusDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="month">
-            <TabsList className="grid h-auto w-full grid-cols-3 sm:w-auto">
-              <TabsTrigger value="today">{t("sla.tabToday")}</TabsTrigger>
-              <TabsTrigger value="week">{t("sla.tabWeek")}</TabsTrigger>
-              <TabsTrigger value="month">{t("sla.tabMonth")}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="today">
-              <TeamTable
-                data={todayQ.data ?? []}
-                loading={todayQ.isLoading}
-                isAdmin={isAdmin}
-                selectedCountry={selectedCountry}
-                onSelect={setSelectedCountry}
-                onAction={(type, team) => setAction({ type, team })}
-              />
-            </TabsContent>
-            <TabsContent value="week">
-              <TeamTable
-                data={weekQ.data ?? []}
-                loading={weekQ.isLoading}
-                isAdmin={isAdmin}
-                selectedCountry={selectedCountry}
-                onSelect={setSelectedCountry}
-                onAction={(type, team) => setAction({ type, team })}
-              />
-            </TabsContent>
-            <TabsContent value="month">
-              <TeamTable
-                data={monthQ.data ?? []}
-                loading={monthQ.isLoading}
-                isAdmin={isAdmin}
-                selectedCountry={selectedCountry}
-                onSelect={setSelectedCountry}
-                onAction={(type, team) => setAction({ type, team })}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t("sla.violationCustomers")}
-            {selectedCountry && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2"
-                onClick={() => setSelectedCountry(null)}
-              >
-                {t("sla.clearFilter")}
-              </Button>
-            )}
-          </CardTitle>
-          <CardDescription>{t("sla.violationDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          {violationsQ.isLoading ? (
-            <Skeleton className="h-40 w-full" />
-          ) : filteredViolations.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              {t("sla.noViolations")}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("sla.team")}</TableHead>
-                  <TableHead>{t("sla.customer")}</TableHead>
-                  <TableHead>{t("sla.status")}</TableHead>
-                  <TableHead>{t("sla.since")}</TableHead>
-                  <TableHead>{t("sla.overdueDays")}</TableHead>
-                  <TableHead className="text-right">{t("sla.fineTotal")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredViolations.slice(0, 200).map((r) => (
-                  <TableRow key={r.customer_id}>
-                    <TableCell>
-                      <Badge variant="outline">{r.country_code ?? "—"}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{r.customer_name}</div>
-                      <div className="text-xs text-muted-foreground">{r.phone}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge>{STATUS_LABEL[r.status as keyof typeof STATUS_LABEL] ?? r.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {new Date(r.since).toLocaleString(locale)}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-destructive">{t("sla.days", { n: r.overdue_days })}</span>
-                      <span className="ml-1 text-xs text-muted-foreground">
-                        ({Math.round(r.overdue_hours)}{uiCopy("ux.copy15b7f4d979")}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">{won(r.fine_total)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="border-amber-300 bg-amber-50/40 dark:bg-amber-950/10">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-            <Clock className="h-4 w-4" />
-            {t("sla.upcoming")}
-          </CardTitle>
-          <CardDescription>{t("sla.upcomingDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          {upcomingQ.isLoading ? (
-            <Skeleton className="h-32 w-full" />
-          ) : (upcomingQ.data?.length ?? 0) === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              {t("sla.noUpcoming")}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("sla.team")}</TableHead>
-                  <TableHead>{t("sla.customer")}</TableHead>
-                  <TableHead>{t("sla.status")}</TableHead>
-                  <TableHead>{t("sla.deadline")}</TableHead>
-                  <TableHead>{t("sla.timeLeft")}</TableHead>
-                  <TableHead className="text-right">{t("sla.upcomingFine")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(upcomingQ.data ?? []).slice(0, 200).map((r) => {
-                  const h = Math.max(0, Number(r.hours_remaining) || 0);
-                  const urgent = h <= 6;
-                  return (
-                    <TableRow key={r.customer_id}>
-                      <TableCell>
-                        <Badge variant="outline">{r.country_code ?? "—"}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{r.customer_name}</div>
-                        <div className="text-xs text-muted-foreground">{r.phone}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {STATUS_LABEL[r.status as keyof typeof STATUS_LABEL] ?? r.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {new Date(r.deadline).toLocaleString(locale)}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={
-                            urgent
-                              ? "font-semibold text-destructive"
-                              : "font-semibold text-amber-600 dark:text-amber-400"
-                          }
-                        >
-                          {h < 1
-                            ? t("sla.minutesLater", { n: Math.round(h * 60) })
-                            : t("sla.hoursMinutesLater", { h: Math.floor(h), m: Math.round((h % 1) * 60) })}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {won(r.fine_amount)}
-                      </TableCell>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {t("sla.violationCustomers")}
+                {selectedCountry && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-2"
+                    onClick={() => setSelectedCountry(null)}
+                  >
+                    {t("sla.clearFilter")}
+                  </Button>
+                )}
+              </CardTitle>
+              <CardDescription>{t("sla.violationDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {violationsQ.isLoading ? (
+                <Skeleton className="h-40 w-full" />
+              ) : filteredViolations.length === 0 ? (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  {t("sla.noViolations")}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("sla.team")}</TableHead>
+                      <TableHead>{t("sla.customer")}</TableHead>
+                      <TableHead>{t("sla.status")}</TableHead>
+                      <TableHead>{t("sla.since")}</TableHead>
+                      <TableHead>{t("sla.overdueDays")}</TableHead>
+                      <TableHead className="text-right">{t("sla.fineTotal")}</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredViolations.slice(0, 200).map((r) => (
+                      <TableRow key={r.customer_id}>
+                        <TableCell>
+                          <Badge variant="outline">{r.country_code ?? "—"}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{r.customer_name}</div>
+                          <div className="text-xs text-muted-foreground">{r.phone}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge>
+                            {STATUS_LABEL[r.status as keyof typeof STATUS_LABEL] ?? r.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(r.since).toLocaleString(locale)}
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-semibold text-destructive">
+                            {t("sla.days", { n: r.overdue_days })}
+                          </span>
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            ({Math.round(r.overdue_hours)}
+                            {uiCopy("ux.copy15b7f4d979")}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {won(r.fine_total)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            {t("sla.history")}
-          </CardTitle>
-          <CardDescription>{t("sla.historyDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          {adjustmentsQ.isLoading ? (
-            <Skeleton className="h-20 w-full" />
-          ) : (adjustmentsQ.data?.length ?? 0) === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">{t("sla.noHistory")}</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("sla.time")}</TableHead>
-                  <TableHead>{t("sla.type")}</TableHead>
-                  <TableHead>{t("sla.period")}</TableHead>
-                  <TableHead className="text-right">{t("sla.amount")}</TableHead>
-                  <TableHead>{t("sla.reason")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {adjustmentsQ.data!.map((a) => (
-                  <TableRow key={a.id}>
-                    <TableCell className="text-xs">{new Date(a.created_at).toLocaleString(locale)}</TableCell>
-                    <TableCell>
-                      <Badge variant={a.adjustment_type === "reset" ? "destructive" : "secondary"}>
-                        {a.adjustment_type === "reset"
-                          ? t("sla.typeReset")
-                          : a.adjustment_type === "override"
-                            ? t("sla.typeOverride")
-                            : t("sla.typeWaive")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {a.period_start} ~ {a.period_end}
-                    </TableCell>
-                    <TableCell className="text-right">{won(a.amount)}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{a.reason ?? "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          <Card className="border-amber-300 bg-amber-50/40 dark:bg-amber-950/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                <Clock className="h-4 w-4" />
+                {t("sla.upcoming")}
+              </CardTitle>
+              <CardDescription>{t("sla.upcomingDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {upcomingQ.isLoading ? (
+                <Skeleton className="h-32 w-full" />
+              ) : (upcomingQ.data?.length ?? 0) === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  {t("sla.noUpcoming")}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("sla.team")}</TableHead>
+                      <TableHead>{t("sla.customer")}</TableHead>
+                      <TableHead>{t("sla.status")}</TableHead>
+                      <TableHead>{t("sla.deadline")}</TableHead>
+                      <TableHead>{t("sla.timeLeft")}</TableHead>
+                      <TableHead className="text-right">{t("sla.upcomingFine")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(upcomingQ.data ?? []).slice(0, 200).map((r) => {
+                      const h = Math.max(0, Number(r.hours_remaining) || 0);
+                      const urgent = h <= 6;
+                      return (
+                        <TableRow key={r.customer_id}>
+                          <TableCell>
+                            <Badge variant="outline">{r.country_code ?? "—"}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">{r.customer_name}</div>
+                            <div className="text-xs text-muted-foreground">{r.phone}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {STATUS_LABEL[r.status as keyof typeof STATUS_LABEL] ?? r.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {new Date(r.deadline).toLocaleString(locale)}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={
+                                urgent
+                                  ? "font-semibold text-destructive"
+                                  : "font-semibold text-amber-600 dark:text-amber-400"
+                              }
+                            >
+                              {h < 1
+                                ? t("sla.minutesLater", { n: Math.round(h * 60) })
+                                : t("sla.hoursMinutesLater", {
+                                    h: Math.floor(h),
+                                    m: Math.round((h % 1) * 60),
+                                  })}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {won(r.fine_amount)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-4 w-4" />
+                {t("sla.history")}
+              </CardTitle>
+              <CardDescription>{t("sla.historyDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {adjustmentsQ.isLoading ? (
+                <Skeleton className="h-20 w-full" />
+              ) : (adjustmentsQ.data?.length ?? 0) === 0 ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  {t("sla.noHistory")}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("sla.time")}</TableHead>
+                      <TableHead>{t("sla.type")}</TableHead>
+                      <TableHead>{t("sla.period")}</TableHead>
+                      <TableHead className="text-right">{t("sla.amount")}</TableHead>
+                      <TableHead>{t("sla.reason")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {adjustmentsQ.data!.map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="text-xs">
+                          {new Date(a.created_at).toLocaleString(locale)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={a.adjustment_type === "reset" ? "destructive" : "secondary"}
+                          >
+                            {a.adjustment_type === "reset"
+                              ? t("sla.typeReset")
+                              : a.adjustment_type === "override"
+                                ? t("sla.typeOverride")
+                                : t("sla.typeWaive")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {a.period_start} ~ {a.period_end}
+                        </TableCell>
+                        <TableCell className="text-right">{won(a.amount)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {a.reason ?? "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="callfines" className="space-y-6">
-          <StaffCallFinesCard periodStart={monthStart} periodEnd={today} isAdmin={isAdmin} today={today} />
+          <StaffCallFinesCard
+            periodStart={monthStart}
+            periodEnd={today}
+            isAdmin={isAdmin}
+            today={today}
+          />
         </TabsContent>
       </Tabs>
 
@@ -358,7 +414,6 @@ function SlaPage() {
     </div>
   );
 }
-
 
 function sumFine(rows: SlaTeamRow[] | undefined) {
   return (rows ?? []).reduce((s, r) => s + Number(r.net_fine || 0), 0);
@@ -375,7 +430,11 @@ function TeamTable(props: {
   const { t } = useTranslation();
   if (props.loading) return <Skeleton className="mt-4 h-40 w-full" />;
   if (!props.data.length) {
-    return <div className="py-8 text-center text-sm text-muted-foreground">{t("sla.noTeamViolations")}</div>;
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground">
+        {t("sla.noTeamViolations")}
+      </div>
+    );
   }
   return (
     <div className="mt-4 overflow-x-auto">
@@ -419,13 +478,28 @@ function TeamTable(props: {
                 {props.isAdmin && (
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
-                      <Button size="sm" variant="ghost" title={t("sla.typeReset")} onClick={() => props.onAction("reset", r)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title={t("sla.typeReset")}
+                        onClick={() => props.onAction("reset", r)}
+                      >
                         <RotateCcw className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" title={t("sla.typeOverride")} onClick={() => props.onAction("override", r)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title={t("sla.typeOverride")}
+                        onClick={() => props.onAction("override", r)}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" title={t("sla.typeWaive")} onClick={() => props.onAction("waive", r)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title={t("sla.typeWaive")}
+                        onClick={() => props.onAction("waive", r)}
+                      >
                         <Ban className="h-4 w-4" />
                       </Button>
                     </div>
@@ -455,15 +529,22 @@ function AdminActionDialog(props: {
   const [periodEnd, setPeriodEnd] = useState(props.periodEnd);
 
   const title =
-    action.type === "reset" ? t("sla.dlgReset")
-    : action.type === "override" ? t("sla.dlgOverride")
-    : t("sla.dlgWaive");
+    action.type === "reset"
+      ? t("sla.dlgReset")
+      : action.type === "override"
+        ? t("sla.dlgOverride")
+        : t("sla.dlgWaive");
 
   const busy = reset.isPending || override.isPending || waive.isPending;
 
   const submit = async () => {
     try {
-      const base = { countryId: action.team.country_id, periodStart, periodEnd, reason: reason || undefined };
+      const base = {
+        countryId: action.team.country_id,
+        periodStart,
+        periodEnd,
+        reason: reason || undefined,
+      };
       if (action.type === "reset") {
         await reset.mutateAsync(base);
         toast.success(t("sla.toastReset"));
@@ -492,7 +573,11 @@ function AdminActionDialog(props: {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label>{t("sla.periodStart")}</Label>
-              <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+              <Input
+                type="date"
+                value={periodStart}
+                onChange={(e) => setPeriodStart(e.target.value)}
+              />
             </div>
             <div>
               <Label>{t("sla.periodEnd")}</Label>
@@ -504,7 +589,9 @@ function AdminActionDialog(props: {
               <Label>{t("sla.amountWon")}</Label>
               <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
               <p className="mt-1 text-xs text-muted-foreground">
-                {action.type === "override" ? t("sla.amountHelpOverride") : t("sla.amountHelpWaive")}
+                {action.type === "override"
+                  ? t("sla.amountHelpOverride")
+                  : t("sla.amountHelpWaive")}
               </p>
             </div>
           )}
@@ -514,8 +601,12 @@ function AdminActionDialog(props: {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={props.onClose} disabled={busy}>{t("sla.cancel")}</Button>
-          <Button onClick={submit} disabled={busy}>{t("sla.confirm")}</Button>
+          <Button variant="outline" onClick={props.onClose} disabled={busy}>
+            {t("sla.cancel")}
+          </Button>
+          <Button onClick={submit} disabled={busy}>
+            {t("sla.confirm")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -536,10 +627,7 @@ function StaffCallFinesCard(props: {
 
   const rows = fines.data ?? [];
   const totalMonthFine = rows.reduce((s, r) => s + Number(r.total_fine || 0), 0);
-  const focusDayFine = rows.reduce(
-    (s, r) => s + (r.focus_fined ? 30000 : 0),
-    0,
-  );
+  const focusDayFine = rows.reduce((s, r) => s + (r.focus_fined ? 30000 : 0), 0);
 
   const onToggle = async (userId: string, name: string, currentlyWaived: boolean) => {
     try {
@@ -578,7 +666,10 @@ function StaffCallFinesCard(props: {
           {uiCopy("ux.copye7327b4635")}
         </CardTitle>
         <CardDescription className="flex flex-wrap items-center gap-3">
-          <span>{uiCopy("ux.copy386ad559ab")} <span className="font-semibold text-destructive">{won(totalMonthFine)}</span></span>
+          <span>
+            {uiCopy("ux.copy386ad559ab")}{" "}
+            <span className="font-semibold text-destructive">{won(totalMonthFine)}</span>
+          </span>
           <span className="text-xs text-muted-foreground">
             {uiCopy("ux.copy6fc2ec7491")} <span className="font-semibold">{won(focusDayFine)}</span>
           </span>
@@ -603,19 +694,27 @@ function StaffCallFinesCard(props: {
         {fines.isLoading ? (
           <Skeleton className="h-32 w-full" />
         ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">{uiCopy("ux.copy3050fd67de")}</div>
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            {uiCopy("ux.copy3050fd67de")}
+          </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{uiCopy("ux.copycee097c09f")}</TableHead>
                 <TableHead className="text-right">{uiCopy("ux.copy84cdec709d")}</TableHead>
-                <TableHead className="text-right">{isFocusToday ? uiCopy("ux.copyff36f9f5ec") : uiCopy("ux.copy47761a7f65", { value0: focusDate })}</TableHead>
+                <TableHead className="text-right">
+                  {isFocusToday
+                    ? uiCopy("ux.copyff36f9f5ec")
+                    : uiCopy("ux.copy47761a7f65", { value0: focusDate })}
+                </TableHead>
                 <TableHead className="text-right">{uiCopy("ux.copy4b9a2cb30d")}</TableHead>
                 <TableHead className="text-right">{uiCopy("ux.copy094f8bfce2")}</TableHead>
                 <TableHead className="text-right">{uiCopy("ux.copyf9704248b4")}</TableHead>
                 <TableHead className="text-right">{uiCopy("ux.copy6b808f497d")}</TableHead>
-                {props.isAdmin && <TableHead className="text-right">{uiCopy("ux.copy3cd034a784")}</TableHead>}
+                {props.isAdmin && (
+                  <TableHead className="text-right">{uiCopy("ux.copy3cd034a784")}</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -632,13 +731,14 @@ function StaffCallFinesCard(props: {
                         : isFocusToday
                           ? `${r.focus_calls}/${goal}`
                           : uiCopy("ux.copya72490afb8");
-                const badgeTone = r.focus_absent || r.focus_waived
-                  ? "secondary"
-                  : r.focus_fined
-                    ? "destructive"
-                    : r.focus_calls >= goal
-                      ? "default"
-                      : "outline";
+                const badgeTone =
+                  r.focus_absent || r.focus_waived
+                    ? "secondary"
+                    : r.focus_fined
+                      ? "destructive"
+                      : r.focus_calls >= goal
+                        ? "default"
+                        : "outline";
                 return (
                   <TableRow key={r.user_id}>
                     <TableCell className="font-medium">{r.display_name}</TableCell>
@@ -648,7 +748,9 @@ function StaffCallFinesCard(props: {
                           type="number"
                           min={0}
                           defaultValue={goal}
-                          onBlur={(e) => onGoalBlur(r.user_id, r.display_name, goal, Number(e.target.value))}
+                          onBlur={(e) =>
+                            onGoalBlur(r.user_id, r.display_name, goal, Number(e.target.value))
+                          }
                           className="ml-auto h-8 w-20 text-right"
                         />
                       ) : (
@@ -660,7 +762,10 @@ function StaffCallFinesCard(props: {
                       <span className="ml-2 text-xs text-muted-foreground">{r.focus_calls}</span>
                     </TableCell>
                     <TableCell className="text-right">{r.total_calls.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{r.days_fined}{uiCopy("ux.copy06cf3e90de")}</TableCell>
+                    <TableCell className="text-right">
+                      {r.days_fined}
+                      {uiCopy("ux.copy06cf3e90de")}
+                    </TableCell>
                     <TableCell className="text-right text-xs text-muted-foreground">
                       {r.days_absent}/{r.days_waived}
                     </TableCell>
@@ -675,7 +780,9 @@ function StaffCallFinesCard(props: {
                           disabled={toggle.isPending}
                           onClick={() => onToggle(r.user_id, r.display_name, r.focus_waived)}
                         >
-                          {r.focus_waived ? uiCopy("ux.copy2ff2de6868") : uiCopy("ux.copybfb5bb88b0")}
+                          {r.focus_waived
+                            ? uiCopy("ux.copy2ff2de6868")
+                            : uiCopy("ux.copybfb5bb88b0")}
                         </Button>
                       </TableCell>
                     )}
@@ -689,5 +796,3 @@ function StaffCallFinesCard(props: {
     </Card>
   );
 }
-
-

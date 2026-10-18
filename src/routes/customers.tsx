@@ -13,14 +13,16 @@ type CustomersSearch = {
 };
 
 export const Route = createFileRoute("/customers")({
-  head: () => ({ meta: [
-{ title: uiCopy("pages.customers.title") },
-{ name: "description", content: uiCopy("pages.customers.description") },
-{ property: "og:title", content: uiCopy("pages.customers.title") },
-{ property: "og:description", content: uiCopy("pages.customers.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.customers.title") },
+      { name: "description", content: uiCopy("pages.customers.description") },
+      { property: "og:title", content: uiCopy("pages.customers.title") },
+      { property: "og:description", content: uiCopy("pages.customers.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): CustomersSearch => ({
     status: typeof search.status === "string" ? search.status : undefined,
     country: typeof search.country === "string" ? search.country : undefined,
@@ -34,9 +36,17 @@ export const Route = createFileRoute("/customers")({
       staleTime: Infinity,
       queryFn: async () => {
         const [co, ch, sf] = await Promise.all([
-          supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
+          supabase
+            .from("countries")
+            .select("id, code, name_ko")
+            .eq("is_active", true)
+            .order("code"),
           supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-          supabase.from("profiles").select("id, display_name, country_id, is_active").order("sort_order").order("display_name"),
+          supabase
+            .from("profiles")
+            .select("id, display_name, country_id, is_active")
+            .order("sort_order")
+            .order("display_name"),
         ]);
         return {
           countries: co.data ?? [],

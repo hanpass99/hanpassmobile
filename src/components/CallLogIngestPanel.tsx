@@ -9,13 +9,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -42,8 +55,12 @@ export function formatKst(iso: string | null | undefined) {
   if (isNaN(d.getTime())) return "—";
   return new Intl.DateTimeFormat("ko-KR", {
     timeZone: "Asia/Seoul",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   }).format(d);
 }
@@ -93,7 +110,10 @@ export function CallLogIngestPanel() {
     const { error } = await (supabase.from("call_log_ingest" as any) as any)
       .update({ matched_employee_id: linkStaff, error_reason: null })
       .eq("id", linkRow.id);
-    if (error) { toast.error(localizeError(error.message)); return; }
+    if (error) {
+      toast.error(localizeError(error.message));
+      return;
+    }
     if (linkRow.phone_call_log_id) {
       await supabase
         .from("phone_call_logs")
@@ -112,17 +132,23 @@ export function CallLogIngestPanel() {
       <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold">{uiCopy("ux.copy81aab55f5f")}</h2>
-          <p className="text-xs text-muted-foreground">
-            {uiCopy("ux.copy31321e466c")}
-          </p>
+          <p className="text-xs text-muted-foreground">{uiCopy("ux.copy31321e466c")}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {problemCount > 0 && (
-            <Badge variant="outline" className="gap-1 border-transparent bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
-              <AlertTriangle className="h-3 w-3" /> {uiCopy("ux.copy4b30e4b84a")} {problemCount}{uiCopy("ux.copyd202b4d78c")}
+            <Badge
+              variant="outline"
+              className="gap-1 border-transparent bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
+            >
+              <AlertTriangle className="h-3 w-3" /> {uiCopy("ux.copy4b30e4b84a")} {problemCount}
+              {uiCopy("ux.copyd202b4d78c")}
             </Badge>
           )}
-          <Button variant={onlyProblems ? "default" : "outline"} size="sm" onClick={() => setOnlyProblems((v) => !v)}>
+          <Button
+            variant={onlyProblems ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOnlyProblems((v) => !v)}
+          >
             {uiCopy("ux.copy0e0a945a6e")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
@@ -149,7 +175,9 @@ export function CallLogIngestPanel() {
             Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
                 {Array.from({ length: 8 }).map((_, j) => (
-                  <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell key={j}>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
                 ))}
               </TableRow>
             ))
@@ -162,36 +190,64 @@ export function CallLogIngestPanel() {
           ) : (
             data.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="whitespace-nowrap text-xs">{formatKst(r.received_at)}</TableCell>
-                <TableCell className="whitespace-nowrap text-xs">{formatKst(r.started_at)}</TableCell>
+                <TableCell className="whitespace-nowrap text-xs">
+                  {formatKst(r.received_at)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-xs">
+                  {formatKst(r.started_at)}
+                </TableCell>
                 <TableCell className="font-mono text-xs">{r.employee_phone ?? "—"}</TableCell>
                 <TableCell className="font-mono text-xs">{r.customer_phone ?? "—"}</TableCell>
-                <TableCell className="text-xs">{r.direction ?? "—"}{r.status ? ` / ${r.status}` : ""}</TableCell>
+                <TableCell className="text-xs">
+                  {r.direction ?? "—"}
+                  {r.status ? ` / ${r.status}` : ""}
+                </TableCell>
                 <TableCell className="text-right font-mono text-xs">{r.duration ?? 0}</TableCell>
                 <TableCell className="text-xs">
                   {!r.parse_ok ? (
-                    <Badge variant="outline" className="border-transparent bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">
+                    <Badge
+                      variant="outline"
+                      className="border-transparent bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200"
+                    >
                       {uiCopy("ux.copy5046905fde")}
                     </Badge>
                   ) : !r.matched_employee_id ? (
-                    <Badge variant="outline" className="border-transparent bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                    <Badge
+                      variant="outline"
+                      className="border-transparent bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
+                    >
                       {uiCopy("ux.copy4c6b02508b")}
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                    <Badge
+                      variant="outline"
+                      className="border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
+                    >
                       {uiCopy("ux.copyf6846cfc84")}
                     </Badge>
                   )}
                   {r.error_reason && (
-                    <div className="mt-1 max-w-[220px] truncate text-xs text-muted-foreground" title={r.error_reason}>
+                    <div
+                      className="mt-1 max-w-[220px] truncate text-xs text-muted-foreground"
+                      title={r.error_reason}
+                    >
                       {r.error_reason}
                     </div>
                   )}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  <Button variant="ghost" size="sm" onClick={() => setDetail(r)}>{uiCopy("ux.copy8ba13a8495")}</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setDetail(r)}>
+                    {uiCopy("ux.copy8ba13a8495")}
+                  </Button>
                   {!r.matched_employee_id && (
-                    <Button variant="ghost" size="sm" onClick={() => { setLinkRow(r); setLinkStaff(""); }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setLinkRow(r);
+                        setLinkStaff("");
+                      }}
+                    >
                       <Link2 className="h-3.5 w-3.5" />
                     </Button>
                   )}
@@ -204,7 +260,9 @@ export function CallLogIngestPanel() {
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{uiCopy("ux.copyb1ee0ff6eb")}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{uiCopy("ux.copyb1ee0ff6eb")}</DialogTitle>
+          </DialogHeader>
           <pre className="max-h-[60vh] overflow-auto rounded-md bg-muted p-3 text-xs">
             {JSON.stringify(detail?.raw_body ?? {}, null, 2)}
           </pre>
@@ -213,25 +271,35 @@ export function CallLogIngestPanel() {
 
       <Dialog open={!!linkRow} onOpenChange={(o) => !o && setLinkRow(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{uiCopy("ux.copy8fa3fae83b")}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{uiCopy("ux.copy8fa3fae83b")}</DialogTitle>
+          </DialogHeader>
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              {uiCopy("ux.copy0eae1698d1")} {linkRow?.employee_phone ?? "—"} {uiCopy("ux.copy93f78b33bf")}
+              {uiCopy("ux.copy0eae1698d1")} {linkRow?.employee_phone ?? "—"}{" "}
+              {uiCopy("ux.copy93f78b33bf")}
             </p>
             <Select value={linkStaff} onValueChange={setLinkStaff}>
-              <SelectTrigger><SelectValue placeholder={uiCopy("ux.copy3dd4c5ecc3")} /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder={uiCopy("ux.copy3dd4c5ecc3")} />
+              </SelectTrigger>
               <SelectContent>
                 {(staff ?? []).map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.display_name}{s.phone ? ` (${s.phone})` : ""}
+                    {s.display_name}
+                    {s.phone ? ` (${s.phone})` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLinkRow(null)}>{uiCopy("ux.copy19b2d19bc1")}</Button>
-            <Button onClick={saveLink} disabled={!linkStaff}>{uiCopy("ux.copy52b7ec5f76")}</Button>
+            <Button variant="outline" onClick={() => setLinkRow(null)}>
+              {uiCopy("ux.copy19b2d19bc1")}
+            </Button>
+            <Button onClick={saveLink} disabled={!linkStaff}>
+              {uiCopy("ux.copy52b7ec5f76")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

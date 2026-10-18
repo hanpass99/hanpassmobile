@@ -5,7 +5,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,25 +26,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import { CUSTOMER_STATUSES, type CustomerStatus } from "@/lib/labels";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
 
 export const Route = createFileRoute("/channel-performance")({
-  head: () => ({ meta: [
-{ title: uiCopy("pages.channel-performance.title") },
-{ name: "description", content: uiCopy("pages.channel-performance.description") },
-{ property: "og:title", content: uiCopy("pages.channel-performance.title") },
-{ property: "og:description", content: uiCopy("pages.channel-performance.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.channel-performance.title") },
+      { name: "description", content: uiCopy("pages.channel-performance.description") },
+      { property: "og:title", content: uiCopy("pages.channel-performance.title") },
+      { property: "og:description", content: uiCopy("pages.channel-performance.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: ChannelPerf,
 });
 
 type Counts = Record<CustomerStatus, number>;
 type Row = { id: string; name: string; total: number; counts: Counts };
 
-const emptyCounts = (): Counts => Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
+const emptyCounts = (): Counts =>
+  Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
 function ChannelPerf() {
   const { t } = useTranslation();
@@ -60,18 +75,22 @@ function ChannelPerf() {
     const { data, error } = await supabase.rpc("stats_by_channel", args);
     if (requestId !== latestLoadRef.current) return;
     if (!error) {
-      const out: Row[] = (data ?? []).map((r: any) => {
-        const counts = emptyCounts();
-        const sc = (r.status_counts ?? {}) as Record<string, number>;
-        for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
-        return { id: r.channel_id, name: r.name, total: Number(r.total ?? 0), counts };
-      }).sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
+      const out: Row[] = (data ?? [])
+        .map((r: any) => {
+          const counts = emptyCounts();
+          const sc = (r.status_counts ?? {}) as Record<string, number>;
+          for (const s of CUSTOMER_STATUSES) counts[s] = Number(sc[s] ?? 0);
+          return { id: r.channel_id, name: r.name, total: Number(r.total ?? 0), counts };
+        })
+        .sort((a, b) => b.counts.activated - a.counts.activated || b.total - a.total);
       setRows(out);
     }
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [dateFrom, dateTo]);
+  useEffect(() => {
+    load();
+  }, [dateFrom, dateTo]);
 
   useEffect(() => {
     const c = supabase
@@ -104,32 +123,59 @@ function ChannelPerf() {
   }, [rows]);
 
   const chartData = useMemo(
-    () => rows.filter((r) => r.total > 0).map((r) => ({
-      name: r.name,
-      total: r.total,
-      activated: r.counts.activated,
-    })),
+    () =>
+      rows
+        .filter((r) => r.total > 0)
+        .map((r) => ({
+          name: r.name,
+          total: r.total,
+          activated: r.counts.activated,
+        })),
     [rows],
   );
 
   const rateBadge = (total: number, rate: number) => {
     if (total === 0) return <Badge variant="secondary">—</Badge>;
-    if (rate >= 3) return <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white">{rate.toFixed(1)}%</Badge>;
-    if (rate >= 1) return <Badge className="bg-amber-500 hover:bg-amber-500 text-white">{rate.toFixed(1)}%</Badge>;
+    if (rate >= 3)
+      return (
+        <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white">{rate.toFixed(1)}%</Badge>
+      );
+    if (rate >= 1)
+      return (
+        <Badge className="bg-amber-500 hover:bg-amber-500 text-white">{rate.toFixed(1)}%</Badge>
+      );
     return <Badge className="bg-red-500 hover:bg-red-500 text-white">{rate.toFixed(1)}%</Badge>;
   };
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("channelPerf.title")} description={loading ? t("common.loading") : t("channelPerf.subtitle")} />
+      <PageHeader
+        title={t("channelPerf.title")}
+        description={loading ? t("common.loading") : t("channelPerf.subtitle")}
+      />
 
       <Card>
         <CardContent className="grid grid-cols-2 items-center gap-2 p-4 sm:flex sm:flex-wrap">
-          <DateBtn value={dateFrom} onChange={setDateFrom} placeholder={t("common.from") || uiCopy("ux.copy453c56f595")} />
+          <DateBtn
+            value={dateFrom}
+            onChange={setDateFrom}
+            placeholder={t("common.from") || uiCopy("ux.copy453c56f595")}
+          />
           <span className="text-muted-foreground">~</span>
-          <DateBtn value={dateTo} onChange={setDateTo} placeholder={t("common.to") || uiCopy("ux.copycad7c84c3e")} />
+          <DateBtn
+            value={dateTo}
+            onChange={setDateTo}
+            placeholder={t("common.to") || uiCopy("ux.copycad7c84c3e")}
+          />
           {(dateFrom || dateTo) && (
-            <Button size="sm" variant="ghost" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setDateFrom(undefined);
+                setDateTo(undefined);
+              }}
+            >
               <X className="mr-1 h-3.5 w-3.5" /> {t("common.reset") || uiCopy("ux.copyff75b4ff24")}
             </Button>
           )}
@@ -141,10 +187,30 @@ function ChannelPerf() {
       </Card>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label={t("channelPerf.totalCustomers")} value={totals.total.toLocaleString()} icon={Users} tone="muted" />
-        <StatCard label={t("channelPerf.callCompleted")} value={totals.callCompleted.toLocaleString()} icon={PhoneCall} tone="info" />
-        <StatCard label={t("channelPerf.activationSuccess")} value={totals.activated.toLocaleString()} icon={CheckCircle2} tone="primary" />
-        <StatCard label={t("channelPerf.overallActivationRate")} value={`${totals.rate.toFixed(1)}%`} icon={TrendingUp} tone="success" />
+        <StatCard
+          label={t("channelPerf.totalCustomers")}
+          value={totals.total.toLocaleString()}
+          icon={Users}
+          tone="muted"
+        />
+        <StatCard
+          label={t("channelPerf.callCompleted")}
+          value={totals.callCompleted.toLocaleString()}
+          icon={PhoneCall}
+          tone="info"
+        />
+        <StatCard
+          label={t("channelPerf.activationSuccess")}
+          value={totals.activated.toLocaleString()}
+          icon={CheckCircle2}
+          tone="primary"
+        />
+        <StatCard
+          label={t("channelPerf.overallActivationRate")}
+          value={`${totals.rate.toFixed(1)}%`}
+          icon={TrendingUp}
+          tone="success"
+        />
       </div>
 
       {chartData.length > 0 && (
@@ -155,13 +221,29 @@ function ChannelPerf() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} angle={-15} textAnchor="end" height={60} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 12 }}
+                    interval={0}
+                    angle={-15}
+                    textAnchor="end"
+                    height={60}
+                  />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="total" name={t("channelPerf.barCustomers")} fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="activated" name={t("channelPerf.barActivated")} fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
-
+                  <Bar
+                    dataKey="total"
+                    name={t("channelPerf.barCustomers")}
+                    fill="var(--chart-2)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="activated"
+                    name={t("channelPerf.barActivated")}
+                    fill="var(--chart-1)"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -176,10 +258,16 @@ function ChannelPerf() {
               <TableRow className="bg-muted/40">
                 <TableHead>{t("channelPerf.channel")}</TableHead>
                 <TableHead className="text-right">{t("dashboard.totalCalls")}</TableHead>
-                <TableHead className="text-right whitespace-nowrap">{t("dashboard.callCompleted")}</TableHead>
-                <TableHead className="text-right whitespace-nowrap">{t("dashboard.activationSuccessRate")}</TableHead>
+                <TableHead className="text-right whitespace-nowrap">
+                  {t("dashboard.callCompleted")}
+                </TableHead>
+                <TableHead className="text-right whitespace-nowrap">
+                  {t("dashboard.activationSuccessRate")}
+                </TableHead>
                 {CUSTOMER_STATUSES.map((s) => (
-                  <TableHead key={s} className="text-right whitespace-nowrap">{t(`status.${s}`)}</TableHead>
+                  <TableHead key={s} className="text-right whitespace-nowrap">
+                    {t(`status.${s}`)}
+                  </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
@@ -188,22 +276,33 @@ function ChannelPerf() {
                 const callCompleted = r.total - r.counts.new;
                 const rate = callCompleted > 0 ? (r.counts.activated / callCompleted) * 100 : 0;
                 return (
-                <TableRow key={r.id}>
-                  <TableCell className="font-medium whitespace-nowrap">{r.name}</TableCell>
-                  <TableCell className="text-right font-bold">{r.total}</TableCell>
-                  <TableCell className="text-right font-semibold text-primary">{callCompleted}</TableCell>
-                  <TableCell className="text-right">{rateBadge(r.total, rate)}</TableCell>
-                  {CUSTOMER_STATUSES.map((s) => (
-                    <TableCell key={s} className={cn(
-                      "text-right",
-                      s === "activated" && "font-bold text-primary",
-                    )}>{r.counts[s]}</TableCell>
-                  ))}
-                </TableRow>
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium whitespace-nowrap">{r.name}</TableCell>
+                    <TableCell className="text-right font-bold">{r.total}</TableCell>
+                    <TableCell className="text-right font-semibold text-primary">
+                      {callCompleted}
+                    </TableCell>
+                    <TableCell className="text-right">{rateBadge(r.total, rate)}</TableCell>
+                    {CUSTOMER_STATUSES.map((s) => (
+                      <TableCell
+                        key={s}
+                        className={cn("text-right", s === "activated" && "font-bold text-primary")}
+                      >
+                        {r.counts[s]}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 );
               })}
               {!visibleRows.length && !loading && (
-                <TableRow><TableCell colSpan={4 + CUSTOMER_STATUSES.length} className="text-center py-8 text-sm text-muted-foreground">{t("channelPerf.noChannel")}</TableCell></TableRow>
+                <TableRow>
+                  <TableCell
+                    colSpan={4 + CUSTOMER_STATUSES.length}
+                    className="text-center py-8 text-sm text-muted-foreground"
+                  >
+                    {t("channelPerf.noChannel")}
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
@@ -213,18 +312,35 @@ function ChannelPerf() {
   );
 }
 
-
-function DateBtn({ value, onChange, placeholder }: { value?: Date; onChange: (d?: Date) => void; placeholder: string }) {
+function DateBtn({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value?: Date;
+  onChange: (d?: Date) => void;
+  placeholder: string;
+}) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("h-9", !value && "text-muted-foreground")}>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn("h-9", !value && "text-muted-foreground")}
+        >
           <CalendarIcon className="mr-2 h-3.5 w-3.5" />
           {value ? format(value, "yyyy-MM-dd") : placeholder}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={value} onSelect={onChange} initialFocus className={cn("p-3 pointer-events-auto")} />
+        <Calendar
+          mode="single"
+          selected={value}
+          onSelect={onChange}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
       </PopoverContent>
     </Popover>
   );

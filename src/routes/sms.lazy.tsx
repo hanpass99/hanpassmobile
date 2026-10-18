@@ -1,7 +1,17 @@
 import { localizeError } from "@/i18n/localize-error";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { MessageSquare, Send, FileText, History, Plus, Trash2, Edit3, Search, Users as UsersIcon } from "lucide-react";
+import {
+  MessageSquare,
+  Send,
+  FileText,
+  History,
+  Plus,
+  Trash2,
+  Edit3,
+  Search,
+  Users as UsersIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/PageHeader";
@@ -14,21 +24,39 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  useSmsCustomers, useSmsTemplates, useSmsLogs,
-  useInvalidateSmsTemplates, useSendSms,
-  type SmsTemplate as Template, type SmsLog,
+  useSmsCustomers,
+  useSmsTemplates,
+  useSmsLogs,
+  useInvalidateSmsTemplates,
+  useSendSms,
+  type SmsTemplate as Template,
+  type SmsLog,
 } from "@/hooks/use-sms";
 
 export const Route = createLazyFileRoute("/sms")({
@@ -41,25 +69,36 @@ function byteLength(s: string): number {
   return n;
 }
 
-
 function SmsPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState("send");
   return (
     <div className="space-y-5 p-0 md:p-2">
-      <PageHeader
-        title={t("sms.title")}
-        description={t("sms.subtitle")}
-      />
+      <PageHeader title={t("sms.title")} description={t("sms.subtitle")} />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid h-auto w-full grid-cols-3">
-          <TabsTrigger value="send"><Send className="mr-1 h-4 w-4" />{t("sms.tabs.send")}</TabsTrigger>
-          <TabsTrigger value="templates"><FileText className="mr-1 h-4 w-4" />{t("sms.tabs.templates")}</TabsTrigger>
-          <TabsTrigger value="history"><History className="mr-1 h-4 w-4" />{t("sms.tabs.history")}</TabsTrigger>
+          <TabsTrigger value="send">
+            <Send className="mr-1 h-4 w-4" />
+            {t("sms.tabs.send")}
+          </TabsTrigger>
+          <TabsTrigger value="templates">
+            <FileText className="mr-1 h-4 w-4" />
+            {t("sms.tabs.templates")}
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="mr-1 h-4 w-4" />
+            {t("sms.tabs.history")}
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="send" className="mt-4"><SendTab /></TabsContent>
-        <TabsContent value="templates" className="mt-4"><TemplatesTab /></TabsContent>
-        <TabsContent value="history" className="mt-4"><HistoryTab /></TabsContent>
+        <TabsContent value="send" className="mt-4">
+          <SendTab />
+        </TabsContent>
+        <TabsContent value="templates" className="mt-4">
+          <TemplatesTab />
+        </TabsContent>
+        <TabsContent value="history" className="mt-4">
+          <HistoryTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -86,10 +125,7 @@ function SendTab() {
     return customers.filter((c) => {
       if (statusFilter !== "all" && c.status !== statusFilter) return false;
       if (!q) return true;
-      return (
-        c.name.toLowerCase().includes(q) ||
-        c.phone.toLowerCase().includes(q)
-      );
+      return c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q);
     });
   }, [customers, search, statusFilter]);
 
@@ -112,7 +148,10 @@ function SendTab() {
 
   async function send() {
     if (!user) return;
-    if (!message.trim()) { toast.error(localizeError(t("sms.needMessage"))); return; }
+    if (!message.trim()) {
+      toast.error(localizeError(t("sms.needMessage")));
+      return;
+    }
 
     const recv: { customer_id?: string | null; name?: string | null; phone: string }[] = [];
     selected.forEach((id) => {
@@ -125,11 +164,21 @@ function SendTab() {
       .filter(Boolean)
       .forEach((p) => recv.push({ phone: p }));
 
-    if (recv.length === 0) { toast.error(localizeError(t("sms.needReceiver"))); return; }
-    if (isLms && !title.trim()) { toast.error(localizeError(t("sms.needTitle"))); return; }
+    if (recv.length === 0) {
+      toast.error(localizeError(t("sms.needReceiver")));
+      return;
+    }
+    if (isLms && !title.trim()) {
+      toast.error(localizeError(t("sms.needTitle")));
+      return;
+    }
 
     try {
-      const data = await sendMutation.mutateAsync({ receivers: recv, message, title: title || undefined });
+      const data = await sendMutation.mutateAsync({
+        receivers: recv,
+        message,
+        title: title || undefined,
+      });
       if (data?.ok) {
         toast.success(t("sms.sendSuccess", { type: data.msg_type, count: data.count }));
         setSelected(new Set());
@@ -138,14 +187,20 @@ function SendTab() {
         setManualPhones("");
         setPickTpl("");
       } else {
-        toast.error(localizeError(t("sms.sendFail", { msg: data?.aligo?.message || JSON.stringify(data?.aligo) })));
+        toast.error(
+          localizeError(
+            t("sms.sendFail", { msg: data?.aligo?.message || JSON.stringify(data?.aligo) }),
+          ),
+        );
       }
     } catch (e) {
       toast.error(localizeError(t("sms.sendFail", { msg: (e as Error).message })));
     }
   }
 
-  const manualCount = manualPhones.trim() ? manualPhones.split(/[\n,;]+/).filter(Boolean).length : 0;
+  const manualCount = manualPhones.trim()
+    ? manualPhones.split(/[\n,;]+/).filter(Boolean).length
+    : 0;
 
   return (
     <div className="grid gap-4 md:grid-cols-[1fr,420px]">
@@ -154,18 +209,26 @@ function SendTab() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <UsersIcon className="h-4 w-4" /> {t("sms.receivers")}
-            <Badge variant="secondary" className="ml-2">{t("sms.selectedCount", { count: selected.size })}</Badge>
+            <Badge variant="secondary" className="ml-2">
+              {t("sms.selectedCount", { count: selected.size })}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <div className="relative min-w-[180px] flex-1">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-8" placeholder={t("sms.searchPlaceholder")}
-                value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input
+                className="pl-8"
+                placeholder={t("sms.searchPlaceholder")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-             <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("sms.allStatus")}</SelectItem>
                 <SelectItem value="new">{t("sms.status.new")}</SelectItem>
@@ -201,20 +264,25 @@ function SendTab() {
                         checked={selected.has(c.id)}
                         onCheckedChange={(v) => {
                           const s = new Set(selected);
-                          if (v) s.add(c.id); else s.delete(c.id);
+                          if (v) s.add(c.id);
+                          else s.delete(c.id);
                           setSelected(s);
                         }}
                       />
                     </TableCell>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="font-mono text-xs">{c.phone}</TableCell>
-                    <TableCell><Badge variant="outline">{c.status}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{c.status}</Badge>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                    {t("sms.noResult")}
-                  </TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                      {t("sms.noResult")}
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -241,14 +309,19 @@ function SendTab() {
           <div>
             <Label className="text-xs">{t("sms.loadTemplate")}</Label>
             <Select value={pickTpl} onValueChange={applyTemplate}>
-              <SelectTrigger><SelectValue placeholder={t("sms.pickTemplate")} /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder={t("sms.pickTemplate")} />
+              </SelectTrigger>
               <SelectContent>
                 {templates.length === 0 && (
-                  <SelectItem value="__none" disabled>{t("sms.noTemplates")}</SelectItem>
+                  <SelectItem value="__none" disabled>
+                    {t("sms.noTemplates")}
+                  </SelectItem>
                 )}
                 {templates.map((tpl) => (
                   <SelectItem key={tpl.id} value={tpl.id}>
-                    {tpl.title}{tpl.is_shared ? t("sms.sharedTag") : ""}
+                    {tpl.title}
+                    {tpl.is_shared ? t("sms.sharedTag") : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -278,7 +351,8 @@ function SendTab() {
           </div>
 
           <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
-            {t("sms.senderNotice")}<br />
+            {t("sms.senderNotice")}
+            <br />
             {t("sms.lmsNotice")}
           </div>
 
@@ -315,16 +389,26 @@ function TemplatesTab() {
 
   async function save() {
     if (!user) return;
-    if (!form.title.trim() || !form.content.trim()) { toast.error(localizeError(t("sms.saveRequired"))); return; }
+    if (!form.title.trim() || !form.content.trim()) {
+      toast.error(localizeError(t("sms.saveRequired")));
+      return;
+    }
     if (editing) {
-      const { error } = await supabase.from("sms_templates")
+      const { error } = await supabase
+        .from("sms_templates")
         .update({ title: form.title, content: form.content, is_shared: form.is_shared })
         .eq("id", editing.id);
       if (error) return toast.error(localizeError(t("sms.editFailed", { msg: error.message })));
       toast.success(t("sms.edited"));
     } else {
-      const { error } = await supabase.from("sms_templates")
-        .insert({ user_id: user.id, title: form.title, content: form.content, is_shared: form.is_shared });
+      const { error } = await supabase
+        .from("sms_templates")
+        .insert({
+          user_id: user.id,
+          title: form.title,
+          content: form.content,
+          is_shared: form.is_shared,
+        });
       if (error) return toast.error(localizeError(t("sms.saveFailed", { msg: error.message })));
       toast.success(t("sms.saved"));
     }
@@ -343,20 +427,28 @@ function TemplatesTab() {
   const mine = items.filter((tpl) => tpl.user_id === user?.id);
   const shared = items.filter((tpl) => tpl.user_id !== user?.id && tpl.is_shared);
 
-
   return (
     <Card>
       <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-        <CardTitle className="text-base">{t("sms.templatesTitle", { count: items.length })}</CardTitle>
-        <Button size="sm" onClick={startNew}><Plus className="mr-1 h-4 w-4" />{t("sms.newTemplate")}</Button>
+        <CardTitle className="text-base">
+          {t("sms.templatesTitle", { count: items.length })}
+        </CardTitle>
+        <Button size="sm" onClick={startNew}>
+          <Plus className="mr-1 h-4 w-4" />
+          {t("sms.newTemplate")}
+        </Button>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <h4 className="mb-2 text-sm font-medium">{t("sms.myTemplates", { count: mine.length })}</h4>
+          <h4 className="mb-2 text-sm font-medium">
+            {t("sms.myTemplates", { count: mine.length })}
+          </h4>
           <TemplateList items={mine} onEdit={startEdit} onDelete={remove} editable />
         </div>
         <div>
-          <h4 className="mb-2 text-sm font-medium">{t("sms.sharedTemplates", { count: shared.length })}</h4>
+          <h4 className="mb-2 text-sm font-medium">
+            {t("sms.sharedTemplates", { count: shared.length })}
+          </h4>
           <TemplateList items={shared} onEdit={() => {}} onDelete={() => {}} editable={false} />
         </div>
       </CardContent>
@@ -370,7 +462,10 @@ function TemplatesTab() {
           <div className="space-y-3">
             <div>
               <Label>{t("sms.fieldTitle")}</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <Input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
             </div>
             <div>
               <Label>{t("sms.fieldContent")}</Label>
@@ -380,16 +475,24 @@ function TemplatesTab() {
                 className="h-40"
               />
               <div className="text-xs text-muted-foreground mt-1">
-                {t("sms.bytesInfo", { bytes: byteLength(form.content), type: byteLength(form.content) > 90 ? "LMS" : "SMS" })}
+                {t("sms.bytesInfo", {
+                  bytes: byteLength(form.content),
+                  type: byteLength(form.content) > 90 ? "LMS" : "SMS",
+                })}
               </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={form.is_shared} onCheckedChange={(v) => setForm({ ...form, is_shared: !!v })} />
+              <Checkbox
+                checked={form.is_shared}
+                onCheckedChange={(v) => setForm({ ...form, is_shared: !!v })}
+              />
               {t("sms.shareWithPeers")}
             </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t("sms.cancel")}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {t("sms.cancel")}
+            </Button>
             <Button onClick={save}>{t("sms.save")}</Button>
           </DialogFooter>
         </DialogContent>
@@ -399,7 +502,10 @@ function TemplatesTab() {
 }
 
 function TemplateList({
-  items, onEdit, onDelete, editable,
+  items,
+  onEdit,
+  onDelete,
+  editable,
 }: {
   items: Template[];
   onEdit: (tpl: Template) => void;
@@ -408,7 +514,9 @@ function TemplateList({
 }) {
   const { t } = useTranslation();
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4 text-center">{t("sms.emptyTemplates")}</p>;
+    return (
+      <p className="text-sm text-muted-foreground py-4 text-center">{t("sms.emptyTemplates")}</p>
+    );
   }
   return (
     <div className="grid gap-2 md:grid-cols-2">
@@ -417,22 +525,43 @@ function TemplateList({
           <div className="flex items-start justify-between gap-2">
             <div className="font-medium text-sm">{tpl.title}</div>
             <div className="flex gap-1">
-              {tpl.is_shared && <Badge variant="secondary" className="text-xs">{t("sms.sharedBadge")}</Badge>}
+              {tpl.is_shared && (
+                <Badge variant="secondary" className="text-xs">
+                  {t("sms.sharedBadge")}
+                </Badge>
+              )}
               {editable && (
                 <>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(tpl)} aria-label={t("common.edit")}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    onClick={() => onEdit(tpl)}
+                    aria-label={t("common.edit")}
+                  >
                     <Edit3 className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => onDelete(tpl.id)} aria-label={t("common.delete")}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-destructive"
+                    onClick={() => onDelete(tpl.id)}
+                    aria-label={t("common.delete")}
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </>
               )}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">{tpl.content}</p>
+          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">
+            {tpl.content}
+          </p>
           <div className="text-xs text-muted-foreground">
-            {t("sms.bytesInfo", { bytes: byteLength(tpl.content), type: byteLength(tpl.content) > 90 ? "LMS" : "SMS" })}
+            {t("sms.bytesInfo", {
+              bytes: byteLength(tpl.content),
+              type: byteLength(tpl.content) > 90 ? "LMS" : "SMS",
+            })}
           </div>
         </div>
       ))}
@@ -448,8 +577,9 @@ function HistoryTab() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [detail, setDetail] = useState<SmsLog | null>(null);
 
-  const load = () => { void refetch(); };
-
+  const load = () => {
+    void refetch();
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -467,24 +597,34 @@ function HistoryTab() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">{t("sms.historyTitle", { count: filtered.length })}</CardTitle>
+        <CardTitle className="text-base">
+          {t("sms.historyTitle", { count: filtered.length })}
+        </CardTitle>
       </CardHeader>
-        <CardContent className="px-3 sm:px-5">
+      <CardContent className="px-3 sm:px-5">
         <div className="flex flex-wrap gap-2 mb-3">
           <div className="relative min-w-[200px] flex-1">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-8" placeholder={t("sms.historySearch")}
-              value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input
+              className="pl-8"
+              placeholder={t("sms.historySearch")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-             <SelectTrigger className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("sms.historyAll")}</SelectItem>
               <SelectItem value="sent">{t("sms.historySent")}</SelectItem>
               <SelectItem value="failed">{t("sms.historyFailed")}</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={load} aria-busy={isFetching}>{t("sms.refresh")}</Button>
+          <Button variant="outline" size="sm" onClick={load} aria-busy={isFetching}>
+            {t("sms.refresh")}
+          </Button>
         </div>
 
         <div className="rounded border overflow-auto">
@@ -501,27 +641,41 @@ function HistoryTab() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t("sms.loading")}</TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t("sms.emptyHistory")}</TableCell></TableRow>
-              ) : filtered.map((l) => (
-                <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetail(l)}>
-                  <TableCell className="text-xs whitespace-nowrap">
-                    {format(new Date(l.sent_at), "MM-dd HH:mm")}
-                  </TableCell>
-                  <TableCell>{l.receiver_name || "-"}</TableCell>
-                  <TableCell className="font-mono text-xs">{l.receiver_phone}</TableCell>
-                  <TableCell><Badge variant="outline">{l.msg_type}</Badge></TableCell>
-                  <TableCell className="max-w-[280px] truncate text-xs">{l.message}</TableCell>
-                  <TableCell>
-                    {l.status === "sent" ? (
-                      <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">{t("sms.historySent")}</Badge>
-                    ) : (
-                      <Badge variant="destructive">{t("sms.historyFailed")}</Badge>
-                    )}
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    {t("sms.loading")}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    {t("sms.emptyHistory")}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((l) => (
+                  <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetail(l)}>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {format(new Date(l.sent_at), "MM-dd HH:mm")}
+                    </TableCell>
+                    <TableCell>{l.receiver_name || "-"}</TableCell>
+                    <TableCell className="font-mono text-xs">{l.receiver_phone}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{l.msg_type}</Badge>
+                    </TableCell>
+                    <TableCell className="max-w-[280px] truncate text-xs">{l.message}</TableCell>
+                    <TableCell>
+                      {l.status === "sent" ? (
+                        <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                          {t("sms.historySent")}
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">{t("sms.historyFailed")}</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
@@ -536,30 +690,53 @@ function HistoryTab() {
           {detail && (
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div><Label className="text-xs">{t("sms.receiver")}</Label><div>{detail.receiver_name || "-"}</div></div>
-                <div><Label className="text-xs">{t("sms.phone")}</Label><div className="font-mono">{detail.receiver_phone}</div></div>
-                <div><Label className="text-xs">{t("sms.type")}</Label><div>{detail.msg_type}</div></div>
-                <div><Label className="text-xs">{t("sms.statusLabel")}</Label><div>{detail.status}</div></div>
-                 <div className="sm:col-span-2"><Label className="text-xs">{t("sms.sentAt")}</Label>
-                  <div>{format(new Date(detail.sent_at), "yyyy-MM-dd HH:mm:ss")}</div></div>
+                <div>
+                  <Label className="text-xs">{t("sms.receiver")}</Label>
+                  <div>{detail.receiver_name || "-"}</div>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("sms.phone")}</Label>
+                  <div className="font-mono">{detail.receiver_phone}</div>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("sms.type")}</Label>
+                  <div>{detail.msg_type}</div>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("sms.statusLabel")}</Label>
+                  <div>{detail.status}</div>
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="text-xs">{t("sms.sentAt")}</Label>
+                  <div>{format(new Date(detail.sent_at), "yyyy-MM-dd HH:mm:ss")}</div>
+                </div>
                 {detail.title && (
-                   <div className="sm:col-span-2"><Label className="text-xs">{t("sms.fieldTitle")}</Label><div>{detail.title}</div></div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-xs">{t("sms.fieldTitle")}</Label>
+                    <div>{detail.title}</div>
+                  </div>
                 )}
               </div>
               <div>
                 <Label className="text-xs">{t("sms.content")}</Label>
-                <div className="rounded border p-2 bg-muted/30 whitespace-pre-wrap text-xs">{detail.message}</div>
+                <div className="rounded border p-2 bg-muted/30 whitespace-pre-wrap text-xs">
+                  {detail.message}
+                </div>
               </div>
               {detail.error_message && (
                 <div>
                   <Label className="text-xs text-destructive">{t("sms.error")}</Label>
-                  <div className="rounded border border-destructive/30 p-2 bg-destructive/10 text-xs">{detail.error_message}</div>
+                  <div className="rounded border border-destructive/30 p-2 bg-destructive/10 text-xs">
+                    {detail.error_message}
+                  </div>
                 </div>
               )}
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDetail(null)}>{t("sms.close")}</Button>
+            <Button variant="outline" onClick={() => setDetail(null)}>
+              {t("sms.close")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

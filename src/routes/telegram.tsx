@@ -30,7 +30,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -44,11 +43,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -109,7 +104,6 @@ function replyLockSecondsLeft(chat: Chat, myId: string | null | undefined, nowMs
   return left > 0 ? left : 0;
 }
 
-
 type Message = {
   id: string;
   telegram_chat_row_id: string;
@@ -132,7 +126,6 @@ type Message = {
   is_ai_generated?: boolean | null;
 };
 
-
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
 type TemplateMediaType = "none" | "image" | "document";
@@ -152,9 +145,15 @@ const TEMPLATE_SELECT =
   "id, title, content, shortcut, media_type, media_storage_path, media_file_name, media_mime, media_size";
 
 const STATUS_LABEL: Record<ChatStatus, string> = {
-  get new() { return uiCopy("ux.copy884009917a"); },
-  get in_progress() { return uiCopy("ux.copy9fdd13d4e6"); },
-  get done() { return uiCopy("ux.copy8d8680373c"); },
+  get new() {
+    return uiCopy("ux.copy884009917a");
+  },
+  get in_progress() {
+    return uiCopy("ux.copy9fdd13d4e6");
+  },
+  get done() {
+    return uiCopy("ux.copy8d8680373c");
+  },
 };
 
 const STATUS_DOT: Record<ChatStatus, string> = {
@@ -170,14 +169,16 @@ const STATUS_BADGE: Record<ChatStatus, string> = {
 };
 
 export const Route = createFileRoute("/telegram")({
-  head: () => ({ meta: [
-{ title: uiCopy("pages.telegram.title") },
-{ name: "description", content: uiCopy("pages.telegram.description") },
-{ property: "og:title", content: uiCopy("pages.telegram.title") },
-{ property: "og:description", content: uiCopy("pages.telegram.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.telegram.title") },
+      { name: "description", content: uiCopy("pages.telegram.description") },
+      { property: "og:title", content: uiCopy("pages.telegram.title") },
+      { property: "og:description", content: uiCopy("pages.telegram.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: TelegramPage,
 });
 
@@ -202,7 +203,6 @@ function TelegramPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [operatorFilter, setOperatorFilter] = useState<string>("all");
   const [showSettings, setShowSettings] = useState(false);
-
 
   // Fetch chats
   const chatsQuery = useQuery({
@@ -266,12 +266,12 @@ function TelegramPage() {
     };
   }, [qc]);
 
-
   const chats = chatsQuery.data ?? [];
 
   // Load display names for all assigned operators referenced by any chat
   const operatorIds = useMemo(
-    () => Array.from(new Set(chats.map((c) => c.assigned_operator_id).filter((x): x is string => !!x))),
+    () =>
+      Array.from(new Set(chats.map((c) => c.assigned_operator_id).filter((x): x is string => !!x))),
     [chats],
   );
   const operatorsQuery = useQuery({
@@ -317,7 +317,6 @@ function TelegramPage() {
     },
   });
 
-
   const counts = useMemo(() => {
     const c = { all: chats.length, new: 0, in_progress: 0, done: 0 };
     for (const ch of chats) c[ch.status] += 1;
@@ -346,15 +345,17 @@ function TelegramPage() {
     return list;
   }, [chats, filterTab, searchTerm, isAdmin, operatorFilter, operatorChatsQuery.data]);
 
-
-  const selected = filtered.find((c) => c.id === selectedId) ?? chats.find((c) => c.id === selectedId) ?? null;
+  const selected =
+    filtered.find((c) => c.id === selectedId) ?? chats.find((c) => c.id === selectedId) ?? null;
 
   return (
     <div className="flex h-[calc(100dvh-5.5rem)] min-h-[480px] flex-col gap-3 sm:h-[calc(100vh-100px)]">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <MessageCircle className="h-5 w-5" />
-          <h1 className="truncate text-base font-semibold sm:text-lg">{uiCopy("ux.copy33bdcb4f52")}</h1>
+          <h1 className="truncate text-base font-semibold sm:text-lg">
+            {uiCopy("ux.copy33bdcb4f52")}
+          </h1>
           <Badge variant="secondary">{chats.length}</Badge>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -375,16 +376,21 @@ function TelegramPage() {
           )}
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-              <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">{uiCopy("ux.copyd21fbc5395")}</span>
+              <Settings className="h-4 w-4 sm:mr-1" />{" "}
+              <span className="hidden sm:inline">{uiCopy("ux.copyd21fbc5395")}</span>
             </Button>
           )}
         </div>
       </div>
 
-
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-[340px_1fr]">
         {/* Left: chat list */}
-        <div className={cn("min-h-0 flex-col rounded-lg border bg-card", selectedId ? "hidden md:flex" : "flex")}>
+        <div
+          className={cn(
+            "min-h-0 flex-col rounded-lg border bg-card",
+            selectedId ? "hidden md:flex" : "flex",
+          )}
+        >
           <div className="border-b p-2">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -395,10 +401,15 @@ function TelegramPage() {
                 className="pl-8 h-9"
               />
             </div>
-            <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as typeof filterTab)} className="mt-2">
+            <Tabs
+              value={filterTab}
+              onValueChange={(v) => setFilterTab(v as typeof filterTab)}
+              className="mt-2"
+            >
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all" className="text-xs">
-                  {uiCopy("ux.copy934dd25ec5")} <span className="ml-1 opacity-60">{counts.all}</span>
+                  {uiCopy("ux.copy934dd25ec5")}{" "}
+                  <span className="ml-1 opacity-60">{counts.all}</span>
                 </TabsTrigger>
                 <TabsTrigger value="new" className="text-xs">
                   <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
@@ -430,96 +441,133 @@ function TelegramPage() {
                 {filtered.map((c) => {
                   const unreadCount = Math.max(0, Number(c.unread_count) || 0);
                   return (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedId(c.id)}
-                    className={cn(
-                      "flex w-full min-w-0 items-start gap-2 px-3 py-2.5 text-left transition hover:bg-accent/50",
-                      unreadCount > 0 && "bg-green-500/[0.04]",
-                      selectedId === c.id && "bg-accent",
-                    )}
-                  >
-                    <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                      {chatDisplayName(c).charAt(0).toUpperCase()}
-                      <span
-                        className={cn(
-                          "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-card",
-                          STATUS_DOT[c.status],
-                        )}
-                      />
-                      {unreadCount > 0 && (
-                        <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-xs font-bold leading-none text-white shadow-sm ring-2 ring-card">
-                          {unreadCount > 99 ? "99+" : unreadCount}
-                        </span>
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedId(c.id)}
+                      className={cn(
+                        "flex w-full min-w-0 items-start gap-2 px-3 py-2.5 text-left transition hover:bg-accent/50",
+                        unreadCount > 0 && "bg-green-500/[0.04]",
+                        selectedId === c.id && "bg-accent",
                       )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", unreadCount > 0 && "font-semibold text-foreground")}>{chatDisplayName(c)}</span>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          {unreadCount > 0 && (
-                            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1.5 text-xs font-bold leading-none text-white shadow-sm">
-                              {unreadCount > 99 ? "99+" : unreadCount}
+                    >
+                      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                        {chatDisplayName(c).charAt(0).toUpperCase()}
+                        <span
+                          className={cn(
+                            "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-card",
+                            STATUS_DOT[c.status],
+                          )}
+                        />
+                        {unreadCount > 0 && (
+                          <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-xs font-bold leading-none text-white shadow-sm ring-2 ring-card">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span
+                            className={cn(
+                              "min-w-0 flex-1 truncate text-sm font-medium",
+                              unreadCount > 0 && "font-semibold text-foreground",
+                            )}
+                          >
+                            {chatDisplayName(c)}
+                          </span>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            {unreadCount > 0 && (
+                              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1.5 text-xs font-bold leading-none text-white shadow-sm">
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                              </span>
+                            )}
+                            {c.last_message_at && (
+                              <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(c.last_message_at), {
+                                  addSuffix: false,
+                                  locale,
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex min-w-0 items-center gap-1.5 pr-1">
+                          <p
+                            className={cn(
+                              "min-w-0 flex-1 truncate text-xs",
+                              unreadCount > 0
+                                ? "font-medium text-foreground"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            {c.last_message_preview ?? "(no preview)"}
+                          </p>
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-1 flex-wrap">
+                          <Badge
+                            variant="outline"
+                            className={cn("h-4 gap-0.5 px-1 text-xs", STATUS_BADGE[c.status])}
+                          >
+                            {STATUS_LABEL[c.status]}
+                          </Badge>
+                          {c.needs_human && (
+                            <Badge
+                              variant="outline"
+                              title={c.needs_human_reason ?? undefined}
+                              className="h-4 gap-0.5 border-red-500/50 bg-red-500/15 px-1 text-xs font-semibold text-red-700 dark:text-red-300"
+                            >
+                              <AlertTriangle className="h-2.5 w-2.5" />{" "}
+                              {uiCopy("ux.copy63267b6ea4")}
+                            </Badge>
+                          )}
+                          {c.banned && (
+                            <Badge
+                              variant="outline"
+                              className="h-4 gap-0.5 border-red-600/50 bg-red-600/15 px-1 text-xs font-semibold text-red-700 dark:text-red-300"
+                            >
+                              {uiCopy("ux.copyb1ff426e0c")}
+                            </Badge>
+                          )}
+                          {c.is_blocked && (
+                            <Badge
+                              variant="outline"
+                              className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-xs text-red-700 dark:text-red-300"
+                            >
+                              {uiCopy("ux.copy495bd02a6f")}
+                            </Badge>
+                          )}
+                          {replyLockSecondsLeft(c, user?.id, nowMs) > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-xs text-amber-700 dark:text-amber-300"
+                            >
+                              {uiCopy("ux.copyaa3fa94efd")}
+                              {replyLockSecondsLeft(c, user?.id, nowMs)}
+                              {uiCopy("ux.copy0445c19584")}
+                            </Badge>
+                          )}
+
+                          {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
+                            <Badge
+                              variant="outline"
+                              className="h-4 gap-0.5 border-blue-500/30 bg-blue-500/10 px-1 text-xs text-blue-700 dark:text-blue-300"
+                            >
+                              {uiCopy("ux.copyd8ee08c181")}{" "}
+                              {operatorMap[c.assigned_operator_id]?.display_name ??
+                                uiCopy("ux.copycee097c09f")}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              {uiCopy("ux.copyd1639782f6")}
                             </span>
                           )}
-                          {c.last_message_at && (
+                          {c.telegram_username && (
                             <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(c.last_message_at), { addSuffix: false, locale })}
+                              @{c.telegram_username}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex min-w-0 items-center gap-1.5 pr-1">
-                        <p className={cn("min-w-0 flex-1 truncate text-xs", unreadCount > 0 ? "font-medium text-foreground" : "text-muted-foreground")}>
-                          {c.last_message_preview ?? "(no preview)"}
-                        </p>
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-1 flex-wrap">
-                        <Badge variant="outline" className={cn("h-4 gap-0.5 px-1 text-xs", STATUS_BADGE[c.status])}>
-                          {STATUS_LABEL[c.status]}
-                        </Badge>
-                        {c.needs_human && (
-                          <Badge
-                            variant="outline"
-                            title={c.needs_human_reason ?? undefined}
-                            className="h-4 gap-0.5 border-red-500/50 bg-red-500/15 px-1 text-xs font-semibold text-red-700 dark:text-red-300"
-                          >
-                            <AlertTriangle className="h-2.5 w-2.5" /> {uiCopy("ux.copy63267b6ea4")}
-                          </Badge>
-                        )}
-                        {c.banned && (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-red-600/50 bg-red-600/15 px-1 text-xs font-semibold text-red-700 dark:text-red-300">
-                            {uiCopy("ux.copyb1ff426e0c")}
-                          </Badge>
-                        )}
-                        {c.is_blocked && (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-xs text-red-700 dark:text-red-300">
-                            {uiCopy("ux.copy495bd02a6f")}
-                          </Badge>
-                        )}
-                        {replyLockSecondsLeft(c, user?.id, nowMs) > 0 && (
-                          <Badge variant="outline" className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-xs text-amber-700 dark:text-amber-300">
-                            {uiCopy("ux.copyaa3fa94efd")}{replyLockSecondsLeft(c, user?.id, nowMs)}{uiCopy("ux.copy0445c19584")}
-                          </Badge>
-                        )}
-
-
-                        {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
-                          <Badge
-                            variant="outline"
-                            className="h-4 gap-0.5 border-blue-500/30 bg-blue-500/10 px-1 text-xs text-blue-700 dark:text-blue-300"
-                          >
-                            {uiCopy("ux.copyd8ee08c181")} {operatorMap[c.assigned_operator_id]?.display_name ?? uiCopy("ux.copycee097c09f")}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">{uiCopy("ux.copyd1639782f6")}</span>
-                        )}
-                        {c.telegram_username && (
-                          <span className="text-xs text-muted-foreground">@{c.telegram_username}</span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
+                    </button>
                   );
                 })}
               </div>
@@ -528,7 +576,12 @@ function TelegramPage() {
         </div>
 
         {/* Right: conversation */}
-        <div className={cn("min-h-0 flex-col rounded-lg border bg-card", selectedId ? "flex" : "hidden md:flex")}>
+        <div
+          className={cn(
+            "min-h-0 flex-col rounded-lg border bg-card",
+            selectedId ? "flex" : "hidden md:flex",
+          )}
+        >
           {selected ? (
             <>
               <div className="border-b p-2 md:hidden">
@@ -597,13 +650,15 @@ function ConversationPane({ chat }: { chat: Chat }) {
         .limit(500);
       if (error) throw error;
       return ((data ?? []) as Message[]).reverse();
-
     },
   });
 
   // Load profiles for sent_by
   const senderIds = useMemo(
-    () => Array.from(new Set((messagesQuery.data ?? []).map((m) => m.sent_by).filter((x): x is string => !!x))),
+    () =>
+      Array.from(
+        new Set((messagesQuery.data ?? []).map((m) => m.sent_by).filter((x): x is string => !!x)),
+      ),
     [messagesQuery.data],
   );
   const profilesQuery = useQuery({
@@ -685,7 +740,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
-    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy7851126014"))),
+    onError: (e) =>
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy7851126014"))),
   });
 
   const editMut = useMutation({
@@ -696,7 +752,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
       setEditingText("");
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
     },
-    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copydb8be469b3"))),
+    onError: (e) =>
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copydb8be469b3"))),
   });
 
   const uploadAndSend = async (file: File) => {
@@ -759,7 +816,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
       toast.success(banned ? uiCopy("ux.copy4be81ba004") : uiCopy("ux.copy1bc5eca1e4"));
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
-    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy6b16fe43fd"))),
+    onError: (e) =>
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy6b16fe43fd"))),
   });
 
   const statusMut = useMutation({
@@ -768,7 +826,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
     },
-    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copydc766aa667"))),
+    onError: (e) =>
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copydc766aa667"))),
   });
 
   const onSubmit = () => {
@@ -779,7 +838,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
 
   const profileMap = profilesQuery.data ?? {};
   const lockHolderName =
-    (chat.reply_lock_by && profileMap[chat.reply_lock_by]?.display_name) || uiCopy("ux.copyde33f64f55");
+    (chat.reply_lock_by && profileMap[chat.reply_lock_by]?.display_name) ||
+    uiCopy("ux.copyde33f64f55");
   const messagesById = useMemo(() => {
     const map = new Map<string, Message>();
     for (const m of messagesQuery.data ?? []) map.set(m.id, m);
@@ -858,16 +918,25 @@ function ConversationPane({ chat }: { chat: Chat }) {
             {chat.telegram_username && (
               <span className="text-xs text-muted-foreground">@{chat.telegram_username}</span>
             )}
-            <Badge variant="outline" className={cn("h-5 px-1.5 text-xs", STATUS_BADGE[chat.status])}>
+            <Badge
+              variant="outline"
+              className={cn("h-5 px-1.5 text-xs", STATUS_BADGE[chat.status])}
+            >
               {STATUS_LABEL[chat.status]}
             </Badge>
             {chat.banned && (
-              <Badge variant="outline" className="h-5 px-1.5 text-xs border-red-600/50 bg-red-600/15 text-red-700 dark:text-red-300">
+              <Badge
+                variant="outline"
+                className="h-5 px-1.5 text-xs border-red-600/50 bg-red-600/15 text-red-700 dark:text-red-300"
+              >
                 {uiCopy("ux.copyb1ff426e0c")}
               </Badge>
             )}
             {chat.is_blocked && (
-              <Badge variant="outline" className="h-5 px-1.5 text-xs border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300">
+              <Badge
+                variant="outline"
+                className="h-5 px-1.5 text-xs border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300"
+              >
                 {uiCopy("ux.copy495bd02a6f")}
               </Badge>
             )}
@@ -884,7 +953,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
             )}
             {(() => {
               const msgs = messagesQuery.data ?? [];
-              const lastOut = [...msgs].reverse().find((mm) => mm.direction === "out" && mm.sent_by);
+              const lastOut = [...msgs]
+                .reverse()
+                .find((mm) => mm.direction === "out" && mm.sent_by);
               const name = lastOut?.sent_by ? profileMap[lastOut.sent_by]?.display_name : null;
               if (!name) return null;
               return (
@@ -955,7 +1026,6 @@ function ConversationPane({ chat }: { chat: Chat }) {
 
       <ParticipationHistory messages={messagesQuery.data ?? []} profileMap={profileMap} />
 
-
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
         {messagesQuery.isLoading ? (
           <div className="text-sm text-muted-foreground">{uiCopy("ux.copyc21bd66dd4")}</div>
@@ -973,16 +1043,24 @@ function ConversationPane({ chat }: { chat: Chat }) {
             const senderLabel = isOut
               ? m.is_ai_generated
                 ? uiCopy("ux.copye11da71b5b", { value0: timeLabel })
-                : uiCopy("ux.copyc6d0857541", { value0: sender?.display_name ?? uiCopy("ux.copycee097c09f"), value1: isMine ? uiCopy("ux.copy7c87b7cc1a") : "", value2: timeLabel })
+                : uiCopy("ux.copyc6d0857541", {
+                    value0: sender?.display_name ?? uiCopy("ux.copycee097c09f"),
+                    value1: isMine ? uiCopy("ux.copy7c87b7cc1a") : "",
+                    value2: timeLabel,
+                  })
               : uiCopy("ux.copyd1b9a3b288", { value0: timeLabel });
             const isEditing = editingId === m.id;
             const editable =
               isMine &&
               !!m.telegram_message_id &&
-              (m.message_type === "text" || m.message_type === "photo" || m.message_type === "document");
+              (m.message_type === "text" ||
+                m.message_type === "photo" ||
+                m.message_type === "document");
             return (
               <div key={m.id} className={cn("group flex", isOut ? "justify-end" : "justify-start")}>
-                <div className={cn("max-w-[88%] sm:max-w-[75%]", isOut && "flex flex-col items-end")}>
+                <div
+                  className={cn("max-w-[88%] sm:max-w-[75%]", isOut && "flex flex-col items-end")}
+                >
                   <div
                     className={cn(
                       "mb-0.5 flex items-center gap-1.5 text-xs font-medium",
@@ -990,7 +1068,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
                     )}
                   >
                     <span>{senderLabel}</span>
-                    {m.edited_at && <span className="italic opacity-70">{uiCopy("ux.copy8e7ea3f3b8")}</span>}
+                    {m.edited_at && (
+                      <span className="italic opacity-70">{uiCopy("ux.copy8e7ea3f3b8")}</span>
+                    )}
                     {!isEditing && !chat.is_blocked && (
                       <button
                         type="button"
@@ -1061,7 +1141,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
                             }}
                             disabled={editMut.isPending}
                           >
-                            {editMut.isPending ? uiCopy("ux.copy44bcbeea77") : uiCopy("ux.copy1f1712acff")}
+                            {editMut.isPending
+                              ? uiCopy("ux.copy44bcbeea77")
+                              : uiCopy("ux.copy1f1712acff")}
                           </Button>
                         </div>
                       </div>
@@ -1081,9 +1163,6 @@ function ConversationPane({ chat }: { chat: Chat }) {
                 </div>
               </div>
             );
-
-
-
           })
         )}
       </div>
@@ -1126,144 +1205,94 @@ function ConversationPane({ chat }: { chat: Chat }) {
             </Button>
           </div>
           {!(customerQuery.data?.phone || chat.phone) && (
-            <div className="text-xs text-muted-foreground">
-              {uiCopy("ux.copy64fe8ca0f0")}
-            </div>
+            <div className="text-xs text-muted-foreground">{uiCopy("ux.copy64fe8ca0f0")}</div>
           )}
         </div>
       ) : (
-      <div className="border-t p-3 space-y-2">
-        {lockSecondsLeft > 0 && (
-          <div className="flex items-center gap-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
-            🔒 {lockHolderName} {uiCopy("ux.copyb222714d61")} {String(Math.floor(lockSecondsLeft / 60)).padStart(2, "0")}:
-            {String(lockSecondsLeft % 60).padStart(2, "0")}
-          </div>
-        )}
-        {replyTo && (
-          <div className="flex items-start gap-2 rounded border-l-2 border-primary bg-primary/5 px-2 py-1.5 text-xs">
-            <Reply className="mt-0.5 h-3.5 w-3.5 text-primary shrink-0" />
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-primary">
-                {replyTo.direction === "out"
-                  ? uiCopy("ux.copy858d7ba806", { value0: (replyTo.sent_by && profileMap[replyTo.sent_by]?.display_name) || uiCopy("ux.copycee097c09f") })
-                  : uiCopy("ux.copy28768b393d")}
-              </div>
-              <div className="line-clamp-2 text-muted-foreground whitespace-pre-wrap break-words">
-                {quotedSnippet(replyTo)}
-              </div>
+        <div className="border-t p-3 space-y-2">
+          {lockSecondsLeft > 0 && (
+            <div className="flex items-center gap-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
+              🔒 {lockHolderName} {uiCopy("ux.copyb222714d61")}{" "}
+              {String(Math.floor(lockSecondsLeft / 60)).padStart(2, "0")}:
+              {String(lockSecondsLeft % 60).padStart(2, "0")}
             </div>
-            <button
-              type="button"
-              onClick={() => setReplyTo(null)}
-              className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted"
-              title={uiCopy("ux.copy7e9ffb5351")}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <Popover open={templatesOpen} onOpenChange={setTemplatesOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8">
-                <Zap className="mr-1 h-3.5 w-3.5" />
-                {uiCopy("ux.copy6be533674d")}
-                {templatesQuery.data && templatesQuery.data.length > 0 && (
-                  <span className="ml-1 opacity-60">({templatesQuery.data.length})</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-80 p-0">
-              <div className="flex items-center justify-between border-b px-3 py-2">
-                <span className="text-xs font-medium">{uiCopy("ux.copybc4b2107e6")}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => {
-                    setTemplatesOpen(false);
-                    setShowTemplatesManager(true);
-                  }}
-                >
-                  <Pencil className="mr-1 h-3 w-3" /> {uiCopy("ux.copyc29fba5a7c")}
+          )}
+          {replyTo && (
+            <div className="flex items-start gap-2 rounded border-l-2 border-primary bg-primary/5 px-2 py-1.5 text-xs">
+              <Reply className="mt-0.5 h-3.5 w-3.5 text-primary shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-primary">
+                  {replyTo.direction === "out"
+                    ? uiCopy("ux.copy858d7ba806", {
+                        value0:
+                          (replyTo.sent_by && profileMap[replyTo.sent_by]?.display_name) ||
+                          uiCopy("ux.copycee097c09f"),
+                      })
+                    : uiCopy("ux.copy28768b393d")}
+                </div>
+                <div className="line-clamp-2 text-muted-foreground whitespace-pre-wrap break-words">
+                  {quotedSnippet(replyTo)}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted"
+                title={uiCopy("ux.copy7e9ffb5351")}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <Popover open={templatesOpen} onOpenChange={setTemplatesOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8">
+                  <Zap className="mr-1 h-3.5 w-3.5" />
+                  {uiCopy("ux.copy6be533674d")}
+                  {templatesQuery.data && templatesQuery.data.length > 0 && (
+                    <span className="ml-1 opacity-60">({templatesQuery.data.length})</span>
+                  )}
                 </Button>
-              </div>
-              <div className="max-h-72 overflow-y-auto">
-                {templatesQuery.isLoading ? (
-                  <div className="p-3 text-xs text-muted-foreground">{uiCopy("ux.copyc21bd66dd4")}</div>
-                ) : (templatesQuery.data ?? []).length === 0 ? (
-                  <div className="p-4 text-center text-xs text-muted-foreground">
-                    {uiCopy("ux.copy0e447a2940")}
-                    <br />
-                    {uiCopy("ux.copy067ad4588e")}
-                  </div>
-                ) : (
-                  <ul className="divide-y">
-                    {(templatesQuery.data ?? []).map((t) => (
-                      <li key={t.id}>
-                        <button
-                          onClick={() => insertTemplate(t)}
-                          className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-accent/50"
-                        >
-                          <TemplateThumb t={t} />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-medium truncate">{t.title}</span>
-                              {t.media_type !== "none" && (
-                                <span className="rounded bg-primary/10 px-1 py-0.5 text-xs text-primary">
-                                  {t.media_type === "image" ? "🖼️" : "📎"}
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap break-words">
-                              {t.content}
-                            </div>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div className="relative flex items-end gap-2">
-          {slashOpen && (
-            <div className="absolute bottom-full left-0 right-14 mb-1 z-20 rounded-md border bg-popover shadow-lg">
-              <div className="border-b px-3 py-1.5 text-xs text-muted-foreground">
-                {uiCopy("ux.copy769e9ced62")} {slashQuery ? `· "/${slashQuery}"` : ""} {uiCopy("ux.copyd9c9120f66")}
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                {slashMatches.length === 0 ? (
-                  <div className="p-3 text-center text-xs text-muted-foreground">{uiCopy("ux.copy13e7e676ca")}</div>
-                ) : (
-                  <ul>
-                    {slashMatches.map((t, idx) => (
-                      <li key={t.id}>
-                        <button
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            applySlashTemplate(t);
-                          }}
-                          onMouseEnter={() => setSlashIndex(idx)}
-                          className={cn(
-                            "block w-full px-3 py-2 text-left text-xs",
-                            idx === slashIndex ? "bg-accent" : "hover:bg-accent/50",
-                          )}
-                        >
-                          <div className="flex items-start gap-2">
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-80 p-0">
+                <div className="flex items-center justify-between border-b px-3 py-2">
+                  <span className="text-xs font-medium">{uiCopy("ux.copybc4b2107e6")}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => {
+                      setTemplatesOpen(false);
+                      setShowTemplatesManager(true);
+                    }}
+                  >
+                    <Pencil className="mr-1 h-3 w-3" /> {uiCopy("ux.copyc29fba5a7c")}
+                  </Button>
+                </div>
+                <div className="max-h-72 overflow-y-auto">
+                  {templatesQuery.isLoading ? (
+                    <div className="p-3 text-xs text-muted-foreground">
+                      {uiCopy("ux.copyc21bd66dd4")}
+                    </div>
+                  ) : (templatesQuery.data ?? []).length === 0 ? (
+                    <div className="p-4 text-center text-xs text-muted-foreground">
+                      {uiCopy("ux.copy0e447a2940")}
+                      <br />
+                      {uiCopy("ux.copy067ad4588e")}
+                    </div>
+                  ) : (
+                    <ul className="divide-y">
+                      {(templatesQuery.data ?? []).map((t) => (
+                        <li key={t.id}>
+                          <button
+                            onClick={() => insertTemplate(t)}
+                            className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-accent/50"
+                          >
                             <TemplateThumb t={t} />
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                {t.shortcut && (
-                                  <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
-                                    /{t.shortcut}
-                                  </span>
-                                )}
-                                <span className="font-medium">{t.title}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-medium truncate">{t.title}</span>
                                 {t.media_type !== "none" && (
                                   <span className="rounded bg-primary/10 px-1 py-0.5 text-xs text-primary">
                                     {t.media_type === "image" ? "🖼️" : "📎"}
@@ -1274,136 +1303,199 @@ function ConversationPane({ chat }: { chat: Chat }) {
                                 {t.content}
                               </div>
                             </div>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
-          {chat.ai_suggestion && (
-            <div className="mb-2 rounded-lg border border-violet-500/40 bg-violet-500/10 p-2.5">
-              <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
-                <Sparkles className="h-3 w-3" /> {uiCopy("ux.copyac628bb42d")}
-                {typeof chat.ai_suggestion_confidence === "number" && (
-                  <span className="font-normal opacity-70">
-                    {uiCopy("ux.copy1bff70f889")} {Math.round(chat.ai_suggestion_confidence * 100)}%)
-                  </span>
-                )}
-              </div>
-              <p className="whitespace-pre-wrap break-words text-xs text-foreground">
-                {chat.ai_suggestion}
-              </p>
-              <div className="mt-2 flex gap-1.5">
-                <Button
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  onClick={() => {
-                    setText(chat.ai_suggestion ?? "");
-                    setTimeout(() => textareaRef.current?.focus(), 0);
-                    void dismissSuggestionFn({ data: { chatRowId: chat.id } })
-                      .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
-                      .catch(() => {});
-                  }}
-                >
-                  {uiCopy("ux.copye81e478217")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 px-2 text-xs"
-                  onClick={() =>
-                    void dismissSuggestionFn({ data: { chatRowId: chat.id } })
-                      .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
-                      .catch(() => {})
-                  }
-                >
-                  {uiCopy("ux.copy18f7ca9774")}
-                </Button>
-              </div>
-            </div>
-          )}
-          <Textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              if (e.target.value.trim()) pingTyping();
-            }}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
-            onKeyDown={(e) => {
-              if (slashOpen && slashMatches.length > 0) {
-                if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  setSlashIndex((i) => (i + 1) % slashMatches.length);
-                  return;
-                }
-                if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  setSlashIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
-                  return;
+          <div className="relative flex items-end gap-2">
+            {slashOpen && (
+              <div className="absolute bottom-full left-0 right-14 mb-1 z-20 rounded-md border bg-popover shadow-lg">
+                <div className="border-b px-3 py-1.5 text-xs text-muted-foreground">
+                  {uiCopy("ux.copy769e9ced62")} {slashQuery ? `· "/${slashQuery}"` : ""}{" "}
+                  {uiCopy("ux.copyd9c9120f66")}
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {slashMatches.length === 0 ? (
+                    <div className="p-3 text-center text-xs text-muted-foreground">
+                      {uiCopy("ux.copy13e7e676ca")}
+                    </div>
+                  ) : (
+                    <ul>
+                      {slashMatches.map((t, idx) => (
+                        <li key={t.id}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              applySlashTemplate(t);
+                            }}
+                            onMouseEnter={() => setSlashIndex(idx)}
+                            className={cn(
+                              "block w-full px-3 py-2 text-left text-xs",
+                              idx === slashIndex ? "bg-accent" : "hover:bg-accent/50",
+                            )}
+                          >
+                            <div className="flex items-start gap-2">
+                              <TemplateThumb t={t} />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  {t.shortcut && (
+                                    <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
+                                      /{t.shortcut}
+                                    </span>
+                                  )}
+                                  <span className="font-medium">{t.title}</span>
+                                  {t.media_type !== "none" && (
+                                    <span className="rounded bg-primary/10 px-1 py-0.5 text-xs text-primary">
+                                      {t.media_type === "image" ? "🖼️" : "📎"}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap break-words">
+                                  {t.content}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+            {chat.ai_suggestion && (
+              <div className="mb-2 rounded-lg border border-violet-500/40 bg-violet-500/10 p-2.5">
+                <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+                  <Sparkles className="h-3 w-3" /> {uiCopy("ux.copyac628bb42d")}
+                  {typeof chat.ai_suggestion_confidence === "number" && (
+                    <span className="font-normal opacity-70">
+                      {uiCopy("ux.copy1bff70f889")}{" "}
+                      {Math.round(chat.ai_suggestion_confidence * 100)}%)
+                    </span>
+                  )}
+                </div>
+                <p className="whitespace-pre-wrap break-words text-xs text-foreground">
+                  {chat.ai_suggestion}
+                </p>
+                <div className="mt-2 flex gap-1.5">
+                  <Button
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => {
+                      setText(chat.ai_suggestion ?? "");
+                      setTimeout(() => textareaRef.current?.focus(), 0);
+                      void dismissSuggestionFn({ data: { chatRowId: chat.id } })
+                        .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
+                        .catch(() => {});
+                    }}
+                  >
+                    {uiCopy("ux.copye81e478217")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs"
+                    onClick={() =>
+                      void dismissSuggestionFn({ data: { chatRowId: chat.id } })
+                        .then(() => qc.invalidateQueries({ queryKey: ["telegram-chats"] }))
+                        .catch(() => {})
+                    }
+                  >
+                    {uiCopy("ux.copy18f7ca9774")}
+                  </Button>
+                </div>
+              </div>
+            )}
+            <Textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                if (e.target.value.trim()) pingTyping();
+              }}
+              onKeyDown={(e) => {
+                if (slashOpen && slashMatches.length > 0) {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setSlashIndex((i) => (i + 1) % slashMatches.length);
+                    return;
+                  }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setSlashIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
+                    return;
+                  }
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    applySlashTemplate(slashMatches[slashIndex]);
+                    return;
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setText("");
+                    return;
+                  }
+                  if (e.key === "Tab") {
+                    e.preventDefault();
+                    applySlashTemplate(slashMatches[slashIndex]);
+                    return;
+                  }
                 }
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  applySlashTemplate(slashMatches[slashIndex]);
-                  return;
+                  onSubmit();
                 }
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  setText("");
-                  return;
-                }
-                if (e.key === "Tab") {
-                  e.preventDefault();
-                  applySlashTemplate(slashMatches[slashIndex]);
-                  return;
-                }
+              }}
+              placeholder={
+                lockSecondsLeft > 0
+                  ? uiCopy("ux.copy02f533eafc", { value0: lockHolderName, value1: lockSecondsLeft })
+                  : uiCopy("ux.copy0d96bfc8d0")
               }
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                onSubmit();
-              }
-            }}
-            placeholder={
-              lockSecondsLeft > 0
-                ? uiCopy("ux.copy02f533eafc", { value0: lockHolderName, value1: lockSecondsLeft })
-                : uiCopy("ux.copy0d96bfc8d0")
-            }
-            rows={2}
-            className="resize-none"
-            disabled={sendMut.isPending || lockSecondsLeft > 0}
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept="image/*,application/pdf,video/*,audio/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) uploadAndSend(f);
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 shrink-0"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || sendMut.isPending || lockSecondsLeft > 0}
-            title={uiCopy("ux.copy69c33954b8")}
-          >
-            <Paperclip className="h-4 w-4" />
-          </Button>
-          <Button onClick={onSubmit} disabled={sendMut.isPending || !text.trim() || isUploading || lockSecondsLeft > 0} size="icon" className="h-10 w-10">
-            <Send className="h-4 w-4" />
-          </Button>
+              rows={2}
+              className="resize-none"
+              disabled={sendMut.isPending || lockSecondsLeft > 0}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*,application/pdf,video/*,audio/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) uploadAndSend(f);
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || sendMut.isPending || lockSecondsLeft > 0}
+              title={uiCopy("ux.copy69c33954b8")}
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={onSubmit}
+              disabled={sendMut.isPending || !text.trim() || isUploading || lockSecondsLeft > 0}
+              size="icon"
+              className="h-10 w-10"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          {isUploading && (
+            <div className="text-xs text-muted-foreground">{uiCopy("ux.copy1e5a8213b8")}</div>
+          )}
         </div>
-        {isUploading && (
-          <div className="text-xs text-muted-foreground">{uiCopy("ux.copy1e5a8213b8")}</div>
-        )}
-      </div>
       )}
 
       {showLinkDialog && (
@@ -1532,7 +1624,6 @@ function ParticipationHistory({
 }
 
 function useSignedMediaUrl(path: string | null) {
-
   return useQuery({
     queryKey: ["telegram-media-url", path],
     enabled: !!path,
@@ -1599,7 +1690,9 @@ function MediaTemplateConfirmDialog({
                   className="mx-auto max-h-64 w-auto max-w-full rounded"
                 />
               ) : (
-                <div className="p-6 text-center text-xs text-muted-foreground">{uiCopy("ux.copy98a4eaaa8f")}</div>
+                <div className="p-6 text-center text-xs text-muted-foreground">
+                  {uiCopy("ux.copy98a4eaaa8f")}
+                </div>
               )
             ) : (
               <div className="flex items-center gap-2 p-2 text-sm">
@@ -1631,7 +1724,9 @@ function MediaTemplateConfirmDialog({
               try {
                 await onSend(caption);
               } catch (e) {
-                toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy7851126014")));
+                toast.error(
+                  localizeError(e instanceof Error ? e.message : uiCopy("ux.copy7851126014")),
+                );
               } finally {
                 setSending(false);
               }
@@ -1648,9 +1743,14 @@ function MediaTemplateConfirmDialog({
 
 function quotedSnippet(m: Message): string {
   const kind = m.message_type ?? "text";
-  if (kind === "photo") return uiCopy("ux.copyf234e8c392", { value0: m.caption ? ` · ${m.caption}` : "" });
-  if (kind === "document") return uiCopy("ux.copy4aed61d8fa", { value0: m.media_file_name ?? uiCopy("ux.copy68b8eecb19") });
-  if (kind === "video") return uiCopy("ux.copy950c54b92c", { value0: m.caption ? ` · ${m.caption}` : "" });
+  if (kind === "photo")
+    return uiCopy("ux.copyf234e8c392", { value0: m.caption ? ` · ${m.caption}` : "" });
+  if (kind === "document")
+    return uiCopy("ux.copy4aed61d8fa", {
+      value0: m.media_file_name ?? uiCopy("ux.copy68b8eecb19"),
+    });
+  if (kind === "video")
+    return uiCopy("ux.copy950c54b92c", { value0: m.caption ? ` · ${m.caption}` : "" });
   if (kind === "voice" || kind === "audio") return uiCopy("ux.copy7dac1c49a3");
   if (kind === "sticker") return uiCopy("ux.copyd3a8e31b75");
   if (kind === "contact") return m.text || uiCopy("ux.copyfe90ac7b72");
@@ -1688,9 +1788,7 @@ function QuotedReplyPreview({
     <div
       className={cn(
         "mb-1.5 rounded border-l-2 px-2 py-1 text-xs",
-        isOut
-          ? "border-primary-foreground/70 bg-black/10"
-          : "border-primary/50 bg-black/5",
+        isOut ? "border-primary-foreground/70 bg-black/10" : "border-primary/50 bg-black/5",
       )}
     >
       <div className="font-semibold opacity-90">{who}</div>
@@ -1699,13 +1797,7 @@ function QuotedReplyPreview({
   );
 }
 
-function MessageBody({
-  m,
-  onPhotoClick,
-}: {
-  m: Message;
-  onPhotoClick?: (url: string) => void;
-}) {
+function MessageBody({ m, onPhotoClick }: { m: Message; onPhotoClick?: (url: string) => void }) {
   useTranslation();
   const kind = m.message_type ?? "text";
   const mediaQ = useSignedMediaUrl(m.media_storage_path);
@@ -1750,7 +1842,6 @@ function MessageBody({
     );
   }
 
-
   if (kind === "video") {
     return (
       <div>
@@ -1790,13 +1881,14 @@ function MessageBody({
         }}
       >
         📎 <span className="break-all">{m.media_file_name ?? "File"}</span>
-        {m.media_size ? <span className="opacity-70 text-xs">({humanSize(m.media_size)})</span> : null}
+        {m.media_size ? (
+          <span className="opacity-70 text-xs">({humanSize(m.media_size)})</span>
+        ) : null}
       </a>
       {captionEl}
     </div>
   );
 }
-
 
 function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
   useTranslation();
@@ -1877,7 +1969,8 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       resetForm();
       qc.invalidateQueries({ queryKey: ["telegram-templates", user?.id] });
     },
-    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
+    onError: (e) =>
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
   });
 
   const deleteMut = useMutation({
@@ -1890,7 +1983,8 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       qc.invalidateQueries({ queryKey: ["telegram-templates", user?.id] });
       resetForm();
     },
-    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
+    onError: (e) =>
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
   });
 
   const startEdit = (t: Template) => {
@@ -1936,14 +2030,18 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
         <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
           <div className="min-h-0">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copy2861047333")}</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {uiCopy("ux.copy2861047333")}
+              </span>
               <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={resetForm}>
                 <Plus className="mr-1 h-3 w-3" /> {uiCopy("ux.copyeb1dda51dd")}
               </Button>
             </div>
             <div className="max-h-80 overflow-y-auto rounded border">
               {templatesQuery.isLoading ? (
-                <div className="p-3 text-xs text-muted-foreground">{uiCopy("ux.copyc21bd66dd4")}</div>
+                <div className="p-3 text-xs text-muted-foreground">
+                  {uiCopy("ux.copyc21bd66dd4")}
+                </div>
               ) : (templatesQuery.data ?? []).length === 0 ? (
                 <div className="p-4 text-center text-xs text-muted-foreground">
                   {uiCopy("ux.copy0e447a2940")}
@@ -1958,10 +2056,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                         editing?.id === t.id && "bg-accent/60",
                       )}
                     >
-                      <button
-                        onClick={() => startEdit(t)}
-                        className="min-w-0 flex-1 text-left"
-                      >
+                      <button onClick={() => startEdit(t)} className="min-w-0 flex-1 text-left">
                         <div className="flex items-center gap-1.5">
                           {t.shortcut && (
                             <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
@@ -1988,7 +2083,8 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                           variant="ghost"
                           className="h-7 w-7 text-destructive hover:text-destructive"
                           onClick={() => {
-                            if (confirm(uiCopy("ux.copy0663e3146a", { value0: t.title }))) deleteMut.mutate(t.id);
+                            if (confirm(uiCopy("ux.copy0663e3146a", { value0: t.title })))
+                              deleteMut.mutate(t.id);
                           }}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -2007,7 +2103,9 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
             </div>
             <div className="space-y-2">
               <div>
-                <label className="text-xs text-muted-foreground">{uiCopy("ux.copye78e385761")}</label>
+                <label className="text-xs text-muted-foreground">
+                  {uiCopy("ux.copye78e385761")}
+                </label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -2030,7 +2128,9 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">{uiCopy("ux.copy3d9477b42c")}</label>
+                <label className="text-xs text-muted-foreground">
+                  {uiCopy("ux.copy3d9477b42c")}
+                </label>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -2071,7 +2171,9 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                   )}
                 </div>
                 {uploadingMedia && (
-                  <div className="mt-1 text-xs text-muted-foreground">{uiCopy("ux.copy1e5a8213b8")}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {uiCopy("ux.copy1e5a8213b8")}
+                  </div>
                 )}
                 {mediaStoragePath && (
                   <div className="mt-2 flex items-center gap-2 rounded border bg-muted/30 p-2">
@@ -2103,9 +2205,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                   size="sm"
                   onClick={() => saveMut.mutate()}
                   disabled={
-                    saveMut.isPending ||
-                    !title.trim() ||
-                    (mediaType === "none" && !content.trim())
+                    saveMut.isPending || !title.trim() || (mediaType === "none" && !content.trim())
                   }
                 >
                   {editing ? uiCopy("ux.copye1407b5115") : uiCopy("ux.copy5794299536")}
@@ -2124,7 +2224,6 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-
 function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void }) {
   useTranslation();
   const qc = useQueryClient();
@@ -2137,14 +2236,14 @@ function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void
   });
 
   const linkMut = useMutation({
-    mutationFn: async (customerId: string) =>
-      linkFn({ data: { chatRowId: chat.id, customerId } }),
+    mutationFn: async (customerId: string) => linkFn({ data: { chatRowId: chat.id, customerId } }),
     onSuccess: () => {
       toast.success(uiCopy("ux.copy007b3cbe11"));
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
       onClose();
     },
-    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
+    onError: (e) =>
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
   });
 
   useEffect(() => {
@@ -2281,8 +2380,7 @@ function SendSmsDialog({
             </span>
             {customerPhone && (
               <span className="ml-1">
-                {uiCopy("ux.copy42730f04b4")}{" "}
-                <span className="font-mono">{customerPhone}</span>
+                {uiCopy("ux.copy42730f04b4")} <span className="font-mono">{customerPhone}</span>
               </span>
             )}
           </div>
@@ -2298,19 +2396,18 @@ function SendSmsDialog({
               className={!phone || isValidKrPhone ? "" : "border-destructive"}
             />
             {phone && !isValidKrPhone && (
-              <div className="text-xs text-destructive">
-                {uiCopy("ux.copy7fb40b86b9")}
-              </div>
+              <div className="text-xs text-destructive">{uiCopy("ux.copy7fb40b86b9")}</div>
             )}
-            {customerPhone && phone.replace(/[^\d]/g, "") !== customerPhone.replace(/[^\d]/g, "") && (
-              <button
-                type="button"
-                onClick={() => setPhone(customerPhone)}
-                className="text-xs text-primary hover:underline"
-              >
-                {uiCopy("ux.copydf0984747f")}
-              </button>
-            )}
+            {customerPhone &&
+              phone.replace(/[^\d]/g, "") !== customerPhone.replace(/[^\d]/g, "") && (
+                <button
+                  type="button"
+                  onClick={() => setPhone(customerPhone)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {uiCopy("ux.copydf0984747f")}
+                </button>
+              )}
           </div>
           <Input
             placeholder={uiCopy("ux.copy5aa63d2b3a")}
@@ -2324,33 +2421,29 @@ function SendSmsDialog({
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
           />
-          <div className="text-xs text-muted-foreground">
-            {uiCopy("ux.copy637f851561")}
-          </div>
+          <div className="text-xs text-muted-foreground">{uiCopy("ux.copy637f851561")}</div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={sendSms.isPending}>
             {uiCopy("ux.copy19b2d19bc1")}
           </Button>
-          <Button onClick={handleSend} disabled={sendSms.isPending || !message.trim() || !isValidKrPhone}>
+          <Button
+            onClick={handleSend}
+            disabled={sendSms.isPending || !message.trim() || !isValidKrPhone}
+          >
             <Send className="mr-2 h-4 w-4" />
             {sendSms.isPending ? uiCopy("ux.copydef390ab23") : uiCopy("ux.copy0e0a08f1ea")}
           </Button>
         </DialogFooter>
-
       </DialogContent>
     </Dialog>
   );
 }
 
-
-
 function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
   useTranslation();
   const defaultUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/api/public/telegram/webhook`
-      : "";
+    typeof window !== "undefined" ? `${window.location.origin}/api/public/telegram/webhook` : "";
   const [url, setUrl] = useState(defaultUrl);
   const registerFn = useServerFn(registerTelegramWebhook);
   const [result, setResult] = useState<any>(null);
@@ -2361,7 +2454,8 @@ function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
       setResult(data);
       toast.success(uiCopy("ux.copy01fe455170", { value0: (data as any).bot?.username }));
     },
-    onError: (e) => toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
+    onError: (e) =>
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1"))),
   });
 
   return (
@@ -2371,15 +2465,11 @@ function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
           <DialogTitle>{uiCopy("ux.copy5154aef071")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 text-sm">
-          <p className="text-muted-foreground">
-            {uiCopy("ux.copyc8f721271f")}
-          </p>
+          <p className="text-muted-foreground">{uiCopy("ux.copyc8f721271f")}</p>
           <div>
             <label className="text-xs font-medium">{uiCopy("ux.copyfa7517b6b6")}</label>
             <Input value={url} onChange={(e) => setUrl(e.target.value)} />
-            <p className="mt-1 text-xs text-muted-foreground">
-              {uiCopy("ux.copyb28408b312")}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{uiCopy("ux.copyb28408b312")}</p>
           </div>
           <Button onClick={() => mut.mutate()} disabled={mut.isPending || !url} className="w-full">
             {mut.isPending ? uiCopy("ux.copy9ace4cd899") : uiCopy("ux.copy08151dbbb3")}

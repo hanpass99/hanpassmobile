@@ -9,13 +9,32 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { ArrowDown, ArrowUp, ArrowUpDown, RotateCcw, Search, X } from "lucide-react";
 import { MultiCountrySelect } from "@/components/MultiCountrySelect";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 export type LoanBorrower = {
   id: string;
@@ -26,10 +45,63 @@ export type LoanBorrower = {
 };
 
 const COUNTRY_NAME: Record<string, string> = {
-  get TH() { return uiCopy("ux.copy3c5bcffe93"); }, get UZ() { return uiCopy("ux.copy2c2c3b4871"); }, get KH() { return uiCopy("ux.copyfd5da91be1"); }, get VN() { return uiCopy("ux.copy6e808b36fb"); }, get ID() { return uiCopy("ux.copy48fbf2cc0c"); },
-  get LK() { return uiCopy("ux.copyb995415b34"); }, get PH() { return uiCopy("ux.copya4b3a91d52"); }, get BD() { return uiCopy("ux.copy6baa9a43fd"); }, get MM() { return uiCopy("ux.copy2541f60d32"); }, get NP() { return uiCopy("ux.copyaf44c080ed"); },
-  get MN() { return uiCopy("ux.copy0d7749b6ad"); }, get TL() { return uiCopy("ux.copy77633f61b4"); }, get PK() { return uiCopy("ux.copy6d78b3425d"); }, get RU() { return uiCopy("ux.copyed25efdbbb"); }, get KG() { return uiCopy("ux.copya60dd4b3eb"); },
-  get IN() { return uiCopy("ux.copy0d3883b86e"); }, get LA() { return uiCopy("ux.copy34ab7f2bec"); }, get TJ() { return uiCopy("ux.copy354bbc0c54"); }, get KZ() { return uiCopy("ux.copya70856ed78"); },
+  get TH() {
+    return uiCopy("ux.copy3c5bcffe93");
+  },
+  get UZ() {
+    return uiCopy("ux.copy2c2c3b4871");
+  },
+  get KH() {
+    return uiCopy("ux.copyfd5da91be1");
+  },
+  get VN() {
+    return uiCopy("ux.copy6e808b36fb");
+  },
+  get ID() {
+    return uiCopy("ux.copy48fbf2cc0c");
+  },
+  get LK() {
+    return uiCopy("ux.copyb995415b34");
+  },
+  get PH() {
+    return uiCopy("ux.copya4b3a91d52");
+  },
+  get BD() {
+    return uiCopy("ux.copy6baa9a43fd");
+  },
+  get MM() {
+    return uiCopy("ux.copy2541f60d32");
+  },
+  get NP() {
+    return uiCopy("ux.copyaf44c080ed");
+  },
+  get MN() {
+    return uiCopy("ux.copy0d7749b6ad");
+  },
+  get TL() {
+    return uiCopy("ux.copy77633f61b4");
+  },
+  get PK() {
+    return uiCopy("ux.copy6d78b3425d");
+  },
+  get RU() {
+    return uiCopy("ux.copyed25efdbbb");
+  },
+  get KG() {
+    return uiCopy("ux.copya60dd4b3eb");
+  },
+  get IN() {
+    return uiCopy("ux.copy0d3883b86e");
+  },
+  get LA() {
+    return uiCopy("ux.copy34ab7f2bec");
+  },
+  get TJ() {
+    return uiCopy("ux.copy354bbc0c54");
+  },
+  get KZ() {
+    return uiCopy("ux.copya70856ed78");
+  },
 };
 
 function todayStr() {
@@ -98,10 +170,22 @@ export function LoanBorrowerList() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [sort, setSort] = useState<{ key: keyof LoanBorrower; asc: boolean }>({ key: "loan_start_date", asc: false });
+  const [sort, setSort] = useState<{ key: keyof LoanBorrower; asc: boolean }>({
+    key: "loan_start_date",
+    asc: false,
+  });
   const { data: rows, isLoading, error, refetch, isFetching } = useLoanBorrowers(true);
-  const update = (action: () => void) => { action(); setPage(1); };
-  const reset = () => update(() => { setCountries([]); setDateFrom(""); setDateTo(""); setSearch(""); });
+  const update = (action: () => void) => {
+    action();
+    setPage(1);
+  };
+  const reset = () =>
+    update(() => {
+      setCountries([]);
+      setDateFrom("");
+      setDateTo("");
+      setSearch("");
+    });
   const counts = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of rows ?? []) m.set(r.nationality, (m.get(r.nationality) ?? 0) + 1);
@@ -110,32 +194,50 @@ export function LoanBorrowerList() {
   const options = counts.map(([code]) => ({ id: code, code, name_ko: COUNTRY_NAME[code] ?? code }));
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (rows ?? []).filter((r) => {
-      if (countries.length && !countries.includes(r.nationality)) return false;
-      if (dateFrom && r.loan_start_date < dateFrom) return false;
-      // 시작일만 선택하면 그날 하루만 조회 (고객 탭과 동일)
-      const effectiveTo = dateTo || dateFrom;
-      if (effectiveTo && r.loan_start_date > effectiveTo) return false;
-      return !q || r.name.toLowerCase().includes(q) || r.phone.includes(q);
-    }).sort((a, b) => (sort.asc ? 1 : -1) * a[sort.key].localeCompare(b[sort.key], "ko", { numeric: true }) || a.id.localeCompare(b.id));
+    return (rows ?? [])
+      .filter((r) => {
+        if (countries.length && !countries.includes(r.nationality)) return false;
+        if (dateFrom && r.loan_start_date < dateFrom) return false;
+        // 시작일만 선택하면 그날 하루만 조회 (고객 탭과 동일)
+        const effectiveTo = dateTo || dateFrom;
+        if (effectiveTo && r.loan_start_date > effectiveTo) return false;
+        return !q || r.name.toLowerCase().includes(q) || r.phone.includes(q);
+      })
+      .sort(
+        (a, b) =>
+          (sort.asc ? 1 : -1) * a[sort.key].localeCompare(b[sort.key], "ko", { numeric: true }) ||
+          a.id.localeCompare(b.id),
+      );
   }, [rows, countries, dateFrom, dateTo, search, sort]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const start = (currentPage - 1) * pageSize;
   const visible = filtered.slice(start, start + pageSize);
-  const quick = (kind: "today" | "week" | "month") => update(() => {
-    const t = todayStr();
-    setDateTo(t);
-    setDateFrom(kind === "today" ? t : kind === "week" ? weekStartStr() : monthStartStr());
-  });
+  const quick = (kind: "today" | "week" | "month") =>
+    update(() => {
+      const t = todayStr();
+      setDateTo(t);
+      setDateFrom(kind === "today" ? t : kind === "week" ? weekStartStr() : monthStartStr());
+    });
   const hasFilters = Boolean(countries.length || dateFrom || dateTo || search);
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1)
-    .filter((n) => n === 1 || n === totalPages || Math.abs(n - currentPage) <= 1);
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1).filter(
+    (n) => n === 1 || n === totalPages || Math.abs(n - currentPage) <= 1,
+  );
   const summary = (label: string, count: number, active: boolean, onClick: () => void) => (
-    <Button key={label} variant="outline" onClick={onClick} aria-pressed={active}
-      className={cn("h-auto min-h-12 min-w-0 flex-col items-start gap-0 rounded-md bg-card px-2.5 py-1.5 text-left font-normal hover:shadow-card-hover", active ? "border-primary ring-1 ring-primary" : "border-border/60")}>
+    <Button
+      key={label}
+      variant="outline"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "h-auto min-h-12 min-w-0 flex-col items-start gap-0 rounded-md bg-card px-2.5 py-1.5 text-left font-normal hover:shadow-card-hover",
+        active ? "border-primary ring-1 ring-primary" : "border-border/60",
+      )}
+    >
       <span className="w-full truncate text-xs font-medium text-muted-foreground">{label}</span>
-      <span className="text-sm font-semibold tabular-nums">{isLoading ? "—" : count.toLocaleString()}</span>
+      <span className="text-sm font-semibold tabular-nums">
+        {isLoading ? "—" : count.toLocaleString()}
+      </span>
     </Button>
   );
   return (
@@ -143,66 +245,283 @@ export function LoanBorrowerList() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">{uiCopy("ux.copyc4f75808a5")}</h2>
         <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
-          <RotateCcw className={cn("mr-2 h-4 w-4", isFetching && "animate-spin")} />{uiCopy("ux.copydeb94acf38")}
+          <RotateCcw className={cn("mr-2 h-4 w-4", isFetching && "animate-spin")} />
+          {uiCopy("ux.copydeb94acf38")}
         </Button>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-        {summary(uiCopy("ux.copy934dd25ec5"), rows?.length ?? 0, !countries.length, () => update(() => setCountries([])))}
-        {counts.map(([code, count]) => summary(COUNTRY_NAME[code] ?? code, count, countries.includes(code), () => update(() => setCountries(countries.length === 1 && countries[0] === code ? [] : [code]))))}
+        {summary(uiCopy("ux.copy934dd25ec5"), rows?.length ?? 0, !countries.length, () =>
+          update(() => setCountries([])),
+        )}
+        {counts.map(([code, count]) =>
+          summary(COUNTRY_NAME[code] ?? code, count, countries.includes(code), () =>
+            update(() =>
+              setCountries(countries.length === 1 && countries[0] === code ? [] : [code]),
+            ),
+          ),
+        )}
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
         <div className="relative md:col-span-2">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => update(() => setSearch(e.target.value))} placeholder={uiCopy("ux.copye0b88277c9")} aria-label={uiCopy("ux.copyd5ae3ca45d")} className="pl-9" />
+          <Input
+            value={search}
+            onChange={(e) => update(() => setSearch(e.target.value))}
+            placeholder={uiCopy("ux.copye0b88277c9")}
+            aria-label={uiCopy("ux.copyd5ae3ca45d")}
+            className="pl-9"
+          />
         </div>
-        <MultiCountrySelect options={options} value={countries} onChange={(v) => update(() => setCountries(v))} placeholder={uiCopy("ux.copy228787215b")} className="h-10 w-full md:col-span-2" />
-        <Select value={String(pageSize)} onValueChange={(v) => update(() => setPageSize(Number(v)))}>
-          <SelectTrigger className="w-full md:col-span-2" aria-label={uiCopy("ux.copyd2dd084b53")}><SelectValue /></SelectTrigger>
-          <SelectContent>{[25, 50, 100].map((n) => <SelectItem key={n} value={String(n)}>{n}{uiCopy("ux.copy2737695ace")}</SelectItem>)}</SelectContent>
+        <MultiCountrySelect
+          options={options}
+          value={countries}
+          onChange={(v) => update(() => setCountries(v))}
+          placeholder={uiCopy("ux.copy228787215b")}
+          className="h-10 w-full md:col-span-2"
+        />
+        <Select
+          value={String(pageSize)}
+          onValueChange={(v) => update(() => setPageSize(Number(v)))}
+        >
+          <SelectTrigger className="w-full md:col-span-2" aria-label={uiCopy("ux.copyd2dd084b53")}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[25, 50, 100].map((n) => (
+              <SelectItem key={n} value={String(n)}>
+                {n}
+                {uiCopy("ux.copy2737695ace")}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copy433529d4ef")}</span>
-        <Input type="date" value={dateFrom} onChange={(e) => update(() => setDateFrom(e.target.value))} className="h-9 w-[150px]" aria-label={uiCopy("ux.copy453c56f595")} />
+        <span className="text-xs font-medium text-muted-foreground">
+          {uiCopy("ux.copy433529d4ef")}
+        </span>
+        <Input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => update(() => setDateFrom(e.target.value))}
+          className="h-9 w-[150px]"
+          aria-label={uiCopy("ux.copy453c56f595")}
+        />
         <span className="text-xs text-muted-foreground">~</span>
-        <Input type="date" value={dateTo} onChange={(e) => update(() => setDateTo(e.target.value))} className="h-9 w-[150px]" aria-label={uiCopy("ux.copycad7c84c3e")} />
-        <Button variant="outline" size="sm" onClick={() => quick("today")}>{uiCopy("ux.copy2bdce5e8cc")}</Button>
-        <Button variant="outline" size="sm" onClick={() => quick("week")}>{uiCopy("ux.copy89ea2d72f7")}</Button>
-        <Button variant="outline" size="sm" onClick={() => quick("month")}>{uiCopy("ux.copyfa72e1d8b0")}</Button>
+        <Input
+          type="date"
+          value={dateTo}
+          onChange={(e) => update(() => setDateTo(e.target.value))}
+          className="h-9 w-[150px]"
+          aria-label={uiCopy("ux.copycad7c84c3e")}
+        />
+        <Button variant="outline" size="sm" onClick={() => quick("today")}>
+          {uiCopy("ux.copy2bdce5e8cc")}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => quick("week")}>
+          {uiCopy("ux.copy89ea2d72f7")}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => quick("month")}>
+          {uiCopy("ux.copyfa72e1d8b0")}
+        </Button>
       </div>
-      {hasFilters && <div className="flex flex-wrap items-center gap-2">
-        {countries.map((code) => <Button key={code} variant="secondary" size="sm" className="h-7 text-xs" onClick={() => update(() => setCountries(countries.filter((c) => c !== code)))}>{COUNTRY_NAME[code] ?? code}<X className="ml-1 h-3 w-3" /></Button>)}
-        {search && <Button variant="secondary" size="sm" className="h-7 max-w-full text-xs" onClick={() => update(() => setSearch(""))}><span className="truncate">{uiCopy("ux.copy0dfabdf68c")} {search}</span><X className="ml-1 h-3 w-3 shrink-0" /></Button>}
-        {(dateFrom || dateTo) && <Button variant="secondary" size="sm" className="h-7 text-xs" onClick={() => update(() => { setDateFrom(""); setDateTo(""); })}>{dateFrom || uiCopy("ux.copy934dd25ec5")} ~ {dateTo || uiCopy("ux.copy934dd25ec5")}<X className="ml-1 h-3 w-3" /></Button>}
-        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={reset}>{uiCopy("ux.copyd4d2c914ff")}</Button>
-      </div>}
-      {dateFrom && dateTo && dateFrom > dateTo && <p role="alert" className="text-sm text-destructive">{uiCopy("ux.copy2225da7b29")}</p>}
-      {error ? <div role="alert" className="flex items-center gap-2 text-sm text-destructive">{uiCopy("ux.copy39bb725699")}<Button variant="outline" size="sm" onClick={() => refetch()}>{uiCopy("ux.copy0c767cecf6")}</Button></div> : <>
-        <div className="text-xs text-muted-foreground">{uiCopy("ux.copy10d96eb939")} {(rows?.length ?? 0).toLocaleString()}{uiCopy("ux.copy4ba32377fd")} {filtered.length.toLocaleString()}{uiCopy("ux.copyd202b4d78c")}</div>
-        <div className="table-scroll rounded-lg border border-border/60 [--table-max-h:70dvh]">
-          <Table className="min-w-[620px]">
-            <TableHeader><TableRow>
-              <TableHead className="w-[60px]">{uiCopy("ux.copy0eae1698d1")}</TableHead>
-              {([ ["name", uiCopy("ux.copy9aa18e5071")], ["phone", uiCopy("ux.copy9a1c3aaaca")], ["nationality", uiCopy("ux.copyff63ca9e88")], ["loan_start_date", uiCopy("ux.copy433529d4ef")] ] as const).map(([key, label]) => <TableHead key={key} aria-sort={sort.key === key ? sort.asc ? "ascending" : "descending" : "none"}>
-                <Button variant="ghost" size="sm" className="h-8 px-0 text-xs font-medium hover:bg-transparent" onClick={() => update(() => setSort({ key, asc: sort.key === key ? !sort.asc : true }))}>{label}{sort.key === key ? sort.asc ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" /> : <ArrowUpDown className="ml-1 h-3 w-3" />}</Button>
-              </TableHead>)}
-            </TableRow></TableHeader>
-            <TableBody>
-              {isLoading ? Array.from({ length: 8 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 5 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>) : !visible.length ? <TableRow><TableCell colSpan={5} className="py-10 text-center text-muted-foreground">{uiCopy("ux.copy96dc408542")}</TableCell></TableRow> : visible.map((r, i) => <TableRow key={r.id}>
-                <TableCell className="text-muted-foreground">{start + i + 1}</TableCell><TableCell className="font-medium">{r.name}</TableCell><TableCell>{r.phone}</TableCell><TableCell>{COUNTRY_NAME[r.nationality] ?? r.nationality}</TableCell><TableCell>{r.loan_start_date}</TableCell>
-              </TableRow>)}
-            </TableBody>
-          </Table>
+      {hasFilters && (
+        <div className="flex flex-wrap items-center gap-2">
+          {countries.map((code) => (
+            <Button
+              key={code}
+              variant="secondary"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => update(() => setCountries(countries.filter((c) => c !== code)))}
+            >
+              {COUNTRY_NAME[code] ?? code}
+              <X className="ml-1 h-3 w-3" />
+            </Button>
+          ))}
+          {search && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 max-w-full text-xs"
+              onClick={() => update(() => setSearch(""))}
+            >
+              <span className="truncate">
+                {uiCopy("ux.copy0dfabdf68c")} {search}
+              </span>
+              <X className="ml-1 h-3 w-3 shrink-0" />
+            </Button>
+          )}
+          {(dateFrom || dateTo) && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() =>
+                update(() => {
+                  setDateFrom("");
+                  setDateTo("");
+                })
+              }
+            >
+              {dateFrom || uiCopy("ux.copy934dd25ec5")} ~ {dateTo || uiCopy("ux.copy934dd25ec5")}
+              <X className="ml-1 h-3 w-3" />
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={reset}>
+            {uiCopy("ux.copyd4d2c914ff")}
+          </Button>
         </div>
-        <div className="flex flex-col items-center gap-2 pt-3">
-          {totalPages > 1 && <div className="max-w-full overflow-x-auto pb-1"><Pagination><PaginationContent>
-            <PaginationItem><PaginationPrevious href="#" aria-disabled={currentPage <= 1} className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""} onClick={(e) => { e.preventDefault(); setPage(Math.max(1, currentPage - 1)); }} /></PaginationItem>
-            {pageNumbers.map((n, i) => <PaginationItem key={n} className="flex items-center">{i > 0 && n - pageNumbers[i - 1] > 1 && <PaginationEllipsis /> }<PaginationLink href="#" isActive={n === currentPage} onClick={(e) => { e.preventDefault(); setPage(n); }}>{n}</PaginationLink></PaginationItem>)}
-            <PaginationItem><PaginationNext href="#" aria-disabled={currentPage >= totalPages} className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""} onClick={(e) => { e.preventDefault(); setPage(Math.min(totalPages, currentPage + 1)); }} /></PaginationItem>
-          </PaginationContent></Pagination></div>}
-          <p className="text-xs text-muted-foreground">{currentPage} / {totalPages} {uiCopy("ux.copy4c8529d45e")} {filtered.length.toLocaleString()}{uiCopy("ux.copyb122c875e1")} {pageSize}{uiCopy("ux.copy0842ceb3e7")}</p>
+      )}
+      {dateFrom && dateTo && dateFrom > dateTo && (
+        <p role="alert" className="text-sm text-destructive">
+          {uiCopy("ux.copy2225da7b29")}
+        </p>
+      )}
+      {error ? (
+        <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
+          {uiCopy("ux.copy39bb725699")}
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            {uiCopy("ux.copy0c767cecf6")}
+          </Button>
         </div>
-      </>}
+      ) : (
+        <>
+          <div className="text-xs text-muted-foreground">
+            {uiCopy("ux.copy10d96eb939")} {(rows?.length ?? 0).toLocaleString()}
+            {uiCopy("ux.copy4ba32377fd")} {filtered.length.toLocaleString()}
+            {uiCopy("ux.copyd202b4d78c")}
+          </div>
+          <div className="table-scroll rounded-lg border border-border/60 [--table-max-h:70dvh]">
+            <Table className="min-w-[620px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">{uiCopy("ux.copy0eae1698d1")}</TableHead>
+                  {(
+                    [
+                      ["name", uiCopy("ux.copy9aa18e5071")],
+                      ["phone", uiCopy("ux.copy9a1c3aaaca")],
+                      ["nationality", uiCopy("ux.copyff63ca9e88")],
+                      ["loan_start_date", uiCopy("ux.copy433529d4ef")],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <TableHead
+                      key={key}
+                      aria-sort={
+                        sort.key === key ? (sort.asc ? "ascending" : "descending") : "none"
+                      }
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-0 text-xs font-medium hover:bg-transparent"
+                        onClick={() =>
+                          update(() => setSort({ key, asc: sort.key === key ? !sort.asc : true }))
+                        }
+                      >
+                        {label}
+                        {sort.key === key ? (
+                          sort.asc ? (
+                            <ArrowUp className="ml-1 h-3 w-3" />
+                          ) : (
+                            <ArrowDown className="ml-1 h-3 w-3" />
+                          )
+                        ) : (
+                          <ArrowUpDown className="ml-1 h-3 w-3" />
+                        )}
+                      </Button>
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton className="h-4 w-20" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : !visible.length ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                      {uiCopy("ux.copy96dc408542")}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  visible.map((r, i) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="text-muted-foreground">{start + i + 1}</TableCell>
+                      <TableCell className="font-medium">{r.name}</TableCell>
+                      <TableCell>{r.phone}</TableCell>
+                      <TableCell>{COUNTRY_NAME[r.nationality] ?? r.nationality}</TableCell>
+                      <TableCell>{r.loan_start_date}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex flex-col items-center gap-2 pt-3">
+            {totalPages > 1 && (
+              <div className="max-w-full overflow-x-auto pb-1">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        aria-disabled={currentPage <= 1}
+                        className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPage(Math.max(1, currentPage - 1));
+                        }}
+                      />
+                    </PaginationItem>
+                    {pageNumbers.map((n, i) => (
+                      <PaginationItem key={n} className="flex items-center">
+                        {i > 0 && n - pageNumbers[i - 1] > 1 && <PaginationEllipsis />}
+                        <PaginationLink
+                          href="#"
+                          isActive={n === currentPage}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPage(n);
+                          }}
+                        >
+                          {n}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        aria-disabled={currentPage >= totalPages}
+                        className={
+                          currentPage >= totalPages ? "pointer-events-none opacity-50" : ""
+                        }
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPage(Math.min(totalPages, currentPage + 1));
+                        }}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {currentPage} / {totalPages} {uiCopy("ux.copy4c8529d45e")}{" "}
+              {filtered.length.toLocaleString()}
+              {uiCopy("ux.copyb122c875e1")} {pageSize}
+              {uiCopy("ux.copy0842ceb3e7")}
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }

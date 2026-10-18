@@ -6,14 +6,17 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ButtonProps, buttonVariants } from "@/components/ui/button";
 
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => { useTranslation(); return (
-  <nav
-    role="navigation"
-    aria-label={uiCopy("accessibility.pagination")}
-    className={cn("mx-auto flex w-full justify-center", className)}
-    {...props}
-  />
-); };
+const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => {
+  useTranslation();
+  return (
+    <nav
+      role="navigation"
+      aria-label={uiCopy("accessibility.pagination")}
+      className={cn("mx-auto flex w-full justify-center", className)}
+      {...props}
+    />
+  );
+};
 Pagination.displayName = "Pagination";
 
 const PaginationContent = React.forwardRef<HTMLUListElement, React.ComponentProps<"ul">>(
@@ -51,42 +54,51 @@ PaginationLink.displayName = "PaginationLink";
 const PaginationPrevious = ({
   className,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) => { useTranslation(); return (
-  <PaginationLink
-    aria-label={uiCopy("accessibility.previousPage")}
-    size="default"
-    className={cn("gap-1 pl-2.5", className)}
-    {...props}
-  >
-    <ChevronLeft className="h-4 w-4" />
-    <span>{uiCopy("accessibility.previous")}</span>
-  </PaginationLink>
-); };
+}: React.ComponentProps<typeof PaginationLink>) => {
+  useTranslation();
+  return (
+    <PaginationLink
+      aria-label={uiCopy("accessibility.previousPage")}
+      size="default"
+      className={cn("gap-1 pl-2.5", className)}
+      {...props}
+    >
+      <ChevronLeft className="h-4 w-4" />
+      <span>{uiCopy("accessibility.previous")}</span>
+    </PaginationLink>
+  );
+};
 PaginationPrevious.displayName = "PaginationPrevious";
 
-const PaginationNext = ({ className, ...props }: React.ComponentProps<typeof PaginationLink>) => { useTranslation(); return (
-  <PaginationLink
-    aria-label={uiCopy("accessibility.nextPage")}
-    size="default"
-    className={cn("gap-1 pr-2.5", className)}
-    {...props}
-  >
-    <span>{uiCopy("accessibility.next")}</span>
-    <ChevronRight className="h-4 w-4" />
-  </PaginationLink>
-); };
+const PaginationNext = ({ className, ...props }: React.ComponentProps<typeof PaginationLink>) => {
+  useTranslation();
+  return (
+    <PaginationLink
+      aria-label={uiCopy("accessibility.nextPage")}
+      size="default"
+      className={cn("gap-1 pr-2.5", className)}
+      {...props}
+    >
+      <span>{uiCopy("accessibility.next")}</span>
+      <ChevronRight className="h-4 w-4" />
+    </PaginationLink>
+  );
+};
 PaginationNext.displayName = "PaginationNext";
 
-const PaginationEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => { useTranslation(); return (
-  <span
-    aria-hidden
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
-    {...props}
-  >
-    <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">{uiCopy("accessibility.morePages")}</span>
-  </span>
-); };
+const PaginationEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => {
+  useTranslation();
+  return (
+    <span
+      aria-hidden
+      className={cn("flex h-9 w-9 items-center justify-center", className)}
+      {...props}
+    >
+      <MoreHorizontal className="h-4 w-4" />
+      <span className="sr-only">{uiCopy("accessibility.morePages")}</span>
+    </span>
+  );
+};
 PaginationEllipsis.displayName = "PaginationEllipsis";
 
 export {

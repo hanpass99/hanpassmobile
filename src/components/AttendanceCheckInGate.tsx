@@ -95,8 +95,12 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
         >
           <CheckCircle2 className="mr-2 h-5 w-5" />
           {saving
-            ? isKo ? uiCopy("ux.copye6e1a2914f") : "Processing..."
-            : isKo ? uiCopy("ux.copy950de9eee8") : "Check In"}
+            ? isKo
+              ? uiCopy("ux.copye6e1a2914f")
+              : "Processing..."
+            : isKo
+              ? uiCopy("ux.copy950de9eee8")
+              : "Check In"}
         </Button>
       </div>
     </div>

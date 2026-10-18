@@ -23,7 +23,8 @@ export function InterfaceLanguage() {
       }
     }
     const saved = localStorage.getItem("lang");
-    if ((saved === "ko" || saved === "en") && saved !== i18n.language) void i18n.changeLanguage(saved);
+    if ((saved === "ko" || saved === "en") && saved !== i18n.language)
+      void i18n.changeLanguage(saved);
   }, [i18n, i18n.language, matches]);
   return null;
 }

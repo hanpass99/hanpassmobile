@@ -4,14 +4,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/sms")({
-  head: () => ({ meta: [
-{ title: uiCopy("pages.sms.title") },
-{ name: "description", content: uiCopy("pages.sms.description") },
-{ property: "og:title", content: uiCopy("pages.sms.title") },
-{ property: "og:description", content: uiCopy("pages.sms.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.sms.title") },
+      { name: "description", content: uiCopy("pages.sms.description") },
+      { property: "og:title", content: uiCopy("pages.sms.title") },
+      { property: "og:description", content: uiCopy("pages.sms.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   pendingComponent: SmsPending,
 });
 

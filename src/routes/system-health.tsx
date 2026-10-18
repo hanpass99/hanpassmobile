@@ -19,14 +19,16 @@ import {
 } from "@/hooks/use-system-health";
 
 export const Route = createFileRoute("/system-health")({
-  head: () => ({ meta: [
-{ title: uiCopy("pages.system-health.title") },
-{ name: "description", content: uiCopy("pages.system-health.description") },
-{ property: "og:title", content: uiCopy("pages.system-health.title") },
-{ property: "og:description", content: uiCopy("pages.system-health.description") },
-{ property: "og:type", content: "website" },
-{ name: "twitter:card", content: "summary" }
-] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.system-health.title") },
+      { name: "description", content: uiCopy("pages.system-health.description") },
+      { property: "og:title", content: uiCopy("pages.system-health.title") },
+      { property: "og:description", content: uiCopy("pages.system-health.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: SystemHealthPage,
 });
 
@@ -67,7 +69,10 @@ function SystemHealthPage() {
     cat,
     items: rows
       .filter((r) => r.category === cat)
-      .sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.check_key.localeCompare(b.check_key)),
+      .sort(
+        (a, b) =>
+          STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.check_key.localeCompare(b.check_key),
+      ),
   })).filter((g) => g.items.length > 0);
 
   return (
@@ -78,7 +83,9 @@ function SystemHealthPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-4">
           <div className="text-sm text-muted-foreground">
             {t("systemHealth.lastChecked")}:{" "}
-            {lastChecked ? format(new Date(lastChecked), "yyyy-MM-dd HH:mm") : t("systemHealth.never")}
+            {lastChecked
+              ? format(new Date(lastChecked), "yyyy-MM-dd HH:mm")
+              : t("systemHealth.never")}
           </div>
           <Button
             size="sm"
@@ -93,9 +100,24 @@ function SystemHealthPage() {
       </Card>
 
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label={t("systemHealth.errorCount")} value={counts.error} icon={XCircle} tone={counts.error ? "primary" : "muted"} />
-        <StatCard label={t("systemHealth.warnCount")} value={counts.warn} icon={AlertTriangle} tone={counts.warn ? "info" : "muted"} />
-        <StatCard label={t("systemHealth.okCount")} value={counts.ok} icon={CheckCircle2} tone="success" />
+        <StatCard
+          label={t("systemHealth.errorCount")}
+          value={counts.error}
+          icon={XCircle}
+          tone={counts.error ? "primary" : "muted"}
+        />
+        <StatCard
+          label={t("systemHealth.warnCount")}
+          value={counts.warn}
+          icon={AlertTriangle}
+          tone={counts.warn ? "info" : "muted"}
+        />
+        <StatCard
+          label={t("systemHealth.okCount")}
+          value={counts.ok}
+          icon={CheckCircle2}
+          tone="success"
+        />
       </div>
 
       {!isLoading && rows.length === 0 && (
@@ -133,7 +155,9 @@ function SystemHealthPage() {
                   {statusBadge(item.status, t(`systemHealth.${item.status}`))}
                   <span className="min-w-0 flex-1 break-words">{item.message}</span>
                   {item.metric != null && (
-                    <span className="text-xs font-semibold text-muted-foreground">{Number(item.metric)}</span>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {Number(item.metric)}
+                    </span>
                   )}
                   <span className="text-xs text-muted-foreground">
                     {format(new Date(item.checked_at), "MM-dd HH:mm")}

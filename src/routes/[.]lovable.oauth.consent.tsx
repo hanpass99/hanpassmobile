@@ -88,10 +88,12 @@ function Consent() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-8">
       <div className="rounded-2xl border bg-card p-8 shadow-sm">
         <h1 className="text-xl font-semibold text-primary">
-          {clientName}{uiCopy("ux.copy754faed9d3")}
+          {clientName}
+          {uiCopy("ux.copy754faed9d3")}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          {uiCopy("ux.copy9c5782d683")} <b>{clientName}</b>{uiCopy("ux.copy74e3c6101a")}
+          {uiCopy("ux.copy9c5782d683")} <b>{clientName}</b>
+          {uiCopy("ux.copy74e3c6101a")}
         </p>
         {details?.scope ? (
           <p className="mt-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
