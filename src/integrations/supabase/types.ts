@@ -1874,6 +1874,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_approved_staff: { Args: { uid: string }; Returns: boolean }
       is_hanpass_company: { Args: { _uid: string }; Returns: boolean }
       is_hanpass_staff: { Args: { _user_id: string }; Returns: boolean }
       latest_system_checks: {
