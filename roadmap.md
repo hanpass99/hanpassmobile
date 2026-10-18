@@ -40,12 +40,14 @@
 
 # Mobile UI audit
 
-- [ ] Audit every sidebar menu screen for admin, staff, Hanpass at 390px and 440px
-- [ ] Fix shared mobile header, page title, actions, and floating assistant behavior
-- [ ] Fix customer tabs, controls, status cards, and tables on mobile
-- [ ] Fix staff management list and controls on mobile
-- [ ] Fix remaining dashboard, messaging, analytics, settings, and admin screens
-- [ ] Verify key screens at mobile and desktop widths
+- [x] Audit every sidebar menu screen for admin, staff, Hanpass at 390px and 440px (role simulation; unavailable screens retain existing access guards)
+- [x] Fix shared mobile header, page title, actions, and floating assistant behavior
+- [x] Fix customer tabs, controls, status cards, and tables on mobile
+- [x] Fix staff management list and controls on mobile
+- [x] Fix remaining dashboard, messaging, analytics, settings, and admin screens
+- [x] Verify key screens at mobile and desktop widths: populated simulated screens, all customer tabs, Telegram list/back, public login/reset and forced-password screen; 118 regression tests and automatic type-check/build passed
+- [ ] Real-account mobile verification requires preview sign-in; no managed auth account matches the requesting user.
+- [ ] Changed-file lint remains blocked by 24 pre-existing errors in legacy route files; shared mobile components have no lint errors.
 
 # Partner application API (external HANPASS site)
 
