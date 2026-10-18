@@ -43,6 +43,13 @@
       "when": 1792314502483,
       "tag": "0005_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792315127180,
+      "tag": "0006_skip_old_facebook_sheet_rows",
+      "breakpoints": true
     }
   ]
 }

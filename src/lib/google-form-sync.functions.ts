@@ -203,6 +203,11 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
       result.skipped++;
       continue;
     }
+    // 2026-10-18: 10월 이전 접수분은 운영에서 정리(삭제)됨 → 다시 가져오지 않음
+    if ((formDate ?? today) < "2026-10-01") {
+      result.skipped++;
+      continue;
+    }
     const key = `${timestamp_raw}|${name}|${phone}`;
     if (existingKeys.has(key)) {
       result.skipped++;
