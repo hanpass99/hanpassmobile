@@ -1,3 +1,4 @@
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileFilters } from "@/components/MobileFilters";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
@@ -58,6 +59,7 @@ const emptyCounts = (): Counts =>
   Object.fromEntries(CUSTOMER_STATUSES.map((s) => [s, 0])) as Counts;
 
 function ChannelPerf() {
+  const mobile = useIsMobile();
   const { t } = useTranslation();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -228,7 +230,8 @@ function ChannelPerf() {
                   <XAxis
                     dataKey="name"
                     tick={{ fontSize: 12 }}
-                    interval={0}
+                    interval={mobile ? "preserveStartEnd" : 0}
+                    minTickGap={mobile ? 24 : 5}
                     angle={-15}
                     textAnchor="end"
                     height={60}

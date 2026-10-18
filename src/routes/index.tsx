@@ -1,3 +1,4 @@
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileFilters } from "@/components/MobileFilters";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
@@ -123,6 +124,7 @@ const emptyStatus = (): StatusCounts => ({
 });
 
 function Dashboard() {
+  const mobile = useIsMobile();
   const { t } = useTranslation();
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -468,7 +470,12 @@ function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis tick={{ fill: "var(--muted-foreground)" }} dataKey="date" fontSize={12} />
+                  <XAxis
+                    tick={{ fill: "var(--muted-foreground)" }}
+                    dataKey="date"
+                    minTickGap={mobile ? 28 : 5}
+                    fontSize={12}
+                  />
                   <YAxis tick={{ fill: "var(--muted-foreground)" }} fontSize={12} />
                   <Tooltip />
                   <Legend />

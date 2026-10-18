@@ -1,3 +1,4 @@
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileFilters } from "@/components/MobileFilters";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, Link, type ErrorComponentProps } from "@tanstack/react-router";
@@ -113,6 +114,7 @@ function delta(cur: number, prev: number) {
 }
 
 function HanpassDashboardPage() {
+  const mobile = useIsMobile();
   const { t } = useTranslation();
   const navigate = Route.useNavigate();
   const sp = Route.useSearch();
@@ -390,7 +392,12 @@ function HanpassDashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis tick={{ fill: "var(--muted-foreground)" }} dataKey="date" fontSize={11} />
+                <XAxis
+                  tick={{ fill: "var(--muted-foreground)" }}
+                  dataKey="date"
+                  minTickGap={mobile ? 28 : 5}
+                  fontSize={mobile ? 12 : 11}
+                />
                 <YAxis tick={{ fill: "var(--muted-foreground)" }} fontSize={11} />
                 <Tooltip />
                 <Legend />
