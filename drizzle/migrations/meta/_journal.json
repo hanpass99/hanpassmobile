@@ -36,6 +36,13 @@
       "when": 1792308438853,
       "tag": "0004_add_loan_borrower_pool",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792314502483,
+      "tag": "0005_migration",
+      "breakpoints": true
     }
   ]
 }
