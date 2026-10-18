@@ -1,3 +1,5 @@
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileFilters } from "@/components/MobileFilters";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, Link, type ErrorComponentProps } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -112,6 +114,7 @@ function delta(cur: number, prev: number) {
 }
 
 function HanpassDashboardPage() {
+  const mobile = useIsMobile();
   const { t } = useTranslation();
   const navigate = Route.useNavigate();
   const sp = Route.useSearch();
@@ -220,100 +223,108 @@ function HanpassDashboardPage() {
       />
 
       {/* 필터 */}
-      <Card>
-        <CardContent className="grid grid-cols-2 items-end gap-3 p-4 lg:flex lg:flex-wrap">
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">{t("common.startDate")}</div>
-            <DatePick value={from} onChange={(v) => setSearch({ from: dateKey(v) })} />
-          </div>
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">{t("common.endDate")}</div>
-            <DatePick value={to} onChange={(v) => setSearch({ to: dateKey(v) })} />
-          </div>
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">{t("hanpassDash.team")}</div>
-            <Select value={sp.country} onValueChange={(v) => setSearch({ country: v })}>
-              <SelectTrigger className="w-full lg:w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("hanpassDash.allTeams")}</SelectItem>
-                {countries.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">
-              {t("hanpassDash.staff")}
+      <MobileFilters>
+        <Card>
+          <CardContent className="grid grid-cols-2 items-end gap-3 p-4 lg:flex lg:flex-wrap">
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">
+                {t("common.startDate")}
+              </div>
+              <DatePick value={from} onChange={(v) => setSearch({ from: dateKey(v) })} />
             </div>
-            <Select value={sp.staff} onValueChange={(v) => setSearch({ staff: v })}>
-              <SelectTrigger className="w-full lg:w-[190px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("hanpassDash.allStaff")}</SelectItem>
-                {staffList.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">{t("hanpassDash.pool")}</div>
-            <Select value={sp.pool} onValueChange={(v) => setSearch({ pool: v })}>
-              <SelectTrigger className="w-full lg:w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("hanpassDash.allPools")}</SelectItem>
-                {HANPASS_POOLS.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {t(`pool.${p}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="col-span-2 flex flex-wrap gap-2 lg:ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSearch({ from: todayKey(), to: todayKey() })}
-            >
-              {t("hanpassDash.today")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSearch({ from: monthStartKey(), to: todayKey() })}
-            >
-              {t("hanpassDash.thisMonth")}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setSearch({
-                  from: monthStartKey(),
-                  to: todayKey(),
-                  country: "all",
-                  staff: "all",
-                  pool: "all",
-                  status: "all",
-                })
-              }
-            >
-              {t("common.reset")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">{t("common.endDate")}</div>
+              <DatePick value={to} onChange={(v) => setSearch({ to: dateKey(v) })} />
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">
+                {t("hanpassDash.team")}
+              </div>
+              <Select value={sp.country} onValueChange={(v) => setSearch({ country: v })}>
+                <SelectTrigger className="w-full lg:w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("hanpassDash.allTeams")}</SelectItem>
+                  {countries.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">
+                {t("hanpassDash.staff")}
+              </div>
+              <Select value={sp.staff} onValueChange={(v) => setSearch({ staff: v })}>
+                <SelectTrigger className="w-full lg:w-[190px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("hanpassDash.allStaff")}</SelectItem>
+                  {staffList.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">
+                {t("hanpassDash.pool")}
+              </div>
+              <Select value={sp.pool} onValueChange={(v) => setSearch({ pool: v })}>
+                <SelectTrigger className="w-full lg:w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("hanpassDash.allPools")}</SelectItem>
+                  {HANPASS_POOLS.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {t(`pool.${p}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2 flex flex-wrap gap-2 lg:ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSearch({ from: todayKey(), to: todayKey() })}
+              >
+                {t("hanpassDash.today")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSearch({ from: monthStartKey(), to: todayKey() })}
+              >
+                {t("hanpassDash.thisMonth")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setSearch({
+                    from: monthStartKey(),
+                    to: todayKey(),
+                    country: "all",
+                    staff: "all",
+                    pool: "all",
+                    status: "all",
+                  })
+                }
+              >
+                {t("common.reset")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </MobileFilters>
 
       {/* 핵심 지표 */}
       {loading ? (
@@ -381,7 +392,12 @@ function HanpassDashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis tick={{ fill: "var(--muted-foreground)" }} dataKey="date" fontSize={11} />
+                <XAxis
+                  tick={{ fill: "var(--muted-foreground)" }}
+                  dataKey="date"
+                  minTickGap={mobile ? 28 : 5}
+                  fontSize={mobile ? 12 : 11}
+                />
                 <YAxis tick={{ fill: "var(--muted-foreground)" }} fontSize={11} />
                 <Tooltip />
                 <Legend />

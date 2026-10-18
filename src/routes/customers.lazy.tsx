@@ -1,3 +1,4 @@
+import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
 import { countryName, companyName } from "@/i18n/display-values";
 import { uiCopy } from "@/i18n/ui-copy";
@@ -2535,236 +2536,245 @@ function CustomersPage() {
                     })}
                   </div>
 
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
-                    <div className="relative md:col-span-2">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder={t("customers.searchPlaceholder")}
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        className="pl-9"
+                  <MobileFilters>
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
+                      <div className="relative md:col-span-2">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder={t("customers.searchPlaceholder")}
+                          value={searchInput}
+                          onChange={(e) => setSearchInput(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                      <MultiCountrySelect
+                        options={countries}
+                        value={countryIds}
+                        onChange={setCountryIds}
+                        placeholder={`${t("customers.col.customerCountry")} · ${t("dashboard.allCountries")}`}
+                        className="h-10 w-full"
                       />
-                    </div>
-                    <MultiCountrySelect
-                      options={countries}
-                      value={countryIds}
-                      onChange={setCountryIds}
-                      placeholder={`${t("customers.col.customerCountry")} · ${t("dashboard.allCountries")}`}
-                      className="h-10 w-full"
-                    />
 
-                    <Select value={assignedCountry} onValueChange={setAssignedCountry}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("customers.col.assignedCountry")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          {t("customers.col.assignedCountry")} · {t("dashboard.allCountries")}
-                        </SelectItem>
-                        <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
-                        {countries.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.code} · {countryName(c)}
+                      <Select value={assignedCountry} onValueChange={setAssignedCountry}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("customers.col.assignedCountry")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">
+                            {t("customers.col.assignedCountry")} · {t("dashboard.allCountries")}
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={statusF} onValueChange={(v) => setStatusF(v as typeof statusF)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("common.status")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("status.allStatus")}</SelectItem>
-                        <SelectItem value="__call_completed__">
-                          {t("dashboard.callCompleted")}
-                        </SelectItem>
-                        {CUSTOMER_STATUSES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {STATUS_LABEL[s]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={staffF} onValueChange={setStaffF}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("customers.assigned")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("customers.allAssigned")}</SelectItem>
-                        <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
-                        {staff
-                          .filter((s) => s.is_active)
-                          .map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.display_name}
+                          <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
+                          {countries.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.code} · {countryName(c)}
                             </SelectItem>
                           ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={callRoundF}
-                      onValueChange={(v) => setCallRoundF(v as typeof callRoundF)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("dashboard.callRound")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("dashboard.roundAll")}</SelectItem>
-                        <SelectItem value="none">{t("dashboard.roundNone")}</SelectItem>
-                        <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
-                        <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
-                        <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {(() => {
-                    const chips: { key: string; label: string; onRemove: () => void }[] = [];
-                    if (debouncedSearch.trim()) {
-                      chips.push({
-                        key: "search",
-                        label: t("customers.chipSearch", { value: debouncedSearch.trim() }),
-                        onRemove: () => setSearchInput(""),
-                      });
-                    }
-                    countryIds.forEach((id) =>
-                      chips.push({
-                        key: `country-${id}`,
-                        label: t("customers.chipCountry", {
-                          value: countryById.get(id)?.code ?? id,
-                        }),
-                        onRemove: () => setCountryIds((ids) => ids.filter((value) => value !== id)),
-                      }),
-                    );
-                    if (assignedCountry !== "all")
-                      chips.push({
-                        key: "assignedCountry",
-                        label: t("customers.chipAssignedCountry", {
-                          value:
-                            assignedCountry === "__none__"
-                              ? t("common.unassigned")
-                              : (countryById.get(assignedCountry)?.code ?? assignedCountry),
-                        }),
-                        onRemove: () => setAssignedCountry("all"),
-                      });
-                    if (statusF !== "all") {
-                      const statusLabel =
-                        statusF === "__call_completed__"
-                          ? t("dashboard.callCompleted")
-                          : STATUS_LABEL[statusF as CustomerStatus];
-                      chips.push({
-                        key: "status",
-                        label: t("customers.chipStatus", { value: statusLabel }),
-                        onRemove: () => setStatusF("all"),
-                      });
-                    }
-                    if (staffF !== "all") {
-                      const name =
-                        staffF === "__none__"
-                          ? t("common.unassigned")
-                          : (staffById.get(staffF) ?? staffF);
-                      chips.push({
-                        key: "staff",
-                        label: t("customers.chipStaff", { value: name }),
-                        onRemove: () => setStaffF("all"),
-                      });
-                    }
-                    if (callRoundF !== "all") {
-                      const roundLabel =
-                        callRoundF === "none"
-                          ? t("dashboard.roundNone")
-                          : t("customers.orderNth", { n: callRoundF });
-                      chips.push({
-                        key: "callRound",
-                        label: t("customers.chipCallRound", { value: roundLabel }),
-                        onRemove: () => setCallRoundF("all"),
-                      });
-                    }
-                    if (dateFrom) {
-                      chips.push({
-                        key: "dateFrom",
-                        label: t("customers.chipDateFrom", {
-                          value: format(dateFrom, "yyyy-MM-dd"),
-                        }),
-                        onRemove: () => setDateFrom(undefined),
-                      });
-                    }
-                    if (dateTo) {
-                      chips.push({
-                        key: "dateTo",
-                        label: t("customers.chipDateTo", { value: format(dateTo, "yyyy-MM-dd") }),
-                        onRemove: () => setDateTo(undefined),
-                      });
-                    }
-
-                    return (
-                      <div className="flex flex-wrap items-center gap-2">
-                        {chips.map((chip) => (
-                          <span
-                            key={chip.key}
-                            className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
-                          >
-                            {chip.label}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              type="button"
-                              onClick={chip.onRemove}
-                              className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-                              aria-label={t("customers.chipRemove", { label: chip.label })}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </span>
-                        ))}
-                        <Button variant="outline" size="sm" onClick={resetFilters}>
-                          <X className="mr-1 h-3.5 w-3.5" />
-                          {t("customers.resetFilters")}
-                        </Button>
-                      </div>
-                    );
-                  })()}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {t("common.registeredDate")}
-                    </span>
-                    <DateRangePicker
-                      label={t("customers.startLabel")}
-                      value={dateFrom}
-                      onChange={setDateFrom}
-                    />
-                    <span className="text-xs text-muted-foreground">~</span>
-                    <DateRangePicker
-                      label={t("customers.endLabel")}
-                      value={dateTo}
-                      onChange={setDateTo}
-                    />
-                    {(dateFrom || dateTo) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setDateFrom(undefined);
-                          setDateTo(undefined);
-                        }}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={statusF}
+                        onValueChange={(v) => setStatusF(v as typeof statusF)}
                       >
-                        {t("common.reset")}
-                      </Button>
-                    )}
-                    {isAdmin && selected.size > 0 && tab === p && (
-                      <div className="ml-auto flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setBulkStatusOpen(true)}>
-                          {t("customers.bulkStatusChangeBtn", { count: selected.size })}
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => setBulkOpen(true)}>
-                          <Trash2 className="mr-2 h-4 w-4" />{" "}
-                          {t("customers.bulkDeleteBtn", { count: selected.size })}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("common.status")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t("status.allStatus")}</SelectItem>
+                          <SelectItem value="__call_completed__">
+                            {t("dashboard.callCompleted")}
+                          </SelectItem>
+                          {CUSTOMER_STATUSES.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {STATUS_LABEL[s]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={staffF} onValueChange={setStaffF}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("customers.assigned")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t("customers.allAssigned")}</SelectItem>
+                          <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
+                          {staff
+                            .filter((s) => s.is_active)
+                            .map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.display_name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={callRoundF}
+                        onValueChange={(v) => setCallRoundF(v as typeof callRoundF)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("dashboard.callRound")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t("dashboard.roundAll")}</SelectItem>
+                          <SelectItem value="none">{t("dashboard.roundNone")}</SelectItem>
+                          <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
+                          <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
+                          <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
+                    {(() => {
+                      const chips: { key: string; label: string; onRemove: () => void }[] = [];
+                      if (debouncedSearch.trim()) {
+                        chips.push({
+                          key: "search",
+                          label: t("customers.chipSearch", { value: debouncedSearch.trim() }),
+                          onRemove: () => setSearchInput(""),
+                        });
+                      }
+                      countryIds.forEach((id) =>
+                        chips.push({
+                          key: `country-${id}`,
+                          label: t("customers.chipCountry", {
+                            value: countryById.get(id)?.code ?? id,
+                          }),
+                          onRemove: () =>
+                            setCountryIds((ids) => ids.filter((value) => value !== id)),
+                        }),
+                      );
+                      if (assignedCountry !== "all")
+                        chips.push({
+                          key: "assignedCountry",
+                          label: t("customers.chipAssignedCountry", {
+                            value:
+                              assignedCountry === "__none__"
+                                ? t("common.unassigned")
+                                : (countryById.get(assignedCountry)?.code ?? assignedCountry),
+                          }),
+                          onRemove: () => setAssignedCountry("all"),
+                        });
+                      if (statusF !== "all") {
+                        const statusLabel =
+                          statusF === "__call_completed__"
+                            ? t("dashboard.callCompleted")
+                            : STATUS_LABEL[statusF as CustomerStatus];
+                        chips.push({
+                          key: "status",
+                          label: t("customers.chipStatus", { value: statusLabel }),
+                          onRemove: () => setStatusF("all"),
+                        });
+                      }
+                      if (staffF !== "all") {
+                        const name =
+                          staffF === "__none__"
+                            ? t("common.unassigned")
+                            : (staffById.get(staffF) ?? staffF);
+                        chips.push({
+                          key: "staff",
+                          label: t("customers.chipStaff", { value: name }),
+                          onRemove: () => setStaffF("all"),
+                        });
+                      }
+                      if (callRoundF !== "all") {
+                        const roundLabel =
+                          callRoundF === "none"
+                            ? t("dashboard.roundNone")
+                            : t("customers.orderNth", { n: callRoundF });
+                        chips.push({
+                          key: "callRound",
+                          label: t("customers.chipCallRound", { value: roundLabel }),
+                          onRemove: () => setCallRoundF("all"),
+                        });
+                      }
+                      if (dateFrom) {
+                        chips.push({
+                          key: "dateFrom",
+                          label: t("customers.chipDateFrom", {
+                            value: format(dateFrom, "yyyy-MM-dd"),
+                          }),
+                          onRemove: () => setDateFrom(undefined),
+                        });
+                      }
+                      if (dateTo) {
+                        chips.push({
+                          key: "dateTo",
+                          label: t("customers.chipDateTo", { value: format(dateTo, "yyyy-MM-dd") }),
+                          onRemove: () => setDateTo(undefined),
+                        });
+                      }
+
+                      return (
+                        <div className="flex flex-wrap items-center gap-2">
+                          {chips.map((chip) => (
+                            <span
+                              key={chip.key}
+                              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
+                            >
+                              {chip.label}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={chip.onRemove}
+                                className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                                aria-label={t("customers.chipRemove", { label: chip.label })}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </span>
+                          ))}
+                          <Button variant="outline" size="sm" onClick={resetFilters}>
+                            <X className="mr-1 h-3.5 w-3.5" />
+                            {t("customers.resetFilters")}
+                          </Button>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {t("common.registeredDate")}
+                      </span>
+                      <DateRangePicker
+                        label={t("customers.startLabel")}
+                        value={dateFrom}
+                        onChange={setDateFrom}
+                      />
+                      <span className="text-xs text-muted-foreground">~</span>
+                      <DateRangePicker
+                        label={t("customers.endLabel")}
+                        value={dateTo}
+                        onChange={setDateTo}
+                      />
+                      {(dateFrom || dateTo) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDateFrom(undefined);
+                            setDateTo(undefined);
+                          }}
+                        >
+                          {t("common.reset")}
+                        </Button>
+                      )}
+                      {isAdmin && selected.size > 0 && tab === p && (
+                        <div className="ml-auto flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBulkStatusOpen(true)}
+                          >
+                            {t("customers.bulkStatusChangeBtn", { count: selected.size })}
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => setBulkOpen(true)}>
+                            <Trash2 className="mr-2 h-4 w-4" />{" "}
+                            {t("customers.bulkDeleteBtn", { count: selected.size })}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </MobileFilters>
                   {staffStats.length > 0 && staffF === "all" && (
                     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
                       <div className="mb-2 text-xs font-semibold text-muted-foreground">

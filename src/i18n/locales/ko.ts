@@ -1,4 +1,5 @@
 export default {
+  mobile: { filters: "필터", backToConversations: "상담 목록으로" },
   app: { desc: "한패스 모바일 아웃바운드 콜 관리 시스템" },
   nav: {
     main: "메인",

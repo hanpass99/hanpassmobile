@@ -1,3 +1,4 @@
+import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
@@ -349,7 +350,7 @@ function TelegramPage() {
     filtered.find((c) => c.id === selectedId) ?? chats.find((c) => c.id === selectedId) ?? null;
 
   return (
-    <div className="flex h-[calc(100dvh-5.5rem)] min-h-[480px] flex-col gap-3 sm:h-[calc(100vh-100px)]">
+    <div className="flex h-[calc(100dvh-5.5rem)] min-h-0 md:min-h-[480px] flex-col gap-3 sm:h-[calc(100vh-100px)]">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <MessageCircle className="h-5 w-5" />
@@ -360,19 +361,21 @@ function TelegramPage() {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {isAdmin && (
-            <select
-              value={operatorFilter}
-              onChange={(e) => setOperatorFilter(e.target.value)}
-              className="hidden h-8 rounded-md border bg-background px-2 text-xs sm:block"
-              title={uiCopy("ux.copy38dcdc6336")}
-            >
-              <option value="all">{uiCopy("ux.copy48d503e015")}</option>
-              {(staffQuery.data ?? []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.display_name ?? uiCopy("ux.copycee097c09f")}
-                </option>
-              ))}
-            </select>
+            <MobileFilters>
+              <select
+                value={operatorFilter}
+                onChange={(e) => setOperatorFilter(e.target.value)}
+                className="h-8 rounded-md border bg-background px-2 text-xs"
+                title={uiCopy("ux.copy38dcdc6336")}
+              >
+                <option value="all">{uiCopy("ux.copy48d503e015")}</option>
+                {(staffQuery.data ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.display_name ?? uiCopy("ux.copycee097c09f")}
+                  </option>
+                ))}
+              </select>
+            </MobileFilters>
           )}
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
@@ -392,44 +395,46 @@ function TelegramPage() {
           )}
         >
           <div className="border-b p-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={uiCopy("ux.copy5599c57f43")}
-                className="pl-8 h-9"
-              />
-            </div>
-            <Tabs
-              value={filterTab}
-              onValueChange={(v) => setFilterTab(v as typeof filterTab)}
-              className="mt-2"
-            >
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="all" className="text-xs">
-                  {uiCopy("ux.copy934dd25ec5")}{" "}
-                  <span className="ml-1 opacity-60">{counts.all}</span>
-                </TabsTrigger>
-                <TabsTrigger value="new" className="text-xs">
-                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-                  {uiCopy("ux.copy884009917a")}
-                  {counts.new > 0 && (
-                    <span className="ml-1 rounded-full bg-green-500 px-1.5 text-xs font-bold text-white">
-                      {counts.new}
-                    </span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="in_progress" className="text-xs">
-                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-yellow-500" />
-                  {uiCopy("ux.copy9fdd13d4e6")}
-                </TabsTrigger>
-                <TabsTrigger value="done" className="text-xs">
-                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-gray-400" />
-                  {uiCopy("ux.copy8d8680373c")}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <MobileFilters>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder={uiCopy("ux.copy5599c57f43")}
+                  className="pl-8 h-9"
+                />
+              </div>
+              <Tabs
+                value={filterTab}
+                onValueChange={(v) => setFilterTab(v as typeof filterTab)}
+                className="mt-2"
+              >
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="all" className="text-xs">
+                    {uiCopy("ux.copy934dd25ec5")}{" "}
+                    <span className="ml-1 opacity-60">{counts.all}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="new" className="text-xs">
+                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                    {uiCopy("ux.copy884009917a")}
+                    {counts.new > 0 && (
+                      <span className="ml-1 rounded-full bg-green-500 px-1.5 text-xs font-bold text-white">
+                        {counts.new}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="in_progress" className="text-xs">
+                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-yellow-500" />
+                    {uiCopy("ux.copy9fdd13d4e6")}
+                  </TabsTrigger>
+                  <TabsTrigger value="done" className="text-xs">
+                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-gray-400" />
+                    {uiCopy("ux.copy8d8680373c")}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </MobileFilters>
           </div>
           <ScrollArea className="flex-1">
             {chatsQuery.isLoading ? (
@@ -586,7 +591,7 @@ function TelegramPage() {
             <>
               <div className="border-b p-2 md:hidden">
                 <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)}>
-                  <ArrowLeft className="mr-1 h-4 w-4" /> {uiCopy("ux.copy9a7569f26d")}
+                  <ArrowLeft className="mr-1 h-4 w-4" /> {uiCopy("mobile.backToConversations")}
                 </Button>
               </div>
               <ConversationPane chat={selected} />
@@ -966,7 +971,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
             })()}
           </div>
         </div>
-        <div className="flex max-w-full items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+        <div className="mobile-conversation-actions flex max-w-full items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
           {chat.status !== "done" ? (
             <Button
               size="sm"

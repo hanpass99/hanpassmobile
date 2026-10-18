@@ -80,7 +80,7 @@ function SystemHealthPage() {
       <PageHeader title={t("systemHealth.title")} description={t("systemHealth.subtitle")} />
 
       <Card>
-        <CardContent className="flex flex-wrap items-center gap-3 p-4">
+        <CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-4 sm:flex sm:flex-wrap">
           <div className="text-sm text-muted-foreground">
             {t("systemHealth.lastChecked")}:{" "}
             {lastChecked
@@ -99,7 +99,7 @@ function SystemHealthPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard
           label={t("systemHealth.errorCount")}
           value={counts.error}

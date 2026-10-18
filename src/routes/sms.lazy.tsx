@@ -1,3 +1,4 @@
+import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -228,31 +229,32 @@ function SendTab() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <div className="relative min-w-[180px] flex-1">
-              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-8"
-                placeholder={t("sms.searchPlaceholder")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+          <MobileFilters>
+            <div className="flex flex-wrap gap-2">
+              <div className="relative min-w-[180px] flex-1">
+                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-8"
+                  placeholder={t("sms.searchPlaceholder")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("sms.allStatus")}</SelectItem>
+                  <SelectItem value="new">{t("sms.status.new")}</SelectItem>
+                  <SelectItem value="in_progress">{t("sms.status.in_progress")}</SelectItem>
+                  <SelectItem value="callback">{t("sms.status.callback")}</SelectItem>
+                  <SelectItem value="no_answer">{t("sms.status.no_answer")}</SelectItem>
+                  <SelectItem value="activated">{t("sms.status.activated")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("sms.allStatus")}</SelectItem>
-                <SelectItem value="new">{t("sms.status.new")}</SelectItem>
-                <SelectItem value="in_progress">{t("sms.status.in_progress")}</SelectItem>
-                <SelectItem value="callback">{t("sms.status.callback")}</SelectItem>
-                <SelectItem value="no_answer">{t("sms.status.no_answer")}</SelectItem>
-                <SelectItem value="activated">{t("sms.status.activated")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+          </MobileFilters>
           <div className="max-h-[420px] overflow-auto rounded border">
             <Table aria-label={t("sms.receivers")}>
               <TableHeader className="sticky top-0 bg-background">
@@ -613,31 +615,32 @@ function HistoryTab() {
         </CardTitle>
       </CardHeader>
       <CardContent className="px-3 sm:px-5">
-        <div className="flex flex-wrap gap-2 mb-3">
-          <div className="relative min-w-[200px] flex-1">
-            <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-8"
-              placeholder={t("sms.historySearch")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <MobileFilters>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <div className="relative min-w-[200px] flex-1">
+              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-8"
+                placeholder={t("sms.historySearch")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("sms.historyAll")}</SelectItem>
+                <SelectItem value="sent">{t("sms.historySent")}</SelectItem>
+                <SelectItem value="failed">{t("sms.historyFailed")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={load} aria-busy={isFetching}>
+              {t("sms.refresh")}
+            </Button>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("sms.historyAll")}</SelectItem>
-              <SelectItem value="sent">{t("sms.historySent")}</SelectItem>
-              <SelectItem value="failed">{t("sms.historyFailed")}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" onClick={load} aria-busy={isFetching}>
-            {t("sms.refresh")}
-          </Button>
-        </div>
-
+        </MobileFilters>
         <div className="rounded border overflow-auto">
           <Table aria-label={t("sms.historyTitle", { count: filtered.length })}>
             <TableHeader>

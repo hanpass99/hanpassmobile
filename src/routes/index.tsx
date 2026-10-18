@@ -1,3 +1,5 @@
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileFilters } from "@/components/MobileFilters";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -122,6 +124,7 @@ const emptyStatus = (): StatusCounts => ({
 });
 
 function Dashboard() {
+  const mobile = useIsMobile();
   const { t } = useTranslation();
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -232,77 +235,81 @@ function Dashboard() {
         </Card>
       )}
 
-      <Card>
-        <CardContent className="grid grid-cols-2 items-end gap-3 p-4 sm:flex sm:flex-wrap">
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">{t("common.startDate")}</div>
-            <DatePick value={from} onChange={setFrom} />
-          </div>
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">{t("common.endDate")}</div>
-            <DatePick value={to} onChange={setTo} />
-          </div>
-          <div
-            className="col-span-2 flex flex-wrap gap-1.5"
-            role="group"
-            aria-label={t("dashboard.datePresets")}
-          >
-            {(["thisMonth", "lastMonth", "last7Days", "today"] as DashboardPreset[]).map(
-              (preset) => {
-                const range = dashboardDatePreset(preset);
-                const selected =
-                  dateKey(from) === dateKey(range.from) && dateKey(to) === dateKey(range.to);
-                return (
-                  <Button
-                    key={preset}
-                    size="sm"
-                    variant={selected ? "secondary" : "ghost"}
-                    aria-pressed={selected}
-                    onClick={() => {
-                      setFrom(range.from);
-                      setTo(range.to);
-                    }}
-                  >
-                    {t(`dashboard.${preset}`)}
-                  </Button>
-                );
-              },
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">
-              {t("dashboard.countryFilter")}
+      <MobileFilters>
+        <Card>
+          <CardContent className="grid grid-cols-2 items-end gap-3 p-4 sm:flex sm:flex-wrap">
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">
+                {t("common.startDate")}
+              </div>
+              <DatePick value={from} onChange={setFrom} />
             </div>
-            <Select value={countryF} onValueChange={setCountryF}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <Globe2 className="mr-2 h-4 w-4" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("dashboard.allCountries")}</SelectItem>
-                {countries.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="col-span-2 flex gap-2 sm:ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setFrom(monthStart);
-                setTo(today);
-                setCountryF("all");
-              }}
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">{t("common.endDate")}</div>
+              <DatePick value={to} onChange={setTo} />
+            </div>
+            <div
+              className="col-span-2 flex flex-wrap gap-1.5"
+              role="group"
+              aria-label={t("dashboard.datePresets")}
             >
-              {t("common.reset")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              {(["thisMonth", "lastMonth", "last7Days", "today"] as DashboardPreset[]).map(
+                (preset) => {
+                  const range = dashboardDatePreset(preset);
+                  const selected =
+                    dateKey(from) === dateKey(range.from) && dateKey(to) === dateKey(range.to);
+                  return (
+                    <Button
+                      key={preset}
+                      size="sm"
+                      variant={selected ? "secondary" : "ghost"}
+                      aria-pressed={selected}
+                      onClick={() => {
+                        setFrom(range.from);
+                        setTo(range.to);
+                      }}
+                    >
+                      {t(`dashboard.${preset}`)}
+                    </Button>
+                  );
+                },
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">
+                {t("dashboard.countryFilter")}
+              </div>
+              <Select value={countryF} onValueChange={setCountryF}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <Globe2 className="mr-2 h-4 w-4" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("dashboard.allCountries")}</SelectItem>
+                  {countries.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2 flex gap-2 sm:ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFrom(monthStart);
+                  setTo(today);
+                  setCountryF("all");
+                }}
+              >
+                {t("common.reset")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </MobileFilters>
 
       <p className="text-xs text-muted-foreground">
         {t("dashboard.comparisonPeriod", {
@@ -463,7 +470,12 @@ function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis tick={{ fill: "var(--muted-foreground)" }} dataKey="date" fontSize={12} />
+                  <XAxis
+                    tick={{ fill: "var(--muted-foreground)" }}
+                    dataKey="date"
+                    minTickGap={mobile ? 28 : 5}
+                    fontSize={12}
+                  />
                   <YAxis tick={{ fill: "var(--muted-foreground)" }} fontSize={12} />
                   <Tooltip />
                   <Legend />
