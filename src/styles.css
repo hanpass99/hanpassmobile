@@ -67,6 +67,10 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --shadow-card: 0 1px 2px 0 rgba(24, 24, 27, 0.05), 0 1px 3px -1px rgba(24, 24, 27, 0.04);
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.15rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.4rem;
   --shadow-card-hover: 0 4px 14px -4px rgba(24, 24, 27, 0.14);
 }
 
@@ -87,7 +91,7 @@
   --secondary: #EEF1F5;
   --secondary-foreground: #1B2430;
   --muted: #EEF1F5;
-  --muted-foreground: #4B5563;
+  --muted-foreground: #374151;
   --accent: #FCE7EA;
   --accent-foreground: #B3121F;
   --destructive: #DC2626;
@@ -182,21 +186,24 @@
   table {
     font-variant-numeric: tabular-nums;
   }
-  body { font-size: 14px; line-height: 1.55; }
-  td { font-size: 14px; }
+  body { font-size: 15px; line-height: 1.55; font-weight: 500; }
+  td { font-size: 15px; font-weight: 500; }
+  input::placeholder, textarea::placeholder { color: var(--color-muted-foreground); opacity: 1; }
+  [data-sidebar="menu-button"] { font-weight: 600; }
+  [role="tab"][data-state="active"] * { color: inherit !important; opacity: 1 !important; }
   tbody tr:nth-child(even) { background-color: color-mix(in oklab, var(--color-muted) 45%, transparent); }
   tbody tr:hover { background-color: var(--color-muted); }
   th {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
     letter-spacing: 0;
-    color: var(--color-muted-foreground);
+    color: var(--color-foreground);
   }
 
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing: auto;
     overflow-x: hidden;
   }
 }
