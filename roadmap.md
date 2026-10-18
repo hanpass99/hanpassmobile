@@ -1,8 +1,9 @@
 # Current requests
 
-- [ ] Critical security: approval gate on all authenticated public/storage access; trusted signup metadata and approval country grant
-- [ ] Critical security: auth bans on disable, admin-only AI settings writes, no UI text changes
-- [ ] Critical security: real RLS/signup regression verification preserving 104 approved staff
+- [x] Critical security: approval gate on all authenticated public/storage access; trusted signup metadata and approval country grant
+- [x] Critical security: auth bans on disable, admin-only AI settings writes, no UI text changes
+- [x] Critical security: isolated PostgreSQL signup/RLS tests; live 104 approved profiles/roles verified unchanged
+- [ ] Critical security: live authenticated signup→approval→disable UI verification (requesting user has no managed auth account; needs preview sign-in)
 
 - [x] 대출자 목록을 다른 고객 탭과 같은 집계·필터·표·페이지 구성으로 정리
 
