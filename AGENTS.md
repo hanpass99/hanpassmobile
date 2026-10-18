@@ -13,3 +13,4 @@
 - Interface copy uses matching ko/en locale entries and reactive React rendering; never translate stored business identifiers or outgoing message content, to preserve data behavior.
 - Language changes update document metadata without rerunning business loaders; automatic DOM/AI translation is not mounted, to keep customer data unchanged.
 - Charts reference global semantic chart/status tokens; the palette lives in global CSS so both themes remain consistent.
+- Dashboard presentation calculations live in a shared pure module; both current and previous KPIs use status counts rather than the legacy RPC call-round field so the existing customer-status rule stays consistent without backend changes.

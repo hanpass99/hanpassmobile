@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 type Tone = "primary" | "success" | "warning" | "destructive" | "info" | "muted";
 
@@ -28,6 +29,7 @@ export function StatCard({
   icon: Icon,
   tone = "primary",
   suffix,
+  footer,
 }: {
   label: string;
   value: string | number;
@@ -35,6 +37,7 @@ export function StatCard({
   icon?: LucideIcon;
   tone?: Tone;
   suffix?: string;
+  footer?: ReactNode;
 }) {
   return (
     <div
@@ -54,6 +57,7 @@ export function StatCard({
           )}
         </span>
         {hint && <span className="text-xs font-medium text-muted-foreground">{hint}</span>}
+        {footer}
       </div>
       {Icon && (
         <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-card/80", labels[tone])}>
