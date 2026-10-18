@@ -40,7 +40,7 @@
 
 # Mobile UI audit
 
-- [ ] Audit every sidebar menu screen at 440px mobile width
+- [ ] Audit every sidebar menu screen for admin, staff, Hanpass at 390px and 440px
 - [ ] Fix shared mobile header, page title, actions, and floating assistant behavior
 - [ ] Fix customer tabs, controls, status cards, and tables on mobile
 - [ ] Fix staff management list and controls on mobile
