@@ -47,6 +47,19 @@ suite("actual signup trigger and RLS, isolated PostgreSQL", () => {
       expect((await db`SELECT * FROM user_roles WHERE user_id=${pending}`).length).toBe(0);
       expect((await db`SELECT * FROM profile_countries WHERE user_id=${pending}`).length).toBe(0);
       expect(await visible(pending)).toEqual([0,0,0,0,0]);
+      const trusted = "44444444-4444-4444-8444-444444444444";
+      await db`INSERT INTO auth.users(id,email,raw_user_meta_data,raw_app_meta_data) VALUES (${trusted},'admin-created@fixture.invalid',${db.json({ country_id: country })},${db.json({ created_by_admin: true })})`;
+      expect((await db`SELECT approval_status,is_active FROM profiles WHERE id=${trusted}`)[0]).toMatchObject({ approval_status: "approved", is_active: true });
+      expect((await db`SELECT role FROM user_roles WHERE user_id=${trusted}`)[0]?.role).toBe("staff");
+      expect((await db`SELECT country_id FROM profile_countries WHERE user_id=${trusted}`)[0]?.country_id).toBe(country);
+      await db.unsafe(readFileSync(new URL("../drizzle/migrations/0010_require_auth_managed_staff_transitions.sql", import.meta.url), "utf8"));
+      await db`UPDATE user_roles SET role='admin' WHERE user_id=${trusted}`;
+      await db.begin(async (tx) => {
+        await tx`SELECT set_config('request.jwt.claim.sub',${trusted},true),set_config('request.jwt.claim.role','authenticated',true)`;
+        await tx.unsafe("SET LOCAL ROLE authenticated");
+        expect((await tx`UPDATE ai_reply_settings SET enabled=false RETURNING id`).length).toBe(1);
+        await expect(tx`UPDATE profiles SET is_active=false,approval_status='disabled' WHERE id=${staff}`.execute()).rejects.toThrow("staff_auth_transition_required");
+      }).catch((error) => { if (!String(error).includes("staff_auth_transition_required")) throw error; });
       await db.begin(async (tx) => {
         await tx`SELECT set_config('request.jwt.claim.sub',${pending},true)`;
         await tx.unsafe("SET LOCAL ROLE authenticated");
