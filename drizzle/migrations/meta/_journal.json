@@ -78,6 +78,13 @@
       "when": 1792328933536,
       "tag": "0010_require_auth_managed_staff_transitions",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792329411221,
+      "tag": "0011_secure_reset_and_indexed_phone_matching",
+      "breakpoints": true
     }
   ]
 }
