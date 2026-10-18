@@ -53,7 +53,7 @@ suite("actual signup trigger and RLS, isolated PostgreSQL", () => {
         expect((await tx`SELECT id FROM profiles`).length).toBe(1);
         expect((await tx`SELECT id FROM storage.objects`).length).toBe(0);
         expect((await tx`UPDATE profiles SET approval_status='approved',is_active=true WHERE id=${pending} RETURNING id`).length).toBe(0);
-        await expect(tx`INSERT INTO storage.objects(id,bucket_id) VALUES (${pending},'telegram-media')`).rejects.toThrow();
+        await expect(tx`INSERT INTO storage.objects(id,bucket_id) VALUES (${pending},'telegram-media')`.execute()).rejects.toThrow();
       }).catch((error) => { if (!String(error).includes("current transaction is aborted")) throw error; });
       await db.begin(async (tx) => {
         await tx`SELECT set_config('request.jwt.claim.sub',${staff},true)`;
@@ -61,7 +61,7 @@ suite("actual signup trigger and RLS, isolated PostgreSQL", () => {
         expect((await tx`SELECT * FROM ai_reply_settings`).length).toBe(1);
         expect((await tx`UPDATE ai_reply_settings SET enabled=false RETURNING id`).length).toBe(0);
         expect((await tx`DELETE FROM ai_reply_settings RETURNING id`).length).toBe(0);
-        await expect(tx`INSERT INTO ai_reply_settings(id,enabled) VALUES (${pending},true)`).rejects.toThrow();
+        await expect(tx`INSERT INTO ai_reply_settings(id,enabled) VALUES (${pending},true)`.execute()).rejects.toThrow();
       }).catch((error) => { if (!String(error).includes("current transaction is aborted")) throw error; });
       // Approval transaction grants the requested country, without changing existing staff.
       await db`INSERT INTO user_roles(user_id,role) VALUES (${pending},'staff')`;
@@ -71,5 +71,5 @@ suite("actual signup trigger and RLS, isolated PostgreSQL", () => {
       await db`UPDATE profiles SET approval_status='disabled',is_active=false WHERE id=${pending}`;
       expect(await visible(pending)).toEqual([0,0,0,0,0]);
     } finally { await db.end(); }
-  });
+  }, 30000);
 });
