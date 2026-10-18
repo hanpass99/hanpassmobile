@@ -329,7 +329,8 @@ function CustomersPage() {
     tabRestoredRef.current = true;
     if (initialSearch.pool) return;
     try {
-      const saved = window.localStorage.getItem("customers.lastTab");
+      let saved = window.localStorage.getItem("customers.lastTab");
+      if (saved === "loan_borrowers") saved = "loan_borrower";
       if (!saved) return;
       if (visiblePools.includes(saved as CustomerPool) || (saved === "loan_borrowers" && showLoanTab)) {
         setTab(saved as TabValue);
@@ -1575,10 +1576,10 @@ function CustomersPage() {
         <TabsList className="flex h-auto w-full snap-x justify-start gap-1 overflow-x-auto bg-transparent p-0 pb-2">
           {visiblePools.map((p) => (
             <TabsTrigger key={p} value={p} className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm">
-              {POOL_SHORT[p]} <span className="ml-1 text-muted-foreground">({poolCount(p)})</span>
+              {POOL_SHORT[p]} <span className="ml-1 opacity-80">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
-          {showLoanTab && (
+          {false && (
             <TabsTrigger value="loan_borrowers" className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm">
               {t("nav.loans")} <span className="ml-1 text-muted-foreground">({loanCount.toLocaleString()})</span>
             </TabsTrigger>

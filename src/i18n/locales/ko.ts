@@ -221,6 +221,7 @@ export default {
     friend_referral: "친구 추천",
     prepaid_charge: "한패스 앱으로 선불 충전자",
     one_year_activation: "1년 개통자",
+    loan_borrower: "대출자 관리",
     short: {
       existing: "기존 고객",
       activation_request: "한패스앱 신청자",
@@ -230,6 +231,7 @@ export default {
       friend_referral: "친구 추천",
       prepaid_charge: "선불 충전자",
       one_year_activation: "1년 개통자",
+    loan_borrower: "대출자 관리",
     },
     emptyPool: "{{name}} Pool에 고객이 없습니다.",
 

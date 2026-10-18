@@ -90,6 +90,7 @@ export const POOLS = [
   "friend_referral",
   "prepaid_charge",
   "one_year_activation",
+  "loan_borrower",
 ] as const;
 export type CustomerPool = (typeof POOLS)[number];
 
