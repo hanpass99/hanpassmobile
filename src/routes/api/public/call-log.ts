@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { constantTimeTokenEqual, normalizePhone, uniquePhoneMatch } from "@/lib/ingestion-security";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,27 +19,6 @@ const payloadSchema = z.object({
   duration: z.union([z.number(), z.string()]).optional().nullable(),
   started_at: z.string().optional().nullable(),
 });
-
-function normalizePhone(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  let digits = raw.replace(/[^\d]/g, "");
-  if (!digits) return null;
-  // Strip Korean country code (+82 / 0082)
-  if (digits.startsWith("0082")) digits = digits.slice(4);
-  if (digits.startsWith("82") && digits.length >= 11) digits = digits.slice(2);
-  // Restore national leading zero for Korean mobile/landline
-  if (!digits.startsWith("0") && /^(1[016789]|2|3[1-3]|4[1-4]|5[1-5]|6[1-4])/.test(digits)) {
-    digits = "0" + digits;
-  }
-  return digits;
-}
-
-/** Comparable key: last 8 digits — immune to leading 0 / country code differences. */
-function phoneKey(raw: string | null | undefined): string | null {
-  const n = normalizePhone(raw);
-  if (!n) return null;
-  return n.slice(-8);
-}
 
 /** Normalize direction into incoming | outgoing | missed. */
 function normalizeDirection(raw: string, status: string | null | undefined): string {
@@ -93,7 +73,7 @@ export const Route = createFileRoute("/api/public/call-log")({
           ? authHeader.slice(7).trim()
           : "";
         const provided = request.headers.get("x-automate-token") ?? bearer;
-        if (!token || provided !== token) {
+        if (!token || !constantTimeTokenEqual(provided, token)) {
           return new Response(JSON.stringify({ error: "unauthorized" }), {
             status: 401,
             headers: jsonHeaders,
@@ -142,48 +122,24 @@ export const Route = createFileRoute("/api/public/call-log")({
         const { iso: startedIso } = parseStartedAt(data.started_at);
         const direction = normalizeDirection(data.direction, data.status);
 
-        // Flexible employee matching: compare normalized last-8-digit keys
         let staffId: string | null = null;
-        const empKey = phoneKey(data.employee_phone);
-        if (empKey) {
-          const { data: profs } = await supabaseAdmin
-            .from("profiles")
-            .select("id, phone")
-            .not("phone", "is", null);
-          staffId = (profs ?? []).find((p: any) => phoneKey(p.phone) === empKey)?.id ?? null;
+        if (empPhone) {
+          const { data: profiles, error: lookupError } = await supabaseAdmin
+            .from("profiles").select("id").eq("phone_digits", empPhone).limit(2);
+          if (lookupError) return Response.json({ error: "employee_lookup_failed" }, { status: 500, headers: corsHeaders });
+          staffId = uniquePhoneMatch(profiles).id;
         }
-
 
         let customerId: string | null = null;
+        let ambiguousCustomer = false;
         if (custPhone) {
-          const variants = new Set<string>([custPhone]);
-          // Korean mobile formatted variants
-          if (/^01\d{8,9}$/.test(custPhone)) {
-            const mid = custPhone.length === 11 ? 7 : 6;
-            variants.add(`${custPhone.slice(0, 3)}-${custPhone.slice(3, mid)}-${custPhone.slice(mid)}`);
-            variants.add(`+82 ${custPhone.slice(1, 3)}-${custPhone.slice(3, mid)}-${custPhone.slice(mid)}`);
-            variants.add(`+82${custPhone.slice(1)}`);
-          }
-          const { data: cust } = await supabaseAdmin
-            .from("customers")
-            .select("id, phone")
-            .in("phone", Array.from(variants))
-            .limit(1)
-            .maybeSingle();
-          customerId = cust?.id ?? null;
-          if (!customerId) {
-            // Fallback: fuzzy match by digits-only via ilike patterns
-            const last8 = custPhone.slice(-8);
-            const { data: fuzzy } = await supabaseAdmin
-              .from("customers")
-              .select("id, phone")
-              .ilike("phone", `%${last8.slice(0, 4)}%${last8.slice(4)}%`)
-              .limit(1)
-              .maybeSingle();
-            customerId = fuzzy?.id ?? null;
-          }
+          const { data: customers, error: lookupError } = await supabaseAdmin
+            .from("customers").select("id").eq("phone_digits", custPhone).limit(2);
+          if (lookupError) return Response.json({ error: "customer_lookup_failed" }, { status: 500, headers: corsHeaders });
+          const match = uniquePhoneMatch(customers);
+          customerId = match.id;
+          ambiguousCustomer = match.ambiguous;
         }
-
 
         const { data: inserted, error } = await supabaseAdmin
           .from("phone_call_logs" as any)
@@ -212,7 +168,9 @@ export const Route = createFileRoute("/api/public/call-log")({
           parse_ok: !error,
           error_reason: error
             ? `insert_failed: ${error.message}`
-            : staffId
+            : ambiguousCustomer
+              ? "ambiguous_customer"
+              : staffId
               ? null
               : "employee_not_matched",
           matched_employee_id: staffId,

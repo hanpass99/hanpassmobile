@@ -767,6 +767,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string
+          phone_digits: string | null
           pool: Database["public"]["Enums"]["customer_pool"]
           requested_plan: string | null
           signup_date: string
@@ -798,6 +799,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone: string
+          phone_digits?: string | null
           pool?: Database["public"]["Enums"]["customer_pool"]
           requested_plan?: string | null
           signup_date?: string
@@ -829,6 +831,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string
+          phone_digits?: string | null
           pool?: Database["public"]["Enums"]["customer_pool"]
           requested_plan?: string | null
           signup_date?: string
@@ -1109,6 +1112,7 @@ export type Database = {
           id: string
           is_active: boolean
           phone: string | null
+          phone_digits: string | null
           sort_order: number
           updated_at: string
         }
@@ -1126,6 +1130,7 @@ export type Database = {
           id: string
           is_active?: boolean
           phone?: string | null
+          phone_digits?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -1143,6 +1148,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           phone?: string | null
+          phone_digits?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -1901,6 +1907,7 @@ export type Database = {
         }[]
       }
       normalize_google_form_phone: { Args: { _phone: string }; Returns: string }
+      normalized_phone_digits: { Args: { raw: string }; Returns: string }
       run_system_checks: { Args: never; Returns: Json }
       search_customers: {
         Args: {

@@ -35,6 +35,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
 import { Route as ApiPublicCallLogRouteImport } from './routes/api/public/call-log'
+import { Route as ApiPublicChangePasswordRouteImport } from './routes/api/public/change-password'
 import { Route as ApiPublicAiLearnRunRouteImport } from './routes/api/public/ai-learn/run'
 import { Route as ApiPublicApplicationsExternalApplicationIdRouteImport } from './routes/api/public/applications.$externalApplicationId'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -172,6 +173,11 @@ const ApiPublicCallLogRoute = ApiPublicCallLogRouteImport.update({
   path: '/api/public/call-log',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicChangePasswordRoute = ApiPublicChangePasswordRouteImport.update({
+  id: '/api/public/change-password',
+  path: '/api/public/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAiLearnRunRoute = ApiPublicAiLearnRunRouteImport.update({
   id: '/api/public/ai-learn/run',
   path: '/api/public/ai-learn/run',
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/applications': typeof ApiPublicApplicationsRouteWithChildren
   '/api/public/call-log': typeof ApiPublicCallLogRoute
+  '/api/public/change-password': typeof ApiPublicChangePasswordRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
   '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/applications': typeof ApiPublicApplicationsRouteWithChildren
   '/api/public/call-log': typeof ApiPublicCallLogRoute
+  '/api/public/change-password': typeof ApiPublicChangePasswordRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
   '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/applications': typeof ApiPublicApplicationsRouteWithChildren
   '/api/public/call-log': typeof ApiPublicCallLogRoute
+  '/api/public/change-password': typeof ApiPublicChangePasswordRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
   '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/applications'
     | '/api/public/call-log'
+    | '/api/public/change-password'
     | '/api/public/ai-learn/run'
     | '/api/public/applications/$externalApplicationId'
     | '/api/public/telegram/webhook'
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/applications'
     | '/api/public/call-log'
+    | '/api/public/change-password'
     | '/api/public/ai-learn/run'
     | '/api/public/applications/$externalApplicationId'
     | '/api/public/telegram/webhook'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/applications'
     | '/api/public/call-log'
+    | '/api/public/change-password'
     | '/api/public/ai-learn/run'
     | '/api/public/applications/$externalApplicationId'
     | '/api/public/telegram/webhook'
@@ -407,6 +419,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicApplicationsRoute: typeof ApiPublicApplicationsRouteWithChildren
   ApiPublicCallLogRoute: typeof ApiPublicCallLogRoute
+  ApiPublicChangePasswordRoute: typeof ApiPublicChangePasswordRoute
   ApiPublicAiLearnRunRoute: typeof ApiPublicAiLearnRunRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
@@ -595,6 +608,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCallLogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/change-password': {
+      id: '/api/public/change-password'
+      path: '/api/public/change-password'
+      fullPath: '/api/public/change-password'
+      preLoaderRoute: typeof ApiPublicChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/ai-learn/run': {
       id: '/api/public/ai-learn/run'
       path: '/api/public/ai-learn/run'
@@ -661,6 +681,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicApplicationsRoute: ApiPublicApplicationsRouteWithChildren,
   ApiPublicCallLogRoute: ApiPublicCallLogRoute,
+  ApiPublicChangePasswordRoute: ApiPublicChangePasswordRoute,
   ApiPublicAiLearnRunRoute: ApiPublicAiLearnRunRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }

@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "node:crypto";
+import { currentOffHoursSessionStart, sundaySessionStart } from "@/lib/telegram-sessions";
+import { inboundInsertOutcome } from "@/lib/ingestion-security";
 import {
   answerCallbackQuery,
   BOT_COPY,
@@ -44,56 +46,6 @@ async function setMarketingOptIn(supabaseAdmin: any, chatId: number, optIn: bool
   }
 }
 
-
-
-// Returns the current hour (0-23) in the given IANA timezone.
-function getHourInTimezone(tz: string, date = new Date()): number {
-  const h = new Intl.DateTimeFormat("en-US", {
-    timeZone: tz,
-    hour: "numeric",
-    hour12: false,
-  }).format(date);
-  // Intl may return "24" for midnight in some environments; normalize.
-  const n = parseInt(h, 10);
-  return Number.isFinite(n) ? n % 24 : new Date().getUTCHours();
-}
-
-// Start (UTC ms) of the current off-hours session for the given tz + business window.
-// If it's currently before startHour → session started at endHour of the previous local day.
-// If it's currently at/after endHour → session started at endHour of today.
-function currentOffHoursSessionStart(
-  tz: string,
-  startHour: number,
-  endHour: number,
-  now = new Date(),
-): Date | null {
-  const hour = getHourInTimezone(tz, now);
-  if (hour >= startHour && hour < endHour) return null; // within business hours
-  // Get local Y-M-D in tz
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-  const y = parts.find((p) => p.type === "year")!.value;
-  const m = parts.find((p) => p.type === "month")!.value;
-  const d = parts.find((p) => p.type === "day")!.value;
-  // Approximate tz offset: build a date at "YYYY-MM-DDTHH:00:00Z" then diff with same wall time interpreted in tz.
-  // Simpler: use the fact that Asia/Seoul has no DST → fixed +09:00. For general tz, compute offset dynamically.
-  const asUtc = new Date(`${y}-${m}-${d}T00:00:00Z`);
-  const localMidnightHour = getHourInTimezone(tz, asUtc);
-  // tz offset in hours = (0 - localMidnightHour) mod 24, but this loses sign around DST; good enough for fixed offsets.
-  const tzOffsetHours = localMidnightHour === 0 ? 0 : 24 - localMidnightHour;
-  if (hour >= endHour) {
-    // Session started today at endHour local time
-    return new Date(Date.UTC(+y, +m - 1, +d, endHour - tzOffsetHours, 0, 0));
-  }
-  // hour < startHour → session started yesterday at endHour local time
-  const yesterday = new Date(Date.UTC(+y, +m - 1, +d, endHour - tzOffsetHours, 0, 0));
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-  return yesterday;
-}
 
 
 function safeEqual(a: string, b: string): boolean {
@@ -331,23 +283,6 @@ const SUNDAY_HANDOFF_NOTICE: Record<string, string> = {
 function isSundayInTimezone(tz: string, date = new Date()): boolean {
   const wd = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short" }).format(date);
   return wd === "Sun";
-}
-
-/** Start (UTC) of the current Sunday in `tz`, used to throttle the holiday auto-reply. */
-function sundaySessionStart(tz: string, now = new Date()): Date {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-  const y = +parts.find((p) => p.type === "year")!.value;
-  const m = +parts.find((p) => p.type === "month")!.value;
-  const d = +parts.find((p) => p.type === "day")!.value;
-  const asUtc = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
-  const localMidnightHour = getHourInTimezone(tz, asUtc);
-  const tzOffsetHours = localMidnightHour === 0 ? 0 : 24 - localMidnightHour;
-  return new Date(Date.UTC(y, m - 1, d, -tzOffsetHours, 0, 0));
 }
 
 // Escalate to a human: notify the customer in their language and flag the chat.
@@ -827,15 +762,6 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const isStartCommand =
           typeof message.text === "string" && message.text.trim().toLowerCase().startsWith("/start");
 
-        // /stop and /reklama → marketing opt-out / opt-in. Never touches the consultation flow.
-        const cmdText =
-          typeof message.text === "string" ? message.text.trim().toLowerCase() : "";
-        if (cmdText.startsWith("/stop") || cmdText.startsWith("/reklama")) {
-          await setMarketingOptIn(supabaseAdmin, chatId, cmdText.startsWith("/reklama"));
-          return Response.json({ ok: true, marketing: true });
-        }
-
-
         // Upsert chat row
         const { data: existing } = await supabaseAdmin
           .from("telegram_chats")
@@ -870,6 +796,59 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           rowId = inserted.id;
         } else {
           rowId = existing.id;
+        }
+
+        // For contact messages, persist a human-readable summary in `text` so
+        // the operator can see the shared phone number directly in the chat.
+        let contactText: string | null = null;
+        if (message.contact?.phone_number) {
+          const digits = normalizePhone(message.contact.phone_number);
+          const pretty = digits ? (formatKoreanPhone(digits) ?? digits) : message.contact.phone_number;
+          const nameParts = [message.contact.first_name, message.contact.last_name].filter(Boolean).join(" ").trim();
+          contactText = `📱 ${nameParts || "연락처"} · ${pretty}`;
+        }
+
+        // Save the message
+        const { data: insertedMsg, error: msgErr } = await supabaseAdmin
+          .from("telegram_messages")
+          .insert({
+            chat_id: chatId,
+            telegram_chat_row_id: rowId,
+            direction: "in",
+            telegram_message_id: message.message_id,
+            message_type: media.kind,
+            text: contactText ?? message.text ?? null,
+            caption,
+            media_storage_path: null,
+            media_url: null,
+            media_file_name: media.fileName ?? null,
+            media_mime: media.mime ?? null,
+            media_size: media.size ?? null,
+            media_width: media.width ?? null,
+            media_height: media.height ?? null,
+            media_duration: media.duration ?? null,
+            raw: message as never,
+          })
+          .select("id")
+          .single();
+        const outcome = inboundInsertOutcome(msgErr);
+        if (outcome === "duplicate") return Response.json({ ok: true, duplicate: true });
+        if (outcome === "failed" || !insertedMsg) {
+          console.error("[telegram webhook] insert message failed", msgErr?.code);
+          return Response.json({ ok: false }, { status: 500 });
+        }
+        const inboundMessageId = insertedMsg.id;
+
+        // /stop and /reklama → marketing opt-out / opt-in. Never touches the consultation flow.
+        const cmdText =
+          typeof message.text === "string" ? message.text.trim().toLowerCase() : "";
+        if (cmdText.startsWith("/stop") || cmdText.startsWith("/reklama")) {
+          await setMarketingOptIn(supabaseAdmin, chatId, cmdText.startsWith("/reklama"));
+          return Response.json({ ok: true, marketing: true });
+        }
+
+
+        if (existing) {
           // Preserve "done" status unless the customer explicitly restarts with /start.
           // Otherwise, treat the inbound message as reopening the chat (status: 'new').
           const nextStatus: "new" | "done" = isStartCommand ? "new" : wasDone ? "done" : "new";
@@ -999,43 +978,11 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           }
         }
 
-        // For contact messages, persist a human-readable summary in `text` so
-        // the operator can see the shared phone number directly in the chat.
-        let contactText: string | null = null;
-        if (message.contact?.phone_number) {
-          const digits = normalizePhone(message.contact.phone_number);
-          const pretty = digits ? (formatKoreanPhone(digits) ?? digits) : message.contact.phone_number;
-          const nameParts = [message.contact.first_name, message.contact.last_name].filter(Boolean).join(" ").trim();
-          contactText = `📱 ${nameParts || "연락처"} · ${pretty}`;
+        if (media_storage_path) {
+          await supabaseAdmin.from("telegram_messages").update({
+            media_storage_path, media_url, media_file_name, media_mime, media_size,
+          }).eq("id", inboundMessageId);
         }
-
-        // Save the message
-        const { data: insertedMsg, error: msgErr } = await supabaseAdmin
-          .from("telegram_messages")
-          .insert({
-            chat_id: chatId,
-            telegram_chat_row_id: rowId,
-            direction: "in",
-            telegram_message_id: message.message_id,
-            message_type: media.kind,
-            text: contactText ?? message.text ?? null,
-            caption,
-            media_storage_path,
-            media_url,
-            media_file_name,
-            media_mime,
-            media_size,
-            media_width: media.width ?? null,
-            media_height: media.height ?? null,
-            media_duration: media.duration ?? null,
-            raw: message as never,
-          })
-          .select("id")
-          .single();
-        if (msgErr && !msgErr.message.includes("duplicate")) {
-          console.error("[telegram webhook] insert message failed", msgErr);
-        }
-        const inboundMessageId = insertedMsg?.id as string | undefined;
 
         // Track whether we've already sent an auto-response so we don't stack messages.
         let autoResponseSent = false;

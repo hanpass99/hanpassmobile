@@ -1,5 +1,12 @@
 # Current requests
 
+- [x] Medium security: unique temporary reset passwords and enforced password change
+- [x] Medium security: Telegram inbound deduplication and correct timezone sessions
+- [x] Medium security: indexed exact call matching, ambiguity handling, constant-time token check
+- [x] Medium security: official SheetJS upgrade and Excel compatibility tests
+- [x] Medium security: regression tests, isolated PostgreSQL policies, type-check and preview build
+- [ ] Medium security: publish app changes before staff resets; real authenticated reset verification needs preview sign-in
+
 - [x] Critical security: approval gate on all authenticated public/storage access; trusted signup metadata and approval country grant
 - [x] Critical security: auth bans on disable, admin-only AI settings writes, no UI text changes
 - [x] Critical security: isolated PostgreSQL signup/RLS tests; live 104 approved profiles/roles verified unchanged
