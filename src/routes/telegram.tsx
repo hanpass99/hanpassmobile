@@ -971,7 +971,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
             })()}
           </div>
         </div>
-        <div className="flex max-w-full items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+        <div className="mobile-conversation-actions flex max-w-full items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
           {chat.status !== "done" ? (
             <Button
               size="sm"
