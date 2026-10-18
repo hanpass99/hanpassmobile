@@ -1,3 +1,5 @@
+import { localizeError } from "@/i18n/localize-error";
+import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -12,8 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,11 +38,26 @@ import { ATTENDANCE_STATUSES, ATTENDANCE_CLASS, type AttendanceStatus } from "@/
 import { useAttendance } from "@/hooks/use-attendance";
 
 export const Route = createFileRoute("/attendance")({
-  head: () => ({ meta: [{ title: i18n.t("head.attendance") }] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.attendance.title") },
+      { name: "description", content: uiCopy("pages.attendance.description") },
+      { property: "og:title", content: uiCopy("pages.attendance.title") },
+      { property: "og:description", content: uiCopy("pages.attendance.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: AttendancePage,
 });
 
-type StaffRow = { id: string; name: string; totalCalls: number; activated: number; attendance: AttendanceStatus };
+type StaffRow = {
+  id: string;
+  name: string;
+  totalCalls: number;
+  activated: number;
+  attendance: AttendanceStatus;
+};
 
 function AttendancePage() {
   const { t } = useTranslation();
@@ -56,15 +86,18 @@ function AttendancePage() {
   const historyRows = data?.history ?? [];
 
   const staffName = useMemo(() => new Map(rows.map((r) => [r.id, r.name])), [rows]);
-  const visibleHistory = selectedStaff === "all" ? historyRows : historyRows.filter((h) => h.user_id === selectedStaff);
+  const visibleHistory =
+    selectedStaff === "all" ? historyRows : historyRows.filter((h) => h.user_id === selectedStaff);
   const presentRows = rows.filter((r) => r.attendance === "present");
-  const avgCalls = presentRows.length ? Math.round(presentRows.reduce((sum, r) => sum + r.totalCalls, 0) / presentRows.length) : 0;
+  const avgCalls = presentRows.length
+    ? Math.round(presentRows.reduce((sum, r) => sum + r.totalCalls, 0) / presentRows.length)
+    : 0;
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["attendance", dateKey] });
 
   const changeAttendance = async (userId: string, status: AttendanceStatus) => {
     if (!isAdmin && user?.id !== userId) {
-      toast.error(t("attendance.forbidden"));
+      toast.error(localizeError(t("attendance.forbidden")));
       return;
     }
     const { error } = await supabase.rpc("set_staff_attendance", {
@@ -72,42 +105,58 @@ function AttendancePage() {
       _date: dateKey,
       _status: status,
     });
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(localizeError(error.message));
+      return;
+    }
     toast.success(t("attendance.updated"));
     invalidate();
   };
 
   const applyBulk = async () => {
-    if (!isAdmin) return toast.error(t("attendance.forbidden"));
+    if (!isAdmin) return toast.error(localizeError(t("attendance.forbidden")));
     const targets = rows.map((r) => r.id);
-    const results = await Promise.all(targets.map((id) => supabase.rpc("set_staff_attendance", {
-      _user_id: id,
-      _date: dateKey,
-      _status: bulkStatus,
-    })));
+    const results = await Promise.all(
+      targets.map((id) =>
+        supabase.rpc("set_staff_attendance", {
+          _user_id: id,
+          _date: dateKey,
+          _status: bulkStatus,
+        }),
+      ),
+    );
     const failed = results.find((r) => r.error);
-    if (failed?.error) return toast.error(failed.error.message);
+    if (failed?.error) return toast.error(localizeError(failed.error.message));
     toast.success(t("attendance.savedCount", { count: targets.length }));
     invalidate();
   };
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("attendance.title")} description={loading ? t("common.loading") : t("attendance.subtitle")} />
+      <PageHeader
+        title={t("attendance.title")}
+        description={loading ? t("common.loading") : t("attendance.subtitle")}
+      />
 
       <Card>
         <CardContent className="grid grid-cols-1 items-end gap-3 p-4 sm:flex sm:flex-wrap">
           <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">{t("attendance.selectedDate")}</div>
+            <div className="text-xs font-medium text-muted-foreground">
+              {t("attendance.selectedDate")}
+            </div>
             <DatePick value={date} onChange={setDate} />
           </div>
           {isAdmin && (
             <div className="flex flex-wrap items-end gap-2 sm:ml-auto">
               <div className="space-y-1.5">
-                <div className="text-xs font-medium text-muted-foreground">{t("attendance.bulkStatus")}</div>
+                <div className="text-xs font-medium text-muted-foreground">
+                  {t("attendance.bulkStatus")}
+                </div>
                 <AttendanceSelect value={bulkStatus} onChange={setBulkStatus} />
               </div>
-              <Button size="sm" onClick={applyBulk} aria-busy={loading}>{t("attendance.bulkApply")}</Button>
+              <Button size="sm" onClick={applyBulk} aria-busy={loading}>
+                {t("attendance.bulkApply")}
+              </Button>
             </div>
           )}
         </CardContent>
@@ -115,12 +164,18 @@ function AttendancePage() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <SummaryCard icon={Users} label={t("attendance.allStaff")} value={rows.length} />
-        <SummaryCard icon={CheckCircle2} label={t("attendance.presentToday")} value={presentRows.length} />
+        <SummaryCard
+          icon={CheckCircle2}
+          label={t("attendance.presentToday")}
+          value={presentRows.length}
+        />
         <SummaryCard icon={History} label={t("attendance.avgCalls")} value={avgCalls} />
       </div>
 
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">{format(date, "yyyy.MM.dd")}</CardTitle></CardHeader>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{format(date, "yyyy.MM.dd")}</CardTitle>
+        </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
@@ -132,31 +187,54 @@ function AttendancePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <TableRow key={`sk-${i}`}>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-7 w-28" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-12" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-12" /></TableCell>
-                  </TableRow>
-                ))
-              ) : rows.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="font-semibold whitespace-nowrap">{r.name}</TableCell>
-                  <TableCell>
-                    {(isAdmin || user?.id === r.id) ? (
-                      <AttendanceSelect value={r.attendance} onChange={(v) => changeAttendance(r.id, v)} />
-                    ) : (
-                      <Badge className={cn("border-transparent", ATTENDANCE_CLASS[r.attendance])}>{t(`attendance.status.${r.attendance}`)}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right font-bold">{r.totalCalls.toLocaleString()}</TableCell>
-                  <TableCell className="text-right font-bold text-primary">{r.activated.toLocaleString()}</TableCell>
-                </TableRow>
-              ))}
+              {loading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <TableRow key={`sk-${i}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-7 w-28" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="ml-auto h-4 w-12" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="ml-auto h-4 w-12" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                : rows.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-semibold whitespace-nowrap">{r.name}</TableCell>
+                      <TableCell>
+                        {isAdmin || user?.id === r.id ? (
+                          <AttendanceSelect
+                            value={r.attendance}
+                            onChange={(v) => changeAttendance(r.id, v)}
+                          />
+                        ) : (
+                          <Badge
+                            className={cn("border-transparent", ATTENDANCE_CLASS[r.attendance])}
+                          >
+                            {t(`attendance.status.${r.attendance}`)}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        {r.totalCalls.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-primary">
+                        {r.activated.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
               {!loading && !rows.length && (
-                <TableRow><TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">{t("common.noData")}</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                    {t("common.noData")}
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
@@ -167,10 +245,16 @@ function AttendancePage() {
         <CardHeader className="grid gap-3 pb-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <CardTitle className="text-base">{t("attendance.history")}</CardTitle>
           <Select value={selectedStaff} onValueChange={setSelectedStaff}>
-            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("attendance.allStaff")}</SelectItem>
-              {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+              {rows.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {r.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </CardHeader>
@@ -185,25 +269,45 @@ function AttendancePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={`sh-${i}`}>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  </TableRow>
-                ))
-              ) : visibleHistory.map((h) => (
-                <TableRow key={h.id}>
-                  <TableCell className="whitespace-nowrap">{h.attendance_date}</TableCell>
-                  <TableCell className="font-medium whitespace-nowrap">{staffName.get(h.user_id) ?? "—"}</TableCell>
-                  <TableCell><Badge className={cn("border-transparent", ATTENDANCE_CLASS[h.status])}>{t(`attendance.status.${h.status}`)}</Badge></TableCell>
-                  <TableCell className="text-muted-foreground">{h.set_by ? (staffName.get(h.set_by) ?? "—") : "—"}</TableCell>
-                </TableRow>
-              ))}
+              {loading
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={`sh-${i}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                : visibleHistory.map((h) => (
+                    <TableRow key={h.id}>
+                      <TableCell className="whitespace-nowrap">{h.attendance_date}</TableCell>
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {staffName.get(h.user_id) ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={cn("border-transparent", ATTENDANCE_CLASS[h.status])}>
+                          {t(`attendance.status.${h.status}`)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {h.set_by ? (staffName.get(h.set_by) ?? "—") : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
               {!loading && !visibleHistory.length && (
-                <TableRow><TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">{t("attendance.noHistory")}</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                    {t("attendance.noHistory")}
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
@@ -213,26 +317,53 @@ function AttendancePage() {
   );
 }
 
-function AttendanceSelect({ value, onChange }: { value: AttendanceStatus; onChange: (v: AttendanceStatus) => void }) {
+function AttendanceSelect({
+  value,
+  onChange,
+}: {
+  value: AttendanceStatus;
+  onChange: (v: AttendanceStatus) => void;
+}) {
   const { t } = useTranslation();
   return (
     <Select value={value} onValueChange={(v) => onChange(v as AttendanceStatus)}>
-      <SelectTrigger className={cn("h-8 w-[112px] border-transparent text-xs", ATTENDANCE_CLASS[value])}>
+      <SelectTrigger
+        className={cn("h-8 w-[112px] border-transparent text-xs", ATTENDANCE_CLASS[value])}
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {ATTENDANCE_STATUSES.map((s) => <SelectItem key={s} value={s}>{t(`attendance.status.${s}`)}</SelectItem>)}
+        {ATTENDANCE_STATUSES.map((s) => (
+          <SelectItem key={s} value={s}>
+            {t(`attendance.status.${s}`)}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
 }
 
-function SummaryCard({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: number }) {
+function SummaryCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Users;
+  label: string;
+  value: number;
+}) {
   return (
-    <Card><CardContent className="flex items-center gap-3 p-4">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft text-primary"><Icon className="h-4 w-4" /></div>
-      <div><div className="text-xs text-muted-foreground">{label}</div><div className="text-2xl font-bold">{value.toLocaleString()}</div></div>
-    </CardContent></Card>
+    <Card>
+      <CardContent className="flex items-center gap-3 p-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <div className="text-xs text-muted-foreground">{label}</div>
+          <div className="text-2xl font-bold">{value.toLocaleString()}</div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -246,7 +377,13 @@ function DatePick({ value, onChange }: { value: Date; onChange: (d: Date) => voi
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={value} onSelect={(d) => d && onChange(d)} initialFocus className="p-3 pointer-events-auto" />
+        <Calendar
+          mode="single"
+          selected={value}
+          onSelect={(d) => d && onChange(d)}
+          initialFocus
+          className="p-3 pointer-events-auto"
+        />
       </PopoverContent>
     </Popover>
   );

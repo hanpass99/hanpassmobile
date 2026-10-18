@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -14,6 +16,7 @@ type PendingNoti = {
 };
 
 export function AdminPushListener() {
+  useTranslation();
   const { user } = useAuth();
   const [queue, setQueue] = useState<PendingNoti[]>([]);
   const [acking, setAcking] = useState(false);
@@ -22,15 +25,22 @@ export function AdminPushListener() {
     if (!user) return;
     const { data, error } = await supabase
       .from("admin_notification_recipients")
-      .select("id, notification_id, admin_notifications!inner(id, title, message, created_at, sender_id)")
+      .select(
+        "id, notification_id, admin_notifications!inner(id, title, message, created_at, sender_id)",
+      )
       .eq("user_id", user.id)
       .is("acknowledged_at", null)
       .order("created_at", { ascending: true });
     if (error || !data) return;
-    const senderIds = Array.from(new Set(data.map((r: any) => r.admin_notifications?.sender_id).filter(Boolean)));
+    const senderIds = Array.from(
+      new Set(data.map((r: any) => r.admin_notifications?.sender_id).filter(Boolean)),
+    );
     let senderMap = new Map<string, string>();
     if (senderIds.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, display_name").in("id", senderIds);
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", senderIds);
       senderMap = new Map((profs ?? []).map((p: any) => [p.id, p.display_name]));
     }
     setQueue(
@@ -52,7 +62,12 @@ export function AdminPushListener() {
       .channel(`admin-push-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "admin_notification_recipients", filter: `user_id=eq.${user.id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "admin_notification_recipients",
+          filter: `user_id=eq.${user.id}`,
+        },
         () => {
           load();
           try {
@@ -94,7 +109,7 @@ export function AdminPushListener() {
           </div>
           <div className="flex flex-1 items-center gap-3">
             <AlertTriangle className="h-8 w-8" />
-            <span className="text-3xl font-black tracking-wide">긴급 공지 · URGENT NOTICE</span>
+            <span className="text-3xl font-black tracking-wide">{uiCopy("ux.copy4aa93a11d4")}</span>
           </div>
           {queue.length > 1 ? (
             <span className="rounded-full bg-destructive-foreground/20 px-5 py-2 text-lg font-bold">
@@ -105,7 +120,7 @@ export function AdminPushListener() {
 
         <div className="px-10 py-8">
           <h2 className="mb-2 text-4xl font-black leading-tight text-foreground">
-            {current.title?.trim() ? current.title : "관리자 공지 / Admin Notice"}
+            {current.title?.trim() ? current.title : uiCopy("ux.copycaa5e41799")}
           </h2>
           <p className="mb-6 text-base text-muted-foreground">
             {current.sender_name ? `${current.sender_name}` : ""}
@@ -127,7 +142,7 @@ export function AdminPushListener() {
             onClick={ack}
             disabled={acking}
           >
-            {acking ? "처리 중..." : "확인 / Acknowledge"}
+            {acking ? uiCopy("ux.copye6e1a2914f") : uiCopy("ux.copy8ebadf1d16")}
           </Button>
         </div>
       </div>

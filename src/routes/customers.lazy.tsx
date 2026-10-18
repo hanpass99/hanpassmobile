@@ -1,13 +1,35 @@
+import { localizeError } from "@/i18n/localize-error";
+import { countryName, companyName } from "@/i18n/display-values";
+import { uiCopy } from "@/i18n/ui-copy";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import * as XLSX from "xlsx";
 import {
-  Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
-  StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X, Phone, ExternalLink,
+  Search,
+  Plus,
+  RefreshCw,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  StickyNote,
+  Trash2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  CalendarIcon,
+  X,
+  Phone,
+  ExternalLink,
 } from "lucide-react";
-import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals, syncGoogleFormReceived, syncQrActivation } from "@/lib/google-form-sync.functions";
+import {
+  syncGoogleFormApplications,
+  syncGoogleFormApplicationsInter,
+  syncFriendReferrals,
+  syncGoogleFormReceived,
+  syncQrActivation,
+} from "@/lib/google-form-sync.functions";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,25 +41,48 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
-  Pagination, PaginationContent, PaginationItem, PaginationLink,
-  PaginationNext, PaginationPrevious, PaginationEllipsis,
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { useTranslation } from "react-i18next";
 
@@ -47,17 +92,25 @@ import { useAuth } from "@/hooks/use-auth";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import i18n from "@/i18n";
 import {
-  CUSTOMER_STATUSES, STATUS_CLASS, type CustomerStatus,
-  POOLS, type CustomerPool,
+  CUSTOMER_STATUSES,
+  STATUS_CLASS,
+  type CustomerStatus,
+  POOLS,
+  type CustomerPool,
 } from "@/lib/labels";
 import {
-  useCustomersLookups, useCustomerPoolCounts, useCustomersList, useCustomersCache,
-  useCustomerStatusCounts, useDebouncedValue,
-  type Country, type Channel, type CustomerRow,
+  useCustomersLookups,
+  useCustomerPoolCounts,
+  useCustomersList,
+  useCustomersCache,
+  useCustomerStatusCounts,
+  useDebouncedValue,
+  type Country,
+  type Channel,
+  type CustomerRow,
   SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
 import { LoanBorrowerList, useLoanBorrowerCount } from "@/components/LoanBorrowerList";
-
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
   get: (_t, p: string) => i18n.t(`status.${p}`),
@@ -113,25 +166,59 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
   return pages;
 }
 
-
 const PAGE_SIZE = 25;
 
-
-function SortHead({ k, children, className = "", sortKey, sortDir, onSort }: { k: string; children?: React.ReactNode; className?: string; sortKey: string; sortDir: SortDir; onSort: (key: string) => void }) {
+function SortHead({
+  k,
+  children,
+  className = "",
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  k: string;
+  children?: React.ReactNode;
+  className?: string;
+  sortKey: string;
+  sortDir: SortDir;
+  onSort: (key: string) => void;
+}) {
   const isActive = sortKey === k;
-  const Icon = isActive ? (sortDir === "asc" ? ArrowUp : sortDir === "desc" ? ArrowDown : ArrowUpDown) : ArrowUpDown;
+  const Icon = isActive
+    ? sortDir === "asc"
+      ? ArrowUp
+      : sortDir === "desc"
+        ? ArrowDown
+        : ArrowUpDown
+    : ArrowUpDown;
   const ariaSort: "ascending" | "descending" | "none" =
-    isActive && sortDir === "asc" ? "ascending" : isActive && sortDir === "desc" ? "descending" : "none";
+    isActive && sortDir === "asc"
+      ? "ascending"
+      : isActive && sortDir === "desc"
+        ? "descending"
+        : "none";
   return (
     <TableHead className={className} aria-sort={ariaSort}>
-      <button type="button" onClick={() => onSort(k)} className="inline-flex items-center gap-1 font-medium hover:text-foreground">
+      <button
+        type="button"
+        onClick={() => onSort(k)}
+        className="inline-flex items-center gap-1 font-medium hover:text-foreground"
+      >
         {children} <Icon className="h-3 w-3 opacity-50" />
       </button>
     </TableHead>
   );
 }
 
-function StatusChangedCell({ c, staffById, fmtDateTime }: { c: CustomerRow; staffById: Map<string, string>; fmtDateTime: (s: string | null | undefined) => string }) {
+function StatusChangedCell({
+  c,
+  staffById,
+  fmtDateTime,
+}: {
+  c: CustomerRow;
+  staffById: Map<string, string>;
+  fmtDateTime: (s: string | null | undefined) => string;
+}) {
   const who = c.status_changed_by ? staffById.get(c.status_changed_by) : null;
   return (
     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
@@ -141,16 +228,37 @@ function StatusChangedCell({ c, staffById, fmtDateTime }: { c: CustomerRow; staf
   );
 }
 
-function CheckCell({ c, isAdmin, selected, onToggle }: { c: CustomerRow; isAdmin: boolean; selected: Set<string>; onToggle: (id: string) => void }) {
+function CheckCell({
+  c,
+  isAdmin,
+  selected,
+  onToggle,
+}: {
+  c: CustomerRow;
+  isAdmin: boolean;
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  useTranslation();
   if (!isAdmin) return null;
   return (
     <TableCell className="w-10">
-      <Checkbox checked={selected.has(c.id)} onCheckedChange={() => onToggle(c.id)} aria-label="select row" />
+      <Checkbox
+        checked={selected.has(c.id)}
+        onCheckedChange={() => onToggle(c.id)}
+        aria-label={uiCopy("ux.copy20a9960d64")}
+      />
     </TableCell>
   );
 }
 
-function StatusCell({ c, onChangeStatus }: { c: CustomerRow; onChangeStatus: (id: string, status: CustomerStatus) => void }) {
+function StatusCell({
+  c,
+  onChangeStatus,
+}: {
+  c: CustomerRow;
+  onChangeStatus: (id: string, status: CustomerStatus) => void;
+}) {
   return (
     <TableCell>
       <Select value={c.status} onValueChange={(v) => onChangeStatus(c.id, v as CustomerStatus)}>
@@ -159,7 +267,9 @@ function StatusCell({ c, onChangeStatus }: { c: CustomerRow; onChangeStatus: (id
         </SelectTrigger>
         <SelectContent>
           {CUSTOMER_STATUSES.map((s) => (
-            <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+            <SelectItem key={s} value={s}>
+              {STATUS_LABEL[s]}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -167,7 +277,13 @@ function StatusCell({ c, onChangeStatus }: { c: CustomerRow; onChangeStatus: (id
   );
 }
 
-function CallRoundCell({ c, onChangeCallRound }: { c: CustomerRow; onChangeCallRound: (id: string, value: number | null) => void }) {
+function CallRoundCell({
+  c,
+  onChangeCallRound,
+}: {
+  c: CustomerRow;
+  onChangeCallRound: (id: string, value: number | null) => void;
+}) {
   const { t } = useTranslation();
   return (
     <TableCell>
@@ -190,7 +306,11 @@ function CallRoundCell({ c, onChangeCallRound }: { c: CustomerRow; onChangeCallR
 }
 
 function Assigned({
-  c, staffById, isAdmin, staff, onChangeAssigned,
+  c,
+  staffById,
+  isAdmin,
+  staff,
+  onChangeAssigned,
 }: {
   c: CustomerRow;
   staffById: Map<string, string>;
@@ -206,12 +326,18 @@ function Assigned({
           value={c.assigned_to ?? "__none__"}
           onValueChange={(v) => onChangeAssigned(c.id, v === "__none__" ? null : v)}
         >
-          <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[130px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
-            {staff.filter((s) => s.is_active).map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
-            ))}
+            {staff
+              .filter((s) => s.is_active)
+              .map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.display_name}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </TableCell>
@@ -219,13 +345,21 @@ function Assigned({
   }
   return (
     <TableCell className="text-xs">
-      {c.assigned_to ? (staffById.get(c.assigned_to) ?? "—") : <span className="text-muted-foreground">{t("common.unassigned")}</span>}
+      {c.assigned_to ? (
+        (staffById.get(c.assigned_to) ?? "—")
+      ) : (
+        <span className="text-muted-foreground">{t("common.unassigned")}</span>
+      )}
     </TableCell>
   );
 }
 
 function CountryCell({
-  c, countryById, isAdmin, countries, onChangeCountry,
+  c,
+  countryById,
+  isAdmin,
+  countries,
+  onChangeCountry,
 }: {
   c: CustomerRow;
   countryById: Map<string, Country>;
@@ -240,18 +374,24 @@ function CountryCell({
           value={c.country_id ?? "__none__"}
           onValueChange={(v) => onChangeCountry(c.id, v === "__none__" ? null : v)}
         >
-          <SelectTrigger className="h-8 w-[100px] text-xs"><SelectValue placeholder="-" /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[100px] text-xs">
+            <SelectValue placeholder="-" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="__none__">-</SelectItem>
             {countries.map((co) => (
-              <SelectItem key={co.id} value={co.id}>{co.code}</SelectItem>
+              <SelectItem key={co.id} value={co.id}>
+                {co.code}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </TableCell>
     );
   }
-  return <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>;
+  return (
+    <TableCell className="text-xs">{countryById.get(c.country_id ?? "")?.code ?? "-"}</TableCell>
+  );
 }
 
 function formatPhone(phone: string): string {
@@ -294,8 +434,6 @@ function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
   );
 }
 
-
-
 function CustomersPage() {
   const { t } = useTranslation();
   const { isAdmin, isHanpass } = useAuth();
@@ -332,15 +470,24 @@ function CustomersPage() {
       let saved = window.localStorage.getItem("customers.lastTab");
       if (saved === "loan_borrowers") saved = "loan_borrower";
       if (!saved) return;
-      if (visiblePools.includes(saved as CustomerPool) || (saved === "loan_borrowers" && showLoanTab)) {
+      if (
+        visiblePools.includes(saved as CustomerPool) ||
+        (saved === "loan_borrowers" && showLoanTab)
+      ) {
         setTab(saved as TabValue);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (!tabRestoredRef.current) return;
-    try { window.localStorage.setItem("customers.lastTab", tab); } catch { /* ignore */ }
+    try {
+      window.localStorage.setItem("customers.lastTab", tab);
+    } catch {
+      /* ignore */
+    }
   }, [tab]);
   const [page, setPage] = useState(1);
   const [jumpPage, setJumpPage] = useState("");
@@ -348,10 +495,12 @@ function CustomersPage() {
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput, 250);
   const [countryIds, setCountryIds] = useState<string[]>(
-    initialSearch.country && initialSearch.country !== "all" ? [initialSearch.country] : []
+    initialSearch.country && initialSearch.country !== "all" ? [initialSearch.country] : [],
   );
   const [assignedCountry, setAssignedCountry] = useState("all");
-  const [statusF, setStatusF] = useState<"all" | CustomerStatus | "__call_completed__">(initialStatus);
+  const [statusF, setStatusF] = useState<"all" | CustomerStatus | "__call_completed__">(
+    initialStatus,
+  );
   const [staffF, setStaffF] = useState("all");
   const [callRoundF, setCallRoundF] = useState<"all" | "none" | "1" | "2" | "3">("all");
   const [sortKey, setSortKey] = useState<string>("imported_at");
@@ -363,10 +512,10 @@ function CustomersPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(
-    initialSearch.from ? new Date(initialSearch.from) : undefined
+    initialSearch.from ? new Date(initialSearch.from) : undefined,
   );
   const [dateTo, setDateTo] = useState<Date | undefined>(
-    initialSearch.to ? new Date(initialSearch.to) : undefined
+    initialSearch.to ? new Date(initialSearch.to) : undefined,
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -383,7 +532,9 @@ function CustomersPage() {
   // 상태 변경 시 자동 재정렬 방지를 위한 표시 순서 고정
   const [pinnedOrder, setPinnedOrder] = useState<string[] | null>(null);
 
-  useEffect(() => { importingRef.current = importing; }, [importing]);
+  useEffect(() => {
+    importingRef.current = importing;
+  }, [importing]);
 
   // === React Query: 룩업 / 풀 카운트 / 리스트 ===
   const { countries, channels, staff } = useCustomersLookups();
@@ -396,7 +547,19 @@ function CustomersPage() {
   useEffect(() => {
     setPinnedOrder(null);
     setPage(1);
-  }, [tab, debouncedSearch, countryIds, assignedCountry, statusF, staffF, callRoundF, sortKey, sortDir, dateFrom, dateTo]);
+  }, [
+    tab,
+    debouncedSearch,
+    countryIds,
+    assignedCountry,
+    statusF,
+    staffF,
+    callRoundF,
+    sortKey,
+    sortDir,
+    dateFrom,
+    dateTo,
+  ]);
 
   // 탭 전환 시 기본 정렬: 1년 개통자는 개통일 오름차순(만기 임박 우선), 친구 추천은 가입일 최신순, QR 개통 신청은 오래된 접수부터
   useEffect(() => {
@@ -415,7 +578,12 @@ function CustomersPage() {
   const toIso = dateTo ? dayEndIso(dateTo) : dateFrom ? dayEndIso(dateFrom) : null;
 
   const {
-    rows, total, isLoading: listLoading, isFetching: listFetching, error: listError, refetch: refetchList,
+    rows,
+    total,
+    isLoading: listLoading,
+    isFetching: listFetching,
+    error: listError,
+    refetch: refetchList,
   } = useCustomersList({
     pool: tab === "loan_borrowers" ? "existing" : tab,
     search: debouncedSearch,
@@ -440,11 +608,14 @@ function CustomersPage() {
   });
 
   useEffect(() => {
-    if (listError) toast.error(t("customers.loadFailed", { msg: (listError as Error).message }));
+    if (listError)
+      toast.error(localizeError(t("customers.loadFailed", { msg: (listError as Error).message })));
   }, [listError]);
 
   // 페이지 전환 시 선택 초기화
-  useEffect(() => { setSelected(new Set()); }, [page, tab]);
+  useEffect(() => {
+    setSelected(new Set());
+  }, [page, tab]);
 
   const loading = listLoading;
   const loadingMore = listFetching && !listLoading;
@@ -480,22 +651,18 @@ function CustomersPage() {
   useEffect(() => {
     const ch = supabase
       .channel("customers-rt")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "customers" },
-        (payload) => {
-          if (payload.eventType === "UPDATE") {
-            const n = payload.new as CustomerRow;
-            cache.patchRow(n.id, n);
-          } else if (payload.eventType === "DELETE") {
-            const o = payload.old as { id: string };
-            cache.removeRow(o.id);
-          } else if (payload.eventType === "INSERT") {
-            // 대량 업로드 중에는 1건마다 재집계하지 않고 업로드 완료 후 한 번만 새로고침
-            if (!importingRef.current) schedulePoolCountRefresh();
-          }
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, (payload) => {
+        if (payload.eventType === "UPDATE") {
+          const n = payload.new as CustomerRow;
+          cache.patchRow(n.id, n);
+        } else if (payload.eventType === "DELETE") {
+          const o = payload.old as { id: string };
+          cache.removeRow(o.id);
+        } else if (payload.eventType === "INSERT") {
+          // 대량 업로드 중에는 1건마다 재집계하지 않고 업로드 완료 후 한 번만 새로고침
+          if (!importingRef.current) schedulePoolCountRefresh();
         }
-      )
+      })
       .subscribe();
     return () => {
       if (poolCountRefreshTimer.current) clearTimeout(poolCountRefreshTimer.current);
@@ -527,7 +694,8 @@ function CustomersPage() {
     if (sortKey && sortDir && !SERVER_SORT_KEYS.has(sortKey)) {
       const dir = sortDir === "asc" ? 1 : -1;
       out.sort((a, b) => {
-        let av: string = ""; let bv: string = "";
+        let av: string = "";
+        let bv: string = "";
         if (sortKey === "country") {
           av = countryById.get(a.country_id ?? "")?.code ?? "";
           bv = countryById.get(b.country_id ?? "")?.code ?? "";
@@ -547,19 +715,26 @@ function CustomersPage() {
     }
     if (pinnedOrder) {
       const idx = new Map(pinnedOrder.map((id, i) => [id, i] as const));
-      out.sort((a, b) => (idx.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (idx.get(b.id) ?? Number.MAX_SAFE_INTEGER));
+      out.sort(
+        (a, b) =>
+          (idx.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (idx.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+      );
     }
     return out;
   }, [rows, sortKey, sortDir, staffById, staffCountryById, countryById, pinnedOrder, statusF]);
 
   const toggleSort = (key: string) => {
-    if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
+    if (sortKey !== key) {
+      setSortKey(key);
+      setSortDir("asc");
+      return;
+    }
     if (sortDir === "asc") setSortDir("desc");
-    else if (sortDir === "desc") { setSortKey(""); setSortDir(null); }
-    else setSortDir("asc");
+    else if (sortDir === "desc") {
+      setSortKey("");
+      setSortDir(null);
+    } else setSortDir("asc");
   };
-
-
 
   const changeStatus = async (id: string, status: CustomerStatus) => {
     const patch: { status: CustomerStatus; activation_date?: string } = { status };
@@ -577,7 +752,7 @@ function CustomersPage() {
       _status: status,
     } as never);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       load();
       return;
     }
@@ -589,19 +764,26 @@ function CustomersPage() {
     cache.patchRow(id, { call_round: value });
     const { error } = await supabase.from("customers").update({ call_round: value }).eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       load();
       return;
     }
-    toast.success(t("dashboard.callRound") + " " + (value ? t("customers.orderNth", { n: value }) : t("dashboard.roundNone")));
+    toast.success(
+      t("dashboard.callRound") +
+        " " +
+        (value ? t("customers.orderNth", { n: value }) : t("dashboard.roundNone")),
+    );
   };
 
   const changeCountry = async (id: string, countryId: string | null) => {
     if (!isAdmin) return;
     cache.patchRow(id, { country_id: countryId });
-    const { error } = await supabase.from("customers").update({ country_id: countryId }).eq("id", id);
+    const { error } = await supabase
+      .from("customers")
+      .update({ country_id: countryId })
+      .eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       load();
       return;
     }
@@ -613,7 +795,7 @@ function CustomersPage() {
     cache.patchRow(id, { assigned_to: userId });
     const { error } = await supabase.from("customers").update({ assigned_to: userId }).eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error(localizeError(error.message));
       load();
       return;
     }
@@ -624,7 +806,7 @@ function CustomersPage() {
     if (!deleteId) return;
     const { error } = await supabase.from("customers").delete().eq("id", deleteId);
     setDeleteId(null);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("common.deleted"));
     load();
   };
@@ -645,11 +827,11 @@ function CustomersPage() {
       const { error } = await supabase.from("customers").delete().in("id", chunk);
       if (error) {
         setBulkOpen(false);
-        return toast.error(error.message);
+        return toast.error(localizeError(error.message));
       }
     }
     setBulkOpen(false);
-    toast.success(t("customers.bulkDeleteConfirm",{count:ids.length}));
+    toast.success(t("customers.bulkDeleteConfirm", { count: ids.length }));
     setSelected(new Set());
     load();
   };
@@ -662,7 +844,9 @@ function CustomersPage() {
     try {
       const { error } = await supabase.from("customers").delete().eq("pool", p);
       if (error) {
-        toast.error(t("customers.toastDeleteFail", { msg: error.message }), { id: toastId });
+        toast.error(localizeError(t("customers.toastDeleteFail", { msg: error.message })), {
+          id: toastId,
+        });
         return;
       }
       toast.success(t("customers.toastPoolDeleteDone", { pool: POOL_LABEL[p] }), { id: toastId });
@@ -676,8 +860,6 @@ function CustomersPage() {
       setDeleteAllRunning(false);
     }
   };
-
-
 
   const bulkChangeStatus = async () => {
     const visibleIds = new Set(filtered.map((r) => r.id));
@@ -701,7 +883,7 @@ function CustomersPage() {
         toast.dismiss(toastId);
         setBulkStatusRunning(false);
         setBulkStatusOpen(false);
-        return toast.error(error.message);
+        return toast.error(localizeError(error.message));
       }
       done += chunk.length;
       toast.loading(t("customers.toastStatusChangeLoading", { done, total }), { id: toastId });
@@ -746,9 +928,21 @@ function CustomersPage() {
       const normKey = (s: string) => s.toLowerCase().replace(/\s+/g, "").trim();
       const headerMap = new Map<string, string>();
       Object.keys(json[0] ?? {}).forEach((k) => headerMap.set(normKey(k), k));
-      const pickHeader = (...keys: string[]) => keys.map((k) => headerMap.get(normKey(k))).find(Boolean);
+      const pickHeader = (...keys: string[]) =>
+        keys.map((k) => headerMap.get(normKey(k))).find(Boolean);
       const headers = {
-        phone: pickHeader("phone", "전화", "전화번호", "연락처", "충전번호", "충전 번호", "휴대폰", "휴대폰번호", "개통번호", "개통 번호"),
+        phone: pickHeader(
+          "phone",
+          "전화",
+          "전화번호",
+          "연락처",
+          "충전번호",
+          "충전 번호",
+          "휴대폰",
+          "휴대폰번호",
+          "개통번호",
+          "개통 번호",
+        ),
         name: pickHeader("name", "이름", "고객명", "성명"),
         country: pickHeader("country", "국가", "국적", "고객국적", "고객 국적", "nationality"),
         assignedCountry: pickHeader("담당국가", "담당 국가", "담당팀", "팀"),
@@ -757,19 +951,36 @@ function CustomersPage() {
         activationDate: pickHeader("개통일", "activation_date"),
         applicationDate: pickHeader("신청일", "application_date"),
         chargeDate: pickHeader("충전일", "충전 일", "charge_date"),
-        signupDate: pickHeader("가입일", "signup_date", "등록일", "데이터등록일", "충전일", "charge_date"),
+        signupDate: pickHeader(
+          "가입일",
+          "signup_date",
+          "등록일",
+          "데이터등록일",
+          "충전일",
+          "charge_date",
+        ),
         requestedPlan: pickHeader("신청요금제", "requested_plan"),
         chargeAmount: pickHeader("충전요금", "충전금액", "charge_amount", "amount"),
         storeName: pickHeader("판매점", "매장", "store", "store_name"),
         birthDate: pickHeader("생년월일", "생일", "birth", "birth_date", "dob"),
         monthlyFee: pickHeader("월요금", "월 요금", "monthly_fee", "월납금"),
-        customerType: pickHeader("선후불", "선/후불", "구분", "고객유형", "고객 유형", "유형", "customer_type", "type"),
+        customerType: pickHeader(
+          "선후불",
+          "선/후불",
+          "구분",
+          "고객유형",
+          "고객 유형",
+          "유형",
+          "customer_type",
+          "type",
+        ),
         idNumber: pickHeader("신분증번호", "신분증 번호", "외국인등록번호", "id_number"),
       };
-      const valueOf = (row: Record<string, any>, key?: string) => key ? row[key] : "";
+      const valueOf = (row: Record<string, any>, key?: string) => (key ? row[key] : "");
       // Excel serial / 다양한 문자열 날짜 → YYYY-MM-DD
       const pad = (n: number) => String(n).padStart(2, "0");
-      const fmtYmd = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+      const fmtYmd = (d: Date) =>
+        `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
       const serialToDate = (n: number): Date | null => {
         if (!isFinite(n) || n <= 0 || n > 2958465) return null;
         // Excel epoch: 1899-12-30 (1900 leap-year bug 보정 포함)
@@ -788,16 +999,22 @@ function CustomersPage() {
         if (!s) return null;
         // YYYYMMDD (8자리) — 예: 19870512
         if (/^\d{8}$/.test(s)) {
-          const y = +s.slice(0, 4), mo = +s.slice(4, 6), da = +s.slice(6, 8);
+          const y = +s.slice(0, 4),
+            mo = +s.slice(4, 6),
+            da = +s.slice(6, 8);
           const d = new Date(Date.UTC(y, mo - 1, da));
-          if (!isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da) return fmtYmd(d);
+          if (!isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da)
+            return fmtYmd(d);
         }
         // YYMMDD (6자리, 한국 주민번호 앞자리 형식) — 예: 870512
         if (/^\d{6}$/.test(s)) {
-          let y = +s.slice(0, 2), mo = +s.slice(2, 4), da = +s.slice(4, 6);
+          let y = +s.slice(0, 2),
+            mo = +s.slice(2, 4),
+            da = +s.slice(4, 6);
           y += y <= new Date().getFullYear() % 100 ? 2000 : 1900;
           const d = new Date(Date.UTC(y, mo - 1, da));
-          if (!isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da) return fmtYmd(d);
+          if (!isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da)
+            return fmtYmd(d);
         }
         // 순수 숫자 문자열 → Excel serial (합리적 범위에서만)
         if (/^\d+(\.\d+)?$/.test(s)) {
@@ -816,11 +1033,15 @@ function CustomersPage() {
         // 2자리 연도 3분할: 한국식 YY-MM-DD 우선, 불가하면 DD-MM-YY
         m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{1,2})$/);
         if (m) {
-          const a = +m[1], b = +m[2], c = +m[3];
+          const a = +m[1],
+            b = +m[2],
+            c = +m[3];
           const mk = (y: number, mo: number, da: number) => {
             if (mo < 1 || mo > 12 || da < 1 || da > 31) return null;
             const d = new Date(Date.UTC(y, mo - 1, da));
-            return !isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da ? d : null;
+            return !isNaN(d.getTime()) && d.getUTCMonth() === mo - 1 && d.getUTCDate() === da
+              ? d
+              : null;
           };
           // YY-MM-DD (예: 25-07-10 → 2025-07-10)
           const ymd = mk(a + (a <= (new Date().getUTCFullYear() % 100) + 1 ? 2000 : 1900), b, c);
@@ -834,7 +1055,8 @@ function CustomersPage() {
         m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
         if (m) {
           const d = new Date(Date.UTC(+m[3], +m[2] - 1, +m[1]));
-          if (!isNaN(d.getTime()) && d.getUTCDate() === +m[1] && d.getUTCMonth() === +m[2] - 1) return fmtYmd(d);
+          if (!isNaN(d.getTime()) && d.getUTCDate() === +m[1] && d.getUTCMonth() === +m[2] - 1)
+            return fmtYmd(d);
         }
 
         return null;
@@ -843,7 +1065,8 @@ function CustomersPage() {
       const countryByName = new Map(countries.map((c) => [c.name_ko, c.id]));
 
       const seenPhones = new Set<string>();
-      let dupInFile = 0, invalid = 0;
+      let dupInFile = 0,
+        invalid = 0;
 
       // 1차: 파일 파싱 + 파일 내 중복 제거
       const parsed: ImportCustomer[] = json
@@ -852,15 +1075,22 @@ function CustomersPage() {
           const nameRaw = norm(valueOf(row, headers.name));
           const phone = phoneRaw;
           const name = nameRaw || (tab === "prepaid_charge" ? phoneRaw : "");
-          if (!name || !phone) { invalid++; return null; }
-          if (seenPhones.has(phone)) { dupInFile++; return null; }
+          if (!name || !phone) {
+            invalid++;
+            return null;
+          }
+          if (seenPhones.has(phone)) {
+            dupInFile++;
+            return null;
+          }
           seenPhones.add(phone);
           const ccRaw = norm(valueOf(row, headers.country));
           const assignedRaw = norm(valueOf(row, headers.assignedCountry));
           const ccForId = assignedRaw || ccRaw;
-          const country_id = countryByCode.get(ccForId.toUpperCase()) ?? countryByName.get(ccForId) ?? null;
+          const country_id =
+            countryByCode.get(ccForId.toUpperCase()) ?? countryByName.get(ccForId) ?? null;
           const memoBase = norm(valueOf(row, headers.notes));
-          const nationalityNote = (ccRaw && ccRaw !== assignedRaw) ? `국적:${ccRaw}` : "";
+          const nationalityNote = ccRaw && ccRaw !== assignedRaw ? `국적:${ccRaw}` : "";
           const notes = [nationalityNote, memoBase].filter(Boolean).join(" / ") || null;
           const carrier_plan = norm(valueOf(row, headers.carrierPlan)) || null;
           const activation_date = toDateStr(valueOf(row, headers.activationDate));
@@ -878,9 +1108,15 @@ function CustomersPage() {
           const monthly_fee = isFinite(monthlyFeeNum) ? monthlyFeeNum : null;
           const customer_type = norm(valueOf(row, headers.customerType)) || null;
           const base: ImportCustomer = {
-            name, phone, country_id, notes, pool: tab as CustomerPool,
-            carrier_plan, activation_date,
-            application_date, requested_plan,
+            name,
+            phone,
+            country_id,
+            notes,
+            pool: tab as CustomerPool,
+            carrier_plan,
+            activation_date,
+            application_date,
+            requested_plan,
           };
           if (charge_date) base.charge_date = charge_date;
           if (signup_date) base.signup_date = signup_date;
@@ -899,7 +1135,10 @@ function CustomersPage() {
         .filter((x): x is ImportCustomer => x !== null);
 
       if (!parsed.length) {
-        toast.error(t("customers.toastNoUploadDataDetail", { dup: dupInFile, n: invalid }), { id: toastId });
+        toast.error(
+          localizeError(t("customers.toastNoUploadDataDetail", { dup: dupInFile, n: invalid })),
+          { id: toastId },
+        );
         return;
       }
 
@@ -914,21 +1153,27 @@ function CustomersPage() {
           .select("id, phone")
           .in("phone", phones);
         const idByPhone = new Map<string, string>();
-        (existingRows ?? []).forEach((r: any) => { idByPhone.set(r.phone, r.id); });
+        (existingRows ?? []).forEach((r: any) => {
+          idByPhone.set(r.phone, r.id);
+        });
 
-        let updated = 0, insertedCnt = 0;
+        let updated = 0,
+          insertedCnt = 0;
         for (let i = 0; i < finalPayload.length; i++) {
           const r = finalPayload[i];
           const eid = idByPhone.get(r.phone);
           if (eid) {
-            const patch: Database["public"]["Tables"]["customers"]["Update"] = { pool: "one_year_activation" };
+            const patch: Database["public"]["Tables"]["customers"]["Update"] = {
+              pool: "one_year_activation",
+            };
             if (r.name) patch.name = r.name;
             if (r.country_id) patch.country_id = r.country_id;
             if (r.carrier_plan) patch.carrier_plan = r.carrier_plan;
             if (r.activation_date) patch.activation_date = r.activation_date;
             if (r.store_name) patch.store_name = r.store_name;
             if (r.birth_date) patch.birth_date = r.birth_date;
-            if (r.monthly_fee !== undefined && r.monthly_fee !== null) patch.monthly_fee = r.monthly_fee;
+            if (r.monthly_fee !== undefined && r.monthly_fee !== null)
+              patch.monthly_fee = r.monthly_fee;
             if (r.customer_type) patch.customer_type = r.customer_type;
             const { error } = await supabase.from("customers").update(patch).eq("id", eid);
             if (!error) updated++;
@@ -937,14 +1182,20 @@ function CustomersPage() {
             if (!error) insertedCnt++;
           }
           if ((i + 1) % 25 === 0) {
-            toast.loading(t("customers.toastProcessing", { i: i + 1, total: finalPayload.length }), { id: toastId });
+            toast.loading(
+              t("customers.toastProcessing", { i: i + 1, total: finalPayload.length }),
+              { id: toastId },
+            );
           }
         }
         toast.success(
-          t("customers.toastPoolUpdated", { updated: updated.toLocaleString(), new: insertedCnt.toLocaleString() })
-            + (dupInFile ? t("customers.toastFileDup", { n: dupInFile }) : "")
-            + (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
-          { id: toastId }
+          t("customers.toastPoolUpdated", {
+            updated: updated.toLocaleString(),
+            new: insertedCnt.toLocaleString(),
+          }) +
+            (dupInFile ? t("customers.toastFileDup", { n: dupInFile }) : "") +
+            (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
+          { id: toastId },
         );
         await refetchPoolCounts();
         setPage(1);
@@ -957,7 +1208,8 @@ function CustomersPage() {
       let inserted = 0;
       let skippedDup = 0;
       const totalToInsert = finalPayload.length;
-      const isDupErr = (msg?: string) => !!msg && (msg.includes("duplicate key") || msg.includes("23505"));
+      const isDupErr = (msg?: string) =>
+        !!msg && (msg.includes("duplicate key") || msg.includes("23505"));
       for (let i = 0; i < totalToInsert; i += insertChunkSize) {
         const chunk = finalPayload.slice(i, i + insertChunkSize);
         const { error } = await supabase.from("customers").insert(chunk);
@@ -969,38 +1221,70 @@ function CustomersPage() {
               if (!rowErr) inserted++;
               else if (isDupErr(rowErr.message)) skippedDup++;
               else {
-                toast.error(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: rowErr.message }), { id: toastId });
+                toast.error(
+                  localizeError(
+                    t("customers.toastUploadStopped", {
+                      done: inserted,
+                      total: totalToInsert,
+                      msg: rowErr.message,
+                    }),
+                  ),
+                  { id: toastId },
+                );
                 await refetchPoolCounts();
                 setPage(1);
                 await refetchList();
                 return;
               }
             }
-            toast.loading(t("customers.toastUploading", { done: inserted.toLocaleString(), total: totalToInsert.toLocaleString() }), { id: toastId });
+            toast.loading(
+              t("customers.toastUploading", {
+                done: inserted.toLocaleString(),
+                total: totalToInsert.toLocaleString(),
+              }),
+              { id: toastId },
+            );
             continue;
           }
-          toast.error(t("customers.toastUploadStopped", { done: inserted, total: totalToInsert, msg: error.message }), { id: toastId });
+          toast.error(
+            localizeError(
+              t("customers.toastUploadStopped", {
+                done: inserted,
+                total: totalToInsert,
+                msg: error.message,
+              }),
+            ),
+            { id: toastId },
+          );
           await refetchPoolCounts();
           setPage(1);
           await refetchList();
           return;
         }
         inserted += chunk.length;
-        toast.loading(t("customers.toastUploading", { done: inserted.toLocaleString(), total: totalToInsert.toLocaleString() }), { id: toastId });
+        toast.loading(
+          t("customers.toastUploading", {
+            done: inserted.toLocaleString(),
+            total: totalToInsert.toLocaleString(),
+          }),
+          { id: toastId },
+        );
       }
 
       toast.success(
-        t("customers.toastAddedFileDup", { n: inserted.toLocaleString(), dup: dupInFile })
-          + (skippedDup ? ` (기존 중복 ${skippedDup.toLocaleString()}건 제외)` : "")
-          + (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
-        { id: toastId }
+        t("customers.toastAddedFileDup", { n: inserted.toLocaleString(), dup: dupInFile }) +
+          (skippedDup ? ` (기존 중복 ${skippedDup.toLocaleString()}건 제외)` : "") +
+          (invalid ? t("customers.toastMissing", { n: invalid }) : ""),
+        { id: toastId },
       );
 
       await refetchPoolCounts();
       setPage(1);
       await refetchList();
     } catch (e: any) {
-      toast.error(t("customers.toastExcelParseFail", { msg: e.message }), { id: toastId });
+      toast.error(localizeError(t("customers.toastExcelParseFail", { msg: e.message })), {
+        id: toastId,
+      });
     } finally {
       importingRef.current = false;
       setImporting(false);
@@ -1009,39 +1293,141 @@ function CustomersPage() {
   };
 
   const downloadSample = () => {
-    const effPool: CustomerPool = (tab === "all" || tab === "loan_borrowers") ? "existing" : tab;
+    const effPool: CustomerPool = tab === "all" || tab === "loan_borrowers" ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
-      header = ["고객명", "선후불", "전화번호", "개통일", "요금제", "국적", "신분증번호"];
-      sample = [{ 고객명: "Nguyen Van A", 선후불: "선불", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "VN", 신분증번호: "900512-5123456" }];
-    } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "qr_activation") {
-      header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
-      sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
-
-    } else if (effPool === "friend_referral") {
-      header = ["고객명", "전화번호", "국적", "가입일", "메모"];
-      sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
-    } else if (effPool === "prepaid_charge") {
-      header = ["전화번호", "국적", "충전 일", "담당자", "상태", "콜 라운드", "메모"];
+      header = [
+        uiCopy("ux.copy7796dc9e19", undefined, "ko"),
+        uiCopy("ux.copyeed986f8aa", undefined, "ko"),
+        uiCopy("ux.copy9a1c3aaaca", undefined, "ko"),
+        uiCopy("ux.copy33697f6a0d", undefined, "ko"),
+        uiCopy("ux.copy98927649e9", undefined, "ko"),
+        uiCopy("ux.copyff63ca9e88", undefined, "ko"),
+        uiCopy("ux.copyc59b920ad9", undefined, "ko"),
+      ];
       sample = [
-        { 전화번호: "010-5946-4992", 국적: "CIS", "충전 일": "2026-04-25", 담당자: "", 상태: "", "콜 라운드": "", 메모: "" },
-        { 전화번호: "010-6593-9433", 국적: "미얀마", "충전 일": "2026-04-25", 담당자: "", 상태: "", "콜 라운드": "", 메모: "" },
+        {
+          고객명: "Nguyen Van A",
+          선후불: "선불",
+          전화번호: "010-1234-5678",
+          개통일: "2026-01-15",
+          요금제: "LTE 5G 무제한",
+          국적: "VN",
+          신분증번호: "900512-5123456",
+        },
+      ];
+    } else if (
+      effPool === "activation_request" ||
+      effPool === "google_form_activation" ||
+      effPool === "qr_activation"
+    ) {
+      header = [
+        uiCopy("ux.copy7796dc9e19", undefined, "ko"),
+        uiCopy("ux.copy9a1c3aaaca", undefined, "ko"),
+        uiCopy("ux.copyff63ca9e88", undefined, "ko"),
+        uiCopy("ux.copy69447c40c6", undefined, "ko"),
+        uiCopy("ux.copyed3cc44e22", undefined, "ko"),
+        uiCopy("ux.copyf3ce23c830", undefined, "ko"),
+      ];
+      sample = [
+        {
+          고객명: "Ivan",
+          전화번호: "010-5555-6666",
+          국적: "CIS",
+          신청일: "2026-05-08",
+          신청요금제: "선불 1만원",
+          메모: "",
+        },
+      ];
+    } else if (effPool === "friend_referral") {
+      header = [
+        uiCopy("ux.copy7796dc9e19", undefined, "ko"),
+        uiCopy("ux.copy9a1c3aaaca", undefined, "ko"),
+        uiCopy("ux.copyff63ca9e88", undefined, "ko"),
+        uiCopy("ux.copy170f7b921a", undefined, "ko"),
+        uiCopy("ux.copyf3ce23c830", undefined, "ko"),
+      ];
+      sample = [
+        {
+          고객명: "CHU KHANH KHANH",
+          전화번호: "010-7597-3068",
+          국적: "VN",
+          가입일: "2026-06-18",
+          메모: "",
+        },
+      ];
+    } else if (effPool === "prepaid_charge") {
+      header = [
+        uiCopy("ux.copy9a1c3aaaca", undefined, "ko"),
+        uiCopy("ux.copyff63ca9e88", undefined, "ko"),
+        uiCopy("ux.copyd77dd1188c", undefined, "ko"),
+        uiCopy("ux.copyb25ae664f2", undefined, "ko"),
+        uiCopy("ux.copy2926977ba7", undefined, "ko"),
+        uiCopy("ux.copyf412206b01", undefined, "ko"),
+        uiCopy("ux.copyf3ce23c830", undefined, "ko"),
+      ];
+      sample = [
+        {
+          전화번호: "010-5946-4992",
+          국적: "CIS",
+          "충전 일": "2026-04-25",
+          담당자: "",
+          상태: "",
+          "콜 라운드": "",
+          메모: "",
+        },
+        {
+          전화번호: "010-6593-9433",
+          국적: "미얀마",
+          "충전 일": "2026-04-25",
+          담당자: "",
+          상태: "",
+          "콜 라운드": "",
+          메모: "",
+        },
       ];
     } else if (effPool === "one_year_activation") {
-      header = ["고객명", "국적", "개통번호", "개통일"];
+      header = [
+        uiCopy("ux.copy7796dc9e19", undefined, "ko"),
+        uiCopy("ux.copyff63ca9e88", undefined, "ko"),
+        uiCopy("ux.copy95277102ff", undefined, "ko"),
+        uiCopy("ux.copy33697f6a0d", undefined, "ko"),
+      ];
       sample = [
         { 고객명: "Nguyen Van A", 국적: "VN", 개통번호: "010-8765-4321", 개통일: "2025-08-01" },
       ];
     } else {
       // new_signup
-      header = ["고객명", "전화번호", "국적", "가입일", "담당자", "상태", "콜 라운드", "데이터 등록일", "메모"];
-      sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 가입일: "2026-05-08", 담당자: "", 상태: "", "콜 라운드": "", "데이터 등록일": "", 메모: "" }];
+      header = [
+        uiCopy("ux.copy7796dc9e19", undefined, "ko"),
+        uiCopy("ux.copy9a1c3aaaca", undefined, "ko"),
+        uiCopy("ux.copyff63ca9e88", undefined, "ko"),
+        uiCopy("ux.copy170f7b921a", undefined, "ko"),
+        uiCopy("ux.copyb25ae664f2", undefined, "ko"),
+        uiCopy("ux.copy2926977ba7", undefined, "ko"),
+        uiCopy("ux.copyf412206b01", undefined, "ko"),
+        uiCopy("ux.copy16dda86128", undefined, "ko"),
+        uiCopy("ux.copyf3ce23c830", undefined, "ko"),
+      ];
+      sample = [
+        {
+          고객명: "Ivan",
+          전화번호: "010-5555-6666",
+          국적: "CIS",
+          가입일: "2026-05-08",
+          담당자: "",
+          상태: "",
+          "콜 라운드": "",
+          "데이터 등록일": "",
+          메모: "",
+        },
+      ];
     }
     const ws = XLSX.utils.json_to_sheet(sample, { header });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Customers");
-    XLSX.writeFile(wb, `샘플_${POOL_SHORT[effPool]}.xlsx`);
+    XLSX.writeFile(wb, uiCopy("ux.copy37ffbb050a", { value0: POOL_SHORT[effPool] }));
   };
 
   // 관리자 전용: 현재 필터로 조회된 데이터를 Excel로 다운로드
@@ -1064,63 +1450,93 @@ function CustomersPage() {
           _pool: tab === "all" || tab === "loan_borrowers" ? undefined : tab,
           _search: debouncedSearch?.trim() || undefined,
           _country_ids: countryIds.length ? countryIds : undefined,
-          _assigned_to: staffF === "all" ? undefined : (staffF === "__none__" ? "unassigned" : staffF),
-          _assigned_country: assignedCountry === "all" ? undefined : (assignedCountry === "__none__" ? "none" : assignedCountry),
-          _status: (statusF === "all" || statusF === "__call_completed__") ? undefined : statusF,
+          _assigned_to:
+            staffF === "all" ? undefined : staffF === "__none__" ? "unassigned" : staffF,
+          _assigned_country:
+            assignedCountry === "all"
+              ? undefined
+              : assignedCountry === "__none__"
+                ? "none"
+                : assignedCountry,
+          _status: statusF === "all" || statusF === "__call_completed__" ? undefined : statusF,
           _date_from: fromIso ?? undefined,
           _date_to: toIso ?? undefined,
           _sort_key: sortKeyForRpc,
           _sort_dir: sortDirForRpc,
           _page: p,
           _page_size: pageSize,
-          _call_round: (callRoundF === "all" ? undefined : (callRoundF === "none" ? null : Number(callRoundF))) as number | undefined,
+          _call_round: (callRoundF === "all"
+            ? undefined
+            : callRoundF === "none"
+              ? null
+              : Number(callRoundF)) as number | undefined,
           _call_completed: statusF === "__call_completed__",
         });
         if (error) throw new Error(error.message);
-        const chunk = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
+        const chunk = (data ?? []) as Array<{ data: CustomerRow; total_count: number }>;
         if (!chunk.length) break;
         totalCount = chunk[0].total_count ?? 0;
         all.push(...chunk.map((r) => r.data));
-        toast.loading(t("customers.toastExcelBuildingProg", { done: all.length.toLocaleString(), total: Math.min(totalCount, EXPORT_LIMIT).toLocaleString() }), { id: toastId });
+        toast.loading(
+          t("customers.toastExcelBuildingProg", {
+            done: all.length.toLocaleString(),
+            total: Math.min(totalCount, EXPORT_LIMIT).toLocaleString(),
+          }),
+          { id: toastId },
+        );
         if (all.length >= totalCount || all.length >= EXPORT_LIMIT) break;
         p += 1;
       }
       if (!all.length) {
-        toast.error(t("customers.toastNoDownloadData"), { id: toastId });
+        toast.error(localizeError(t("customers.toastNoDownloadData")), { id: toastId });
         return;
       }
-      const rowsForXlsx = tab === "one_year_activation" ? all.map((c) => ({
-        고객명: c.name,
-        국적: countryById.get(c.country_id ?? "")?.code ?? "",
-        개통번호: c.phone,
-        개통일: c.activation_date ?? "",
-      })) : all.map((c) => ({
-        고객명: c.name,
-        전화번호: c.phone,
-        국적: countryById.get(c.country_id ?? "")?.code ?? "",
-        담당자: c.assigned_to ? (staffById.get(c.assigned_to) ?? "") : "",
-        상태: STATUS_LABEL[c.status],
-        풀: POOL_LABEL[c.pool],
-        "콜 라운드": c.call_round ?? "",
-        개통일: c.activation_date ?? "",
-        요금제: c.carrier_plan ?? "",
-        신청일: c.application_date ?? "",
-        신청요금제: c.requested_plan ?? "",
-        ...(tab === "prepaid_charge" ? { "충전 일": c.charge_date ?? "" } : { "가입일": c.signup_date ?? "" }),
-        이메일: c.email ?? "",
-        충전번호: c.charge_phone ?? "",
-        "데이터 등록일": c.imported_at ? new Date(c.imported_at).toLocaleString("ko-KR") : "",
-        ...(tab === "existing" ? { 선후불: c.customer_type ?? "", 신분증번호: c.id_number ?? "" } : {}),
-        메모: c.notes ?? "",
-      }));
+      const rowsForXlsx =
+        tab === "one_year_activation"
+          ? all.map((c) => ({
+              고객명: c.name,
+              국적: countryById.get(c.country_id ?? "")?.code ?? "",
+              개통번호: c.phone,
+              개통일: c.activation_date ?? "",
+            }))
+          : all.map((c) => ({
+              고객명: c.name,
+              전화번호: c.phone,
+              국적: countryById.get(c.country_id ?? "")?.code ?? "",
+              담당자: c.assigned_to ? (staffById.get(c.assigned_to) ?? "") : "",
+              상태: STATUS_LABEL[c.status],
+              풀: POOL_LABEL[c.pool],
+              "콜 라운드": c.call_round ?? "",
+              개통일: c.activation_date ?? "",
+              요금제: c.carrier_plan ?? "",
+              신청일: c.application_date ?? "",
+              신청요금제: c.requested_plan ?? "",
+              ...(tab === "prepaid_charge"
+                ? { "충전 일": c.charge_date ?? "" }
+                : { 가입일: c.signup_date ?? "" }),
+              이메일: c.email ?? "",
+              충전번호: c.charge_phone ?? "",
+              "데이터 등록일": c.imported_at ? new Date(c.imported_at).toLocaleString("ko-KR") : "",
+              ...(tab === "existing"
+                ? { 선후불: c.customer_type ?? "", 신분증번호: c.id_number ?? "" }
+                : {}),
+              메모: c.notes ?? "",
+            }));
       const ws = XLSX.utils.json_to_sheet(rowsForXlsx);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Customers");
       const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-      XLSX.writeFile(wb, `고객목록_${POOL_SHORT[(tab === "all" ? "existing" : tab) as CustomerPool]}_${ts}.xlsx`);
-      toast.success(t("customers.toastDownloadDone", { n: all.length.toLocaleString() }), { id: toastId });
+      XLSX.writeFile(
+        wb,
+        `고객목록_${POOL_SHORT[(tab === "all" ? "existing" : tab) as CustomerPool]}_${ts}.xlsx`,
+      );
+      toast.success(t("customers.toastDownloadDone", { n: all.length.toLocaleString() }), {
+        id: toastId,
+      });
     } catch (e: any) {
-      toast.error(t("customers.toastDownloadFail", { msg: e.message }), { id: toastId });
+      toast.error(localizeError(t("customers.toastDownloadFail", { msg: e.message })), {
+        id: toastId,
+      });
     } finally {
       setDownloading(false);
     }
@@ -1130,7 +1546,10 @@ function CustomersPage() {
 
   // 담당자별 상태 통계 (현재 Pool, 현재 필터 적용 후)
   const staffStats = useMemo(() => {
-    const map = new Map<string, { name: string; total: number; activated: number; in_progress: number; }>();
+    const map = new Map<
+      string,
+      { name: string; total: number; activated: number; in_progress: number }
+    >();
     filtered.forEach((r) => {
       const id = r.assigned_to ?? "__none__";
       const name = id === "__none__" ? t("common.unassigned") : (staffById.get(id) ?? "—");
@@ -1140,23 +1559,35 @@ function CustomersPage() {
       if (r.status === "in_progress") cur.in_progress += 1;
       map.set(id, cur);
     });
-    return Array.from(map.entries()).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.total - a.total);
+    return Array.from(map.entries())
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => b.total - a.total);
   }, [filtered, staffById]);
 
   const fmtDate = (s: string | null | undefined) =>
     s ? new Date(s).toLocaleDateString(i18n.language === "en" ? "en-US" : "ko-KR") : "-";
 
   const fmtDateTime = (s: string | null | undefined) =>
-    s ? new Date(s).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR", { dateStyle: "short", timeStyle: "short" }) : "-";
+    s
+      ? new Date(s).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR", {
+          dateStyle: "short",
+          timeStyle: "short",
+        })
+      : "-";
 
-
-  const StatusChangedHead = <TableHead className="whitespace-nowrap">{t("customers.col.statusChanged")}</TableHead>;
+  const StatusChangedHead = (
+    <TableHead className="whitespace-nowrap">{t("customers.col.statusChanged")}</TableHead>
+  );
 
   // === 풀별 컬럼 렌더러 ===
   const renderTable = (p: CustomerPool) => {
     const CheckHead = isAdmin ? (
       <TableHead className="w-10">
-        <Checkbox checked={allChecked} onCheckedChange={toggleAll} aria-label="select all" />
+        <Checkbox
+          checked={allChecked}
+          onCheckedChange={toggleAll}
+          aria-label={uiCopy("ux.copyf52f04faf1")}
+        />
       </TableHead>
     ) : null;
 
@@ -1168,39 +1599,62 @@ function CustomersPage() {
           <StickyNote className="mr-1 h-3.5 w-3.5" /> {t("customers.col.memo")}
         </Button>
         {isAdmin && (
-          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteId(c.id)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive"
+            onClick={() => setDeleteId(c.id)}
+          >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         )}
       </TableCell>
     );
 
-
-
-
-
-    const CallRoundHead = <SortHead k="call_round" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("dashboard.callRound")}</SortHead>;
-
-
+    const CallRoundHead = (
+      <SortHead k="call_round" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+        {t("dashboard.callRound")}
+      </SortHead>
+    );
 
     if (p === "existing") {
       return (
-        <Table aria-label="Customer list">
+        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-              <TableHead>선후불</TableHead>
-              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
-              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationDate")}</SortHead>
-              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.carrierPlan")}</SortHead>
-              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
-              <TableHead>신분증번호</TableHead>
-              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
-              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
+              <TableHead>{uiCopy("ux.copyeed986f8aa")}</TableHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.phone")}
+              </SortHead>
+              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.activationDate")}
+              </SortHead>
+              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.carrierPlan")}
+              </SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.country")}
+              </SortHead>
+              <TableHead>{uiCopy("ux.copyc59b920ad9")}</TableHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.assigned")}
+              </SortHead>
+              <SortHead
+                k="status"
+                className="min-w-[140px]"
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSort={toggleSort}
+              >
+                {t("customers.col.status")}
+              </SortHead>
               {CallRoundHead}
               {StatusChangedHead}
-              <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
+              <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("common.registeredDate")}
+              </SortHead>
               <TableHead>{t("customers.col.memo")}</TableHead>
               <TableHead className="text-right">{t("customers.col.action")}</TableHead>
             </TableRow>
@@ -1209,19 +1663,45 @@ function CustomersPage() {
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-                <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
+                <TableCell className="font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setDetailTarget(c)}
+                    className="text-left hover:underline"
+                  >
+                    {c.name}
+                  </button>
+                </TableCell>
                 <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
-                <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                <TableCell className="font-mono text-xs">
+                  <PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} />
+                </TableCell>
                 <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
-                <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
+                <CountryCell
+                  c={c}
+                  countryById={countryById}
+                  isAdmin={isAdmin}
+                  countries={countries}
+                  onChangeCountry={changeCountry}
+                />
                 <TableCell className="font-mono text-xs">{c.id_number ?? "-"}</TableCell>
-                <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
+                <Assigned
+                  c={c}
+                  staffById={staffById}
+                  isAdmin={isAdmin}
+                  staff={staff}
+                  onChangeAssigned={changeAssigned}
+                />
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                 <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
-                <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
-                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {fmtDate(c.imported_at)}
+                </TableCell>
+                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>
+                  {c.notes ?? "-"}
+                </TableCell>
                 {renderActions(c)}
               </TableRow>
             ))}
@@ -1233,19 +1713,44 @@ function CustomersPage() {
 
     if (p === "friend_referral" || p === "prepaid_charge") {
       return (
-        <Table aria-label="Customer list">
+        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
-              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
-              <SortHead k={p === "prepaid_charge" ? "charge_date" : "signup_date"} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{p === "prepaid_charge" ? t("customers.col.chargeDate") : t("customers.col.signupDate")}</SortHead>
-              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
-              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.phone")}
+              </SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.country")}
+              </SortHead>
+              <SortHead
+                k={p === "prepaid_charge" ? "charge_date" : "signup_date"}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSort={toggleSort}
+              >
+                {p === "prepaid_charge"
+                  ? t("customers.col.chargeDate")
+                  : t("customers.col.signupDate")}
+              </SortHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.assigned")}
+              </SortHead>
+              <SortHead
+                k="status"
+                className="min-w-[140px]"
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSort={toggleSort}
+              >
+                {t("customers.col.status")}
+              </SortHead>
               {CallRoundHead}
               {StatusChangedHead}
-              <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
+              <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("common.registeredDate")}
+              </SortHead>
               <TableHead>{t("customers.col.memo")}</TableHead>
               <TableHead className="text-right">{t("customers.col.action")}</TableHead>
             </TableRow>
@@ -1254,16 +1759,44 @@ function CustomersPage() {
             {filtered.map((c) => (
               <TableRow key={c.id} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-                <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-                <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
-                <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
-                <TableCell className="text-xs">{fmtDate(p === "prepaid_charge" ? c.charge_date : c.signup_date)}</TableCell>
-                <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
+                <TableCell className="font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setDetailTarget(c)}
+                    className="text-left hover:underline"
+                  >
+                    {c.name}
+                  </button>
+                </TableCell>
+                <TableCell className="font-mono text-xs">
+                  <PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} />
+                </TableCell>
+                <CountryCell
+                  c={c}
+                  countryById={countryById}
+                  isAdmin={isAdmin}
+                  countries={countries}
+                  onChangeCountry={changeCountry}
+                />
+                <TableCell className="text-xs">
+                  {fmtDate(p === "prepaid_charge" ? c.charge_date : c.signup_date)}
+                </TableCell>
+                <Assigned
+                  c={c}
+                  staffById={staffById}
+                  isAdmin={isAdmin}
+                  staff={staff}
+                  onChangeAssigned={changeAssigned}
+                />
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                 <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
-                <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
-                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {fmtDate(c.imported_at)}
+                </TableCell>
+                <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>
+                  {c.notes ?? "-"}
+                </TableCell>
                 {renderActions(c)}
               </TableRow>
             ))}
@@ -1272,7 +1805,6 @@ function CustomersPage() {
         </Table>
       );
     }
-
 
     if (p === "one_year_activation") {
       const today = new Date();
@@ -1290,31 +1822,67 @@ function CustomersPage() {
         if (n === null) return <span className="text-muted-foreground">-</span>;
         const near = isNearMaturity(n);
         if (n < 0) {
-          return <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${near ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{t("customers.matured", { n: Math.abs(n) })}</span>;
+          return (
+            <span
+              className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${near ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}
+            >
+              {t("customers.matured", { n: Math.abs(n) })}
+            </span>
+          );
         }
-        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">D-DAY</span>;
+        if (n === 0)
+          return (
+            <span className="inline-flex rounded px-1.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+              {uiCopy("ux.copy6e18d83cf6")}
+            </span>
+          );
         const cls = near
           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
           : n <= 30
-          ? "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200"
-          : n <= 60
-          ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
-          : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
-        return <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${cls}`}>D-{n}</span>;
+            ? "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200"
+            : n <= 60
+              ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
+              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
+        return (
+          <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${cls}`}>
+            {uiCopy("ux.copyc2c80cc39a")}
+            {n}
+          </span>
+        );
       };
 
       return (
-        <Table aria-label="Customer list">
+        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
-              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.customerName")}</SortHead>
-              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
-              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationNumber")}</SortHead>
-              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationDate")}</SortHead>
-              <TableHead className="whitespace-nowrap">{t("customers.col.oneYearMaturity")}</TableHead>
-              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
-              <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
+              <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.customerName")}
+              </SortHead>
+              <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.country")}
+              </SortHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.activationNumber")}
+              </SortHead>
+              <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.activationDate")}
+              </SortHead>
+              <TableHead className="whitespace-nowrap">
+                {t("customers.col.oneYearMaturity")}
+              </TableHead>
+              <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+                {t("customers.col.assigned")}
+              </SortHead>
+              <SortHead
+                k="status"
+                className="min-w-[140px]"
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSort={toggleSort}
+              >
+                {t("customers.col.status")}
+              </SortHead>
               {CallRoundHead}
               <TableHead>{t("customers.col.memo")}</TableHead>
               <TableHead className="text-right">{t("customers.col.action")}</TableHead>
@@ -1324,18 +1892,47 @@ function CustomersPage() {
             {filtered.map((c) => {
               const dday = daysToAnniversary(c.activation_date);
               return (
-                <TableRow key={c.id} className={cn("hover:bg-muted/30", isNearMaturity(dday) && "bg-emerald-50/50 dark:bg-emerald-950/20")}>
-
+                <TableRow
+                  key={c.id}
+                  className={cn(
+                    "hover:bg-muted/30",
+                    isNearMaturity(dday) && "bg-emerald-50/50 dark:bg-emerald-950/20",
+                  )}
+                >
                   <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-                  <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-                  <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
-                  <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
+                  <TableCell className="font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setDetailTarget(c)}
+                      className="text-left hover:underline"
+                    >
+                      {c.name}
+                    </button>
+                  </TableCell>
+                  <CountryCell
+                    c={c}
+                    countryById={countryById}
+                    isAdmin={isAdmin}
+                    countries={countries}
+                    onChangeCountry={changeCountry}
+                  />
+                  <TableCell className="font-mono text-xs">
+                    <PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} />
+                  </TableCell>
                   <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                   <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
-                  <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
+                  <Assigned
+                    c={c}
+                    staffById={staffById}
+                    isAdmin={isAdmin}
+                    staff={staff}
+                    onChangeAssigned={changeAssigned}
+                  />
                   <StatusCell c={c} onChangeStatus={changeStatus} />
                   <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
-                  <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+                  <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>
+                    {c.notes ?? "-"}
+                  </TableCell>
                   {renderActions(c)}
                 </TableRow>
               );
@@ -1347,20 +1944,40 @@ function CustomersPage() {
     }
 
     return (
-      <Table aria-label="Customer list">
+      <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
         <TableHeader>
           <TableRow className="bg-muted/60 border-b border-border">
             {CheckHead}
             <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-            <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
-            <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
-            <SortHead k="application_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.applicationDate")}</SortHead>
-            <SortHead k="requested_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.requestedPlan")}</SortHead>
-            <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
-            <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
+            <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("customers.col.phone")}
+            </SortHead>
+            <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("customers.col.country")}
+            </SortHead>
+            <SortHead k="application_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("customers.col.applicationDate")}
+            </SortHead>
+            <SortHead k="requested_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("customers.col.requestedPlan")}
+            </SortHead>
+            <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("customers.col.assigned")}
+            </SortHead>
+            <SortHead
+              k="status"
+              className="min-w-[140px]"
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+            >
+              {t("customers.col.status")}
+            </SortHead>
             {CallRoundHead}
             {StatusChangedHead}
-            <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("common.registeredDate")}</SortHead>
+            <SortHead k="imported_at" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("common.registeredDate")}
+            </SortHead>
             <TableHead>{t("customers.col.memo")}</TableHead>
             <TableHead className="text-right">{t("customers.col.action")}</TableHead>
           </TableRow>
@@ -1369,17 +1986,43 @@ function CustomersPage() {
           {filtered.map((c) => (
             <TableRow key={c.id} className="hover:bg-muted/30">
               <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-              <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-              <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
-              <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
+              <TableCell className="font-medium">
+                <button
+                  type="button"
+                  onClick={() => setDetailTarget(c)}
+                  className="text-left hover:underline"
+                >
+                  {c.name}
+                </button>
+              </TableCell>
+              <TableCell className="font-mono text-xs">
+                <PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} />
+              </TableCell>
+              <CountryCell
+                c={c}
+                countryById={countryById}
+                isAdmin={isAdmin}
+                countries={countries}
+                onChangeCountry={changeCountry}
+              />
               <TableCell className="text-xs">{fmtDate(c.application_date)}</TableCell>
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
-              <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
+              <Assigned
+                c={c}
+                staffById={staffById}
+                isAdmin={isAdmin}
+                staff={staff}
+                onChangeAssigned={changeAssigned}
+              />
               <StatusCell c={c} onChangeStatus={changeStatus} />
               <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
               <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
-              <TableCell className="text-xs text-muted-foreground">{fmtDate(c.imported_at)}</TableCell>
-              <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>{c.notes ?? "-"}</TableCell>
+              <TableCell className="text-xs text-muted-foreground">
+                {fmtDate(c.imported_at)}
+              </TableCell>
+              <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>
+                {c.notes ?? "-"}
+              </TableCell>
               {renderActions(c)}
             </TableRow>
           ))}
@@ -1400,10 +2043,11 @@ function CustomersPage() {
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(t("customers.googleFormSyncErr", { msg: r.errors[0] }));
+        toast.error(localizeError(t("customers.googleFormSyncErr", { msg: r.errors[0] })));
       }
     },
-    onError: (e: Error) => toast.error(t("customers.googleFormSyncFail", { msg: e.message })),
+    onError: (e: Error) =>
+      toast.error(localizeError(t("customers.googleFormSyncFail", { msg: e.message }))),
   });
   const syncMutRef = useRef(syncGoogleFormMut);
   syncMutRef.current = syncGoogleFormMut;
@@ -1417,10 +2061,11 @@ function CustomersPage() {
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(t("customers.googleFormSyncErr", { msg: r.errors[0] }));
+        toast.error(localizeError(t("customers.googleFormSyncErr", { msg: r.errors[0] })));
       }
     },
-    onError: (e: Error) => toast.error(t("customers.googleFormSyncFail", { msg: e.message })),
+    onError: (e: Error) =>
+      toast.error(localizeError(t("customers.googleFormSyncFail", { msg: e.message }))),
   });
   // === QR 개통 신청 자동 동기화 ===
   const syncQrFn = useServerFn(syncQrActivation);
@@ -1428,13 +2073,14 @@ function CustomersPage() {
     mutationFn: () => syncQrFn(),
     onSuccess: (r) => {
       if (r.inserted > 0) {
-        toast.success(`QR 개통 신청 ${r.inserted}건을 가져왔습니다`);
+        toast.success(uiCopy("ux.copy37a0471fd9", { value0: r.inserted }));
         void refetchList();
         void refetchPoolCounts();
       }
-      if (r.errors && r.errors.length > 0) toast.error(`QR 개통 신청 동기화 오류: ${r.errors[0]}`);
+      if (r.errors && r.errors.length > 0)
+        toast.error(localizeError(`QR 개통 신청 동기화 오류: ${r.errors[0]}`));
     },
-    onError: (e: Error) => toast.error(`QR 개통 신청 동기화 실패: ${e.message}`),
+    onError: (e: Error) => toast.error(localizeError(`QR 개통 신청 동기화 실패: ${e.message}`)),
   });
   const syncQrMutRef = useRef(syncQrMut);
   syncQrMutRef.current = syncQrMut;
@@ -1463,7 +2109,6 @@ function CustomersPage() {
     }
   }, [tab]);
 
-
   // === 구글폼 인터 자동 동기화 (통합: google_form_activation 탭에서 함께 실행) ===
   const syncGoogleFormInterFn = useServerFn(syncGoogleFormApplicationsInter);
   const syncGoogleFormInterMut = useMutation({
@@ -1475,10 +2120,11 @@ function CustomersPage() {
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(t("customers.googleFormInterSyncErr", { msg: r.errors[0] }));
+        toast.error(localizeError(t("customers.googleFormInterSyncErr", { msg: r.errors[0] })));
       }
     },
-    onError: (e: Error) => toast.error(t("customers.googleFormInterSyncFail", { msg: e.message })),
+    onError: (e: Error) =>
+      toast.error(localizeError(t("customers.googleFormInterSyncFail", { msg: e.message }))),
   });
   const syncInterMutRef = useRef(syncGoogleFormInterMut);
   syncInterMutRef.current = syncGoogleFormInterMut;
@@ -1494,10 +2140,11 @@ function CustomersPage() {
         void refetchPoolCounts();
       }
       if (r.errors && r.errors.length > 0) {
-        toast.error(t("customers.friendReferralSyncErr", { msg: r.errors[0] }));
+        toast.error(localizeError(t("customers.friendReferralSyncErr", { msg: r.errors[0] })));
       }
     },
-    onError: (e: Error) => toast.error(t("customers.friendReferralSyncFail", { msg: e.message })),
+    onError: (e: Error) =>
+      toast.error(localizeError(t("customers.friendReferralSyncFail", { msg: e.message }))),
   });
   const syncFriendMutRef = useRef(syncFriendReferralsMut);
   syncFriendMutRef.current = syncFriendReferralsMut;
@@ -1507,9 +2154,6 @@ function CustomersPage() {
     const timer = setInterval(() => syncFriendMutRef.current.mutate(), 60_000);
     return () => clearInterval(timer);
   }, [tab]);
-
-
-
 
   if (listError) {
     return (
@@ -1528,16 +2172,20 @@ function CustomersPage() {
     );
   }
 
-  const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
-  const SHEET_URL_INTER = "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
-  const SHEET_URL_QR = "https://docs.google.com/spreadsheets/d/16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM/edit";
-  const SHEET_URL_FRIEND = "https://docs.google.com/spreadsheets/d/1OwC6pQ2as5VsyDTYVzUSGsNru9ki2jFvScn5kk2zZ1w/edit";
+  const SHEET_URL =
+    "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
+  const SHEET_URL_INTER =
+    "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
+  const SHEET_URL_QR =
+    "https://docs.google.com/spreadsheets/d/16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM/edit";
+  const SHEET_URL_FRIEND =
+    "https://docs.google.com/spreadsheets/d/1OwC6pQ2as5VsyDTYVzUSGsNru9ki2jFvScn5kk2zZ1w/edit";
 
   return (
     <div className="space-y-5">
       <PageHeader
         title={t("customers.title")}
-        description={`${t("customers.totalDesc",{count:total.toLocaleString()})} · ${t("customers.displayed",{n:rows.length.toLocaleString()})}${loading?" · "+t("common.loading"):""}`}
+        description={`${t("customers.totalDesc", { count: total.toLocaleString() })} · ${t("customers.displayed", { n: rows.length.toLocaleString() })}${loading ? " · " + t("common.loading") : ""}`}
         actions={
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             {tab === "google_form_activation" && (
@@ -1555,12 +2203,17 @@ function CustomersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => { syncGoogleFormMut.mutate(); syncGoogleFormInterMut.mutate(); }}
+                  onClick={() => {
+                    syncGoogleFormMut.mutate();
+                    syncGoogleFormInterMut.mutate();
+                  }}
                   disabled={syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending}
                   aria-busy={syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending}
                   title={t("customers.googleFormSyncTitle")}
                 >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`mr-2 h-4 w-4 ${syncGoogleFormMut.isPending || syncGoogleFormInterMut.isPending ? "animate-spin" : ""}`}
+                  />
                   {t("customers.googleFormSync")}
                 </Button>
               </>
@@ -1569,7 +2222,7 @@ function CustomersPage() {
               <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL_QR} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-1 h-4 w-4" /> QR 시트 열기
+                    <ExternalLink className="mr-1 h-4 w-4" /> {uiCopy("ux.copy9ddc6d6836")}
                   </a>
                 </Button>
                 <Button
@@ -1578,10 +2231,12 @@ function CustomersPage() {
                   onClick={() => syncQrMut.mutate()}
                   disabled={syncQrMut.isPending}
                   aria-busy={syncQrMut.isPending}
-                  title="QR 개통 신청 시트 동기화"
+                  title={uiCopy("ux.copy738ecd0d1d")}
                 >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${syncQrMut.isPending ? "animate-spin" : ""}`} />
-                  동기화
+                  <RefreshCw
+                    className={`mr-2 h-4 w-4 ${syncQrMut.isPending ? "animate-spin" : ""}`}
+                  />
+                  {uiCopy("ux.copye7665a58ae")}
                 </Button>
               </>
             )}
@@ -1600,31 +2255,44 @@ function CustomersPage() {
                   aria-busy={syncFriendReferralsMut.isPending}
                   title={t("customers.friendReferralSyncTitle")}
                 >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${syncFriendReferralsMut.isPending ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`mr-2 h-4 w-4 ${syncFriendReferralsMut.isPending ? "animate-spin" : ""}`}
+                  />
                   {t("customers.friendReferralSync")}
                 </Button>
               </>
             )}
             <Button variant="outline" size="sm" onClick={load} aria-busy={loading || loadingMore}>
-
               <RefreshCw className="mr-2 h-4 w-4" /> {t("common.refresh")}
             </Button>
           </div>
         }
       />
 
-
-
-      <Tabs value={tab} onValueChange={(v) => { setTab(v as TabValue); setSelected(new Set()); }}>
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v as TabValue);
+          setSelected(new Set());
+        }}
+      >
         <TabsList className="flex h-auto w-full snap-x justify-start gap-1 overflow-x-auto bg-transparent p-0 pb-2">
           {visiblePools.map((p) => (
-            <TabsTrigger key={p} value={p} className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm">
+            <TabsTrigger
+              key={p}
+              value={p}
+              className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm"
+            >
               {POOL_SHORT[p]} <span className="ml-1 opacity-80">({poolCount(p)})</span>
             </TabsTrigger>
           ))}
           {false && (
-            <TabsTrigger value="loan_borrowers" className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm">
-              {t("nav.loans")} <span className="ml-1 text-muted-foreground">({loanCount.toLocaleString()})</span>
+            <TabsTrigger
+              value="loan_borrowers"
+              className="min-h-9 shrink-0 snap-start px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md md:text-sm"
+            >
+              {t("nav.loans")}{" "}
+              <span className="ml-1 text-muted-foreground">({loanCount.toLocaleString()})</span>
             </TabsTrigger>
           )}
         </TabsList>
@@ -1641,323 +2309,483 @@ function CustomersPage() {
               </TabsContent>
             );
           }
-          const p: CustomerPool = (tv === "all") ? "existing" : tv;
+          const p: CustomerPool = tv === "all" ? "existing" : tv;
           return (
-          <TabsContent key={tv} value={tv} className="mt-4">
-            <Card>
-              <CardContent className="space-y-4 p-3 sm:p-4">
-                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                  <div className="text-sm font-semibold">{POOL_LABEL[p]}</div>
-                  {tab === p && (
-                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                      {isAdmin && (
-                        <>
-                          <input
-                            ref={fileRef}
-                            type="file"
-                            accept=".xlsx,.xls,.csv"
-                            className="hidden"
-                            onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
-                          />
-                          <Button variant="outline" size="sm" onClick={downloadSample}>
-                            <Download className="mr-2 h-4 w-4" /> {t("customers.sample")}
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing} aria-busy={importing}>
-                            <Upload className="mr-2 h-4 w-4" /> {importing ? t("customers.uploading") : t("customers.excelUpload")}
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={downloadFiltered} disabled={downloading} aria-busy={downloading}>
-                            <FileSpreadsheet className="mr-2 h-4 w-4" /> {downloading ? t("customers.downloadingLabel") : t("customers.excelDownload")}
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => { setDeleteAllConfirm(""); setDeleteAllOpen(true); }}>
-                            <Trash2 className="mr-2 h-4 w-4" /> {t("customers.tabDeleteAll")}
-                          </Button>
-                        </>
-                      )}
-                      <Button size="sm" onClick={() => setShowAdd(true)}>
-                        <Plus className="mr-2 h-4 w-4" /> {t("customers.addCustomer")}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-                  <button
-                    type="button"
-                    onClick={() => setStatusF("all")}
-                    className={cn(
-                      "rounded-md border bg-card px-2.5 py-1.5 text-left transition hover:shadow-card-hover",
-                      statusF === "all" ? "border-primary ring-1 ring-primary" : "border-border/60"
-                    )}
-                  >
-                    <div className="text-xs font-medium text-muted-foreground">{t("status.allStatus")}</div>
-                    <div className="text-sm font-semibold tracking-normal tabular-nums">{statusTotal.toLocaleString()}</div>
-                  </button>
-                  {CUSTOMER_STATUSES.map((s) => {
-                    const n = statusCounts[s] ?? 0;
-                    const active = statusF === s;
-                    return (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setStatusF(active ? "all" : s)}
-                        className={cn(
-                          "rounded-md border bg-card px-2.5 py-1.5 text-left transition hover:shadow-card-hover",
-                          active ? "border-primary ring-1 ring-primary" : "border-border/60"
+            <TabsContent key={tv} value={tv} className="mt-4">
+              <Card>
+                <CardContent className="space-y-4 p-3 sm:p-4">
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div className="text-sm font-semibold">{POOL_LABEL[p]}</div>
+                    {tab === p && (
+                      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                        {isAdmin && (
+                          <>
+                            <input
+                              ref={fileRef}
+                              type="file"
+                              accept=".xlsx,.xls,.csv"
+                              className="hidden"
+                              onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
+                            />
+                            <Button variant="outline" size="sm" onClick={downloadSample}>
+                              <Download className="mr-2 h-4 w-4" /> {t("customers.sample")}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => fileRef.current?.click()}
+                              disabled={importing}
+                              aria-busy={importing}
+                            >
+                              <Upload className="mr-2 h-4 w-4" />{" "}
+                              {importing ? t("customers.uploading") : t("customers.excelUpload")}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={downloadFiltered}
+                              disabled={downloading}
+                              aria-busy={downloading}
+                            >
+                              <FileSpreadsheet className="mr-2 h-4 w-4" />{" "}
+                              {downloading
+                                ? t("customers.downloadingLabel")
+                                : t("customers.excelDownload")}
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                setDeleteAllConfirm("");
+                                setDeleteAllOpen(true);
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> {t("customers.tabDeleteAll")}
+                            </Button>
+                          </>
                         )}
-                      >
-                        <div className={cn("inline-block rounded px-1.5 py-0.5 text-xs font-medium", STATUS_CLASS[s])}>
-                          {STATUS_LABEL[s]}
-                        </div>
-                        <div className="text-sm font-semibold tracking-normal tabular-nums">{n.toLocaleString()}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
-                  <div className="relative md:col-span-2">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder={t("customers.searchPlaceholder")}
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      className="pl-9"
-                    />
+                        <Button size="sm" onClick={() => setShowAdd(true)}>
+                          <Plus className="mr-2 h-4 w-4" /> {t("customers.addCustomer")}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <MultiCountrySelect
-                    options={countries}
-                    value={countryIds}
-                    onChange={setCountryIds}
-                    placeholder={`${t("customers.col.customerCountry")} · ${t("dashboard.allCountries")}`}
-                    className="h-10 w-full"
-                  />
 
-                  <Select value={assignedCountry} onValueChange={setAssignedCountry}>
-                    <SelectTrigger><SelectValue placeholder={t("customers.col.assignedCountry")} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("customers.col.assignedCountry")} · {t("dashboard.allCountries")}</SelectItem>
-                      <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
-                      {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Select value={statusF} onValueChange={(v) => setStatusF(v as typeof statusF)}>
-                    <SelectTrigger><SelectValue placeholder={t("common.status")} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("status.allStatus")}</SelectItem>
-                      <SelectItem value="__call_completed__">{t("dashboard.callCompleted")}</SelectItem>
-                      {CUSTOMER_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Select value={staffF} onValueChange={setStaffF}>
-                    <SelectTrigger><SelectValue placeholder={t("customers.assigned")} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("customers.allAssigned")}</SelectItem>
-                      <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
-                      {staff.filter((s) => s.is_active).map((s) => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Select value={callRoundF} onValueChange={(v) => setCallRoundF(v as typeof callRoundF)}>
-                    <SelectTrigger><SelectValue placeholder={t("dashboard.callRound")} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("dashboard.roundAll")}</SelectItem>
-                      <SelectItem value="none">{t("dashboard.roundNone")}</SelectItem>
-                      <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
-                      <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
-                      <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {(() => {
-                  const chips: { key: string; label: string; onRemove: () => void }[] = [];
-                  if (debouncedSearch.trim()) {
-                    chips.push({ key: "search", label: t("customers.chipSearch", { value: debouncedSearch.trim() }), onRemove: () => setSearchInput("") });
-                  }
-                  if (countryIds.length > 0) {
-                    const codes = countryIds.map((id) => countryById.get(id)?.code ?? id).join(", ");
-                    chips.push({ key: "country", label: t("customers.chipCountry", { value: codes }), onRemove: () => setCountryIds([]) });
-                  }
-                  if (statusF !== "all") {
-                    const statusLabel = statusF === "__call_completed__" ? t("dashboard.callCompleted") : STATUS_LABEL[statusF as CustomerStatus];
-                    chips.push({ key: "status", label: t("customers.chipStatus", { value: statusLabel }), onRemove: () => setStatusF("all") });
-                  }
-                  if (staffF !== "all") {
-                    const name = staffF === "__none__" ? t("common.unassigned") : (staffById.get(staffF) ?? staffF);
-                    chips.push({ key: "staff", label: t("customers.chipStaff", { value: name }), onRemove: () => setStaffF("all") });
-                  }
-                  if (callRoundF !== "all") {
-                    const roundLabel = callRoundF === "none" ? t("dashboard.roundNone") : t("customers.orderNth", { n: callRoundF });
-                    chips.push({ key: "callRound", label: t("customers.chipCallRound", { value: roundLabel }), onRemove: () => setCallRoundF("all") });
-                  }
-                  if (dateFrom) {
-                    chips.push({ key: "dateFrom", label: t("customers.chipDateFrom", { value: format(dateFrom, "yyyy-MM-dd") }), onRemove: () => setDateFrom(undefined) });
-                  }
-                  if (dateTo) {
-                    chips.push({ key: "dateTo", label: t("customers.chipDateTo", { value: format(dateTo, "yyyy-MM-dd") }), onRemove: () => setDateTo(undefined) });
-                  }
-                  if (!chips.length) return null;
-                  return (
-                    <div className="flex flex-wrap items-center gap-2">
-                      {chips.map((chip) => (
-                        <span
-                          key={chip.key}
-                          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+                    <button
+                      type="button"
+                      onClick={() => setStatusF("all")}
+                      className={cn(
+                        "rounded-md border bg-card px-2.5 py-1.5 text-left transition hover:shadow-card-hover",
+                        statusF === "all"
+                          ? "border-primary ring-1 ring-primary"
+                          : "border-border/60",
+                      )}
+                    >
+                      <div className="text-xs font-medium text-muted-foreground">
+                        {t("status.allStatus")}
+                      </div>
+                      <div className="text-sm font-semibold tracking-normal tabular-nums">
+                        {statusTotal.toLocaleString()}
+                      </div>
+                    </button>
+                    {CUSTOMER_STATUSES.map((s) => {
+                      const n = statusCounts[s] ?? 0;
+                      const active = statusF === s;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setStatusF(active ? "all" : s)}
+                          className={cn(
+                            "rounded-md border bg-card px-2.5 py-1.5 text-left transition hover:shadow-card-hover",
+                            active ? "border-primary ring-1 ring-primary" : "border-border/60",
+                          )}
                         >
-                          {chip.label}
-                          <button
-                            type="button"
-                            onClick={chip.onRemove}
-                            className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-                            aria-label={t("customers.chipRemove", { label: chip.label })}
+                          <div
+                            className={cn(
+                              "inline-block rounded px-1.5 py-0.5 text-xs font-medium",
+                              STATUS_CLASS[s],
+                            )}
                           >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                      <button
-                        type="button"
+                            {STATUS_LABEL[s]}
+                          </div>
+                          <div className="text-sm font-semibold tracking-normal tabular-nums">
+                            {n.toLocaleString()}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
+                    <div className="relative md:col-span-2">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder={t("customers.searchPlaceholder")}
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <MultiCountrySelect
+                      options={countries}
+                      value={countryIds}
+                      onChange={setCountryIds}
+                      placeholder={`${t("customers.col.customerCountry")} · ${t("dashboard.allCountries")}`}
+                      className="h-10 w-full"
+                    />
+
+                    <Select value={assignedCountry} onValueChange={setAssignedCountry}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("customers.col.assignedCountry")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          {t("customers.col.assignedCountry")} · {t("dashboard.allCountries")}
+                        </SelectItem>
+                        <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
+                        {countries.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.code} · {countryName(c)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={statusF} onValueChange={(v) => setStatusF(v as typeof statusF)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("common.status")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("status.allStatus")}</SelectItem>
+                        <SelectItem value="__call_completed__">
+                          {t("dashboard.callCompleted")}
+                        </SelectItem>
+                        {CUSTOMER_STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {STATUS_LABEL[s]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={staffF} onValueChange={setStaffF}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("customers.assigned")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("customers.allAssigned")}</SelectItem>
+                        <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
+                        {staff
+                          .filter((s) => s.is_active)
+                          .map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.display_name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={callRoundF}
+                      onValueChange={(v) => setCallRoundF(v as typeof callRoundF)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("dashboard.callRound")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("dashboard.roundAll")}</SelectItem>
+                        <SelectItem value="none">{t("dashboard.roundNone")}</SelectItem>
+                        <SelectItem value="1">{t("dashboard.round1")}</SelectItem>
+                        <SelectItem value="2">{t("dashboard.round2")}</SelectItem>
+                        <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(() => {
+                    const chips: { key: string; label: string; onRemove: () => void }[] = [];
+                    if (debouncedSearch.trim()) {
+                      chips.push({
+                        key: "search",
+                        label: t("customers.chipSearch", { value: debouncedSearch.trim() }),
+                        onRemove: () => setSearchInput(""),
+                      });
+                    }
+                    if (countryIds.length > 0) {
+                      const codes = countryIds
+                        .map((id) => countryById.get(id)?.code ?? id)
+                        .join(", ");
+                      chips.push({
+                        key: "country",
+                        label: t("customers.chipCountry", { value: codes }),
+                        onRemove: () => setCountryIds([]),
+                      });
+                    }
+                    if (statusF !== "all") {
+                      const statusLabel =
+                        statusF === "__call_completed__"
+                          ? t("dashboard.callCompleted")
+                          : STATUS_LABEL[statusF as CustomerStatus];
+                      chips.push({
+                        key: "status",
+                        label: t("customers.chipStatus", { value: statusLabel }),
+                        onRemove: () => setStatusF("all"),
+                      });
+                    }
+                    if (staffF !== "all") {
+                      const name =
+                        staffF === "__none__"
+                          ? t("common.unassigned")
+                          : (staffById.get(staffF) ?? staffF);
+                      chips.push({
+                        key: "staff",
+                        label: t("customers.chipStaff", { value: name }),
+                        onRemove: () => setStaffF("all"),
+                      });
+                    }
+                    if (callRoundF !== "all") {
+                      const roundLabel =
+                        callRoundF === "none"
+                          ? t("dashboard.roundNone")
+                          : t("customers.orderNth", { n: callRoundF });
+                      chips.push({
+                        key: "callRound",
+                        label: t("customers.chipCallRound", { value: roundLabel }),
+                        onRemove: () => setCallRoundF("all"),
+                      });
+                    }
+                    if (dateFrom) {
+                      chips.push({
+                        key: "dateFrom",
+                        label: t("customers.chipDateFrom", {
+                          value: format(dateFrom, "yyyy-MM-dd"),
+                        }),
+                        onRemove: () => setDateFrom(undefined),
+                      });
+                    }
+                    if (dateTo) {
+                      chips.push({
+                        key: "dateTo",
+                        label: t("customers.chipDateTo", { value: format(dateTo, "yyyy-MM-dd") }),
+                        onRemove: () => setDateTo(undefined),
+                      });
+                    }
+                    if (!chips.length) return null;
+                    return (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {chips.map((chip) => (
+                          <span
+                            key={chip.key}
+                            className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
+                          >
+                            {chip.label}
+                            <button
+                              type="button"
+                              onClick={chip.onRemove}
+                              className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                              aria-label={t("customers.chipRemove", { label: chip.label })}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchInput("");
+                            setCountryIds([]);
+                            setStatusF("all");
+                            setStaffF("all");
+                            setCallRoundF("all");
+                            setDateFrom(undefined);
+                            setDateTo(undefined);
+                          }}
+                          className="rounded-full border border-dashed px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground"
+                        >
+                          {t("customers.resetAll")}
+                        </button>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("common.registeredDate")}
+                    </span>
+                    <DateRangePicker
+                      label={t("customers.startLabel")}
+                      value={dateFrom}
+                      onChange={setDateFrom}
+                    />
+                    <span className="text-xs text-muted-foreground">~</span>
+                    <DateRangePicker
+                      label={t("customers.endLabel")}
+                      value={dateTo}
+                      onChange={setDateTo}
+                    />
+                    {(dateFrom || dateTo) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
-                          setSearchInput("");
-                          setCountryIds([]);
-                          setStatusF("all");
-                          setStaffF("all");
-                          setCallRoundF("all");
                           setDateFrom(undefined);
                           setDateTo(undefined);
                         }}
-                        className="rounded-full border border-dashed px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground"
                       >
-                        {t("customers.resetAll")}
-                      </button>
-                    </div>
-                  );
-                })()}
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">{t("common.registeredDate")}</span>
-                  <DateRangePicker label={t("customers.startLabel")} value={dateFrom} onChange={setDateFrom} />
-                  <span className="text-xs text-muted-foreground">~</span>
-                  <DateRangePicker label={t("customers.endLabel")} value={dateTo} onChange={setDateTo} />
-                  {(dateFrom || dateTo) && (
-                    <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
-                      {t("common.reset")}
-                    </Button>
-                  )}
-                  {isAdmin && selected.size > 0 && tab === p && (
-                    <div className="ml-auto flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setBulkStatusOpen(true)}>
-                        {t("customers.bulkStatusChangeBtn", { count: selected.size })}
+                        {t("common.reset")}
                       </Button>
-                      <Button variant="destructive" size="sm" onClick={() => setBulkOpen(true)}>
-                        <Trash2 className="mr-2 h-4 w-4" /> {t("customers.bulkDeleteBtn",{count:selected.size})}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {staffStats.length > 0 && (staffF === "all") && (
-                  <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-                    <div className="mb-2 text-xs font-semibold text-muted-foreground">{t("customers.staffStats")}</div>
-                    <div className="flex flex-wrap gap-2">
-                      {staffStats.map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => setStaffF(s.id)}
-                          className="rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs hover:bg-muted"
-                        >
-                          <span className="font-medium">{s.name}</span>
-                          <span className="ml-2 text-muted-foreground">{t("customers.staffTotal", { n: s.total })}</span>
-                          <span className="ml-1.5 text-success">{t("customers.staffActivated", { n: s.activated })}</span>
-                          <span className="ml-1.5 text-info">{t("customers.staffProgress", { n: s.in_progress })}</span>
-                        </button>
-                      ))}
-                    </div>
+                    )}
+                    {isAdmin && selected.size > 0 && tab === p && (
+                      <div className="ml-auto flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setBulkStatusOpen(true)}>
+                          {t("customers.bulkStatusChangeBtn", { count: selected.size })}
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => setBulkOpen(true)}>
+                          <Trash2 className="mr-2 h-4 w-4" />{" "}
+                          {t("customers.bulkDeleteBtn", { count: selected.size })}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                <div className="table-scroll rounded-lg border border-border/60 [--table-max-h:70dvh]">
-                  {renderTable(p)}
-                </div>
-                {total > PAGE_SIZE && (
-                  <div className="flex flex-col items-center gap-2 pt-3">
-                    <div className="max-w-full overflow-x-auto pb-1">
-                    <div className="flex w-max items-center gap-3">
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious
-                              href="#"
-                              aria-disabled={loadingMore || page <= 1}
-                              className={page <= 1 || loadingMore ? "pointer-events-none opacity-50" : ""}
-                              onClick={(e) => { e.preventDefault(); if (page > 1 && !loadingMore) loadPrevious(); }}
-                            />
-                          </PaginationItem>
-                          {getPageNumbers(page, totalPages).map((p, i) =>
-                            p === "..." ? (
-                              <PaginationItem key={`e${i}`}><PaginationEllipsis /></PaginationItem>
-                            ) : (
-                              <PaginationItem key={p}>
-                                <PaginationLink
+                  {staffStats.length > 0 && staffF === "all" && (
+                    <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                      <div className="mb-2 text-xs font-semibold text-muted-foreground">
+                        {t("customers.staffStats")}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {staffStats.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => setStaffF(s.id)}
+                            className="rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs hover:bg-muted"
+                          >
+                            <span className="font-medium">{s.name}</span>
+                            <span className="ml-2 text-muted-foreground">
+                              {t("customers.staffTotal", { n: s.total })}
+                            </span>
+                            <span className="ml-1.5 text-success">
+                              {t("customers.staffActivated", { n: s.activated })}
+                            </span>
+                            <span className="ml-1.5 text-info">
+                              {t("customers.staffProgress", { n: s.in_progress })}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="table-scroll rounded-lg border border-border/60 [--table-max-h:70dvh]">
+                    {renderTable(p)}
+                  </div>
+                  {total > PAGE_SIZE && (
+                    <div className="flex flex-col items-center gap-2 pt-3">
+                      <div className="max-w-full overflow-x-auto pb-1">
+                        <div className="flex w-max items-center gap-3">
+                          <Pagination>
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious
                                   href="#"
-                                  isActive={p === page}
-                                  onClick={(e) => { e.preventDefault(); if (!loadingMore) setPage(p as number); }}
-                                >
-                                  {p}
-                                </PaginationLink>
+                                  aria-disabled={loadingMore || page <= 1}
+                                  className={
+                                    page <= 1 || loadingMore ? "pointer-events-none opacity-50" : ""
+                                  }
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    if (page > 1 && !loadingMore) loadPrevious();
+                                  }}
+                                />
                               </PaginationItem>
-                            )
+                              {getPageNumbers(page, totalPages).map((p, i) =>
+                                p === "..." ? (
+                                  <PaginationItem key={`e${i}`}>
+                                    <PaginationEllipsis />
+                                  </PaginationItem>
+                                ) : (
+                                  <PaginationItem key={p}>
+                                    <PaginationLink
+                                      href="#"
+                                      isActive={p === page}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        if (!loadingMore) setPage(p as number);
+                                      }}
+                                    >
+                                      {p}
+                                    </PaginationLink>
+                                  </PaginationItem>
+                                ),
+                              )}
+                              <PaginationItem>
+                                <PaginationNext
+                                  href="#"
+                                  aria-disabled={loadingMore || page >= totalPages}
+                                  className={
+                                    page >= totalPages || loadingMore
+                                      ? "pointer-events-none opacity-50"
+                                      : ""
+                                  }
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    if (page < totalPages && !loadingMore) loadMore();
+                                  }}
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
+                          {totalPages > 5 && (
+                            <div className="flex items-center gap-1.5 text-sm">
+                              <span className="text-muted-foreground whitespace-nowrap">
+                                {t("customers.goToPage")}
+                              </span>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={totalPages}
+                                value={jumpPage}
+                                onChange={(e) => setJumpPage(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    const n = parseInt(jumpPage, 10);
+                                    if (!isNaN(n) && n >= 1 && n <= totalPages) {
+                                      setPage(n);
+                                    }
+                                    setJumpPage("");
+                                  }
+                                }}
+                                onBlur={() => {
+                                  const n = parseInt(jumpPage, 10);
+                                  if (!isNaN(n) && n >= 1 && n <= totalPages) {
+                                    setPage(n);
+                                  }
+                                  setJumpPage("");
+                                }}
+                                className="h-8 w-[60px] px-1.5 text-center text-sm"
+                              />
+                              <span className="text-muted-foreground">
+                                / {totalPages.toLocaleString()}
+                              </span>
+                            </div>
                           )}
-                          <PaginationItem>
-                            <PaginationNext
-                              href="#"
-                              aria-disabled={loadingMore || page >= totalPages}
-                              className={page >= totalPages || loadingMore ? "pointer-events-none opacity-50" : ""}
-                              onClick={(e) => { e.preventDefault(); if (page < totalPages && !loadingMore) loadMore(); }}
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                      {totalPages > 5 && (
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <span className="text-muted-foreground whitespace-nowrap">{t("customers.goToPage")}</span>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={totalPages}
-                            value={jumpPage}
-                            onChange={(e) => setJumpPage(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                const n = parseInt(jumpPage, 10);
-                                if (!isNaN(n) && n >= 1 && n <= totalPages) {
-                                  setPage(n);
-                                }
-                                setJumpPage("");
-                              }
-                            }}
-                            onBlur={() => {
-                              const n = parseInt(jumpPage, 10);
-                              if (!isNaN(n) && n >= 1 && n <= totalPages) {
-                                setPage(n);
-                              }
-                              setJumpPage("");
-                            }}
-                            className="h-8 w-[60px] px-1.5 text-center text-sm"
-                          />
-                          <span className="text-muted-foreground">/ {totalPages.toLocaleString()}</span>
                         </div>
-                      )}
-                    </div></div>
-                    <div className="text-xs text-muted-foreground">
-                      {loadingMore ? t("customers.loadingLabel") : t("customers.pageOf", { page: page.toLocaleString(), total: totalPages.toLocaleString(), count: total.toLocaleString(), size: PAGE_SIZE })}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {loadingMore
+                          ? t("customers.loadingLabel")
+                          : t("customers.pageOf", {
+                              page: page.toLocaleString(),
+                              total: totalPages.toLocaleString(),
+                              count: total.toLocaleString(),
+                              size: PAGE_SIZE,
+                            })}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           );
         })}
       </Tabs>
@@ -1976,10 +2804,7 @@ function CustomersPage() {
         }}
         onCall={(c) => setCallLogTarget(c)}
       />
-      <QuickCallLogDialog
-        customer={callLogTarget}
-        onClose={() => setCallLogTarget(null)}
-      />
+      <QuickCallLogDialog customer={callLogTarget} onClose={() => setCallLogTarget(null)} />
       <AddCustomerDialog
         open={showAdd}
         onClose={() => setShowAdd(false)}
@@ -1996,8 +2821,12 @@ function CustomersPage() {
             <DialogDescription>{t("customers.deleteDesc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>{t("common.cancel")}</Button>
-            <Button variant="destructive" onClick={deleteCustomer}>{t("common.delete")}</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={deleteCustomer}>
+              {t("common.delete")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2005,11 +2834,17 @@ function CustomersPage() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t("customers.bulkDeleteTitle")}</DialogTitle>
-            <DialogDescription>{t("customers.bulkDeleteDesc", { count: selected.size })}</DialogDescription>
+            <DialogDescription>
+              {t("customers.bulkDeleteDesc", { count: selected.size })}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkOpen(false)}>{t("common.cancel")}</Button>
-            <Button variant="destructive" onClick={bulkDelete}>{t("customers.bulkDeleteConfirm", { count: selected.size })}</Button>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={bulkDelete}>
+              {t("customers.bulkDeleteConfirm", { count: selected.size })}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2018,19 +2853,28 @@ function CustomersPage() {
           <DialogHeader>
             <DialogTitle>{t("customers.deleteAllTitle")}</DialogTitle>
             <DialogDescription>
-              <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> — {t("customers.tabDeleteAll")}: {poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}
-              <br /><br />
-              DELETE
+              <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> —{" "}
+              {t("customers.tabDeleteAll")}:{" "}
+              {poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}
+              <br />
+              <br />
+              {uiCopy("ux.copyd6f5636098")}
             </DialogDescription>
           </DialogHeader>
           <Input
             value={deleteAllConfirm}
             onChange={(e) => setDeleteAllConfirm(e.target.value)}
-            placeholder="DELETE"
+            placeholder={uiCopy("ux.copyd6f5636098")}
             disabled={deleteAllRunning}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={deleteAllRunning}>{t("common.cancel")}</Button>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteAllOpen(false)}
+              disabled={deleteAllRunning}
+            >
+              {t("common.cancel")}
+            </Button>
             <Button
               variant="destructive"
               onClick={deleteAllInTab}
@@ -2041,27 +2885,44 @@ function CustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={bulkStatusOpen} onOpenChange={(o) => !bulkStatusRunning && setBulkStatusOpen(o)}>
+      <Dialog
+        open={bulkStatusOpen}
+        onOpenChange={(o) => !bulkStatusRunning && setBulkStatusOpen(o)}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t("customers.bulkStatusTitle")}</DialogTitle>
-            <DialogDescription>{t("customers.bulkStatusDesc", { count: selected.size })}</DialogDescription>
+            <DialogDescription>
+              {t("customers.bulkStatusDesc", { count: selected.size })}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label>{t("customers.newStatus")}</Label>
             <Select value={bulkStatus} onValueChange={(v) => setBulkStatus(v as CustomerStatus)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {CUSTOMER_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                  <SelectItem key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusRunning}>{t("common.cancel")}</Button>
+            <Button
+              variant="outline"
+              onClick={() => setBulkStatusOpen(false)}
+              disabled={bulkStatusRunning}
+            >
+              {t("common.cancel")}
+            </Button>
             <Button onClick={bulkChangeStatus} disabled={bulkStatusRunning}>
-              {bulkStatusRunning ? t("customers.changing") : t("customers.bulkChangeBtn", { count: selected.size })}
+              {bulkStatusRunning
+                ? t("customers.changing")
+                : t("customers.bulkChangeBtn", { count: selected.size })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2070,17 +2931,38 @@ function CustomersPage() {
   );
 }
 
-function DateRangePicker({ label, value, onChange }: { label: string; value?: Date; onChange: (d?: Date) => void }) {
+function DateRangePicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: Date;
+  onChange: (d?: Date) => void;
+}) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("w-[140px] justify-start text-left font-normal", !value && "text-muted-foreground")}>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "w-[140px] justify-start text-left font-normal",
+            !value && "text-muted-foreground",
+          )}
+        >
           <CalendarIcon className="mr-2 h-3.5 w-3.5" />
           {value ? format(value, "yyyy.MM.dd") : <span>{label}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={value} onSelect={(d) => onChange(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
+        <Calendar
+          mode="single"
+          selected={value}
+          onSelect={(d) => onChange(d)}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
       </PopoverContent>
     </Popover>
   );
@@ -2115,7 +2997,13 @@ function EmptyRow({ cols, loading, pool }: { cols: number; loading: boolean; poo
 // === 메모 다이얼로그 ===
 type Note = { id: string; content: string; created_at: string; author_id: string };
 
-function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: Map<string, string> }) {
+function MemoPanel({
+  customer,
+  staffById,
+}: {
+  customer: CustomerRow;
+  staffById: Map<string, string>;
+}) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
@@ -2125,7 +3013,11 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
 
   const load = async (id: string) => {
     setLoading(true);
-    const { data: n } = await supabase.from("customer_notes").select("*").eq("customer_id", id).order("created_at", { ascending: false });
+    const { data: n } = await supabase
+      .from("customer_notes")
+      .select("*")
+      .eq("customer_id", id)
+      .order("created_at", { ascending: false });
     setNotes((n ?? []) as Note[]);
     setLoading(false);
   };
@@ -2144,7 +3036,7 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
       content: content.trim(),
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     setContent("");
     toast.success(t("customers.memoSaved"));
     load(customer.id);
@@ -2154,7 +3046,12 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
     <div className="space-y-3">
       <div className="space-y-2">
         <Label>{t("memo.newMemo")}</Label>
-        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder={t("customers.memoAddPlaceholder")} />
+        <Textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={3}
+          placeholder={t("customers.memoAddPlaceholder")}
+        />
         <div className="flex justify-end">
           <Button size="sm" onClick={save} disabled={saving || !content.trim()}>
             {saving ? t("customers.memoSaving") : t("customers.memoAddBtn")}
@@ -2164,15 +3061,25 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
       <div className="space-y-2">
         <Label>{t("customers.memoHistory")}</Label>
         <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
-          {loading && <div className="text-center text-xs text-muted-foreground py-4">{t("customers.loadingLabel")}</div>}
+          {loading && (
+            <div className="text-center text-xs text-muted-foreground py-4">
+              {t("customers.loadingLabel")}
+            </div>
+          )}
           {!loading && notes.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground py-4">{t("customers.memoNone")}</div>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              {t("customers.memoNone")}
+            </div>
           )}
           {notes.map((n) => (
             <div key={n.id} className="rounded bg-muted/40 p-2 text-sm">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="font-medium">{staffById.get(n.author_id) ?? "—"}</span>
-                <span>{new Date(n.created_at).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR")}</span>
+                <span>
+                  {new Date(n.created_at).toLocaleString(
+                    i18n.language === "en" ? "en-US" : "ko-KR",
+                  )}
+                </span>
               </div>
               <div className="mt-1 whitespace-pre-wrap">{n.content}</div>
             </div>
@@ -2183,7 +3090,14 @@ function MemoPanel({ customer, staffById }: { customer: CustomerRow; staffById: 
   );
 }
 
-type CallResult = "no_answer" | "wrong_number" | "callback" | "not_interested" | "interested" | "activated" | "failed";
+type CallResult =
+  | "no_answer"
+  | "wrong_number"
+  | "callback"
+  | "not_interested"
+  | "interested"
+  | "activated"
+  | "failed";
 const CALL_RESULT_LABEL = new Proxy({} as Record<CallResult, string>, {
   get: (_t, p: string) => i18n.t(`callResult.${p}`),
 });
@@ -2196,7 +3110,15 @@ const CALL_RESULT_CLASS: Record<CallResult, string> = {
   activated: "bg-green-100 text-green-700 border-green-300",
   failed: "bg-rose-100 text-rose-700 border-rose-300",
 };
-const CALL_RESULT_KEYS: CallResult[] = ["no_answer","wrong_number","callback","not_interested","interested","activated","failed"];
+const CALL_RESULT_KEYS: CallResult[] = [
+  "no_answer",
+  "wrong_number",
+  "callback",
+  "not_interested",
+  "interested",
+  "activated",
+  "failed",
+];
 
 type CallLog = {
   id: string;
@@ -2210,7 +3132,13 @@ type CallLog = {
   created_at: string;
 };
 
-function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffById: Map<string, string> }) {
+function CallLogPanel({
+  customer,
+  staffById,
+}: {
+  customer: CustomerRow;
+  staffById: Map<string, string>;
+}) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [logs, setLogs] = useState<CallLog[]>([]);
@@ -2254,7 +3182,7 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
       is_activation: isActivation,
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("customers.callLog.saved"));
     setNotes("");
     setDuration("");
@@ -2268,25 +3196,45 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
         <div className="space-y-2">
           <Label>{t("customers.callLog.result")}</Label>
           <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {CALL_RESULT_KEYS.map((r) => (
-                <SelectItem key={r} value={r}>{CALL_RESULT_LABEL[r]}</SelectItem>
+                <SelectItem key={r} value={r}>
+                  {CALL_RESULT_LABEL[r]}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
           <Label>{t("customers.callLog.memo")}</Label>
-          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("customers.callLog.memoPlaceholder")} />
+          <Textarea
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder={t("customers.callLog.memoPlaceholder")}
+          />
         </div>
         <div className="space-y-2">
           <Label>{t("customers.callLog.duration")}</Label>
-          <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+          <Input
+            type="number"
+            min={0}
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+          />
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox id="is_activation" checked={isActivation} onCheckedChange={(c) => setIsActivation(!!c)} />
-          <Label htmlFor="is_activation" className="cursor-pointer">{t("customers.callLog.isActivation")}</Label>
+          <Checkbox
+            id="is_activation"
+            checked={isActivation}
+            onCheckedChange={(c) => setIsActivation(!!c)}
+          />
+          <Label htmlFor="is_activation" className="cursor-pointer">
+            {t("customers.callLog.isActivation")}
+          </Label>
         </div>
         <div className="flex justify-end">
           <Button size="sm" onClick={save} disabled={saving}>
@@ -2298,26 +3246,45 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
       <div className="space-y-2">
         <Label>{t("customers.callLog.recent")}</Label>
         <div className="max-h-[300px] space-y-2 overflow-y-auto rounded border border-border/60 p-2">
-          {loading && <div className="text-center text-xs text-muted-foreground py-4">{t("customers.loadingLabel")}</div>}
+          {loading && (
+            <div className="text-center text-xs text-muted-foreground py-4">
+              {t("customers.loadingLabel")}
+            </div>
+          )}
           {!loading && logs.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground py-4">{t("customers.callLog.empty")}</div>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              {t("customers.callLog.empty")}
+            </div>
           )}
           {logs.map((l) => (
             <div key={l.id} className="rounded bg-muted/40 p-2 text-sm">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", CALL_RESULT_CLASS[l.result])}>
+                  <span
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-xs font-medium",
+                      CALL_RESULT_CLASS[l.result],
+                    )}
+                  >
                     {CALL_RESULT_LABEL[l.result]}
                   </span>
                   {l.is_activation && (
-                    <span className="rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-xs text-green-700">{t("customers.callLog.activated")}</span>
+                    <span className="rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-xs text-green-700">
+                      {t("customers.callLog.activated")}
+                    </span>
                   )}
-                  {l.duration_sec > 0 && <span>{t("customers.callLog.seconds", { n: l.duration_sec })}</span>}
+                  {l.duration_sec > 0 && (
+                    <span>{t("customers.callLog.seconds", { n: l.duration_sec })}</span>
+                  )}
                 </div>
-                <span>{new Date(l.call_date).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR")}</span>
+                <span>
+                  {new Date(l.call_date).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR")}
+                </span>
               </div>
               {l.notes && <div className="mt-1 whitespace-pre-wrap">{l.notes}</div>}
-              <div className="mt-1 text-xs text-muted-foreground">{staffById.get(l.staff_id) ?? "—"}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {staffById.get(l.staff_id) ?? "—"}
+              </div>
             </div>
           ))}
         </div>
@@ -2326,7 +3293,15 @@ function CallLogPanel({ customer, staffById }: { customer: CustomerRow; staffByI
   );
 }
 
-function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | null; onClose: () => void; staffById: Map<string, string> }) {
+function MemoDialog({
+  customer,
+  onClose,
+  staffById,
+}: {
+  customer: CustomerRow | null;
+  onClose: () => void;
+  staffById: Map<string, string>;
+}) {
   const { t } = useTranslation();
   if (!customer) return null;
   return (
@@ -2342,10 +3317,32 @@ function MemoDialog({ customer, onClose, staffById }: { customer: CustomerRow | 
   );
 }
 
-type CustomerPatch = Partial<Pick<CustomerRow, "name" | "phone" | "email" | "country_id" | "channel_id" | "pool" | "notes" | "status" | "activation_date" | "assigned_to">>;
+type CustomerPatch = Partial<
+  Pick<
+    CustomerRow,
+    | "name"
+    | "phone"
+    | "email"
+    | "country_id"
+    | "channel_id"
+    | "pool"
+    | "notes"
+    | "status"
+    | "activation_date"
+    | "assigned_to"
+  >
+>;
 
 function CustomerDetailSheet({
-  customer, onClose, staffById, countries, channels, visiblePools, onChangeStatus, onSaved, onCall,
+  customer,
+  onClose,
+  staffById,
+  countries,
+  channels,
+  visiblePools,
+  onChangeStatus,
+  onSaved,
+  onCall,
 }: {
   customer: CustomerRow | null;
   onClose: () => void;
@@ -2360,7 +3357,6 @@ function CustomerDetailSheet({
   const { t } = useTranslation();
   const [form, setForm] = useState<CustomerPatch>({});
   const [saving, setSaving] = useState(false);
-
 
   useEffect(() => {
     if (customer) {
@@ -2410,7 +3406,7 @@ function CustomerDetailSheet({
         ? await supabase.from("customers").update(extraPatch).eq("id", customer.id)
         : { error: null };
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     onSaved(form);
     toast.success(t("customers.detail.saved"));
   };
@@ -2421,25 +3417,41 @@ function CustomerDetailSheet({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             {customer.name}
-            <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", STATUS_CLASS[customer.status])}>
+            <span
+              className={cn(
+                "rounded-full border px-2 py-0.5 text-xs font-medium",
+                STATUS_CLASS[customer.status],
+              )}
+            >
               {STATUS_LABEL[customer.status]}
             </span>
           </SheetTitle>
           <SheetDescription asChild>
             <div className="flex items-center gap-2 text-sm">
               <PhoneLink phone={customer.phone} onCall={() => onCall(customer)} />
-              {country ? <span className="text-muted-foreground">· {country.code} {country.name_ko}</span> : null}
+              {country ? (
+                <span className="text-muted-foreground">
+                  · {country.code} {countryName(country)}
+                </span>
+              ) : null}
             </div>
           </SheetDescription>
         </SheetHeader>
 
         <div className="mt-4 space-y-2">
           <Label>{t("customers.detail.changeStatus")}</Label>
-          <Select value={customer.status} onValueChange={(v) => onChangeStatus(customer.id, v as CustomerStatus)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+          <Select
+            value={customer.status}
+            onValueChange={(v) => onChangeStatus(customer.id, v as CustomerStatus)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {CUSTOMER_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                <SelectItem key={s} value={s}>
+                  {STATUS_LABEL[s]}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -2447,58 +3459,115 @@ function CustomerDetailSheet({
 
         <Tabs defaultValue="info" className="mt-4">
           <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
-            <TabsTrigger value="info" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md">{t("customers.detail.tabInfo")}</TabsTrigger>
-            <TabsTrigger value="memo" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md">{t("customers.detail.tabMemo")}</TabsTrigger>
-            <TabsTrigger value="calls" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md">{t("customers.detail.tabCalls")}</TabsTrigger>
+            <TabsTrigger
+              value="info"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md"
+            >
+              {t("customers.detail.tabInfo")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="memo"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md"
+            >
+              {t("customers.detail.tabMemo")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="calls"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground bg-transparent shadow-none rounded-md"
+            >
+              {t("customers.detail.tabCalls")}
+            </TabsTrigger>
           </TabsList>
-
 
           <TabsContent value="info" className="space-y-3 pt-3">
             <div className="space-y-2">
               <Label>{t("customers.detail.name")}</Label>
-              <Input value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Input
+                value={form.name ?? ""}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label>{t("customers.detail.phone")}</Label>
-              <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <Input
+                value={form.phone ?? ""}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label>{t("customers.detail.email")}</Label>
-              <Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value || null })} />
+              <Input
+                type="email"
+                value={form.email ?? ""}
+                onChange={(e) => setForm({ ...form, email: e.target.value || null })}
+              />
             </div>
             <div className="space-y-2">
               <Label>{t("customers.detail.country")}</Label>
-              <Select value={form.country_id ?? ""} onValueChange={(v) => setForm({ ...form, country_id: v || null })}>
-                <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
+              <Select
+                value={form.country_id ?? ""}
+                onValueChange={(v) => setForm({ ...form, country_id: v || null })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("customers.detail.selectPlaceholder")} />
+                </SelectTrigger>
                 <SelectContent>
-                  {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                  {countries.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.code} · {countryName(c)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>{t("customers.detail.channel")}</Label>
-              <Select value={form.channel_id ?? ""} onValueChange={(v) => setForm({ ...form, channel_id: v || null })}>
-                <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
+              <Select
+                value={form.channel_id ?? ""}
+                onValueChange={(v) => setForm({ ...form, channel_id: v || null })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("customers.detail.selectPlaceholder")} />
+                </SelectTrigger>
                 <SelectContent>
-                  {channels.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  {channels.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>{t("customers.detail.pool")}</Label>
-              <Select value={form.pool ?? customer.pool} onValueChange={(v) => setForm({ ...form, pool: v as CustomerPool })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.pool ?? customer.pool}
+                onValueChange={(v) => setForm({ ...form, pool: v as CustomerPool })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {visiblePools.map((p) => <SelectItem key={p} value={p}>{POOL_LABEL[p]}</SelectItem>)}
+                  {visiblePools.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {POOL_LABEL[p]}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>{t("customers.detail.notes")}</Label>
-              <Textarea rows={3} value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value || null })} />
+              <Textarea
+                rows={3}
+                value={form.notes ?? ""}
+                onChange={(e) => setForm({ ...form, notes: e.target.value || null })}
+              />
             </div>
             <div className="flex justify-end pt-2">
-              <Button onClick={save} disabled={saving}>{saving ? t("customers.detail.saving") : t("customers.detail.save")}</Button>
+              <Button onClick={save} disabled={saving}>
+                {saving ? t("customers.detail.saving") : t("customers.detail.save")}
+              </Button>
             </div>
           </TabsContent>
 
@@ -2510,14 +3579,19 @@ function CustomerDetailSheet({
             <CallLogPanel customer={customer} staffById={staffById} />
           </TabsContent>
         </Tabs>
-
       </SheetContent>
     </Sheet>
   );
 }
 
 function AddCustomerDialog({
-  open, onClose, onAdded, countries, channels, defaultPool, visiblePools,
+  open,
+  onClose,
+  onAdded,
+  countries,
+  channels,
+  defaultPool,
+  visiblePools,
 }: {
   open: boolean;
   onClose: () => void;
@@ -2538,23 +3612,32 @@ function AddCustomerDialog({
   const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "qr_activation";
+  const requiresApplication =
+    pool === "activation_request" || pool === "google_form_activation" || pool === "qr_activation";
 
   useEffect(() => {
     if (open) {
-      setName(""); setPhone(""); setEmail(""); setCountryId(""); setChannelId(""); setPool(defaultPool);
-      setApplicationDate(""); setRequestedPlan("");
+      setName("");
+      setPhone("");
+      setEmail("");
+      setCountryId("");
+      setChannelId("");
+      setPool(defaultPool);
+      setApplicationDate("");
+      setRequestedPlan("");
     }
   }, [open, defaultPool]);
 
   const save = async () => {
-    if (!name || !phone) return toast.error(t("customers.required"));
+    if (!name || !phone) return toast.error(localizeError(t("customers.required")));
     if (requiresApplication && (!applicationDate || !requestedPlan.trim())) {
-      return toast.error(t("customers.add.applicationRequired"));
+      return toast.error(localizeError(t("customers.add.applicationRequired")));
     }
     setSaving(true);
     const { error } = await supabase.from("customers").insert({
-      name, phone, pool,
+      name,
+      phone,
+      pool,
       email: email || null,
       country_id: countryId || null,
       channel_id: channelId || null,
@@ -2562,15 +3645,18 @@ function AddCustomerDialog({
       requested_plan: requestedPlan.trim() || null,
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("customers.customerAdded"));
-    onAdded(); onClose();
+    onAdded();
+    onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader><DialogTitle>{t("customers.add.title")}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{t("customers.add.title")}</DialogTitle>
+        </DialogHeader>
         <div className="grid grid-cols-2 gap-3 py-2">
           <div className="space-y-2">
             <Label>{t("customers.nameRequired")}</Label>
@@ -2587,49 +3673,89 @@ function AddCustomerDialog({
           <div className="space-y-2">
             <Label>{t("customers.poolLabel")}</Label>
             <Select value={pool} onValueChange={(v) => setPool(v as CustomerPool)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {visiblePools.map((p) => <SelectItem key={p} value={p}>{POOL_LABEL[p]}</SelectItem>)}
+                {visiblePools.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {POOL_LABEL[p]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
             <Label>{t("customers.detail.country")}</Label>
             <Select value={countryId} onValueChange={setCountryId}>
-              <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder={t("customers.detail.selectPlaceholder")} />
+              </SelectTrigger>
               <SelectContent>
-                {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.name_ko}</SelectItem>)}
+                {countries.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.code} · {countryName(c)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="col-span-2 space-y-2">
             <Label>{t("customers.channelLabel")}</Label>
             <Select value={channelId} onValueChange={setChannelId}>
-              <SelectTrigger><SelectValue placeholder={t("customers.detail.selectPlaceholder")} /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder={t("customers.detail.selectPlaceholder")} />
+              </SelectTrigger>
               <SelectContent>
-                {channels.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {channels.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>{t("customers.applicationDate")} {requiresApplication && "*"}</Label>
-            <Input type="date" value={applicationDate} onChange={(e) => setApplicationDate(e.target.value)} />
+            <Label>
+              {t("customers.applicationDate")} {requiresApplication && "*"}
+            </Label>
+            <Input
+              type="date"
+              value={applicationDate}
+              onChange={(e) => setApplicationDate(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
-            <Label>{t("customers.requestedPlan")} {requiresApplication && "*"}</Label>
-            <Input value={requestedPlan} onChange={(e) => setRequestedPlan(e.target.value)} placeholder={t("customers.add.planPlaceholder")} />
+            <Label>
+              {t("customers.requestedPlan")} {requiresApplication && "*"}
+            </Label>
+            <Input
+              value={requestedPlan}
+              onChange={(e) => setRequestedPlan(e.target.value)}
+              placeholder={t("customers.add.planPlaceholder")}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>{t("customers.add.cancel")}</Button>
-          <Button onClick={save} disabled={saving}>{saving ? t("customers.add.saving") : t("customers.add.save")}</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            {t("customers.add.cancel")}
+          </Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? t("customers.add.saving") : t("customers.add.save")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | null; onClose: () => void }) {
+function QuickCallLogDialog({
+  customer,
+  onClose,
+}: {
+  customer: CustomerRow | null;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [result, setResult] = useState<CallResult>("no_answer");
@@ -2648,7 +3774,7 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
   if (!customer) return null;
 
   const save = async () => {
-    if (!user) return toast.error(t("customers.quickCall.loginRequired"));
+    if (!user) return toast.error(localizeError(t("customers.quickCall.loginRequired")));
     setSaving(true);
     const { error } = await supabase.from("call_logs").insert({
       customer_id: customer.id,
@@ -2660,12 +3786,19 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
       is_activation: result === "activated",
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("customers.callLog.saved"));
     onClose();
   };
 
-  const QUICK_RESULTS: CallResult[] = ["no_answer", "callback", "not_interested", "interested", "activated", "wrong_number"];
+  const QUICK_RESULTS: CallResult[] = [
+    "no_answer",
+    "callback",
+    "not_interested",
+    "interested",
+    "activated",
+    "wrong_number",
+  ];
 
   return (
     <Dialog open={!!customer} onOpenChange={(o) => !o && onClose()}>
@@ -2678,26 +3811,44 @@ function QuickCallLogDialog({ customer, onClose }: { customer: CustomerRow | nul
           <div className="space-y-2">
             <Label>{t("customers.callLog.result")}</Label>
             <Select value={result} onValueChange={(v) => setResult(v as CallResult)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {QUICK_RESULTS.map((r) => (
-                  <SelectItem key={r} value={r}>{CALL_RESULT_LABEL[r]}</SelectItem>
+                  <SelectItem key={r} value={r}>
+                    {CALL_RESULT_LABEL[r]}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
             <Label>{t("customers.callLog.memo")}</Label>
-            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("customers.quickCall.callNotes")} />
+            <Textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder={t("customers.quickCall.callNotes")}
+            />
           </div>
           <div className="space-y-2">
             <Label>{t("customers.callLog.duration")}</Label>
-            <Input type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+            <Input
+              type="number"
+              min={0}
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t("customers.quickCall.dontSave")}</Button>
-          <Button onClick={save} disabled={saving}>{t("customers.quickCall.save")}</Button>
+          <Button variant="outline" onClick={onClose}>
+            {t("customers.quickCall.dontSave")}
+          </Button>
+          <Button onClick={save} disabled={saving}>
+            {t("customers.quickCall.save")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

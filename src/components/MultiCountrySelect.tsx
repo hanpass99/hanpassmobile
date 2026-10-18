@@ -1,3 +1,4 @@
+import { countryName, companyName } from "@/i18n/display-values";
 import { useState } from "react";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ export function MultiCountrySelect({
               >
                 <Checkbox checked={checked} onCheckedChange={() => toggle(c.id)} />
                 <span className="font-mono text-xs font-bold text-primary">{c.code}</span>
-                <span className="text-xs">{c.name_ko}</span>
+                <span className="text-xs">{countryName(c)}</span>
                 {checked && <Check className="ml-auto h-3.5 w-3.5 text-primary" />}
               </button>
             );

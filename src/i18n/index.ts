@@ -5,7 +5,8 @@ import en from "./locales/en";
 
 i18n.use(initReactI18next).init({
   resources: { ko: { translation: ko }, en: { translation: en } },
-  lng: typeof window !== "undefined" ? localStorage.getItem("lang") || "ko" : "ko",
+  lng: "ko",
+  supportedLngs: ["ko", "en"],
   fallbackLng: "ko",
   interpolation: { escapeValue: false },
 });

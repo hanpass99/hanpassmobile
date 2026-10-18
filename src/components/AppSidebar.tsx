@@ -1,7 +1,24 @@
+import hanpassLogo from "@/assets/hanpass-logo.png";
+import { uiCopy } from "@/i18n/ui-copy";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
-  Settings, Users2, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
+  LayoutDashboard,
+  Users,
+  Radio,
+  AlertTriangle,
+  BarChart3,
+  Settings,
+  Users2,
+  LogOut,
+  Moon,
+  Sun,
+  Languages,
+  MessageSquare,
+  PhoneCall,
+  Bot,
+  Bell,
+  Send,
+  Megaphone,
   ShieldAlert,
 } from "lucide-react";
 
@@ -11,15 +28,22 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
 import i18n from "@/i18n";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useSystemChecks } from "@/hooks/use-system-health";
-
 
 function useTelegramUnreadTotal(enabled: boolean) {
   const [total, setTotal] = useState(0);
@@ -38,10 +62,8 @@ function useTelegramUnreadTotal(enabled: boolean) {
     refresh();
     const ch = supabase
       .channel("sidebar-telegram-unread")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "telegram_chats" },
-        () => refresh(),
+      .on("postgres_changes", { event: "*", schema: "public", table: "telegram_chats" }, () =>
+        refresh(),
       )
       .subscribe();
     return () => {
@@ -68,35 +90,63 @@ export function AppSidebar() {
     { title: t("nav.customers"), url: "/customers", icon: Users },
     { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
     ...(telegramEnabled
-      ? [{ title: "텔레그램 상담", url: "/telegram", icon: Send, badge: telegramUnread }]
+      ? [
+          {
+            title: uiCopy("ux.copy8918c4d3ab"),
+            url: "/telegram",
+            icon: Send,
+            badge: telegramUnread,
+          },
+        ]
       : []),
     { title: t("nav.callLogs"), url: "/call-logs", icon: PhoneCall },
-  ] as Array<{ title: string; url: string; icon: typeof LayoutDashboard; badge?: number; external?: string }>;
+  ] as Array<{
+    title: string;
+    url: string;
+    icon: typeof LayoutDashboard;
+    badge?: number;
+    external?: string;
+  }>;
   const analyticsItems = [
-    ...(isAdmin ? [{ title: t("nav.hanpassDash"), url: "/hanpass-dashboard", icon: BarChart3 }] : []),
+    ...(isAdmin
+      ? [{ title: t("nav.hanpassDash"), url: "/hanpass-dashboard", icon: BarChart3 }]
+      : []),
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
     { title: t("nav.sla"), url: "/sla", icon: AlertTriangle },
   ];
 
   const systemItems = [
     ...(isAdmin
-      ? [{ title: t("nav.systemHealth"), url: "/system-health", icon: ShieldAlert, badge: healthErrors }]
+      ? [
+          {
+            title: t("nav.systemHealth"),
+            url: "/system-health",
+            icon: ShieldAlert,
+            badge: healthErrors,
+          },
+        ]
       : []),
-    ...(isAdmin ? [{ title: "관리자 공지", url: "/notifications", icon: Bell }] : []),
-    ...(isAdmin ? [{ title: "브로드캐스트", url: "/broadcast", icon: Megaphone }] : []),
-    ...(isAdmin ? [{ title: "AI 학습", url: "/ai-faq", icon: Bot }] : []),
+    ...(isAdmin ? [{ title: uiCopy("ux.copy79500c9b6b"), url: "/notifications", icon: Bell }] : []),
+    ...(isAdmin
+      ? [{ title: uiCopy("ux.copyc4da70b633"), url: "/broadcast", icon: Megaphone }]
+      : []),
+    ...(isAdmin ? [{ title: uiCopy("ux.copy79a3beb296"), url: "/ai-faq", icon: Bot }] : []),
     ...(isAdmin ? [{ title: t("nav.staffMgmt"), url: "/staff", icon: Users2 }] : []),
     { title: t("nav.settings"), url: "/settings", icon: Settings },
-    { title: "AI 어시스턴트", url: "/ai-assistant", icon: Bot },
+    { title: uiCopy("ux.copy6eb7d86174"), url: "/ai-assistant", icon: Bot },
   ];
-
 
   const renderItems = (items: typeof mainItems) =>
     items.map((item) => {
       const active = item.external ? false : isActive(item.url);
       const inner = (
         <>
-          <item.icon className={cn("h-[18px] w-[18px] shrink-0 text-sidebar-foreground/80", active && "text-primary")} />
+          <item.icon
+            className={cn(
+              "h-[18px] w-[18px] shrink-0 text-sidebar-foreground/80",
+              active && "text-primary",
+            )}
+          />
           <span className="flex-1 truncate">{item.title}</span>
           {item.badge && item.badge > 0 ? (
             <span className="ml-auto rounded-full bg-sidebar-primary px-2 py-0.5 text-[12px] font-bold leading-none text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
@@ -118,11 +168,20 @@ export function AppSidebar() {
             )}
           >
             {item.external ? (
-              <a href={item.external} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3">
+              <a
+                href={item.external}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3"
+              >
                 {inner}
               </a>
             ) : (
-              <Link to={item.url} className="flex items-center gap-3" onClick={() => isMobile && setOpenMobile(false)}>
+              <Link
+                to={item.url}
+                className="flex items-center gap-3"
+                onClick={() => isMobile && setOpenMobile(false)}
+              >
                 {inner}
               </Link>
             )}
@@ -138,14 +197,20 @@ export function AppSidebar() {
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border">
           <div className="flex items-center gap-2.5 px-2 py-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-              <Phone className="h-4 w-4" />
-            </div>
+            <img
+              src={hanpassLogo}
+              alt={uiCopy("brand.logoAlt")}
+              width={32}
+              height={32}
+              className="h-8 w-8 shrink-0 object-contain"
+            />
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
               <span className="font-display text-[15px] font-bold leading-tight tracking-normal text-sidebar-foreground">
-                HANPASS MOBILE
+                {uiCopy("ux.copy3b198d601e")}
               </span>
-              <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">OB Call CRM</span>
+              <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">
+                {uiCopy("ux.copybfcfd42d77")}
+              </span>
             </div>
           </div>
         </SidebarHeader>
@@ -158,7 +223,6 @@ export function AppSidebar() {
                   { title: t("nav.hanpassDash"), url: "/hanpass-dashboard", icon: BarChart3 },
                   { title: t("nav.customers"), url: "/customers", icon: Users },
                 ])}
-
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -175,14 +239,20 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 px-2 py-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-            <Phone className="h-4 w-4" />
-          </div>
+          <img
+            src={hanpassLogo}
+            alt={uiCopy("brand.logoAlt")}
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0 object-contain"
+          />
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-display text-[15px] font-bold leading-tight tracking-normal text-sidebar-foreground">
-              HANPASS MOBILE
+              {uiCopy("ux.copy3b198d601e")}
             </span>
-            <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">OB Call CRM</span>
+            <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">
+              {uiCopy("ux.copybfcfd42d77")}
+            </span>
           </div>
         </div>
       </SidebarHeader>
@@ -190,27 +260,31 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className={groupLabel}>{t("nav.main")}</SidebarGroupLabel>
-          <SidebarGroupContent><SidebarMenu>{renderItems(mainItems)}</SidebarMenu></SidebarGroupContent>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderItems(mainItems)}</SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel className={groupLabel}>{t("nav.analytics")}</SidebarGroupLabel>
-          <SidebarGroupContent><SidebarMenu>{renderItems(analyticsItems)}</SidebarMenu></SidebarGroupContent>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderItems(analyticsItems)}</SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel className={groupLabel}>{t("nav.system")}</SidebarGroupLabel>
-          <SidebarGroupContent><SidebarMenu>{renderItems(systemItems)}</SidebarMenu></SidebarGroupContent>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderItems(systemItems)}</SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-
         <SidebarPrefs />
         <SidebarUserFooter />
       </SidebarFooter>
     </Sidebar>
   );
 }
-
 
 function SidebarPrefs() {
   const { theme, toggle } = useTheme();
@@ -222,16 +296,29 @@ function SidebarPrefs() {
   };
   return (
     <div className="flex items-center gap-1 px-2 py-1 group-data-[collapsible=icon]:hidden">
-      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-[13px] font-medium text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={switchLang} title="Language">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 flex-1 justify-start gap-2 text-[13px] font-medium text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        onClick={switchLang}
+        title={uiCopy("ux.copy89b86ab0e6")}
+      >
         <Languages className="h-4 w-4" />
-        {i18nInst.language === "ko" ? "한국어" : "English"}
+        {i18nInst.language === "ko"
+          ? uiCopy("ux.copy6e081b5948")
+          : uiCopy("interfaceExtra.english")}
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={toggle} title="Theme">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        onClick={toggle}
+        title={uiCopy("ux.copya797e30923")}
+      >
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
     </div>
   );
-
 }
 
 function SidebarUserFooter() {
@@ -249,14 +336,22 @@ function SidebarUserFooter() {
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
-        <span className="truncate text-[14px] font-bold text-sidebar-foreground">{displayName || user.email}</span>
-        <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">{isAdmin ? t("common.admin") : t("common.staff")}</span>
+        <span className="truncate text-[14px] font-bold text-sidebar-foreground">
+          {displayName || user.email}
+        </span>
+        <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">
+          {isAdmin ? t("common.admin") : t("common.staff")}
+        </span>
       </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
-        onClick={() => signOut()} title={t("common.logout")}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0 text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+        onClick={() => signOut()}
+        title={t("common.logout")}
+      >
         <LogOut className="h-4 w-4" />
       </Button>
     </div>
-
   );
 }

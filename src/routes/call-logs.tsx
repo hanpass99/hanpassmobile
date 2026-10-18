@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,19 +13,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  CUSTOMER_STATUSES, STATUS_LABEL, STATUS_CLASS, type CustomerStatus,
-} from "@/lib/labels";
+import { CUSTOMER_STATUSES, STATUS_LABEL, STATUS_CLASS, type CustomerStatus } from "@/lib/labels";
 import { CallLogPopupDialog } from "@/components/CallLogPopupProvider";
 import { CallLogIngestPanel, formatKst } from "@/components/CallLogIngestPanel";
 import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/call-logs")({
-  head: () => ({ meta: [{ title: i18n.t("head.callLogs", { defaultValue: "통화 로그 — Hanpass OB CRM" }) }] }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.call-logs.title") },
+      { name: "description", content: uiCopy("pages.call-logs.description") },
+      { property: "og:title", content: uiCopy("pages.call-logs.title") },
+      { property: "og:description", content: uiCopy("pages.call-logs.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: CallLogsPage,
 });
 
@@ -52,12 +65,29 @@ function formatDuration(sec: number) {
 }
 
 function DirectionBadge({ direction }: { direction: string }) {
+  useTranslation();
   const map: Record<string, { icon: React.ReactNode; className: string; label: string }> = {
-    incoming: { icon: <PhoneIncoming className="h-3 w-3" />, className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200", label: "수신" },
-    outgoing: { icon: <PhoneOutgoing className="h-3 w-3" />, className: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200", label: "발신" },
-    missed:   { icon: <PhoneMissed className="h-3 w-3" />, className: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200", label: "부재중" },
+    incoming: {
+      icon: <PhoneIncoming className="h-3 w-3" />,
+      className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+      label: uiCopy("ux.copy9bb563dfcf"),
+    },
+    outgoing: {
+      icon: <PhoneOutgoing className="h-3 w-3" />,
+      className: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+      label: uiCopy("ux.copy1c2f41fedd"),
+    },
+    missed: {
+      icon: <PhoneMissed className="h-3 w-3" />,
+      className: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200",
+      label: uiCopy("ux.copya00c889f47"),
+    },
   };
-  const it = map[direction] ?? { icon: null, className: "bg-muted text-muted-foreground", label: direction };
+  const it = map[direction] ?? {
+    icon: null,
+    className: "bg-muted text-muted-foreground",
+    label: direction,
+  };
   return (
     <Badge variant="outline" className={`gap-1 border-transparent ${it.className}`}>
       {it.icon}
@@ -66,7 +96,8 @@ function DirectionBadge({ direction }: { direction: string }) {
   );
 }
 
-const SELECT_QUERY = "id, staff_id, employee_phone, customer_phone, customer_id, direction, status, call_status, memo, duration_sec, started_at, staff:profiles!phone_call_logs_staff_id_fkey(display_name), customer:customers(name)";
+const SELECT_QUERY =
+  "id, staff_id, employee_phone, customer_phone, customer_id, direction, status, call_status, memo, duration_sec, started_at, staff:profiles!phone_call_logs_staff_id_fkey(display_name), customer:customers(name)";
 
 function todayStr() {
   const d = new Date();
@@ -90,7 +121,7 @@ function CallLogsPage() {
   const toIso = dayEndIso(new Date(dateTo));
 
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["phone_call_logs", fromIso, toIso, isAdmin ? "all" : user?.id ?? "me"],
+    queryKey: ["phone_call_logs", fromIso, toIso, isAdmin ? "all" : (user?.id ?? "me")],
     enabled: !!user,
     queryFn: async () => {
       let q = supabase
@@ -110,21 +141,24 @@ function CallLogsPage() {
   useEffect(() => {
     const channel = supabase
       .channel("phone_call_logs:table")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "phone_call_logs" },
-        () => qc.invalidateQueries({ queryKey: ["phone_call_logs"] }),
+      .on("postgres_changes", { event: "*", schema: "public", table: "phone_call_logs" }, () =>
+        qc.invalidateQueries({ queryKey: ["phone_call_logs"] }),
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [qc]);
 
   // Aggregate stats per staff
   const stats = useMemo(() => {
-    const map = new Map<string, { name: string; total: number; statuses: Record<string, number> }>();
+    const map = new Map<
+      string,
+      { name: string; total: number; statuses: Record<string, number> }
+    >();
     (data ?? []).forEach((r) => {
       const key = r.staff_id ?? "unknown";
-      const name = r.staff?.display_name ?? (r.staff_id ? "—" : "미배정");
+      const name = r.staff?.display_name ?? (r.staff_id ? "—" : uiCopy("ux.copy246b8838e3"));
       if (!map.has(key)) map.set(key, { name, total: 0, statuses: {} });
       const entry = map.get(key)!;
       entry.total += 1;
@@ -142,8 +176,8 @@ function CallLogsPage() {
   return (
     <div className="space-y-5 p-0 md:p-2">
       <PageHeader
-        title={t("nav.callLogs", { defaultValue: "통화 로그" })}
-        description={t("callLogs.desc", { defaultValue: "직원별 통화 이력을 최신순으로 확인합니다." })}
+        title={t("nav.callLogs", {})}
+        description={t("callLogs.desc", {})}
         actions={
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
@@ -155,22 +189,53 @@ function CallLogsPage() {
       {/* Date range filter */}
       <div className="grid grid-cols-2 items-end gap-3 rounded-lg border bg-card p-4 sm:flex sm:flex-wrap">
         <div>
-          <Label className="text-xs">{t("common.from", { defaultValue: "시작일" })}</Label>
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 w-full sm:w-[160px]" />
+          <Label className="text-xs">{t("common.from", {})}</Label>
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="mt-1 w-full sm:w-[160px]"
+          />
         </div>
         <div>
-          <Label className="text-xs">{t("common.to", { defaultValue: "종료일" })}</Label>
-          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 w-full sm:w-[160px]" />
+          <Label className="text-xs">{t("common.to", {})}</Label>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="mt-1 w-full sm:w-[160px]"
+          />
         </div>
         <div className="col-span-2 flex flex-wrap gap-1 text-sm sm:ml-auto">
-          <Button variant="ghost" size="sm" onClick={() => { setDateFrom(todayStr()); setDateTo(todayStr()); }}>
-            {t("callLogs.today", { defaultValue: "오늘" })}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDateFrom(todayStr());
+              setDateTo(todayStr());
+            }}
+          >
+            {t("callLogs.today", {})}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setDateFrom(daysAgoStr(6)); setDateTo(todayStr()); }}>
-            {t("callLogs.last7", { defaultValue: "최근 7일" })}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDateFrom(daysAgoStr(6));
+              setDateTo(todayStr());
+            }}
+          >
+            {t("callLogs.last7", {})}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setDateFrom(daysAgoStr(29)); setDateTo(todayStr()); }}>
-            {t("callLogs.last30", { defaultValue: "최근 30일" })}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDateFrom(daysAgoStr(29));
+              setDateTo(todayStr());
+            }}
+          >
+            {t("callLogs.last30", {})}
           </Button>
         </div>
       </div>
@@ -178,22 +243,48 @@ function CallLogsPage() {
       {/* Dashboard summary */}
       <div className="grid grid-cols-3 gap-2 md:gap-4">
         <Card>
-          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{t("callLogs.totalCalls", { defaultValue: "총 통화 수" })}</CardTitle></CardHeader>
-          <CardContent className="p-3 pt-0"><div className="text-xl font-bold sm:text-2xl">{totalCalls}</div></CardContent>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs text-muted-foreground sm:text-sm">
+              {t("callLogs.totalCalls", {})}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <div className="text-xl font-bold sm:text-2xl">{totalCalls}</div>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{t("callLogs.totalActivated", { defaultValue: "개통 완료" })}</CardTitle></CardHeader>
-          <CardContent className="p-3 pt-0"><div className="text-xl font-bold text-emerald-600 sm:text-2xl">{totalActivated}</div></CardContent>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs text-muted-foreground sm:text-sm">
+              {t("callLogs.totalActivated", {})}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <div className="text-xl font-bold text-emerald-600 sm:text-2xl">{totalActivated}</div>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{isAdmin ? t("callLogs.activeStaff", { defaultValue: "활동 직원" }) : t("callLogs.avgDuration", { defaultValue: "평균 통화(초)" })}</CardTitle></CardHeader>
-          <CardContent className="p-3 pt-0"><div className="text-xl font-bold sm:text-2xl">{isAdmin ? stats.length : (totalCalls ? Math.round((data ?? []).reduce((a, r) => a + (r.duration_sec ?? 0), 0) / totalCalls) : 0)}</div></CardContent>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs text-muted-foreground sm:text-sm">
+              {isAdmin ? t("callLogs.activeStaff", {}) : t("callLogs.avgDuration", {})}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <div className="text-xl font-bold sm:text-2xl">
+              {isAdmin
+                ? stats.length
+                : totalCalls
+                  ? Math.round(
+                      (data ?? []).reduce((a, r) => a + (r.duration_sec ?? 0), 0) / totalCalls,
+                    )
+                  : 0}
+            </div>
+          </CardContent>
         </Card>
       </div>
 
       {/* Pretty status grid */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold">{t("callLogs.statusOverview", { defaultValue: "상태별 통계" })}</h2>
+        <h2 className="mb-3 text-sm font-semibold">{t("callLogs.statusOverview", {})}</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {CUSTOMER_STATUSES.map((s) => {
             const count = (data ?? []).filter((r) => r.call_status === s).length;
@@ -209,69 +300,78 @@ function CallLogsPage() {
 
       {/* Staff stats table — admin only */}
       {isAdmin && (
-      <div className="rounded-lg border bg-card overflow-x-auto">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">{t("callLogs.staffStats", { defaultValue: "직원별 통계" })}</h2>
-          <p className="text-xs text-muted-foreground">{t("callLogs.staffStatsDesc", { defaultValue: "선택한 기간 동안의 직원별 통화 건수와 상태별 결과" })}</p>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("callLogs.staff", { defaultValue: "직원" })}</TableHead>
-              <TableHead className="text-right">{t("callLogs.totalCalls", { defaultValue: "총 통화" })}</TableHead>
-              {CUSTOMER_STATUSES.map((s) => (
-                <TableHead key={s} className="text-right whitespace-nowrap">{STATUS_LABEL[s]}</TableHead>
-              ))}
-              <TableHead className="text-right">{t("callLogs.unset", { defaultValue: "미분류" })}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={CUSTOMER_STATUSES.length + 3}><Skeleton className="h-4 w-full" /></TableCell></TableRow>
-            ) : stats.length === 0 ? (
+        <div className="rounded-lg border bg-card overflow-x-auto">
+          <div className="border-b px-4 py-3">
+            <h2 className="text-sm font-semibold">{t("callLogs.staffStats", {})}</h2>
+            <p className="text-xs text-muted-foreground">{t("callLogs.staffStatsDesc", {})}</p>
+          </div>
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={CUSTOMER_STATUSES.length + 3} className="h-24 text-center text-sm text-muted-foreground">
-                  {t("callLogs.empty", { defaultValue: "통화 로그가 없습니다." })}
-                </TableCell>
+                <TableHead>{t("callLogs.staff", {})}</TableHead>
+                <TableHead className="text-right">{t("callLogs.totalCalls", {})}</TableHead>
+                {CUSTOMER_STATUSES.map((s) => (
+                  <TableHead key={s} className="text-right whitespace-nowrap">
+                    {STATUS_LABEL[s]}
+                  </TableHead>
+                ))}
+                <TableHead className="text-right">{t("callLogs.unset", {})}</TableHead>
               </TableRow>
-            ) : (
-              stats.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell className="text-right font-mono">{s.total}</TableCell>
-                  {CUSTOMER_STATUSES.map((st) => (
-                    <TableCell key={st} className="text-right font-mono text-xs">
-                      {s.statuses[st] ?? 0}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right font-mono text-xs text-muted-foreground">
-                    {s.statuses["unset"] ?? 0}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={CUSTOMER_STATUSES.length + 3}>
+                    <Skeleton className="h-4 w-full" />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : stats.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={CUSTOMER_STATUSES.length + 3}
+                    className="h-24 text-center text-sm text-muted-foreground"
+                  >
+                    {t("callLogs.empty", {})}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                stats.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell className="text-right font-mono">{s.total}</TableCell>
+                    {CUSTOMER_STATUSES.map((st) => (
+                      <TableCell key={st} className="text-right font-mono text-xs">
+                        {s.statuses[st] ?? 0}
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                      {s.statuses["unset"] ?? 0}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Recent calls */}
       <div className="rounded-lg border bg-card overflow-x-auto">
         <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">{t("callLogs.recentTitle", { defaultValue: "통화 목록" })}</h2>
+          <h2 className="text-sm font-semibold">{t("callLogs.recentTitle", {})}</h2>
         </div>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("callLogs.startedAt", { defaultValue: "시작 시각" })}</TableHead>
-              <TableHead>{t("callLogs.staff", { defaultValue: "직원" })}</TableHead>
-              <TableHead>{t("callLogs.employeePhone", { defaultValue: "직원 번호" })}</TableHead>
-              <TableHead>{t("callLogs.direction", { defaultValue: "방향" })}</TableHead>
-              <TableHead>{t("callLogs.customer", { defaultValue: "고객" })}</TableHead>
-              <TableHead>{t("callLogs.customerPhone", { defaultValue: "고객 번호" })}</TableHead>
-              <TableHead>{t("callLogs.callStatus", { defaultValue: "통화 상태" })}</TableHead>
-              <TableHead>{t("callLogs.memo", { defaultValue: "메모" })}</TableHead>
-              <TableHead className="text-right">{t("callLogs.duration", { defaultValue: "통화 시간" })}</TableHead>
+              <TableHead>{t("callLogs.startedAt", {})}</TableHead>
+              <TableHead>{t("callLogs.staff", {})}</TableHead>
+              <TableHead>{t("callLogs.employeePhone", {})}</TableHead>
+              <TableHead>{t("callLogs.direction", {})}</TableHead>
+              <TableHead>{t("callLogs.customer", {})}</TableHead>
+              <TableHead>{t("callLogs.customerPhone", {})}</TableHead>
+              <TableHead>{t("callLogs.callStatus", {})}</TableHead>
+              <TableHead>{t("callLogs.memo", {})}</TableHead>
+              <TableHead className="text-right">{t("callLogs.duration", {})}</TableHead>
               <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
@@ -280,14 +380,16 @@ function CallLogsPage() {
               Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
                   {Array.from({ length: 10 }).map((_, j) => (
-                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : !data || data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="h-32 text-center text-sm text-muted-foreground">
-                  {t("callLogs.empty", { defaultValue: "통화 로그가 없습니다." })}
+                  {t("callLogs.empty", {})}
                 </TableCell>
               </TableRow>
             ) : (
@@ -298,7 +400,9 @@ function CallLogsPage() {
                   </TableCell>
                   <TableCell className="text-sm">{row.staff?.display_name ?? "—"}</TableCell>
                   <TableCell className="font-mono text-xs">{row.employee_phone}</TableCell>
-                  <TableCell><DirectionBadge direction={row.direction} /></TableCell>
+                  <TableCell>
+                    <DirectionBadge direction={row.direction} />
+                  </TableCell>
                   <TableCell className="text-sm">{row.customer?.name ?? "—"}</TableCell>
                   <TableCell className="font-mono text-xs">{row.customer_phone ?? "—"}</TableCell>
                   <TableCell>
@@ -310,13 +414,18 @@ function CallLogsPage() {
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="max-w-[240px] truncate text-sm text-muted-foreground" title={row.memo ?? ""}>
+                  <TableCell
+                    className="max-w-[240px] truncate text-sm text-muted-foreground"
+                    title={row.memo ?? ""}
+                  >
                     {row.memo ?? "—"}
                   </TableCell>
-                  <TableCell className="text-right font-mono text-xs">{formatDuration(row.duration_sec)}</TableCell>
+                  <TableCell className="text-right font-mono text-xs">
+                    {formatDuration(row.duration_sec)}
+                  </TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => setPopupRow(row)}>
-                      {t("common.edit", { defaultValue: "편집" })}
+                      {t("common.edit", {})}
                     </Button>
                   </TableCell>
                 </TableRow>

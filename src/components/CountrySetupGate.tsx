@@ -1,10 +1,19 @@
+import { localizeError } from "@/i18n/localize-error";
+import { uiCopy } from "@/i18n/ui-copy";
+import { countryName } from "@/i18n/display-values";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type CountryRow = { id: string; code: string; name_ko: string };
 
@@ -25,18 +34,20 @@ export function CountrySetupGate() {
   }, []);
 
   const save = async () => {
-    if (!value) return toast.error(t("country.selectRequired"));
+    if (!value) return toast.error(localizeError(t("country.selectRequired")));
     setBusy(true);
     const { error } = await supabase.rpc("set_own_country" as any, { _country_id: value });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("country.saved"));
     await refresh();
   };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
-      <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">H</span>
+      <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">
+        {uiCopy("ux.copy7cf184f4c6")}
+      </span>
       <h1 className="text-xl font-bold text-foreground">{t("country.setupTitle")}</h1>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t("country.setupSub")}</p>
       {displayName && <p className="mt-1 text-xs text-muted-foreground/70">{displayName}</p>}
@@ -48,7 +59,7 @@ export function CountrySetupGate() {
           <SelectContent>
             {countries.map((c) => (
               <SelectItem key={c.id} value={c.id}>
-                {c.name_ko} ({c.code})
+                {countryName(c)} ({c.code})
               </SelectItem>
             ))}
           </SelectContent>

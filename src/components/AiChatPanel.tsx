@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useRef, useState } from "react";
 import { Send, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +12,14 @@ type Msg = {
   text: string;
 };
 
-export function AiChatPanel({ className, style }: { className?: string; style?: React.CSSProperties }) {
+export function AiChatPanel({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  useTranslation();
   const { session } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -61,9 +70,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
       if (!res.ok || !res.body) {
         const err = await res.text().catch(() => "");
         setMessages((m) =>
-          m.map((x) =>
-            x.id === assistantId ? { ...x, text: `⚠️ ${err || res.statusText}` } : x,
-          ),
+          m.map((x) => (x.id === assistantId ? { ...x, text: `⚠️ ${err || res.statusText}` } : x)),
         );
         return;
       }
@@ -74,9 +81,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
         const { value, done } = await reader.read();
         if (done) break;
         acc += decoder.decode(value, { stream: true });
-        setMessages((m) =>
-          m.map((x) => (x.id === assistantId ? { ...x, text: acc } : x)),
-        );
+        setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, text: acc } : x)));
       }
     } catch (e) {
       setMessages((m) =>
@@ -93,11 +98,19 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
   };
 
   return (
-    <div style={style} className={cn("flex flex-col overflow-hidden rounded-xl border border-border bg-card", className)}>
+    <div
+      style={style}
+      className={cn(
+        "flex flex-col overflow-hidden rounded-xl border border-border bg-card",
+        className,
+      )}
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="text-sm font-semibold">AI 어시스턴트</span>
-          <span className="hidden truncate text-xs text-muted-foreground sm:inline">한국어 · English · O'zbekcha · Русский</span>
+          <span className="text-sm font-semibold">{uiCopy("ux.copy6eb7d86174")}</span>
+          <span className="hidden truncate text-xs text-muted-foreground sm:inline">
+            {uiCopy("ux.copy9615c5793f")}
+          </span>
         </div>
         <Button
           variant="ghost"
@@ -109,19 +122,22 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
           }}
         >
           <Trash2 className="h-3 w-3" />
-          Clear
+          {uiCopy("ux.copy719ea396ad")}
         </Button>
       </div>
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
         {messages.length === 0 && (
           <div className="mt-6 space-y-2 text-center text-xs text-muted-foreground">
-            <p>고객 검색, 오늘 통화 통계, 상태별 조회, 메모 추가 등을 도와드립니다.</p>
-            <p className="opacity-70">예: "오늘 콜 제일 많이 한 직원", "010-1234-5678 검색", "부재중 고객 리스트"</p>
+            <p>{uiCopy("ux.copya7b6fe5300")}</p>
+            <p className="opacity-70">{uiCopy("ux.copya198d426d6")}</p>
           </div>
         )}
         {messages.map((m) => (
-          <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+          <div
+            key={m.id}
+            className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
+          >
             <div
               className={cn(
                 "max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm",
@@ -136,7 +152,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
         ))}
         {loading && messages[messages.length - 1]?.text === "" && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" /> Thinking…
+            <Loader2 className="h-3 w-3 animate-spin" /> {uiCopy("ux.copya60d9c9c53")}
           </div>
         )}
       </div>
@@ -159,7 +175,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
             }
           }}
           rows={1}
-          placeholder="질문을 입력하세요…"
+          placeholder={uiCopy("ux.copy342b610a52")}
           className="max-h-40 min-h-9 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           disabled={loading}
         />

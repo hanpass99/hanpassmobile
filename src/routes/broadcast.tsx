@@ -1,3 +1,6 @@
+import { localizeError } from "@/i18n/localize-error";
+import { useTranslation } from "react-i18next";
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,23 +16,45 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  createBroadcast, getBroadcastAudience, listBroadcasts, sendBroadcastBatch,
+  createBroadcast,
+  getBroadcastAudience,
+  listBroadcasts,
+  sendBroadcastBatch,
 } from "@/lib/broadcast.functions";
 
 export const Route = createFileRoute("/broadcast")({
   head: () => ({
     meta: [
-      { title: "브로드캐스트 · Hanpass Mobile OB CRM" },
-      { name: "description", content: "수신 동의한 텔레그램 고객에게 요금제·이벤트 안내를 안전하게 단체 발송합니다." },
-      { property: "og:title", content: "브로드캐스트 · Hanpass Mobile OB CRM" },
-      { property: "og:description", content: "수신 동의 고객 대상 안전한 텔레그램 단체 발송 관리." },
+      { title: uiCopy("pages.broadcast.title") },
+      { name: "description", content: uiCopy("pages.broadcast.description") },
+      { property: "og:title", content: uiCopy("pages.broadcast.title") },
+      { property: "og:description", content: uiCopy("pages.broadcast.description") },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -38,15 +63,27 @@ export const Route = createFileRoute("/broadcast")({
 });
 
 type LangFilter = "all" | "uz" | "ru";
-type MediaState = { storagePath: string; fileName: string; mime: string; kind: "photo" | "document" } | null;
+type MediaState = {
+  storagePath: string;
+  fileName: string;
+  mime: string;
+  kind: "photo" | "document";
+} | null;
 
 const LANG_LABEL: Record<LangFilter, string> = {
-  all: "전체",
-  uz: "우즈베크어",
-  ru: "러시아어",
+  get all() {
+    return uiCopy("ux.copy934dd25ec5");
+  },
+  get uz() {
+    return uiCopy("ux.copy915cb7fbc7");
+  },
+  get ru() {
+    return uiCopy("ux.copy368c007214");
+  },
 };
 
 function BroadcastPage() {
+  useTranslation();
   const { isAdmin, user } = useAuth();
   const qc = useQueryClient();
 
@@ -82,7 +119,7 @@ function BroadcastPage() {
   if (!isAdmin) {
     return (
       <div className="space-y-4">
-        <PageHeader title="브로드캐스트" description="관리자만 접근할 수 있습니다." />
+        <PageHeader title={uiCopy("ux.copyc4da70b633")} description={uiCopy("ux.copy5a5a3d6567")} />
       </div>
     );
   }
@@ -104,7 +141,7 @@ function BroadcastPage() {
         kind: file.type.startsWith("image/") ? "photo" : "document",
       });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "업로드 실패");
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copya40a00757b")));
     } finally {
       setUploading(false);
     }
@@ -132,13 +169,13 @@ function BroadcastPage() {
         if (r.done) break;
       }
       setResult({ ok, fail });
-      toast.success(`발송 완료 — 성공 ${ok}명 / 실패 ${fail}명`);
+      toast.success(uiCopy("ux.copyed7dd9ebba", { value0: ok, value1: fail }));
       setMessage("");
       setMedia(null);
       qc.invalidateQueries({ queryKey: ["broadcast-history"] });
       qc.invalidateQueries({ queryKey: ["broadcast-audience"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "발송 실패");
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copyc7df7ab9d2")));
     } finally {
       setSending(false);
     }
@@ -148,52 +185,54 @@ function BroadcastPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="브로드캐스트"
-        description="수신 동의(opt-in)한 텔레그램 고객에게만 안전한 속도로 단체 발송합니다."
-      />
+      <PageHeader title={uiCopy("ux.copyc4da70b633")} description={uiCopy("ux.copyab1bf4947f")} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Megaphone className="h-4 w-4" /> 새 브로드캐스트
+              <Megaphone className="h-4 w-4" /> {uiCopy("ux.copy528d29f905")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>메시지 *</Label>
+              <Label>{uiCopy("ux.copyc54c521437")}</Label>
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={7}
                 maxLength={3500}
-                placeholder="요금제 / 이벤트 안내 내용을 입력하세요."
+                placeholder={uiCopy("ux.copy80f2eff975")}
               />
-              <p className="text-xs text-muted-foreground">
-                모든 메시지 하단에 수신 거부 안내 문구와 버튼이 자동으로 추가됩니다.
-              </p>
+              <p className="text-xs text-muted-foreground">{uiCopy("ux.copy882a2fcef1")}</p>
             </div>
 
             <div className="space-y-2">
-              <Label>대상 언어</Label>
+              <Label>{uiCopy("ux.copya09e9a6dbb")}</Label>
               <Select value={langFilter} onValueChange={(v) => setLangFilter(v as LangFilter)}>
-                 <SelectTrigger className="w-full sm:w-56"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-56">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  <SelectItem value="uz">우즈베크어만</SelectItem>
-                  <SelectItem value="ru">러시아어만</SelectItem>
+                  <SelectItem value="all">{uiCopy("ux.copy934dd25ec5")}</SelectItem>
+                  <SelectItem value="uz">{uiCopy("ux.copy521fd56509")}</SelectItem>
+                  <SelectItem value="ru">{uiCopy("ux.copy3921c2a44f")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>첨부 (선택)</Label>
+              <Label>{uiCopy("ux.copyfd95a7c85d")}</Label>
               {media ? (
                 <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
                   <Paperclip className="h-4 w-4 text-muted-foreground" />
                   <span className="flex-1 truncate">{media.fileName}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setMedia(null)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setMedia(null)}
+                  >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -215,24 +254,30 @@ function BroadcastPage() {
               <div className="space-y-2">
                 <Progress value={progress.total ? (progress.done / progress.total) * 100 : 0} />
                 <p className="text-xs text-muted-foreground">
-                  발송 중… {progress.done}/{progress.total} · 성공 {progress.ok} · 실패 {progress.fail}
+                  {uiCopy("ux.copy8321f5ba42")} {progress.done}/{progress.total}{" "}
+                  {uiCopy("ux.copy70d898c46c")} {progress.ok} {uiCopy("ux.copyb2a76f8a46")}{" "}
+                  {progress.fail}
                 </p>
               </div>
             )}
 
             {result && (
               <div className="rounded-md border bg-muted/40 p-3 text-sm">
-                발송 결과 — 성공 <strong>{result.ok}</strong>명 / 실패(차단 등) <strong>{result.fail}</strong>명
+                {uiCopy("ux.copy523c3ace86")} <strong>{result.ok}</strong>
+                {uiCopy("ux.copyabdc9c407b")} <strong>{result.fail}</strong>
+                {uiCopy("ux.copy5a62fd50d2")}
               </div>
             )}
 
-             <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button disabled={!canSend} onClick={() => setConfirmOpen(true)}>
                 <Send className="mr-2 h-4 w-4" />
-                {sending ? "발송 중…" : "발송"}
+                {sending ? uiCopy("ux.copy8321f5ba42") : uiCopy("ux.copy6979bfc484")}
               </Button>
               <span className="text-sm text-muted-foreground">
-                예상 수신자: <strong>{audienceCount}</strong>명 ({LANG_LABEL[langFilter]})
+                {uiCopy("ux.copy78bac16426")} <strong>{audienceCount}</strong>
+                {uiCopy("ux.copyfddd3e1176")}
+                {LANG_LABEL[langFilter]})
               </span>
             </div>
           </CardContent>
@@ -240,32 +285,32 @@ function BroadcastPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">안전 정책</CardTitle>
+            <CardTitle className="text-base">{uiCopy("ux.copyb66d1487bc")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>· 봇과 대화한 모든 고객에게 발송됩니다 (기본 수신).</p>
-            <p>· 수신 거부 버튼 또는 /stop 을 보낸 고객에게는 절대 발송되지 않습니다.</p>
-            <p>· 초당 약 1건 속도로 순차 발송하여 봇 차단을 예방합니다.</p>
-            <p>· 차단(403)·오류 고객은 자동으로 수신 거부 처리 후 건너뜁니다.</p>
+            <p>{uiCopy("ux.copy89fe4a949a")}</p>
+            <p>{uiCopy("ux.copy7782656d48")}</p>
+            <p>{uiCopy("ux.copyb2f8bea756")}</p>
+            <p>{uiCopy("ux.copycad01055c0")}</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">발송 이력</CardTitle>
+          <CardTitle className="text-base">{uiCopy("ux.copyed11019be9")}</CardTitle>
         </CardHeader>
-         <CardContent className="overflow-x-auto">
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>발송 시각</TableHead>
-                <TableHead>내용</TableHead>
-                <TableHead>언어</TableHead>
-                <TableHead className="text-right">대상</TableHead>
-                <TableHead className="text-right">성공</TableHead>
-                <TableHead className="text-right">실패</TableHead>
-                <TableHead>상태</TableHead>
+                <TableHead>{uiCopy("ux.copy3a17ac56c8")}</TableHead>
+                <TableHead>{uiCopy("ux.copy8a0c65f9e1")}</TableHead>
+                <TableHead>{uiCopy("ux.copy1a723e1dbb")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy6bf537cb7e")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy23b6441130")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy732fe33ab1")}</TableHead>
+                <TableHead>{uiCopy("ux.copy2926977ba7")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -275,15 +320,19 @@ function BroadcastPage() {
                     {new Date(b.created_at).toLocaleString("ko-KR")}
                   </TableCell>
                   <TableCell className="max-w-[360px] truncate text-xs">
-                    {b.message || (b.media_file_name ?? "(첨부)")}
+                    {b.message || (b.media_file_name ?? uiCopy("ux.copy3809a0592f"))}
                   </TableCell>
-                  <TableCell className="text-xs">{LANG_LABEL[(b.lang_filter as LangFilter) ?? "all"]}</TableCell>
+                  <TableCell className="text-xs">
+                    {LANG_LABEL[(b.lang_filter as LangFilter) ?? "all"]}
+                  </TableCell>
                   <TableCell className="text-right text-xs">{b.target_count}</TableCell>
                   <TableCell className="text-right text-xs">{b.success_count}</TableCell>
                   <TableCell className="text-right text-xs">{b.failed_count}</TableCell>
                   <TableCell>
                     <Badge variant={b.status === "completed" ? "secondary" : "outline"}>
-                      {b.status === "completed" ? "완료" : "진행중"}
+                      {b.status === "completed"
+                        ? uiCopy("ux.copy8d8680373c")
+                        : uiCopy("ux.copy0dae9079ff")}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -291,7 +340,7 @@ function BroadcastPage() {
               {(history?.broadcasts ?? []).length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
-                    발송 이력이 없습니다.
+                    {uiCopy("ux.copy688f0e9740")}
                   </TableCell>
                 </TableRow>
               )}
@@ -303,14 +352,17 @@ function BroadcastPage() {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>단체 발송 확인</AlertDialogTitle>
+            <AlertDialogTitle>{uiCopy("ux.copy99441fe7d5")}</AlertDialogTitle>
             <AlertDialogDescription>
-              정말 {audienceCount}명에게 보내시겠습니까? 초당 약 1건 속도로 순차 발송되며, 발송 중에는 이 화면을 닫지 마세요.
+              {uiCopy("ux.copye800876038")} {audienceCount}
+              {uiCopy("ux.copy5626f026c0")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={runBroadcast}>발송</AlertDialogAction>
+            <AlertDialogCancel>{uiCopy("ux.copy19b2d19bc1")}</AlertDialogCancel>
+            <AlertDialogAction onClick={runBroadcast}>
+              {uiCopy("ux.copy6979bfc484")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

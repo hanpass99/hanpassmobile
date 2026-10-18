@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useRef, useState } from "react";
 import { Bot, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,6 +11,7 @@ const STORAGE_KEY = "ai-assistant-pos";
 const BTN_SIZE = 56;
 
 export function AiAssistant() {
+  useTranslation();
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<Pos | null>(null);
@@ -117,7 +120,7 @@ export function AiAssistant() {
     <>
       <button
         type="button"
-        aria-label="AI Assistant"
+        aria-label={uiCopy("accessibility.assistant")}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

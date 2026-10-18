@@ -1,7 +1,11 @@
+import { localizeError } from "@/i18n/localize-error";
+import { countryName, companyName } from "@/i18n/display-values";
+import hanpassLogo from "@/assets/hanpass-logo.png";
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
-import { Mail, Lock, ArrowLeft, ShieldCheck, Languages, Phone } from "lucide-react";
+import { Mail, Lock, ArrowLeft, ShieldCheck, Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,7 +16,20 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
-    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : "",
+    next:
+      typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//")
+        ? s.next
+        : "",
+  }),
+  head: () => ({
+    meta: [
+      { title: uiCopy("pages.auth.title") },
+      { name: "description", content: uiCopy("pages.auth.description") },
+      { property: "og:title", content: uiCopy("pages.auth.title") },
+      { property: "og:description", content: uiCopy("pages.auth.description") },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: AuthPage,
 });
@@ -31,7 +48,9 @@ function AuthPage() {
   const target = safeNext(next);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
-  const [countries, setCountries] = useState<Array<{ id: string; code: string; name_ko: string }>>([]);
+  const [countries, setCountries] = useState<Array<{ id: string; code: string; name_ko: string }>>(
+    [],
+  );
 
   useEffect(() => {
     if (mode !== "signup" || countries.length) return;
@@ -40,15 +59,24 @@ function AuthPage() {
       .select("id, code, name_ko")
       .eq("is_active", true)
       .order("code")
-      .then(({ data }) => setCountries((data ?? []) as Array<{ id: string; code: string; name_ko: string }>));
+      .then(({ data }) =>
+        setCountries((data ?? []) as Array<{ id: string; code: string; name_ko: string }>),
+      );
   }, [mode, countries.length]);
 
   if (loading) return null;
   if (session) return <Navigate to={target} />;
 
   const loginSchema = z.object({
-    email: z.string().trim().email({ message: t("auth.invalidEmail") }).max(255),
-    password: z.string().min(6, { message: t("auth.pwdMin") }).max(100),
+    email: z
+      .string()
+      .trim()
+      .email({ message: t("auth.invalidEmail") })
+      .max(255),
+    password: z
+      .string()
+      .min(6, { message: t("auth.pwdMin") })
+      .max(100),
   });
 
   const switchLang = () => {
@@ -61,11 +89,11 @@ function AuthPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
-    if (!parsed.success) return toast.error(parsed.error.errors[0].message);
+    if (!parsed.success) return toast.error(localizeError(parsed.error.errors[0].message));
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setBusy(false);
-    if (error) return toast.error(t("auth.loginFailed", { msg: error.message }));
+    if (error) return toast.error(localizeError(t("auth.loginFailed", { msg: error.message })));
     toast.success(t("auth.welcome"));
     if (target !== "/") window.location.href = target;
     else navigate({ to: "/" });
@@ -77,10 +105,10 @@ function AuthPage() {
     const name = String(fd.get("name") ?? "").trim();
     const company = String(fd.get("company") ?? "한패스 모바일");
     const countryId = String(fd.get("country_id") ?? "").trim();
-    if (!name) return toast.error(t("auth.enterName"));
-    if (!countryId) return toast.error(t("country.selectRequired"));
+    if (!name) return toast.error(localizeError(t("auth.enterName")));
+    if (!countryId) return toast.error(localizeError(t("country.selectRequired")));
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
-    if (!parsed.success) return toast.error(parsed.error.errors[0].message);
+    if (!parsed.success) return toast.error(localizeError(parsed.error.errors[0].message));
     setBusy(true);
     const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
@@ -95,7 +123,7 @@ function AuthPage() {
       },
     });
     setBusy(false);
-    if (error) return toast.error(t("auth.signupFailed", { msg: error.message }));
+    if (error) return toast.error(localizeError(t("auth.signupFailed", { msg: error.message })));
     setMode("signupDone");
   };
 
@@ -103,13 +131,13 @@ function AuthPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email") ?? "").trim();
-    if (!email) return toast.error(t("auth.enterEmail"));
+    if (!email) return toast.error(localizeError(t("auth.enterEmail")));
     setBusy(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(localizeError(error.message));
     toast.success(t("auth.linkSent"));
     setMode("login");
   };
@@ -121,16 +149,26 @@ function AuthPage() {
         <div className="relative hidden flex-col justify-between bg-primary p-10 text-primary-foreground md:flex">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-foreground text-primary">
-              <Phone className="h-6 w-6" />
+              <img
+                src={hanpassLogo}
+                alt={uiCopy("brand.logoAlt")}
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
             </div>
             <div>
-              <div className="text-[20px] font-bold leading-tight">Hanpass Mobile</div>
-              <div className="text-[13px] text-primary-foreground/50">OB Call Management</div>
+              <div className="text-[20px] font-bold leading-tight">
+                {uiCopy("ux.copyca8c605ac7")}
+              </div>
+              <div className="text-[13px] text-primary-foreground/50">
+                {uiCopy("ux.copy36e1723e1c")}
+              </div>
             </div>
           </div>
 
           <div className="space-y-5">
-            <h1 className="text-[22px] font-semibold leading-snug tracking-normal whitespace-nowrap">
+            <h1 className="text-[22px] font-semibold leading-snug tracking-normal">
               {t("auth.brandTagline")}
             </h1>
             <p className="text-[14px] leading-relaxed text-primary-foreground/70">
@@ -149,12 +187,16 @@ function AuthPage() {
         <div className="flex flex-col bg-card p-8 md:p-12">
           <div className="flex items-center justify-between mb-8">
             <div className="md:hidden flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Phone className="h-5 w-5" />
-              </div>
+              <img
+                src={hanpassLogo}
+                alt={uiCopy("brand.logoAlt")}
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
               <div>
-                <div className="text-sm font-bold text-primary">Hanpass Mobile</div>
-                <div className="text-xs text-muted-foreground">OB Call CRM</div>
+                <div className="text-sm font-bold text-primary">{uiCopy("ux.copyca8c605ac7")}</div>
+                <div className="text-xs text-muted-foreground">{uiCopy("ux.copybfcfd42d77")}</div>
               </div>
             </div>
             <button
@@ -163,14 +205,18 @@ function AuthPage() {
               title={t("common.language")}
             >
               <Languages className="h-4 w-4" />
-              {i18nInst.language === "ko" ? "한국어" : "English"}
+              {i18nInst.language === "ko"
+                ? uiCopy("ux.copy6e081b5948")
+                : uiCopy("interfaceExtra.english")}
             </button>
           </div>
 
           {mode === "login" ? (
             <div className="flex-1 flex flex-col">
               <div className="mb-8">
-                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">{t("auth.loginTitle")}</h2>
+                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">
+                  {t("auth.loginTitle")}
+                </h2>
                 <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.loginSub")}</p>
               </div>
               <form onSubmit={handleLogin} className="space-y-5 flex-1">
@@ -187,13 +233,16 @@ function AuthPage() {
                       autoComplete="email"
                       required
                       className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
-                      placeholder="you@example.com"
+                      placeholder={uiCopy("ux.copy50e2b46ef8")}
                     />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password" className="text-[13px] font-medium text-foreground">
+                    <Label
+                      htmlFor="login-password"
+                      className="text-[13px] font-medium text-foreground"
+                    >
                       {t("auth.password")}
                     </Label>
                     <button
@@ -244,7 +293,9 @@ function AuthPage() {
                 <ArrowLeft className="h-3.5 w-3.5" /> {t("auth.backToLogin")}
               </button>
               <div className="mb-8">
-                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">{t("auth.signupTitle")}</h2>
+                <h2 className="text-[24px] font-semibold tracking-normal text-foreground">
+                  {t("auth.signupTitle")}
+                </h2>
                 <p className="mt-1.5 text-[14px] text-muted-foreground">{t("auth.signupSub")}</p>
               </div>
               <form onSubmit={handleSignup} className="space-y-4 flex-1">
@@ -262,7 +313,10 @@ function AuthPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-company" className="text-[13px] font-medium text-foreground">
+                  <Label
+                    htmlFor="signup-company"
+                    className="text-[13px] font-medium text-foreground"
+                  >
                     {t("auth.company")}
                   </Label>
                   <select
@@ -271,12 +325,15 @@ function AuthPage() {
                     className="h-11 w-full rounded-lg border border-border bg-card px-3 text-[14px] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     defaultValue="한패스 모바일"
                   >
-                    <option value="한패스">한패스</option>
-                    <option value="한패스 모바일">한패스 모바일</option>
+                    <option value="한패스">{uiCopy("ux.copy3b0cf485bf")}</option>
+                    <option value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-country" className="text-[13px] font-medium text-foreground">
+                  <Label
+                    htmlFor="signup-country"
+                    className="text-[13px] font-medium text-foreground"
+                  >
                     {t("country.label")}
                   </Label>
                   <select
@@ -291,7 +348,7 @@ function AuthPage() {
                     </option>
                     {countries.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name_ko} ({c.code})
+                        {countryName(c)} ({c.code})
                       </option>
                     ))}
                   </select>
@@ -310,12 +367,15 @@ function AuthPage() {
                       autoComplete="email"
                       required
                       className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
-                      placeholder="you@example.com"
+                      placeholder={uiCopy("ux.copy50e2b46ef8")}
                     />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-password" className="text-[13px] font-medium text-foreground">
+                  <Label
+                    htmlFor="signup-password"
+                    className="text-[13px] font-medium text-foreground"
+                  >
                     {t("auth.password")}
                   </Label>
                   <div className="relative">
@@ -350,7 +410,9 @@ function AuthPage() {
                 <ShieldCheck className="h-7 w-7 text-primary" />
               </span>
               <h2 className="text-[22px] font-medium text-primary">{t("auth.signupDoneTitle")}</h2>
-              <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-muted-foreground">{t("auth.signupDoneSub")}</p>
+              <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
+                {t("auth.signupDoneSub")}
+              </p>
               <Button
                 className="mt-8 h-11 rounded-lg bg-primary px-8 text-[14px] font-semibold text-primary-foreground hover:bg-primary/90"
                 onClick={() => setMode("login")}
@@ -383,7 +445,7 @@ function AuthPage() {
                       type="email"
                       required
                       className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
-                      placeholder="you@example.com"
+                      placeholder={uiCopy("ux.copy50e2b46ef8")}
                     />
                   </div>
                 </div>
