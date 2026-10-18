@@ -85,7 +85,7 @@ export function useSettingsData(params: { year: number; month: number; isAdmin: 
           is_active: p.is_active,
           approval_status: (((p as any).approval_status as string) ?? (p.is_active ? "approved" : "disabled")) as SettingsRow["approval_status"],
           role: (r?.role as AppRole | undefined) ?? null,
-          country_ids: pcMap.get(p.id) ?? [],
+          country_ids: pcMap.get(p.id) ?? (p.country_id ? [p.country_id] : []),
           avatar_url: p.avatar_url ?? null,
           call_target: tg?.call_target ?? 0,
           activation_target: tg?.activation_target ?? 0,

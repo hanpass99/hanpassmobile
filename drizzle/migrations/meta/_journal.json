@@ -57,6 +57,27 @@
       "when": 1792315924029,
       "tag": "0007_skip_old_qr_sheet_rows",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792328492351,
+      "tag": "0008_approved_staff_access_gate",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792328619581,
+      "tag": "0009_close_approval_rpc_bypasses",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792328933536,
+      "tag": "0010_require_auth_managed_staff_transitions",
+      "breakpoints": true
     }
   ]
 }
