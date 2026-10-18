@@ -450,3 +450,13 @@
     max-width: 100%;
   }
 }
+@media (max-width: 767px) {
+  [data-mobile-assistant] {
+    top: 6px !important; bottom: auto !important; width: 44px !important; height: 44px !important;
+  }
+  body:has([data-mobile-assistant]) header.sticky { padding-right: 68px; }
+  .mobile-filter-controls [class*="grid-cols-"] { grid-template-columns: minmax(0, 1fr); }
+  .mobile-filter-controls [class*="col-span-2"] { grid-column: auto; }
+  .mobile-filter-controls [class*="items-end"] { align-items: stretch; }
+  .mobile-filter-sheet { inset: 0 !important; transform: none !important; }
+}
