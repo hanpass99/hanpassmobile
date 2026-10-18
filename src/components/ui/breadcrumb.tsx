@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
@@ -10,7 +11,7 @@ const Breadcrumb = React.forwardRef<
   React.ComponentPropsWithoutRef<"nav"> & {
     separator?: React.ReactNode;
   }
->(({ ...props }, ref) => <nav ref={ref} aria-label={uiCopy("accessibility.breadcrumb")} {...props} />);
+>(({ ...props }, ref) => { useTranslation(); return <nav ref={ref} aria-label={uiCopy("accessibility.breadcrumb")} {...props} />; });
 Breadcrumb.displayName = "Breadcrumb";
 
 const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWithoutRef<"ol">>(
@@ -78,7 +79,7 @@ const BreadcrumbSeparator = ({ children, className, ...props }: React.ComponentP
 );
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 
-const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => (
+const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => { useTranslation(); return (
   <span
     role="presentation"
     aria-hidden="true"
@@ -88,7 +89,7 @@ const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span"
     <MoreHorizontal className="h-4 w-4" />
     <span className="sr-only">{uiCopy("accessibility.more")}</span>
   </span>
-);
+); };
 BreadcrumbEllipsis.displayName = "BreadcrumbElipssis";
 
 export {

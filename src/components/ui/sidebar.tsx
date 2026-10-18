@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
@@ -170,6 +171,7 @@ const Sidebar = React.forwardRef<
     },
     ref,
   ) => {
+useTranslation();
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
     if (collapsible === "none") {
@@ -262,6 +264,7 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
+useTranslation();
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -286,6 +289,7 @@ SidebarTrigger.displayName = "SidebarTrigger";
 
 const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"button">>(
   ({ className, ...props }, ref) => {
+useTranslation();
     const { toggleSidebar } = useSidebar();
 
     return (

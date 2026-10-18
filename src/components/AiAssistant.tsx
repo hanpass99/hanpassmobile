@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useRef, useState } from "react";
 import { Bot, X } from "lucide-react";

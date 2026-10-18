@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
@@ -5,14 +6,14 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ButtonProps, buttonVariants } from "@/components/ui/button";
 
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
+const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => { useTranslation(); return (
   <nav
     role="navigation"
     aria-label={uiCopy("accessibility.pagination")}
     className={cn("mx-auto flex w-full justify-center", className)}
     {...props}
   />
-);
+); };
 Pagination.displayName = "Pagination";
 
 const PaginationContent = React.forwardRef<HTMLUListElement, React.ComponentProps<"ul">>(
@@ -50,7 +51,7 @@ PaginationLink.displayName = "PaginationLink";
 const PaginationPrevious = ({
   className,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
+}: React.ComponentProps<typeof PaginationLink>) => { useTranslation(); return (
   <PaginationLink
     aria-label={uiCopy("accessibility.previousPage")}
     size="default"
@@ -60,10 +61,10 @@ const PaginationPrevious = ({
     <ChevronLeft className="h-4 w-4" />
     <span>{uiCopy("accessibility.previous")}</span>
   </PaginationLink>
-);
+); };
 PaginationPrevious.displayName = "PaginationPrevious";
 
-const PaginationNext = ({ className, ...props }: React.ComponentProps<typeof PaginationLink>) => (
+const PaginationNext = ({ className, ...props }: React.ComponentProps<typeof PaginationLink>) => { useTranslation(); return (
   <PaginationLink
     aria-label={uiCopy("accessibility.nextPage")}
     size="default"
@@ -73,10 +74,10 @@ const PaginationNext = ({ className, ...props }: React.ComponentProps<typeof Pag
     <span>{uiCopy("accessibility.next")}</span>
     <ChevronRight className="h-4 w-4" />
   </PaginationLink>
-);
+); };
 PaginationNext.displayName = "PaginationNext";
 
-const PaginationEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => (
+const PaginationEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => { useTranslation(); return (
   <span
     aria-hidden
     className={cn("flex h-9 w-9 items-center justify-center", className)}
@@ -85,7 +86,7 @@ const PaginationEllipsis = ({ className, ...props }: React.ComponentProps<"span"
     <MoreHorizontal className="h-4 w-4" />
     <span className="sr-only">{uiCopy("accessibility.morePages")}</span>
   </span>
-);
+); };
 PaginationEllipsis.displayName = "PaginationEllipsis";
 
 export {
