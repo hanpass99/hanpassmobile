@@ -352,7 +352,7 @@ export default {
     emptyPool: "No customers in {{name}} pool.",
   },
   customers: {
-    quickCall: "Call customer",
+    quickCallAction: "Call customer",
     quickSms: "Send SMS",
     quickStatus: "Change status",
     confirmStatus: "Change {{name}}’s status to {{status}}?",
@@ -364,7 +364,6 @@ export default {
     emptyDescription: "No customers match the current filters.",
     errorTitle: "Could not load customers",
     errorDescription: "Please try again in a moment.",
-    retry: "Retry",
 
     title: "Customers",
     totalDesc: "Total {{count}}",

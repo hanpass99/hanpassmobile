@@ -352,7 +352,7 @@ export default {
     emptyPool: "{{name}} Pool에 고객이 없습니다.",
   },
   customers: {
-    quickCall: "전화 걸기",
+    quickCallAction: "전화 걸기",
     quickSms: "문자 보내기",
     quickStatus: "상태 변경",
     confirmStatus: "{{name}} 고객의 상태를 {{status}}(으)로 변경하시겠습니까?",
@@ -364,7 +364,6 @@ export default {
     emptyDescription: "현재 필터에 맞는 고객이 없습니다.",
     errorTitle: "고객 목록을 불러오지 못했습니다",
     errorDescription: "잠시 후 다시 시도해 주세요.",
-    retry: "다시 시도",
 
     title: "고객 관리",
     totalDesc: "총 {{count}}명",

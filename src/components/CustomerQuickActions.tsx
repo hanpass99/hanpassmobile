@@ -33,14 +33,14 @@ export function CustomerQuickActions({
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
             <a
               href={telHref}
-              aria-label={t("customers.quickCall")}
+              aria-label={t("customers.quickCallAction")}
               onClick={() => window.setTimeout(onCall, 1500)}
             >
               <Phone className="h-4 w-4" />
             </a>
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{t("customers.quickCall")}</TooltipContent>
+        <TooltipContent>{t("customers.quickCallAction")}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
