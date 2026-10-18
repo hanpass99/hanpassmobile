@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,8 +38,8 @@ export const Route = createFileRoute("/ai-faq")({
   component: AiFaqPage,
   head: () => ({
     meta: [
-      { title: "AI 학습 · Hanpass Mobile OB" },
-      { name: "description", content: "텔레그램 자동 응답 FAQ 관리 및 AI 학습" },
+      { title: uiCopy("ux.copy5588dfa7bc") },
+      { name: "description", content: uiCopy("ux.copy603aa27652") },
     ],
   }),
 });
@@ -68,7 +69,7 @@ function AiFaqPage() {
   const dedupe = useMutation({
     mutationFn: () => dedupeFn(),
     onSuccess: (r) => {
-      toast.success(`중복 FAQ ${r.removed}개 정리 완료`);
+      toast.success(uiCopy("ux.copy4da97e6606", { value0: r.removed }));
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -77,7 +78,7 @@ function AiFaqPage() {
   const autoApprove = useMutation({
     mutationFn: () => autoApproveFn(),
     onSuccess: (r) => {
-      toast.success(`후보 ${r.scanned}건 처리 · 승인 ${r.approved} · 중복 제외 ${r.duplicates}`);
+      toast.success(uiCopy("ux.copye75bacf87c", { value0: r.scanned, value1: r.approved, value2: r.duplicates }));
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
       qc.invalidateQueries({ queryKey: ["ai-faq-candidates"] });
     },
@@ -103,7 +104,7 @@ function AiFaqPage() {
       is_active: boolean;
     }) => upsertFn({ data: payload }),
     onSuccess: () => {
-      toast.success("저장되었습니다");
+      toast.success(uiCopy("ux.copyb5d983174d"));
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
     },
@@ -112,7 +113,7 @@ function AiFaqPage() {
   const remove = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("삭제되었습니다");
+      toast.success(uiCopy("ux.copya4c5ac4e6b"));
       qc.invalidateQueries({ queryKey: ["ai-faq-list"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -124,7 +125,7 @@ function AiFaqPage() {
 
   if (!isAdmin) {
     return (
-      <div className="p-6 text-sm text-muted-foreground">관리자만 접근할 수 있습니다.</div>
+      <div className="p-6 text-sm text-muted-foreground">{uiCopy("ux.copy5a5a3d6567")}</div>
     );
   }
 
@@ -134,15 +135,15 @@ function AiFaqPage() {
   return (
     <div className="space-y-5 p-0 md:p-2">
       <PageHeader
-        title="AI 학습 (FAQ)"
-        description="텔레그램 자동 응답에 사용되는 질문·답변 예시를 관리합니다."
+        title={uiCopy("ux.copyc68ac7e1fd")}
+        description={uiCopy("ux.copya7ccc6ac52")}
       />
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border bg-card p-4">
         <div className="min-w-0">
-          <div className="text-sm font-medium">AI 자동 응답 (전역)</div>
+          <div className="text-sm font-medium">{uiCopy("ux.copy20f53c3789")}</div>
           <div className="text-xs text-muted-foreground">
-            꺼짐 상태에서는 모든 채팅방에서 AI가 답장하지 않습니다.
+            {uiCopy("ux.copy8c97ffcf3a")}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -159,7 +160,7 @@ function AiFaqPage() {
 
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm text-muted-foreground">총 {faqs.length}개</div>
+        <div className="text-sm text-muted-foreground">{uiCopy("ux.copy10d96eb939")} {faqs.length}{uiCopy("ux.copy11600c9ada")}</div>
         <div className="flex flex-wrap items-center gap-2">
         {isAdmin && (
           <>
@@ -169,7 +170,7 @@ function AiFaqPage() {
               disabled={dedupe.isPending}
               onClick={() => dedupe.mutate()}
             >
-              중복 정리
+              {uiCopy("ux.copyf58cc5e289")}
             </Button>
             <Button
               size="sm"
@@ -177,7 +178,7 @@ function AiFaqPage() {
               disabled={autoApprove.isPending}
               onClick={() => autoApprove.mutate()}
             >
-              후보 자동 승인
+              {uiCopy("ux.copy437bf161a0")}
             </Button>
           </>
         )}
@@ -193,7 +194,7 @@ function AiFaqPage() {
             })
           }
         >
-          <Plus className="mr-1 h-4 w-4" /> FAQ 추가
+          <Plus className="mr-1 h-4 w-4" /> {uiCopy("ux.copy2b625e9172")}
         </Button>
         </div>
       </div>
@@ -205,7 +206,7 @@ function AiFaqPage() {
             <div className="mb-2 flex items-start justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 {f.category && <Badge variant="secondary">{f.category}</Badge>}
-                {!f.is_active && <Badge variant="outline">비활성</Badge>}
+                {!f.is_active && <Badge variant="outline">{uiCopy("ux.copyfae2014b52")}</Badge>}
               </div>
               <div className="flex gap-1">
                 <Button size="icon" variant="ghost" onClick={() => setEditing(f)}>
@@ -215,7 +216,7 @@ function AiFaqPage() {
                   size="icon"
                   variant="ghost"
                   onClick={() => {
-                    if (confirm("이 FAQ를 삭제하시겠습니까?")) remove.mutate(f.id);
+                    if (confirm(uiCopy("ux.copyf75b3c2866"))) remove.mutate(f.id);
                   }}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -223,7 +224,7 @@ function AiFaqPage() {
               </div>
             </div>
             <div className="mb-2 space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">질문 예시</div>
+              <div className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copyf2c154a161")}</div>
               <div className="flex flex-wrap gap-1">
                 {f.question_examples.map((q, i) => (
                   <Badge key={i} variant="outline" className="whitespace-normal">
@@ -234,11 +235,11 @@ function AiFaqPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <div className="text-xs font-medium text-muted-foreground">답변 (UZ)</div>
+                <div className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copy43872d3c38")}</div>
                 <div className="whitespace-pre-wrap text-sm">{f.answer_uz}</div>
               </div>
               <div>
-                <div className="text-xs font-medium text-muted-foreground">답변 (RU)</div>
+                <div className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copy65f6cc9300")}</div>
                 <div className="whitespace-pre-wrap text-sm">{f.answer_ru}</div>
               </div>
             </div>
@@ -246,7 +247,7 @@ function AiFaqPage() {
         ))}
         {faqs.length === 0 && (
           <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-            등록된 FAQ가 없습니다.
+            {uiCopy("ux.copy281e05079d")}
           </div>
         )}
       </div>
@@ -293,19 +294,19 @@ function FaqEditor({
     <Dialog open onOpenChange={(o) => !o && onCancel()}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initial.id ? "FAQ 편집" : "FAQ 추가"}</DialogTitle>
+          <DialogTitle>{initial.id ? uiCopy("ux.copy031319a2ee") : uiCopy("ux.copy2b625e9172")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <Label>카테고리 (선택)</Label>
+            <Label>{uiCopy("ux.copyeece9f4070")}</Label>
             <Input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="예: 요금제, 개통, 배송"
+              placeholder={uiCopy("ux.copy798e161b30")}
             />
           </div>
           <div>
-            <Label>질문 예시 (여러 개 등록)</Label>
+            <Label>{uiCopy("ux.copy729b8ed9d1")}</Label>
             <div className="space-y-2">
               {examples.map((q, i) => (
                 <div key={i} className="flex gap-2">
@@ -316,7 +317,7 @@ function FaqEditor({
                       next[i] = e.target.value;
                       setExamples(next);
                     }}
-                    placeholder="고객이 물어볼 수 있는 표현"
+                    placeholder={uiCopy("ux.copyd243eafcbd")}
                   />
                   <Button
                     size="icon"
@@ -333,32 +334,32 @@ function FaqEditor({
                 variant="outline"
                 onClick={() => setExamples([...examples, ""])}
               >
-                <Plus className="mr-1 h-4 w-4" /> 예시 추가
+                <Plus className="mr-1 h-4 w-4" /> {uiCopy("ux.copy9b4b700ffa")}
               </Button>
             </div>
           </div>
           <div>
-            <Label>답변 (Uzbek)</Label>
+            <Label>{uiCopy("ux.copy2b720dff21")}</Label>
             <Textarea value={uz} onChange={(e) => setUz(e.target.value)} rows={4} />
           </div>
           <div>
-            <Label>답변 (Russian)</Label>
+            <Label>{uiCopy("ux.copydc0f553e8c")}</Label>
             <Textarea value={ru} onChange={(e) => setRu(e.target.value)} rows={4} />
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={active} onCheckedChange={setActive} />
-            <Label>활성화</Label>
+            <Label>{uiCopy("ux.copybbf831ade8")}</Label>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>
-            취소
+            {uiCopy("ux.copy19b2d19bc1")}
           </Button>
           <Button
             onClick={() => {
               const cleaned = examples.map((s) => s.trim()).filter(Boolean);
-              if (cleaned.length === 0) return toast.error("질문 예시를 하나 이상 입력하세요");
-              if (!uz.trim() || !ru.trim()) return toast.error("UZ/RU 답변을 모두 입력하세요");
+              if (cleaned.length === 0) return toast.error(uiCopy("ux.copybf93e916b1"));
+              if (!uz.trim() || !ru.trim()) return toast.error(uiCopy("ux.copy3cde346460"));
               onSave({
                 id: initial.id ?? null,
                 category: category.trim() || null,
@@ -370,7 +371,7 @@ function FaqEditor({
             }}
             disabled={saving}
           >
-            {saving ? "저장 중…" : "저장"}
+            {saving ? uiCopy("ux.copy9f678504e8") : uiCopy("ux.copy1f1712acff")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -397,7 +398,7 @@ function CandidatesSection() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["ai-faq-candidates"] });
       qc.invalidateQueries({ queryKey: ["ai-faqs"] });
-      toast.success("처리했습니다.");
+      toast.success(uiCopy("ux.copy7d70447c36"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -407,16 +408,16 @@ function CandidatesSection() {
   return (
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
       <div className="text-sm font-semibold">
-        상담 이력 기반 FAQ 후보 <span className="text-muted-foreground">({candidates.length})</span>
+        {uiCopy("ux.copy04655172b4")} <span className="text-muted-foreground">({candidates.length})</span>
       </div>
       <p className="text-xs text-muted-foreground">
-        상담사가 실제로 반복해서 보낸 답변을 자동으로 감지한 항목입니다. 승인하면 지식베이스에 추가됩니다.
+        {uiCopy("ux.copyd1f28b0825")}
       </p>
       {candidates.map((c) => (
         <div key={c.id} className="rounded-md border bg-card p-3">
           <div className="mb-1 flex flex-wrap items-center gap-2">
-            <Badge variant="outline">{c.category ?? "미분류"}</Badge>
-            <span className="text-xs text-muted-foreground">{c.occurrences}회 반복</span>
+            <Badge variant="outline">{c.category ?? uiCopy("ux.copy3c1db0337a")}</Badge>
+            <span className="text-xs text-muted-foreground">{c.occurrences}{uiCopy("ux.copycb41b51aeb")}</span>
           </div>
           <div className="mb-2 flex flex-wrap gap-1">
             {(c.question_examples ?? []).map((qe: string, i: number) => (
@@ -431,7 +432,7 @@ function CandidatesSection() {
           </div>
           <div className="mt-2 flex gap-2">
             <Button size="sm" disabled={act.isPending} onClick={() => act.mutate({ id: c.id, approve: true })}>
-              승인
+              {uiCopy("ux.copy0d1cd67197")}
             </Button>
             <Button
               size="sm"
@@ -439,7 +440,7 @@ function CandidatesSection() {
               disabled={act.isPending}
               onClick={() => act.mutate({ id: c.id, approve: false })}
             >
-              거절
+              {uiCopy("ux.copy09797ed805")}
             </Button>
           </div>
         </div>

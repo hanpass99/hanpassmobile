@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -145,7 +146,7 @@ function CheckCell({ c, isAdmin, selected, onToggle }: { c: CustomerRow; isAdmin
   if (!isAdmin) return null;
   return (
     <TableCell className="w-10">
-      <Checkbox checked={selected.has(c.id)} onCheckedChange={() => onToggle(c.id)} aria-label="select row" />
+      <Checkbox checked={selected.has(c.id)} onCheckedChange={() => onToggle(c.id)} aria-label={uiCopy("ux.copy20a9960d64")} />
     </TableCell>
   );
 }
@@ -1013,35 +1014,35 @@ function CustomersPage() {
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
     if (effPool === "existing") {
-      header = ["고객명", "선후불", "전화번호", "개통일", "요금제", "국적", "신분증번호"];
+      header = [uiCopy("ux.copy7796dc9e19", undefined, "ko"), uiCopy("ux.copyeed986f8aa", undefined, "ko"), uiCopy("ux.copy9a1c3aaaca", undefined, "ko"), uiCopy("ux.copy33697f6a0d", undefined, "ko"), uiCopy("ux.copy98927649e9", undefined, "ko"), uiCopy("ux.copyff63ca9e88", undefined, "ko"), uiCopy("ux.copyc59b920ad9", undefined, "ko")];
       sample = [{ 고객명: "Nguyen Van A", 선후불: "선불", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "VN", 신분증번호: "900512-5123456" }];
     } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "qr_activation") {
-      header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
+      header = [uiCopy("ux.copy7796dc9e19", undefined, "ko"), uiCopy("ux.copy9a1c3aaaca", undefined, "ko"), uiCopy("ux.copyff63ca9e88", undefined, "ko"), uiCopy("ux.copy69447c40c6", undefined, "ko"), uiCopy("ux.copyed3cc44e22", undefined, "ko"), uiCopy("ux.copyf3ce23c830", undefined, "ko")];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
 
     } else if (effPool === "friend_referral") {
-      header = ["고객명", "전화번호", "국적", "가입일", "메모"];
+      header = [uiCopy("ux.copy7796dc9e19", undefined, "ko"), uiCopy("ux.copy9a1c3aaaca", undefined, "ko"), uiCopy("ux.copyff63ca9e88", undefined, "ko"), uiCopy("ux.copy170f7b921a", undefined, "ko"), uiCopy("ux.copyf3ce23c830", undefined, "ko")];
       sample = [{ 고객명: "CHU KHANH KHANH", 전화번호: "010-7597-3068", 국적: "VN", 가입일: "2026-06-18", 메모: "" }];
     } else if (effPool === "prepaid_charge") {
-      header = ["전화번호", "국적", "충전 일", "담당자", "상태", "콜 라운드", "메모"];
+      header = [uiCopy("ux.copy9a1c3aaaca", undefined, "ko"), uiCopy("ux.copyff63ca9e88", undefined, "ko"), uiCopy("ux.copyd77dd1188c", undefined, "ko"), uiCopy("ux.copyb25ae664f2", undefined, "ko"), uiCopy("ux.copy2926977ba7", undefined, "ko"), uiCopy("ux.copyf412206b01", undefined, "ko"), uiCopy("ux.copyf3ce23c830", undefined, "ko")];
       sample = [
         { 전화번호: "010-5946-4992", 국적: "CIS", "충전 일": "2026-04-25", 담당자: "", 상태: "", "콜 라운드": "", 메모: "" },
         { 전화번호: "010-6593-9433", 국적: "미얀마", "충전 일": "2026-04-25", 담당자: "", 상태: "", "콜 라운드": "", 메모: "" },
       ];
     } else if (effPool === "one_year_activation") {
-      header = ["고객명", "국적", "개통번호", "개통일"];
+      header = [uiCopy("ux.copy7796dc9e19", undefined, "ko"), uiCopy("ux.copyff63ca9e88", undefined, "ko"), uiCopy("ux.copy95277102ff", undefined, "ko"), uiCopy("ux.copy33697f6a0d", undefined, "ko")];
       sample = [
         { 고객명: "Nguyen Van A", 국적: "VN", 개통번호: "010-8765-4321", 개통일: "2025-08-01" },
       ];
     } else {
       // new_signup
-      header = ["고객명", "전화번호", "국적", "가입일", "담당자", "상태", "콜 라운드", "데이터 등록일", "메모"];
+      header = [uiCopy("ux.copy7796dc9e19", undefined, "ko"), uiCopy("ux.copy9a1c3aaaca", undefined, "ko"), uiCopy("ux.copyff63ca9e88", undefined, "ko"), uiCopy("ux.copy170f7b921a", undefined, "ko"), uiCopy("ux.copyb25ae664f2", undefined, "ko"), uiCopy("ux.copy2926977ba7", undefined, "ko"), uiCopy("ux.copyf412206b01", undefined, "ko"), uiCopy("ux.copy16dda86128", undefined, "ko"), uiCopy("ux.copyf3ce23c830", undefined, "ko")];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 가입일: "2026-05-08", 담당자: "", 상태: "", "콜 라운드": "", "데이터 등록일": "", 메모: "" }];
     }
     const ws = XLSX.utils.json_to_sheet(sample, { header });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Customers");
-    XLSX.writeFile(wb, `샘플_${POOL_SHORT[effPool]}.xlsx`);
+    XLSX.writeFile(wb, uiCopy("ux.copy37ffbb050a", { value0: POOL_SHORT[effPool] }));
   };
 
   // 관리자 전용: 현재 필터로 조회된 데이터를 Excel로 다운로드
@@ -1156,7 +1157,7 @@ function CustomersPage() {
   const renderTable = (p: CustomerPool) => {
     const CheckHead = isAdmin ? (
       <TableHead className="w-10">
-        <Checkbox checked={allChecked} onCheckedChange={toggleAll} aria-label="select all" />
+        <Checkbox checked={allChecked} onCheckedChange={toggleAll} aria-label={uiCopy("ux.copyf52f04faf1")} />
       </TableHead>
     ) : null;
 
@@ -1185,17 +1186,17 @@ function CustomersPage() {
 
     if (p === "existing") {
       return (
-        <Table aria-label="Customer list">
+        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-              <TableHead>선후불</TableHead>
+              <TableHead>{uiCopy("ux.copyeed986f8aa")}</TableHead>
               <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.phone")}</SortHead>
               <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationDate")}</SortHead>
               <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.carrierPlan")}</SortHead>
               <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
-              <TableHead>신분증번호</TableHead>
+              <TableHead>{uiCopy("ux.copyc59b920ad9")}</TableHead>
               <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
               <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
               {CallRoundHead}
@@ -1233,7 +1234,7 @@ function CustomersPage() {
 
     if (p === "friend_referral" || p === "prepaid_charge") {
       return (
-        <Table aria-label="Customer list">
+        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
@@ -1292,7 +1293,7 @@ function CustomersPage() {
         if (n < 0) {
           return <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${near ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{t("customers.matured", { n: Math.abs(n) })}</span>;
         }
-        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">D-DAY</span>;
+        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">{uiCopy("ux.copy6e18d83cf6")}</span>;
         const cls = near
           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
           : n <= 30
@@ -1300,11 +1301,11 @@ function CustomersPage() {
           : n <= 60
           ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
           : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
-        return <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${cls}`}>D-{n}</span>;
+        return <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${cls}`}>{uiCopy("ux.copyc2c80cc39a")}{n}</span>;
       };
 
       return (
-        <Table aria-label="Customer list">
+        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
@@ -1347,7 +1348,7 @@ function CustomersPage() {
     }
 
     return (
-      <Table aria-label="Customer list">
+      <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
         <TableHeader>
           <TableRow className="bg-muted/60 border-b border-border">
             {CheckHead}
@@ -1428,7 +1429,7 @@ function CustomersPage() {
     mutationFn: () => syncQrFn(),
     onSuccess: (r) => {
       if (r.inserted > 0) {
-        toast.success(`QR 개통 신청 ${r.inserted}건을 가져왔습니다`);
+        toast.success(uiCopy("ux.copy37a0471fd9", { value0: r.inserted }));
         void refetchList();
         void refetchPoolCounts();
       }
@@ -1569,7 +1570,7 @@ function CustomersPage() {
               <>
                 <Button variant="outline" size="sm" asChild>
                   <a href={SHEET_URL_QR} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-1 h-4 w-4" /> QR 시트 열기
+                    <ExternalLink className="mr-1 h-4 w-4" /> {uiCopy("ux.copy9ddc6d6836")}
                   </a>
                 </Button>
                 <Button
@@ -1578,10 +1579,10 @@ function CustomersPage() {
                   onClick={() => syncQrMut.mutate()}
                   disabled={syncQrMut.isPending}
                   aria-busy={syncQrMut.isPending}
-                  title="QR 개통 신청 시트 동기화"
+                  title={uiCopy("ux.copy738ecd0d1d")}
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${syncQrMut.isPending ? "animate-spin" : ""}`} />
-                  동기화
+                  {uiCopy("ux.copye7665a58ae")}
                 </Button>
               </>
             )}
@@ -2020,13 +2021,13 @@ function CustomersPage() {
             <DialogDescription>
               <strong>{POOL_LABEL[(tab === "all" ? "existing" : tab) as CustomerPool]}</strong> — {t("customers.tabDeleteAll")}: {poolCount((tab === "all" ? "existing" : tab) as CustomerPool).toLocaleString()}
               <br /><br />
-              DELETE
+              {uiCopy("ux.copyd6f5636098")}
             </DialogDescription>
           </DialogHeader>
           <Input
             value={deleteAllConfirm}
             onChange={(e) => setDeleteAllConfirm(e.target.value)}
-            placeholder="DELETE"
+            placeholder={uiCopy("ux.copyd6f5636098")}
             disabled={deleteAllRunning}
           />
           <DialogFooter>

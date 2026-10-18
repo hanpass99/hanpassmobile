@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -120,7 +121,7 @@ function Dashboard() {
       .sort((a, b) => b.value - a.value).slice(0, 8);
 
     const chd = (summary.channel_summary ?? []).map((r) => ({
-      name: String(r.name).replace("한패스 ", ""),
+      name: String(r.name).replace(uiCopy("ux.copyc46bee0f62"), ""),
       [t("dashboard.customers")]: Number(r.customers),
       [t("dashboard.activations")]: Number(r.activations),
     }));

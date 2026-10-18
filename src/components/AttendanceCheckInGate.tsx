@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, Sun } from "lucide-react";
@@ -59,7 +60,7 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
       toast.error(error.message);
       return;
     }
-    toast.success(i18n.language === "ko" ? "출근이 확인되었습니다" : "Check-in confirmed");
+    toast.success(i18n.language === "ko" ? uiCopy("ux.copya19230634f") : "Check-in confirmed");
     setPresent(true);
   };
 
@@ -74,16 +75,16 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
           <Sun className="h-8 w-8" />
         </div>
         <h2 className="text-center text-xl font-bold text-foreground">
-          {isKo ? "오늘 출근하셨나요?" : "Are you here today?"}
+          {isKo ? uiCopy("ux.copy77c83d8823") : "Are you here today?"}
         </h2>
         <p className="mt-2 text-center text-sm text-muted-foreground leading-relaxed">
           {isKo
-            ? "출근 완료 버튼을 눌러야 시스템을 사용할 수 있습니다. 버튼을 누른 시점부터 오늘의 SLA(일일 콜 목표) 정책이 적용됩니다."
+            ? uiCopy("ux.copydccf36b376")
             : "Click Check In to unlock the system. Today's SLA (daily call goal) applies from the moment you check in."}
         </p>
         <p className="mt-3 text-center text-xs text-muted-foreground">
           {isKo
-            ? "출근 완료를 하지 않은 날은 결근으로 처리되어 SLA 벌금이 면제됩니다."
+            ? uiCopy("ux.copyd2a99ada84")
             : "Days without check-in count as absent and are exempt from SLA fines."}
         </p>
         <Button
@@ -93,8 +94,8 @@ export function AttendanceCheckInGate({ children }: { children: React.ReactNode 
         >
           <CheckCircle2 className="mr-2 h-5 w-5" />
           {saving
-            ? isKo ? "처리 중..." : "Processing..."
-            : isKo ? "출근 완료" : "Check In"}
+            ? isKo ? uiCopy("ux.copye6e1a2914f") : "Processing..."
+            : isKo ? uiCopy("ux.copy950de9eee8") : "Check In"}
         </Button>
       </div>
     </div>

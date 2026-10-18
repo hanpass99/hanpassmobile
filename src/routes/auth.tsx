@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
@@ -124,8 +125,8 @@ function AuthPage() {
               <Phone className="h-6 w-6" />
             </div>
             <div>
-              <div className="text-[20px] font-bold leading-tight">Hanpass Mobile</div>
-              <div className="text-[13px] text-primary-foreground/50">OB Call Management</div>
+              <div className="text-[20px] font-bold leading-tight">{uiCopy("ux.copyca8c605ac7")}</div>
+              <div className="text-[13px] text-primary-foreground/50">{uiCopy("ux.copy36e1723e1c")}</div>
             </div>
           </div>
 
@@ -153,8 +154,8 @@ function AuthPage() {
                 <Phone className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-bold text-primary">Hanpass Mobile</div>
-                <div className="text-xs text-muted-foreground">OB Call CRM</div>
+                <div className="text-sm font-bold text-primary">{uiCopy("ux.copyca8c605ac7")}</div>
+                <div className="text-xs text-muted-foreground">{uiCopy("ux.copybfcfd42d77")}</div>
               </div>
             </div>
             <button
@@ -163,7 +164,7 @@ function AuthPage() {
               title={t("common.language")}
             >
               <Languages className="h-4 w-4" />
-              {i18nInst.language === "ko" ? "한국어" : "English"}
+              {i18nInst.language === "ko" ? uiCopy("ux.copy6e081b5948") : "English"}
             </button>
           </div>
 
@@ -187,7 +188,7 @@ function AuthPage() {
                       autoComplete="email"
                       required
                       className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
-                      placeholder="you@example.com"
+                      placeholder={uiCopy("ux.copy50e2b46ef8")}
                     />
                   </div>
                 </div>
@@ -271,8 +272,8 @@ function AuthPage() {
                     className="h-11 w-full rounded-lg border border-border bg-card px-3 text-[14px] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     defaultValue="한패스 모바일"
                   >
-                    <option value="한패스">한패스</option>
-                    <option value="한패스 모바일">한패스 모바일</option>
+                    <option value="한패스">{uiCopy("ux.copy3b0cf485bf")}</option>
+                    <option value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
@@ -310,7 +311,7 @@ function AuthPage() {
                       autoComplete="email"
                       required
                       className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
-                      placeholder="you@example.com"
+                      placeholder={uiCopy("ux.copy50e2b46ef8")}
                     />
                   </div>
                 </div>
@@ -383,7 +384,7 @@ function AuthPage() {
                       type="email"
                       required
                       className="h-11 pl-10 rounded-lg border-border text-primary placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring"
-                      placeholder="you@example.com"
+                      placeholder={uiCopy("ux.copy50e2b46ef8")}
                     />
                   </div>
                 </div>

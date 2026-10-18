@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/PageHeader";
@@ -182,7 +183,7 @@ function StaffAdmin() {
   };
 
   const exportCsv = () => {
-    const header = ["이름", "이메일", "전화번호", "부서", "소속", "권한", "상태", "담당 국가", "콜 목표", "개통 목표", "마지막 접속"];
+    const header = [uiCopy("ux.copy9aa18e5071", undefined, "ko"), uiCopy("ux.copy3c37764a2b", undefined, "ko"), uiCopy("ux.copy9a1c3aaaca", undefined, "ko"), uiCopy("ux.copye5b530d6da", undefined, "ko"), uiCopy("ux.copy5d24a2fcca", undefined, "ko"), uiCopy("ux.copy4d02bde7c2", undefined, "ko"), uiCopy("ux.copy2926977ba7", undefined, "ko"), uiCopy("ux.copyc20c9907b6", undefined, "ko"), uiCopy("ux.copy916320861b", undefined, "ko"), uiCopy("ux.copy5073014a80", undefined, "ko"), uiCopy("ux.copy549d527bdf", undefined, "ko")];
     const lines = view.map((r) =>
       [
         r.display_name,
@@ -312,7 +313,7 @@ function StaffAdmin() {
       setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, can_access_telegram: !value } : x)));
       return;
     }
-    toast.success(value ? "텔레그램 상담 접근 허용됨" : "텔레그램 상담 접근 차단됨");
+    toast.success(value ? uiCopy("ux.copya065956349") : uiCopy("ux.copybf68c3d7c5"));
   };
 
 
@@ -435,8 +436,8 @@ function StaffAdmin() {
               <SelectTrigger className="h-9 sm:w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("settings.company")}: {t("common.all")}</SelectItem>
-                <SelectItem value="한패스">한패스</SelectItem>
-                <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+                <SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem>
+                <SelectItem value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={fRole} onValueChange={setFRole}>
@@ -457,7 +458,7 @@ function StaffAdmin() {
               </SelectContent>
             </Select>
             <Button size="sm" variant="outline" className="h-9" onClick={exportCsv}>
-              <Download className="mr-1.5 h-4 w-4" /> CSV
+              <Download className="mr-1.5 h-4 w-4" /> {uiCopy("ux.copy3281188351")}
             </Button>
             {(filterActive || sortActive) && (
               <Button size="sm" variant="ghost" className="h-9" onClick={resetFilters}>
@@ -483,8 +484,8 @@ function StaffAdmin() {
               <Select onValueChange={(v) => applyBulkCompany(v)}>
                 <SelectTrigger className="h-8 w-40"><SelectValue placeholder={t("settings.bulkCompanyApply")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="한패스">한패스</SelectItem>
-                  <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+                  <SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem>
+                  <SelectItem value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button size="sm" variant="ghost" className="h-8" onClick={() => setSelected([])}>{t("common.cancel")}</Button>
@@ -520,7 +521,7 @@ function StaffAdmin() {
                   )}
                   <Select value={r.company} onValueChange={(v) => setCompany(r, v)}>
                     <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="한패스">한패스</SelectItem><SelectItem value="한패스 모바일">한패스 모바일</SelectItem></SelectContent>
+                    <SelectContent><SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem><SelectItem value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</SelectItem></SelectContent>
                   </Select>
                   {r.role !== "admin" && <div className="col-span-2"><MultiCountrySelect options={countries} value={r.country_ids} onChange={(next) => setCountries2(r, next)} /></div>}
                   {r.id !== user?.id && <Button size="sm" variant="outline" onClick={() => setResetTarget(r)}><KeyRound className="mr-1 h-4 w-4" />{t("settings.resetPwd")}</Button>}
@@ -618,8 +619,8 @@ function StaffAdmin() {
                       <Select value={r.company} onValueChange={(v) => setCompany(r, v)}>
                         <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="한패스">한패스</SelectItem>
-                          <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+                          <SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem>
+                          <SelectItem value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
@@ -713,7 +714,7 @@ function StaffAdmin() {
                             onCheckedChange={(v) => setNewSignupAccess(r, v)}
                           />
                           <span className="text-xs text-muted-foreground">
-                            신규가입: {r.role === "admin" ? t("settings.accessAllowedAll") : r.can_access_new_signup ? t("settings.accessAllowed") : t("settings.accessBlocked")}
+                            {uiCopy("ux.copyb0bda5efaa")} {r.role === "admin" ? t("settings.accessAllowedAll") : r.can_access_new_signup ? t("settings.accessAllowed") : t("settings.accessBlocked")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -723,7 +724,7 @@ function StaffAdmin() {
                             onCheckedChange={(v) => setTelegramAccess(r, v)}
                           />
                           <span className="text-xs text-muted-foreground">
-                            텔레그램: {r.role === "admin" ? t("settings.accessAllowedAll") : r.can_access_telegram ? t("settings.accessAllowed") : t("settings.accessBlocked")}
+                            {uiCopy("ux.copy10e44b4770")} {r.role === "admin" ? t("settings.accessAllowedAll") : r.can_access_telegram ? t("settings.accessAllowed") : t("settings.accessBlocked")}
                           </span>
                         </div>
                       </div>
@@ -1046,8 +1047,8 @@ function CreateStaffDialog({
             <Select value={company} onValueChange={setCompany}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="한패스">한패스</SelectItem>
-                <SelectItem value="한패스 모바일">한패스 모바일</SelectItem>
+                <SelectItem value="한패스">{uiCopy("ux.copy3b0cf485bf")}</SelectItem>
+                <SelectItem value="한패스 모바일">{uiCopy("ux.copy9018a1247c")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

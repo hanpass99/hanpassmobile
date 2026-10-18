@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,8 +22,8 @@ import i18n from "@/i18n";
 export const Route = createFileRoute("/notifications")({
   head: () => ({
     meta: [
-      { title: "관리자 공지 · Hanpass Mobile OB CRM" },
-      { name: "description", content: "관리자가 직원에게 공지 팝업과 SMS를 발송합니다." },
+      { title: uiCopy("ux.copye44079b91e") },
+      { name: "description", content: uiCopy("ux.copy506b6ddb92") },
     ],
   }),
   component: NotificationsPage,
@@ -134,8 +135,8 @@ function NotificationsPage() {
 
   const send = async () => {
     if (!user) return;
-    if (!message.trim()) return toast.error("메시지를 입력해주세요");
-    if (selectedStaff.length === 0) return toast.error("수신 직원을 선택해주세요");
+    if (!message.trim()) return toast.error(uiCopy("ux.copy639327aa73"));
+    if (selectedStaff.length === 0) return toast.error(uiCopy("ux.copy17e717e325"));
     setSending(true);
     try {
       const { data: noti, error: nErr } = await supabase
@@ -157,7 +158,7 @@ function NotificationsPage() {
           body: { receivers, message: smsText, title: title.trim() || "공지" },
         });
         if (sErr) {
-          smsInfo = ` (SMS 실패: ${sErr.message})`;
+          smsInfo = uiCopy("ux.copy3fd23e3fdc", { value0: sErr.message });
         } else {
           const ok = (smsRes as any)?.ok;
           const status = ok ? "sent" : "failed";
@@ -169,19 +170,19 @@ function NotificationsPage() {
               "user_id",
               withPhone.map((s) => s.id),
             );
-          smsInfo = ok ? ` · SMS ${withPhone.length}건 발송` : ` (SMS 실패)`;
+          smsInfo = ok ? uiCopy("ux.copyfe5acbf748", { value0: withPhone.length }) : uiCopy("ux.copy3484da77e2");
         }
         const skipped = selectedStaff.length - withPhone.length;
-        if (skipped > 0) smsInfo += ` · 번호 없음 ${skipped}명 스킵`;
+        if (skipped > 0) smsInfo += uiCopy("ux.copyb2c7761573", { value0: skipped });
       }
 
-      toast.success(`${selectedStaff.length}명에게 공지 발송 완료${smsInfo}`);
+      toast.success(uiCopy("ux.copy36869a1e4f", { value0: selectedStaff.length, value1: smsInfo }));
       setTitle("");
       setMessage("");
       setSelected(new Set());
       qc.invalidateQueries({ queryKey: ["noti-history"] });
     } catch (e: any) {
-      toast.error(`발송 실패: ${e?.message ?? e}`);
+      toast.error(uiCopy("ux.copybf7e58346d", { value0: e?.message ?? e }));
     } finally {
       setSending(false);
     }
@@ -190,7 +191,7 @@ function NotificationsPage() {
   if (!isAdmin) {
     return (
       <div className="space-y-4">
-        <PageHeader title="관리자 공지" description="관리자만 접근할 수 있습니다." />
+        <PageHeader title={uiCopy("ux.copy79500c9b6b")} description={uiCopy("ux.copy5a5a3d6567")} />
       </div>
     );
   }
@@ -199,45 +200,45 @@ function NotificationsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="관리자 공지" description="직원에게 팝업 공지와 업무폰 SMS를 함께 발송합니다." />
+      <PageHeader title={uiCopy("ux.copy79500c9b6b")} description={uiCopy("ux.copyafc7ceb07d")} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">새 공지 작성</CardTitle>
+            <CardTitle className="text-base">{uiCopy("ux.copy3f9f0f1f38")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>제목 (선택)</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 긴급 회의" maxLength={44} />
+              <Label>{uiCopy("ux.copy7cbc093002")}</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={uiCopy("ux.copy47ab900319")} maxLength={44} />
             </div>
             <div className="space-y-2">
-              <Label>내용 *</Label>
+              <Label>{uiCopy("ux.copycd2f267c0d")}</Label>
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="직원에게 전달할 내용을 입력하세요"
+                placeholder={uiCopy("ux.copy29d8a0aedf")}
                 rows={6}
               />
               <p className="text-xs text-muted-foreground">
-                직원 화면에 큰 팝업으로 표시되며, 확인 버튼을 눌러야 닫힙니다.
+                {uiCopy("ux.copyc6f35041b3")}
               </p>
             </div>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border p-3">
               <div className="min-w-0">
-                <div className="text-sm font-medium">업무폰 SMS도 함께 전송</div>
-                <div className="text-xs text-muted-foreground">등록된 전화번호가 있는 직원에게만 발송됩니다.</div>
+                <div className="text-sm font-medium">{uiCopy("ux.copy9235e58c12")}</div>
+                <div className="text-xs text-muted-foreground">{uiCopy("ux.copyf041cc568b")}</div>
               </div>
               <Switch checked={sendSms} onCheckedChange={setSendSms} />
             </div>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t pt-3">
               <div className="text-sm text-muted-foreground">
-                선택: <b className="text-foreground">{selectedStaff.length}</b>명
-                {sendSms ? ` · SMS 대상 ${withPhone.length}명` : ""}
+                {uiCopy("ux.copy8b497e8a54")} <b className="text-foreground">{selectedStaff.length}</b>{uiCopy("ux.copy5a62fd50d2")}
+                {sendSms ? uiCopy("ux.copyaecf3e3a33", { value0: withPhone.length }) : ""}
               </div>
               <Button onClick={send} disabled={sending || !message.trim() || selectedStaff.length === 0}>
                 <Send className="mr-2 h-4 w-4" />
-                {sending ? "발송 중..." : "발송"}
+                {sending ? uiCopy("ux.copya1cdc12999") : uiCopy("ux.copy6979bfc484")}
               </Button>
             </div>
           </CardContent>
@@ -246,11 +247,11 @@ function NotificationsPage() {
         <Card>
           <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 space-y-0">
             <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4" /> 수신 직원
+              <Users className="h-4 w-4" /> {uiCopy("ux.copyd442a6ac55")}
             </CardTitle>
             <div className="flex items-center gap-2 text-xs">
               <Checkbox checked={allSelected} onCheckedChange={(v) => toggleAll(!!v)} id="all" />
-              <label htmlFor="all" className="cursor-pointer">전직원 선택</label>
+              <label htmlFor="all" className="cursor-pointer">{uiCopy("ux.copy426ad8878a")}</label>
             </div>
           </CardHeader>
           <CardContent className="max-h-[420px] overflow-y-auto space-y-1">
@@ -266,13 +267,13 @@ function NotificationsPage() {
                   {hasPhone ? (
                     <span className="text-xs text-muted-foreground">{s.phone}</span>
                   ) : (
-                    <Badge variant="outline" className="text-xs">번호 없음</Badge>
+                    <Badge variant="outline" className="text-xs">{uiCopy("ux.copy56005390d1")}</Badge>
                   )}
                 </label>
               );
             })}
             {staff.length === 0 ? (
-              <p className="p-3 text-center text-sm text-muted-foreground">활성 직원이 없습니다.</p>
+              <p className="p-3 text-center text-sm text-muted-foreground">{uiCopy("ux.copy9cc3d9dd53")}</p>
             ) : null}
           </CardContent>
         </Card>
@@ -280,17 +281,17 @@ function NotificationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">발송 이력 (최근 50건)</CardTitle>
+          <CardTitle className="text-base">{uiCopy("ux.copy578d9de4c5")}</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>일시</TableHead>
-                <TableHead>제목</TableHead>
-                <TableHead>내용</TableHead>
-                <TableHead className="text-right">확인</TableHead>
-                <TableHead className="text-right">SMS</TableHead>
+                <TableHead>{uiCopy("ux.copyabfcf6cff0")}</TableHead>
+                <TableHead>{uiCopy("ux.copy078b3a1b0a")}</TableHead>
+                <TableHead>{uiCopy("ux.copy8a0c65f9e1")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy468266d639")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy9e10d4517d")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -313,8 +314,8 @@ function NotificationsPage() {
                     </Button>
                   </TableCell>
                   <TableCell className="text-right text-xs">
-                    {h.sms_ok > 0 ? <span className="text-emerald-600">성공 {h.sms_ok}</span> : null}
-                    {h.sms_fail > 0 ? <span className="ml-2 text-red-600">실패 {h.sms_fail}</span> : null}
+                    {h.sms_ok > 0 ? <span className="text-emerald-600">{uiCopy("ux.copy23b6441130")} {h.sms_ok}</span> : null}
+                    {h.sms_fail > 0 ? <span className="ml-2 text-red-600">{uiCopy("ux.copy732fe33ab1")} {h.sms_fail}</span> : null}
                     {h.sms_ok === 0 && h.sms_fail === 0 ? <span className="text-muted-foreground">-</span> : null}
                   </TableCell>
                 </TableRow>
@@ -322,7 +323,7 @@ function NotificationsPage() {
               {history.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="p-6 text-center text-sm text-muted-foreground">
-                    발송 이력이 없습니다.
+                    {uiCopy("ux.copy688f0e9740")}
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -334,11 +335,11 @@ function NotificationsPage() {
       <Dialog open={!!detailNoti} onOpenChange={(open) => !open && setDetailNoti(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>확인 현황 · Acknowledgement Status</DialogTitle>
+            <DialogTitle>{uiCopy("ux.copy87091b0ede")}</DialogTitle>
             <DialogDescription>
               {detailNoti ? (
                 <>
-                  {new Date(detailNoti.created_at).toLocaleString()} · {detailNoti.title ?? "관리자 공지"}
+                  {new Date(detailNoti.created_at).toLocaleString()} · {detailNoti.title ?? uiCopy("ux.copy79500c9b6b")}
                 </>
               ) : null}
             </DialogDescription>
@@ -347,10 +348,10 @@ function NotificationsPage() {
             <div className="space-y-4">
                <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="rounded-md bg-emerald-50 px-3 py-1 text-emerald-700">
-                  확인 완료: {detailNoti.acked}명
+                  {uiCopy("ux.copy7331dcc71c")} {detailNoti.acked}{uiCopy("ux.copy5a62fd50d2")}
                 </div>
                 <div className="rounded-md bg-red-50 px-3 py-1 text-red-700">
-                  미확인: {detailNoti.total - detailNoti.acked}명
+                  {uiCopy("ux.copy46bf0c9447")} {detailNoti.total - detailNoti.acked}{uiCopy("ux.copy5a62fd50d2")}
                 </div>
               </div>
 
@@ -358,8 +359,8 @@ function NotificationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>직원</TableHead>
-                      <TableHead className="text-right">상태</TableHead>
+                      <TableHead>{uiCopy("ux.copycee097c09f")}</TableHead>
+                      <TableHead className="text-right">{uiCopy("ux.copy2926977ba7")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -369,14 +370,14 @@ function NotificationsPage() {
                         <TableRow key={r.user_id}>
                           <TableCell className="text-sm font-medium">{r.display_name}</TableCell>
                           <TableCell className="text-right">
-                            <Badge variant="destructive" className="text-xs">미확인</Badge>
+                            <Badge variant="destructive" className="text-xs">{uiCopy("ux.copy46a79618eb")}</Badge>
                           </TableCell>
                         </TableRow>
                       ))}
                     {detailNoti.recipients.filter((r) => !r.acknowledged_at).length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={2} className="p-4 text-center text-sm text-muted-foreground">
-                          모두 확인했습니다. All acknowledged.
+                          {uiCopy("ux.copy19edd1e4d9")}
                         </TableCell>
                       </TableRow>
                     ) : null}

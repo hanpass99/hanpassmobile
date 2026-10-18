@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -147,7 +148,7 @@ function AuthedShell() {
   if (isActive === false) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
-        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">H</span>
+        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">{uiCopy("ux.copy7cf184f4c6")}</span>
         <h1 className="text-xl font-bold text-foreground">{t("auth.pendingTitle")}</h1>
         <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t("auth.pendingSub")}</p>
         {displayName && <p className="mt-1 text-xs text-muted-foreground/70">{displayName}</p>}
@@ -172,10 +173,10 @@ function AuthedShell() {
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="sticky top-0 z-30 grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 bg-header px-3 text-header-foreground shadow-sm md:flex md:gap-3 md:px-6">
               <SidebarTrigger className="text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground" />
-              <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[13px]">
+              <nav aria-label={uiCopy("ux.copy6e5ce570b4")} className="flex min-w-0 items-center gap-1.5 text-[13px]">
                 <Link to="/" className="inline-flex shrink-0 items-center gap-2 font-medium text-header-foreground/70 hover:text-header-foreground">
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-xs font-black text-brand-foreground">H</span>
-                  <span className="hidden sm:inline">Hanpass Mobile</span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-xs font-black text-brand-foreground">{uiCopy("ux.copy7cf184f4c6")}</span>
+                  <span className="hidden sm:inline">{uiCopy("ux.copyca8c605ac7")}</span>
                 </Link>
                 <span className="hidden text-header-foreground/30 sm:inline">/</span>
                 <a
@@ -184,13 +185,13 @@ function AuthedShell() {
                   rel="noopener noreferrer"
                   className="truncate font-display font-semibold text-header-foreground hover:underline"
                 >
-                  USIM 개통
+                  {uiCopy("ux.copy43baaf5052")}
                 </a>
               </nav>
               <div className="hidden flex-1 md:block" />
               <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-xs font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                OB Call Management
+                {uiCopy("ux.copy36e1723e1c")}
               </span>
               <span
                 aria-hidden

@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -78,7 +79,7 @@ function SlaPage() {
       <Tabs defaultValue="sla" className="space-y-6">
         <TabsList className="grid h-auto w-full grid-cols-2 sm:w-auto">
           <TabsTrigger value="sla">{t("sla.title")}</TabsTrigger>
-          <TabsTrigger value="callfines">직원 콜 벌금</TabsTrigger>
+          <TabsTrigger value="callfines">{uiCopy("ux.copy1c8e7e0c39")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="sla" className="space-y-6">
@@ -197,7 +198,7 @@ function SlaPage() {
                     <TableCell>
                       <span className="font-semibold text-destructive">{t("sla.days", { n: r.overdue_days })}</span>
                       <span className="ml-1 text-xs text-muted-foreground">
-                        ({Math.round(r.overdue_hours)}h)
+                        ({Math.round(r.overdue_hours)}{uiCopy("ux.copy15b7f4d979")}
                       </span>
                     </TableCell>
                     <TableCell className="text-right font-semibold">{won(r.fine_total)}</TableCell>
@@ -540,11 +541,11 @@ function StaffCallFinesCard(props: {
       });
       toast.success(
         nowWaived
-          ? `${name}: ${focusDate} 벌금이 면제되었습니다`
-          : `${name}: ${focusDate} 벌금 면제가 해제되었습니다`,
+          ? uiCopy("ux.copya6ceb41a40", { value0: name, value1: focusDate })
+          : uiCopy("ux.copy8e9278e6f7", { value0: name, value1: focusDate }),
       );
     } catch (e) {
-      toast.error((e as Error).message || "처리 실패");
+      toast.error((e as Error).message || uiCopy("ux.copyfa4ae245c4"));
     }
   };
 
@@ -552,9 +553,9 @@ function StaffCallFinesCard(props: {
     if (!Number.isFinite(next) || next < 0 || next === current) return;
     try {
       await setGoal.mutateAsync({ userId, goal: next });
-      toast.success(`${name}: 콜 목표 ${next}로 변경`);
+      toast.success(uiCopy("ux.copy1bc80e57f6", { value0: name, value1: next }));
     } catch (e) {
-      toast.error((e as Error).message || "목표 변경 실패");
+      toast.error((e as Error).message || uiCopy("ux.copyd114a46691"));
     }
   };
 
@@ -565,16 +566,16 @@ function StaffCallFinesCard(props: {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" />
-          직원 콜 벌금 (일 목표 미달 · 3만원/일)
+          {uiCopy("ux.copye7327b4635")}
         </CardTitle>
         <CardDescription className="flex flex-wrap items-center gap-3">
-          <span>통화 로그 기준. 이번 달 합계: <span className="font-semibold text-destructive">{won(totalMonthFine)}</span></span>
+          <span>{uiCopy("ux.copy386ad559ab")} <span className="font-semibold text-destructive">{won(totalMonthFine)}</span></span>
           <span className="text-xs text-muted-foreground">
-            선택 날짜 벌금: <span className="font-semibold">{won(focusDayFine)}</span>
+            {uiCopy("ux.copy6fc2ec7491")} <span className="font-semibold">{won(focusDayFine)}</span>
           </span>
         </CardDescription>
         <div className="flex flex-wrap items-center gap-2 pt-2">
-          <Label className="text-xs">날짜별 조회</Label>
+          <Label className="text-xs">{uiCopy("ux.copy1664ccf1cd")}</Label>
           <Input
             type="date"
             value={focusDate}
@@ -584,7 +585,7 @@ function StaffCallFinesCard(props: {
           />
           {!isFocusToday && (
             <Button size="sm" variant="ghost" onClick={() => setFocusDate(props.today)}>
-              오늘로
+              {uiCopy("ux.copya14409f042")}
             </Button>
           )}
         </div>
@@ -593,35 +594,35 @@ function StaffCallFinesCard(props: {
         {fines.isLoading ? (
           <Skeleton className="h-32 w-full" />
         ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">직원이 없습니다</div>
+          <div className="py-8 text-center text-sm text-muted-foreground">{uiCopy("ux.copy3050fd67de")}</div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>직원</TableHead>
-                <TableHead className="text-right">일 목표</TableHead>
-                <TableHead className="text-right">{isFocusToday ? "오늘 콜" : `${focusDate} 콜`}</TableHead>
-                <TableHead className="text-right">이달 총콜</TableHead>
-                <TableHead className="text-right">벌금 일수</TableHead>
-                <TableHead className="text-right">결근/면제</TableHead>
-                <TableHead className="text-right">이달 벌금</TableHead>
-                {props.isAdmin && <TableHead className="text-right">선택일 처리</TableHead>}
+                <TableHead>{uiCopy("ux.copycee097c09f")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy84cdec709d")}</TableHead>
+                <TableHead className="text-right">{isFocusToday ? uiCopy("ux.copyff36f9f5ec") : uiCopy("ux.copy47761a7f65", { value0: focusDate })}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy4b9a2cb30d")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy094f8bfce2")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copyf9704248b4")}</TableHead>
+                <TableHead className="text-right">{uiCopy("ux.copy6b808f497d")}</TableHead>
+                {props.isAdmin && <TableHead className="text-right">{uiCopy("ux.copy3cd034a784")}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((r) => {
                 const goal = Number(r.daily_call_goal ?? 50);
                 const focusStatus = r.focus_absent
-                  ? "결근"
+                  ? uiCopy("ux.copyee47824bf9")
                   : r.focus_waived
-                    ? "면제"
+                    ? uiCopy("ux.copy882fd3b5d2")
                     : r.focus_fined
-                      ? "벌금"
+                      ? uiCopy("ux.copy832f8aeddc")
                       : r.focus_calls >= goal
-                        ? "달성"
+                        ? uiCopy("ux.copyf3b8c1b4da")
                         : isFocusToday
                           ? `${r.focus_calls}/${goal}`
-                          : "미달";
+                          : uiCopy("ux.copya72490afb8");
                 const badgeTone = r.focus_absent || r.focus_waived
                   ? "secondary"
                   : r.focus_fined
@@ -650,7 +651,7 @@ function StaffCallFinesCard(props: {
                       <span className="ml-2 text-xs text-muted-foreground">{r.focus_calls}</span>
                     </TableCell>
                     <TableCell className="text-right">{r.total_calls.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{r.days_fined}일</TableCell>
+                    <TableCell className="text-right">{r.days_fined}{uiCopy("ux.copy06cf3e90de")}</TableCell>
                     <TableCell className="text-right text-xs text-muted-foreground">
                       {r.days_absent}/{r.days_waived}
                     </TableCell>
@@ -665,7 +666,7 @@ function StaffCallFinesCard(props: {
                           disabled={toggle.isPending}
                           onClick={() => onToggle(r.user_id, r.display_name, r.focus_waived)}
                         >
-                          {r.focus_waived ? "면제 해제" : "벌금 면제"}
+                          {r.focus_waived ? uiCopy("ux.copy2ff2de6868") : uiCopy("ux.copybfb5bb88b0")}
                         </Button>
                       </TableCell>
                     )}

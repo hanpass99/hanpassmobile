@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -94,7 +95,7 @@ export function AdminPushListener() {
           </div>
           <div className="flex flex-1 items-center gap-3">
             <AlertTriangle className="h-8 w-8" />
-            <span className="text-3xl font-black tracking-wide">긴급 공지 · URGENT NOTICE</span>
+            <span className="text-3xl font-black tracking-wide">{uiCopy("ux.copy4aa93a11d4")}</span>
           </div>
           {queue.length > 1 ? (
             <span className="rounded-full bg-destructive-foreground/20 px-5 py-2 text-lg font-bold">
@@ -105,7 +106,7 @@ export function AdminPushListener() {
 
         <div className="px-10 py-8">
           <h2 className="mb-2 text-4xl font-black leading-tight text-foreground">
-            {current.title?.trim() ? current.title : "관리자 공지 / Admin Notice"}
+            {current.title?.trim() ? current.title : uiCopy("ux.copycaa5e41799")}
           </h2>
           <p className="mb-6 text-base text-muted-foreground">
             {current.sender_name ? `${current.sender_name}` : ""}
@@ -127,7 +128,7 @@ export function AdminPushListener() {
             onClick={ack}
             disabled={acking}
           >
-            {acking ? "처리 중..." : "확인 / Acknowledge"}
+            {acking ? uiCopy("ux.copye6e1a2914f") : uiCopy("ux.copy8ebadf1d16")}
           </Button>
         </div>
       </div>

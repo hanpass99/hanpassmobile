@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -150,9 +151,9 @@ const TEMPLATE_SELECT =
   "id, title, content, shortcut, media_type, media_storage_path, media_file_name, media_mime, media_size";
 
 const STATUS_LABEL: Record<ChatStatus, string> = {
-  new: "신규",
-  in_progress: "처리중",
-  done: "완료",
+  get new() { return uiCopy("ux.copy884009917a"); },
+  get in_progress() { return uiCopy("ux.copy9fdd13d4e6"); },
+  get done() { return uiCopy("ux.copy8d8680373c"); },
 };
 
 const STATUS_DOT: Record<ChatStatus, string> = {
@@ -170,8 +171,8 @@ const STATUS_BADGE: Record<ChatStatus, string> = {
 export const Route = createFileRoute("/telegram")({
   head: () => ({
     meta: [
-      { title: "텔레그램 상담 — Hanpass OB CRM" },
-      { name: "description", content: "텔레그램 고객 상담 통합 채팅" },
+      { title: uiCopy("ux.copy44805994d0") },
+      { name: "description", content: uiCopy("ux.copy9c7d21aa5e") },
     ],
   }),
   component: TelegramPage,
@@ -350,7 +351,7 @@ function TelegramPage() {
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <MessageCircle className="h-5 w-5" />
-          <h1 className="truncate text-base font-semibold sm:text-lg">텔레그램 상담 · Telegram Chat</h1>
+          <h1 className="truncate text-base font-semibold sm:text-lg">{uiCopy("ux.copy33bdcb4f52")}</h1>
           <Badge variant="secondary">{chats.length}</Badge>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -359,19 +360,19 @@ function TelegramPage() {
               value={operatorFilter}
               onChange={(e) => setOperatorFilter(e.target.value)}
               className="hidden h-8 rounded-md border bg-background px-2 text-xs sm:block"
-              title="상담사별 대화 필터 (감사용)"
+              title={uiCopy("ux.copy38dcdc6336")}
             >
-              <option value="all">전체 상담사</option>
+              <option value="all">{uiCopy("ux.copy48d503e015")}</option>
               {(staffQuery.data ?? []).map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.display_name ?? "직원"}
+                  {p.display_name ?? uiCopy("ux.copycee097c09f")}
                 </option>
               ))}
             </select>
           )}
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-              <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">웹훅 설정</span>
+              <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">{uiCopy("ux.copyd21fbc5395")}</span>
             </Button>
           )}
         </div>
@@ -387,18 +388,18 @@ function TelegramPage() {
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="이름, 번호, 메시지 검색"
+                placeholder={uiCopy("ux.copy5599c57f43")}
                 className="pl-8 h-9"
               />
             </div>
             <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as typeof filterTab)} className="mt-2">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all" className="text-xs">
-                  전체 <span className="ml-1 opacity-60">{counts.all}</span>
+                  {uiCopy("ux.copy934dd25ec5")} <span className="ml-1 opacity-60">{counts.all}</span>
                 </TabsTrigger>
                 <TabsTrigger value="new" className="text-xs">
                   <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-                  신규
+                  {uiCopy("ux.copy884009917a")}
                   {counts.new > 0 && (
                     <span className="ml-1 rounded-full bg-green-500 px-1.5 text-xs font-bold text-white">
                       {counts.new}
@@ -407,20 +408,20 @@ function TelegramPage() {
                 </TabsTrigger>
                 <TabsTrigger value="in_progress" className="text-xs">
                   <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-yellow-500" />
-                  처리중
+                  {uiCopy("ux.copy9fdd13d4e6")}
                 </TabsTrigger>
                 <TabsTrigger value="done" className="text-xs">
                   <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-gray-400" />
-                  완료
+                  {uiCopy("ux.copy8d8680373c")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
           <ScrollArea className="flex-1">
             {chatsQuery.isLoading ? (
-              <div className="p-4 text-sm text-muted-foreground">불러오는 중...</div>
+              <div className="p-4 text-sm text-muted-foreground">{uiCopy("ux.copyc21bd66dd4")}</div>
             ) : filtered.length === 0 ? (
-              <div className="p-4 text-sm text-muted-foreground">대화가 없습니다.</div>
+              <div className="p-4 text-sm text-muted-foreground">{uiCopy("ux.copy87efbbfdb9")}</div>
             ) : (
               <div className="divide-y pb-4">
                 {filtered.map((c) => {
@@ -480,22 +481,22 @@ function TelegramPage() {
                             title={c.needs_human_reason ?? undefined}
                             className="h-4 gap-0.5 border-red-500/50 bg-red-500/15 px-1 text-xs font-semibold text-red-700 dark:text-red-300"
                           >
-                            <AlertTriangle className="h-2.5 w-2.5" /> AI 응답 불가 · 담당자 확인 필요
+                            <AlertTriangle className="h-2.5 w-2.5" /> {uiCopy("ux.copy63267b6ea4")}
                           </Badge>
                         )}
                         {c.banned && (
                           <Badge variant="outline" className="h-4 gap-0.5 border-red-600/50 bg-red-600/15 px-1 text-xs font-semibold text-red-700 dark:text-red-300">
-                            ⛔ 차단한 고객
+                            {uiCopy("ux.copyb1ff426e0c")}
                           </Badge>
                         )}
                         {c.is_blocked && (
                           <Badge variant="outline" className="h-4 gap-0.5 border-red-500/40 bg-red-500/10 px-1 text-xs text-red-700 dark:text-red-300">
-                            🚫 차단됨
+                            {uiCopy("ux.copy495bd02a6f")}
                           </Badge>
                         )}
                         {replyLockSecondsLeft(c, user?.id, nowMs) > 0 && (
                           <Badge variant="outline" className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-xs text-amber-700 dark:text-amber-300">
-                            🔒 답변 중 ({replyLockSecondsLeft(c, user?.id, nowMs)}초)
+                            {uiCopy("ux.copyaa3fa94efd")}{replyLockSecondsLeft(c, user?.id, nowMs)}{uiCopy("ux.copy0445c19584")}
                           </Badge>
                         )}
 
@@ -505,10 +506,10 @@ function TelegramPage() {
                             variant="outline"
                             className="h-4 gap-0.5 border-blue-500/30 bg-blue-500/10 px-1 text-xs text-blue-700 dark:text-blue-300"
                           >
-                            담당: {operatorMap[c.assigned_operator_id]?.display_name ?? "직원"}
+                            {uiCopy("ux.copyd8ee08c181")} {operatorMap[c.assigned_operator_id]?.display_name ?? uiCopy("ux.copycee097c09f")}
                           </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground">담당: 없음</span>
+                          <span className="text-xs text-muted-foreground">{uiCopy("ux.copyd1639782f6")}</span>
                         )}
                         {c.telegram_username && (
                           <span className="text-xs text-muted-foreground">@{c.telegram_username}</span>
@@ -529,14 +530,14 @@ function TelegramPage() {
             <>
               <div className="border-b p-2 md:hidden">
                 <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)}>
-                  <ArrowLeft className="mr-1 h-4 w-4" /> 대화 목록
+                  <ArrowLeft className="mr-1 h-4 w-4" /> {uiCopy("ux.copy9a7569f26d")}
                 </Button>
               </div>
               <ConversationPane chat={selected} />
             </>
           ) : (
             <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-              왼쪽에서 대화를 선택하세요.
+              {uiCopy("ux.copy8fdfaa79a5")}
             </div>
           )}
         </div>
@@ -680,7 +681,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "전송 실패"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy7851126014")),
   });
 
   const editMut = useMutation({
@@ -691,14 +692,14 @@ function ConversationPane({ chat }: { chat: Chat }) {
       setEditingText("");
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "수정 실패"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copydb8be469b3")),
   });
 
   const uploadAndSend = async (file: File) => {
     if (!file) return;
     const MAX = 20 * 1024 * 1024;
     if (file.size > MAX) {
-      toast.error("파일이 너무 큽니다 (최대 20MB)");
+      toast.error(uiCopy("ux.copy858605d9a8"));
       return;
     }
     setIsUploading(true);
@@ -731,7 +732,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "파일 전송 실패");
+      toast.error(e instanceof Error ? e.message : uiCopy("ux.copy1938fe147b"));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -741,7 +742,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const unlinkMut = useMutation({
     mutationFn: async () => unlinkFn({ data: { chatRowId: chat.id, customerId: null } }),
     onSuccess: () => {
-      toast.success("연결 해제됨");
+      toast.success(uiCopy("ux.copy612c88e20c"));
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
   });
@@ -751,10 +752,10 @@ function ConversationPane({ chat }: { chat: Chat }) {
     mutationFn: async (banned: boolean) =>
       banFn({ data: { chatRowId: chat.id, banned, reason: banned ? "운영자 차단" : null } }),
     onSuccess: (_d, banned) => {
-      toast.success(banned ? "고객을 차단했습니다" : "차단을 해제했습니다");
+      toast.success(banned ? uiCopy("ux.copy4be81ba004") : uiCopy("ux.copy1bc5eca1e4"));
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "차단 처리 실패"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy6b16fe43fd")),
   });
 
   const statusMut = useMutation({
@@ -763,7 +764,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "상태 변경 실패"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copydc766aa667")),
   });
 
   const onSubmit = () => {
@@ -774,7 +775,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
 
   const profileMap = profilesQuery.data ?? {};
   const lockHolderName =
-    (chat.reply_lock_by && profileMap[chat.reply_lock_by]?.display_name) || "다른 담당자";
+    (chat.reply_lock_by && profileMap[chat.reply_lock_by]?.display_name) || uiCopy("ux.copyde33f64f55");
   const messagesById = useMemo(() => {
     const map = new Map<string, Message>();
     for (const m of messagesQuery.data ?? []) map.set(m.id, m);
@@ -858,12 +859,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
             </Badge>
             {chat.banned && (
               <Badge variant="outline" className="h-5 px-1.5 text-xs border-red-600/50 bg-red-600/15 text-red-700 dark:text-red-300">
-                ⛔ 차단한 고객
+                {uiCopy("ux.copyb1ff426e0c")}
               </Badge>
             )}
             {chat.is_blocked && (
               <Badge variant="outline" className="h-5 px-1.5 text-xs border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300">
-                🚫 차단됨
+                {uiCopy("ux.copy495bd02a6f")}
               </Badge>
             )}
           </div>
@@ -875,7 +876,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
             ) : chat.phone ? (
               <span>{chat.phone}</span>
             ) : (
-              <span className="text-muted-foreground">번호 대기중</span>
+              <span className="text-muted-foreground">{uiCopy("ux.copybdeffc4066")}</span>
             )}
             {(() => {
               const msgs = messagesQuery.data ?? [];
@@ -884,7 +885,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
               if (!name) return null;
               return (
                 <span className="text-blue-700 dark:text-blue-300">
-                  마지막 응대: {name}
+                  {uiCopy("ux.copyc56848ce21")} {name}
                 </span>
               );
             })()}
@@ -899,7 +900,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
               disabled={statusMut.isPending}
               className="border-gray-400/40 text-gray-600 hover:bg-gray-500/10 dark:text-gray-300"
             >
-              <Check className="mr-1 h-4 w-4" /> 완료 처리
+              <Check className="mr-1 h-4 w-4" /> {uiCopy("ux.copya9f9a032f1")}
             </Button>
           ) : (
             <Button
@@ -908,16 +909,16 @@ function ConversationPane({ chat }: { chat: Chat }) {
               onClick={() => statusMut.mutate("in_progress")}
               disabled={statusMut.isPending}
             >
-              다시 열기
+              {uiCopy("ux.copy2834b5649a")}
             </Button>
           )}
           {chat.customer_id ? (
             <Button size="sm" variant="ghost" onClick={() => unlinkMut.mutate()}>
-              <Link2Off className="mr-1 h-4 w-4" /> 연결 해제
+              <Link2Off className="mr-1 h-4 w-4" /> {uiCopy("ux.copyeb58837ff6")}
             </Button>
           ) : (
             <Button size="sm" variant="outline" onClick={() => setShowLinkDialog(true)}>
-              <UserPlus className="mr-1 h-4 w-4" /> 고객 연결
+              <UserPlus className="mr-1 h-4 w-4" /> {uiCopy("ux.copyd88c6293ee")}
             </Button>
           )}
           {chat.banned ? (
@@ -928,21 +929,21 @@ function ConversationPane({ chat }: { chat: Chat }) {
               disabled={banMut.isPending}
               className="border-green-500/40 text-green-700 hover:bg-green-500/10 dark:text-green-400"
             >
-              <ShieldCheck className="mr-1 h-4 w-4" /> 차단 해제
+              <ShieldCheck className="mr-1 h-4 w-4" /> {uiCopy("ux.copyb80f64fc98")}
             </Button>
           ) : (
             <Button
               size="sm"
               variant="outline"
               onClick={() => {
-                if (window.confirm("이 고객을 차단할까요? 차단하면 고객이 보내는 메시지가 더 이상 접수되지 않습니다.")) {
+                if (window.confirm(uiCopy("ux.copy6166f7d9f7"))) {
                   banMut.mutate(true);
                 }
               }}
               disabled={banMut.isPending}
               className="border-red-500/40 text-red-700 hover:bg-red-500/10 dark:text-red-400"
             >
-              <Ban className="mr-1 h-4 w-4" /> 고객 차단
+              <Ban className="mr-1 h-4 w-4" /> {uiCopy("ux.copy2d6f7d040f")}
             </Button>
           )}
         </div>
@@ -953,9 +954,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
         {messagesQuery.isLoading ? (
-          <div className="text-sm text-muted-foreground">불러오는 중...</div>
+          <div className="text-sm text-muted-foreground">{uiCopy("ux.copyc21bd66dd4")}</div>
         ) : (messagesQuery.data ?? []).length === 0 ? (
-          <div className="text-sm text-muted-foreground">아직 메시지가 없습니다.</div>
+          <div className="text-sm text-muted-foreground">{uiCopy("ux.copye450ca6989")}</div>
         ) : (
           (messagesQuery.data ?? []).map((m) => {
             const isOut = m.direction === "out";
@@ -967,9 +968,9 @@ function ConversationPane({ chat }: { chat: Chat }) {
             });
             const senderLabel = isOut
               ? m.is_ai_generated
-                ? `🤖 AI 자동 응답 · ${timeLabel}`
-                : `${sender?.display_name ?? "직원"}${isMine ? " (나)" : ""} · ${timeLabel}`
-              : `고객 · ${timeLabel}`;
+                ? uiCopy("ux.copye11da71b5b", { value0: timeLabel })
+                : uiCopy("ux.copyc6d0857541", { value0: sender?.display_name ?? uiCopy("ux.copycee097c09f"), value1: isMine ? uiCopy("ux.copy7c87b7cc1a") : "", value2: timeLabel })
+              : uiCopy("ux.copyd1b9a3b288", { value0: timeLabel });
             const isEditing = editingId === m.id;
             const editable =
               isMine &&
@@ -985,7 +986,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                     )}
                   >
                     <span>{senderLabel}</span>
-                    {m.edited_at && <span className="italic opacity-70">(수정됨)</span>}
+                    {m.edited_at && <span className="italic opacity-70">{uiCopy("ux.copy8e7ea3f3b8")}</span>}
                     {!isEditing && !chat.is_blocked && (
                       <button
                         type="button"
@@ -994,7 +995,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                           focusInput();
                         }}
                         className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition text-primary/70 hover:text-primary"
-                        title="답장"
+                        title={uiCopy("ux.copy15ebe9285d")}
                       >
                         <Reply className="h-3 w-3" />
                       </button>
@@ -1007,7 +1008,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                           setEditingText(m.text ?? m.caption ?? "");
                         }}
                         className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition text-primary/70 hover:text-primary"
-                        title="메시지 수정"
+                        title={uiCopy("ux.copye6b0083ac6")}
                       >
                         <Pencil className="h-3 w-3" />
                       </button>
@@ -1042,21 +1043,21 @@ function ConversationPane({ chat }: { chat: Chat }) {
                             }}
                             disabled={editMut.isPending}
                           >
-                            취소
+                            {uiCopy("ux.copy19b2d19bc1")}
                           </Button>
                           <Button
                             size="sm"
                             onClick={() => {
                               const t = editingText.trim();
                               if (!t) {
-                                toast.error("내용을 입력하세요");
+                                toast.error(uiCopy("ux.copy8f12bb567d"));
                                 return;
                               }
                               editMut.mutate({ messageId: m.id, text: t });
                             }}
                             disabled={editMut.isPending}
                           >
-                            {editMut.isPending ? "저장중..." : "저장"}
+                            {editMut.isPending ? uiCopy("ux.copy44bcbeea77") : uiCopy("ux.copy1f1712acff")}
                           </Button>
                         </div>
                       </div>
@@ -1089,10 +1090,10 @@ function ConversationPane({ chat }: { chat: Chat }) {
             <span className="text-2xl">⛔</span>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-red-700 dark:text-red-300">
-                차단한 고객입니다
+                {uiCopy("ux.copyc1d8859802")}
               </div>
               <div className="mt-0.5 text-xs text-muted-foreground">
-                이 고객이 보내는 메시지는 접수되지 않습니다. 다시 상담하려면 상단의 “차단 해제”를 누르세요.
+                {uiCopy("ux.copy945211fa95")}
               </div>
             </div>
           </div>
@@ -1103,10 +1104,10 @@ function ConversationPane({ chat }: { chat: Chat }) {
             <span className="text-2xl">🚫</span>
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm text-red-700 dark:text-red-300">
-                고객이 봇을 차단했습니다
+                {uiCopy("ux.copy1a7378ef99")}
               </div>
               <div className="text-xs text-muted-foreground mt-0.5">
-                텔레그램으로는 메시지를 보낼 수 없습니다. 대신 SMS로 발송하세요.
+                {uiCopy("ux.copyb17a784415")}
               </div>
             </div>
           </div>
@@ -1117,12 +1118,12 @@ function ConversationPane({ chat }: { chat: Chat }) {
               className="flex-1"
             >
               <Send className="mr-2 h-4 w-4" />
-              SMS 발송
+              {uiCopy("ux.copy0e0a08f1ea")}
             </Button>
           </div>
           {!(customerQuery.data?.phone || chat.phone) && (
             <div className="text-xs text-muted-foreground">
-              전화번호가 없습니다. 고객을 먼저 연결하세요.
+              {uiCopy("ux.copy64fe8ca0f0")}
             </div>
           )}
         </div>
@@ -1130,7 +1131,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
       <div className="border-t p-3 space-y-2">
         {lockSecondsLeft > 0 && (
           <div className="flex items-center gap-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
-            🔒 {lockHolderName} 님이 답변 중입니다 · 남은 시간 {String(Math.floor(lockSecondsLeft / 60)).padStart(2, "0")}:
+            🔒 {lockHolderName} {uiCopy("ux.copyb222714d61")} {String(Math.floor(lockSecondsLeft / 60)).padStart(2, "0")}:
             {String(lockSecondsLeft % 60).padStart(2, "0")}
           </div>
         )}
@@ -1140,8 +1141,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-primary">
                 {replyTo.direction === "out"
-                  ? `${(replyTo.sent_by && profileMap[replyTo.sent_by]?.display_name) || "직원"} 에게 답장`
-                  : "고객에게 답장"}
+                  ? uiCopy("ux.copy858d7ba806", { value0: (replyTo.sent_by && profileMap[replyTo.sent_by]?.display_name) || uiCopy("ux.copycee097c09f") })
+                  : uiCopy("ux.copy28768b393d")}
               </div>
               <div className="line-clamp-2 text-muted-foreground whitespace-pre-wrap break-words">
                 {quotedSnippet(replyTo)}
@@ -1151,7 +1152,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
               type="button"
               onClick={() => setReplyTo(null)}
               className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted"
-              title="답장 취소"
+              title={uiCopy("ux.copy7e9ffb5351")}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -1162,7 +1163,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8">
                 <Zap className="mr-1 h-3.5 w-3.5" />
-                템플릿
+                {uiCopy("ux.copy6be533674d")}
                 {templatesQuery.data && templatesQuery.data.length > 0 && (
                   <span className="ml-1 opacity-60">({templatesQuery.data.length})</span>
                 )}
@@ -1170,7 +1171,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
             </PopoverTrigger>
             <PopoverContent align="start" className="w-80 p-0">
               <div className="flex items-center justify-between border-b px-3 py-2">
-                <span className="text-xs font-medium">내 빠른 답변</span>
+                <span className="text-xs font-medium">{uiCopy("ux.copybc4b2107e6")}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1180,17 +1181,17 @@ function ConversationPane({ chat }: { chat: Chat }) {
                     setShowTemplatesManager(true);
                   }}
                 >
-                  <Pencil className="mr-1 h-3 w-3" /> 관리
+                  <Pencil className="mr-1 h-3 w-3" /> {uiCopy("ux.copyc29fba5a7c")}
                 </Button>
               </div>
               <div className="max-h-72 overflow-y-auto">
                 {templatesQuery.isLoading ? (
-                  <div className="p-3 text-xs text-muted-foreground">불러오는 중...</div>
+                  <div className="p-3 text-xs text-muted-foreground">{uiCopy("ux.copyc21bd66dd4")}</div>
                 ) : (templatesQuery.data ?? []).length === 0 ? (
                   <div className="p-4 text-center text-xs text-muted-foreground">
-                    아직 템플릿이 없습니다.
+                    {uiCopy("ux.copy0e447a2940")}
                     <br />
-                    "관리"에서 만들어 보세요.
+                    {uiCopy("ux.copy067ad4588e")}
                   </div>
                 ) : (
                   <ul className="divide-y">
@@ -1228,11 +1229,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
           {slashOpen && (
             <div className="absolute bottom-full left-0 right-14 mb-1 z-20 rounded-md border bg-popover shadow-lg">
               <div className="border-b px-3 py-1.5 text-xs text-muted-foreground">
-                템플릿 자동완성 {slashQuery ? `· "/${slashQuery}"` : ""} — ↑/↓ 이동, Enter 삽입, Esc 취소
+                {uiCopy("ux.copy769e9ced62")} {slashQuery ? `· "/${slashQuery}"` : ""} {uiCopy("ux.copyd9c9120f66")}
               </div>
               <div className="max-h-64 overflow-y-auto">
                 {slashMatches.length === 0 ? (
-                  <div className="p-3 text-center text-xs text-muted-foreground">템플릿 없음</div>
+                  <div className="p-3 text-center text-xs text-muted-foreground">{uiCopy("ux.copy13e7e676ca")}</div>
                 ) : (
                   <ul>
                     {slashMatches.map((t, idx) => (
@@ -1281,10 +1282,10 @@ function ConversationPane({ chat }: { chat: Chat }) {
           {chat.ai_suggestion && (
             <div className="mb-2 rounded-lg border border-violet-500/40 bg-violet-500/10 p-2.5">
               <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
-                <Sparkles className="h-3 w-3" /> AI 제안
+                <Sparkles className="h-3 w-3" /> {uiCopy("ux.copyac628bb42d")}
                 {typeof chat.ai_suggestion_confidence === "number" && (
                   <span className="font-normal opacity-70">
-                    (신뢰도 {Math.round(chat.ai_suggestion_confidence * 100)}%)
+                    {uiCopy("ux.copy1bff70f889")} {Math.round(chat.ai_suggestion_confidence * 100)}%)
                   </span>
                 )}
               </div>
@@ -1303,7 +1304,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                       .catch(() => {});
                   }}
                 >
-                  사용하기
+                  {uiCopy("ux.copye81e478217")}
                 </Button>
                 <Button
                   size="sm"
@@ -1315,7 +1316,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                       .catch(() => {})
                   }
                 >
-                  무시
+                  {uiCopy("ux.copy18f7ca9774")}
                 </Button>
               </div>
             </div>
@@ -1363,8 +1364,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
             }}
             placeholder={
               lockSecondsLeft > 0
-                ? `${lockHolderName} 님이 답변 중입니다 (${lockSecondsLeft}초 후 가능)`
-                : "메시지 입력 (Enter 전송, Shift+Enter 줄바꿈, / 로 템플릿 검색)"
+                ? uiCopy("ux.copy02f533eafc", { value0: lockHolderName, value1: lockSecondsLeft })
+                : uiCopy("ux.copy0d96bfc8d0")
             }
             rows={2}
             className="resize-none"
@@ -1387,7 +1388,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
             className="h-10 w-10 shrink-0"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading || sendMut.isPending || lockSecondsLeft > 0}
-            title="사진/파일 첨부"
+            title={uiCopy("ux.copy69c33954b8")}
           >
             <Paperclip className="h-4 w-4" />
           </Button>
@@ -1396,7 +1397,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
           </Button>
         </div>
         {isUploading && (
-          <div className="text-xs text-muted-foreground">업로드 중...</div>
+          <div className="text-xs text-muted-foreground">{uiCopy("ux.copy1e5a8213b8")}</div>
         )}
       </div>
       )}
@@ -1434,20 +1435,20 @@ function ConversationPane({ chat }: { chat: Chat }) {
       <Dialog open={!!photoUrl} onOpenChange={(o) => !o && setPhotoUrl(null)}>
         <DialogContent className="max-w-4xl p-2 bg-black/95 border-none">
           <DialogHeader className="sr-only">
-            <DialogTitle>사진 보기</DialogTitle>
+            <DialogTitle>{uiCopy("ux.copy74842a9af3")}</DialogTitle>
           </DialogHeader>
           <button
             type="button"
             onClick={() => setPhotoUrl(null)}
             className="absolute right-3 top-3 z-10 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
-            aria-label="닫기"
+            aria-label={uiCopy("ux.copy94b7dba159")}
           >
             <X className="h-4 w-4" />
           </button>
           {photoUrl && (
             <img
               src={photoUrl}
-              alt="photo"
+              alt={uiCopy("ux.copyeeb35d331b")}
               className="mx-auto max-h-[85vh] w-auto max-w-full rounded"
             />
           )}
@@ -1460,7 +1461,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                 download
                 className="text-xs text-white/80 underline underline-offset-2 hover:text-white"
               >
-                원본 다운로드
+                {uiCopy("ux.copy64b0dd5f5b")}
               </a>
             )}
           </DialogFooter>
@@ -1511,13 +1512,13 @@ function ParticipationHistory({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-b bg-muted/30 px-4 py-1.5 text-xs">
-      <span className="font-medium text-muted-foreground">응대 이력:</span>
+      <span className="font-medium text-muted-foreground">{uiCopy("ux.copya16f5a7356")}</span>
       {runs.map((r, i) => (
         <span
           key={i}
           className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-700 dark:text-blue-300"
         >
-          {profileMap[r.operatorId]?.display_name ?? "직원"} ({fmt(r.start)}
+          {profileMap[r.operatorId]?.display_name ?? uiCopy("ux.copycee097c09f")} ({fmt(r.start)}
           {r.start !== r.end ? ` ~ ${fmt(r.end)}` : ""})
         </span>
       ))}
@@ -1580,7 +1581,7 @@ function MediaTemplateConfirmDialog({
     <Dialog open onOpenChange={(o) => !o && !sending && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>미디어 템플릿 전송 확인</DialogTitle>
+          <DialogTitle>{uiCopy("ux.copyefcca831a2")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="rounded border bg-muted/30 p-2">
@@ -1592,7 +1593,7 @@ function MediaTemplateConfirmDialog({
                   className="mx-auto max-h-64 w-auto max-w-full rounded"
                 />
               ) : (
-                <div className="p-6 text-center text-xs text-muted-foreground">미리보기 불러오는 중…</div>
+                <div className="p-6 text-center text-xs text-muted-foreground">{uiCopy("ux.copy98a4eaaa8f")}</div>
               )
             ) : (
               <div className="flex items-center gap-2 p-2 text-sm">
@@ -1604,19 +1605,19 @@ function MediaTemplateConfirmDialog({
             )}
           </div>
           <div>
-            <label className="text-xs text-muted-foreground">캡션 (내용 텍스트)</label>
+            <label className="text-xs text-muted-foreground">{uiCopy("ux.copy98eb584769")}</label>
             <Textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={4}
               className="resize-none"
-              placeholder="선택 사항 — 비워두면 미디어만 전송됩니다."
+              placeholder={uiCopy("ux.copyf98cd93789")}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={sending}>
-            취소
+            {uiCopy("ux.copy19b2d19bc1")}
           </Button>
           <Button
             onClick={async () => {
@@ -1624,14 +1625,14 @@ function MediaTemplateConfirmDialog({
               try {
                 await onSend(caption);
               } catch (e) {
-                toast.error(e instanceof Error ? e.message : "전송 실패");
+                toast.error(e instanceof Error ? e.message : uiCopy("ux.copy7851126014"));
               } finally {
                 setSending(false);
               }
             }}
             disabled={sending}
           >
-            {sending ? "전송 중..." : "전송"}
+            {sending ? uiCopy("ux.copyd47f335880") : uiCopy("ux.copy4077ceb9da")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1641,13 +1642,13 @@ function MediaTemplateConfirmDialog({
 
 function quotedSnippet(m: Message): string {
   const kind = m.message_type ?? "text";
-  if (kind === "photo") return `📷 사진${m.caption ? ` · ${m.caption}` : ""}`;
-  if (kind === "document") return `📎 ${m.media_file_name ?? "파일"}`;
-  if (kind === "video") return `🎬 동영상${m.caption ? ` · ${m.caption}` : ""}`;
-  if (kind === "voice" || kind === "audio") return "🎤 음성";
-  if (kind === "sticker") return "🎨 스티커";
-  if (kind === "contact") return m.text || "📱 연락처";
-  return (m.text ?? m.caption ?? "").trim() || "(빈 메시지)";
+  if (kind === "photo") return uiCopy("ux.copyf234e8c392", { value0: m.caption ? ` · ${m.caption}` : "" });
+  if (kind === "document") return uiCopy("ux.copy4aed61d8fa", { value0: m.media_file_name ?? uiCopy("ux.copy68b8eecb19") });
+  if (kind === "video") return uiCopy("ux.copy950c54b92c", { value0: m.caption ? ` · ${m.caption}` : "" });
+  if (kind === "voice" || kind === "audio") return uiCopy("ux.copy7dac1c49a3");
+  if (kind === "sticker") return uiCopy("ux.copyd3a8e31b75");
+  if (kind === "contact") return m.text || uiCopy("ux.copyfe90ac7b72");
+  return (m.text ?? m.caption ?? "").trim() || uiCopy("ux.copy99c6ef9e6a");
 }
 
 function QuotedReplyPreview({
@@ -1667,14 +1668,14 @@ function QuotedReplyPreview({
           isOut ? "border-primary-foreground/60 bg-black/10" : "border-primary/50 bg-black/5",
         )}
       >
-        답장한 메시지를 불러올 수 없음
+        {uiCopy("ux.copy6f307b63b6")}
       </div>
     );
   }
   const who =
     target.direction === "out"
-      ? (target.sent_by && profileMap[target.sent_by]?.display_name) || "직원"
-      : "고객";
+      ? (target.sent_by && profileMap[target.sent_by]?.display_name) || uiCopy("ux.copycee097c09f")
+      : uiCopy("ux.copya58673ab1d");
   const snippet = quotedSnippet(target);
   return (
     <div
@@ -1704,12 +1705,12 @@ function MessageBody({
   const caption = m.caption ?? null;
 
   if (kind === "contact") {
-    const label = m.text && m.text.trim() ? m.text : "📱 연락처";
+    const label = m.text && m.text.trim() ? m.text : uiCopy("ux.copyfe90ac7b72");
     return <span className="font-medium">{label}</span>;
   }
 
   if (kind === "text" || (!m.media_storage_path && m.text)) {
-    return <>{m.text ?? m.caption ?? "(비어있음)"}</>;
+    return <>{m.text ?? m.caption ?? uiCopy("ux.copy37820bf881")}</>;
   }
 
   const captionEl = caption ? (
@@ -1724,7 +1725,7 @@ function MessageBody({
             type="button"
             onClick={() => onPhotoClick?.(url)}
             className="block cursor-zoom-in"
-            title="크게 보기"
+            title={uiCopy("ux.copyb98c80ee2b")}
           >
             <img
               src={url}
@@ -1734,7 +1735,7 @@ function MessageBody({
             />
           </button>
         ) : (
-          <div className="opacity-70">📷 Loading photo…</div>
+          <div className="opacity-70">{uiCopy("ux.copy4b893226b3")}</div>
         )}
         {captionEl}
       </div>
@@ -1748,7 +1749,7 @@ function MessageBody({
         {url ? (
           <video src={url} controls className="max-h-80 max-w-full rounded-lg" preload="metadata" />
         ) : (
-          <div className="opacity-70">🎬 Loading video…</div>
+          <div className="opacity-70">{uiCopy("ux.copya9d364055b")}</div>
         )}
         {captionEl}
       </div>
@@ -1761,7 +1762,7 @@ function MessageBody({
         {url ? (
           <audio src={url} controls className="max-w-full" preload="metadata" />
         ) : (
-          <div className="opacity-70">🎤 Loading audio…</div>
+          <div className="opacity-70">{uiCopy("ux.copy7b80019725")}</div>
         )}
         {captionEl}
       </div>
@@ -1831,14 +1832,14 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      if (!user?.id) throw new Error("로그인이 필요합니다");
+      if (!user?.id) throw new Error(uiCopy("ux.copy26f5e5fa97"));
       const t = title.trim();
       const c = content.trim();
       const sRaw = shortcut.trim().toLowerCase().replace(/^\/+/, "");
-      if (/\s/.test(sRaw)) throw new Error("단축어에 공백을 사용할 수 없습니다");
+      if (/\s/.test(sRaw)) throw new Error(uiCopy("ux.copy972573befa"));
       const s = sRaw || null;
-      if (!t) throw new Error("제목을 입력하세요");
-      if (mediaType === "none" && !c) throw new Error("내용 또는 미디어를 입력하세요");
+      if (!t) throw new Error(uiCopy("ux.copye84a95fdf9"));
+      if (mediaType === "none" && !c) throw new Error(uiCopy("ux.copyf3c8d82aab"));
       const payload = {
         title: t,
         content: c,
@@ -1863,11 +1864,11 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       }
     },
     onSuccess: () => {
-      toast.success(editing ? "수정됨" : "추가됨");
+      toast.success(editing ? uiCopy("ux.copy6b7dad83b5") : uiCopy("ux.copy75c960b438"));
       resetForm();
       qc.invalidateQueries({ queryKey: ["telegram-templates", user?.id] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "실패"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1")),
   });
 
   const deleteMut = useMutation({
@@ -1876,11 +1877,11 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("삭제됨");
+      toast.success(uiCopy("ux.copy5ab2ec72b3"));
       qc.invalidateQueries({ queryKey: ["telegram-templates", user?.id] });
       resetForm();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "실패"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1")),
   });
 
   const startEdit = (t: Template) => {
@@ -1911,7 +1912,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
       setMediaSize(file.size);
       setMediaType(file.type.startsWith("image/") ? "image" : "document");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "업로드 실패");
+      toast.error(e instanceof Error ? e.message : uiCopy("ux.copya40a00757b"));
     } finally {
       setUploadingMedia(false);
     }
@@ -1921,22 +1922,22 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>내 빠른 답변 템플릿</DialogTitle>
+          <DialogTitle>{uiCopy("ux.copy3ab300078c")}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
           <div className="min-h-0">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">내 템플릿</span>
+              <span className="text-xs font-medium text-muted-foreground">{uiCopy("ux.copy2861047333")}</span>
               <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={resetForm}>
-                <Plus className="mr-1 h-3 w-3" /> 새 템플릿
+                <Plus className="mr-1 h-3 w-3" /> {uiCopy("ux.copyeb1dda51dd")}
               </Button>
             </div>
             <div className="max-h-80 overflow-y-auto rounded border">
               {templatesQuery.isLoading ? (
-                <div className="p-3 text-xs text-muted-foreground">불러오는 중...</div>
+                <div className="p-3 text-xs text-muted-foreground">{uiCopy("ux.copyc21bd66dd4")}</div>
               ) : (templatesQuery.data ?? []).length === 0 ? (
                 <div className="p-4 text-center text-xs text-muted-foreground">
-                  아직 템플릿이 없습니다.
+                  {uiCopy("ux.copy0e447a2940")}
                 </div>
               ) : (
                 <ul className="divide-y">
@@ -1978,7 +1979,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                           variant="ghost"
                           className="h-7 w-7 text-destructive hover:text-destructive"
                           onClick={() => {
-                            if (confirm(`"${t.title}" 삭제하시겠습니까?`)) deleteMut.mutate(t.id);
+                            if (confirm(uiCopy("ux.copy0663e3146a", { value0: t.title }))) deleteMut.mutate(t.id);
                           }}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1993,21 +1994,21 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
 
           <div>
             <div className="mb-2 text-xs font-medium text-muted-foreground">
-              {editing ? "템플릿 수정" : "새 템플릿"}
+              {editing ? uiCopy("ux.copy326aa3c366") : uiCopy("ux.copyeb1dda51dd")}
             </div>
             <div className="space-y-2">
               <div>
-                <label className="text-xs text-muted-foreground">제목 (짧은 이름)</label>
+                <label className="text-xs text-muted-foreground">{uiCopy("ux.copye78e385761")}</label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="예: 인사말"
+                  placeholder={uiCopy("ux.copy4e0e306b29")}
                   maxLength={80}
                 />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">
-                  단축어 (선택, 공백 없이 짧은 단어 — 예: salom, tarif)
+                  {uiCopy("ux.copy07afefd25e")}
                 </label>
                 <Input
                   value={shortcut}
@@ -2016,22 +2017,22 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                   maxLength={32}
                 />
                 <div className="mt-1 text-xs text-muted-foreground">
-                  입력창에 "/" 를 치면 자동완성 목록이 나타납니다.
+                  {uiCopy("ux.copya5533e6f4e")}
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">내용 (실제 전송될 메시지)</label>
+                <label className="text-xs text-muted-foreground">{uiCopy("ux.copy3d9477b42c")}</label>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="어떤 언어든 자유롭게 입력하세요 (한국어 / O'zbek / Русский …)"
+                  placeholder={uiCopy("ux.copy0c0ca4146c")}
                   rows={7}
                   className="resize-none"
                 />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">
-                  미디어 첨부 (선택 — 이미지 또는 파일)
+                  {uiCopy("ux.copydd37a7dd41")}
                 </label>
                 <div className="flex items-center gap-2">
                   <Input
@@ -2056,12 +2057,12 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                         setMediaSize(null);
                       }}
                     >
-                      제거
+                      {uiCopy("ux.copy11f2aa43b2")}
                     </Button>
                   )}
                 </div>
                 {uploadingMedia && (
-                  <div className="mt-1 text-xs text-muted-foreground">업로드 중...</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{uiCopy("ux.copy1e5a8213b8")}</div>
                 )}
                 {mediaStoragePath && (
                   <div className="mt-2 flex items-center gap-2 rounded border bg-muted/30 p-2">
@@ -2086,7 +2087,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
               <div className="flex justify-end gap-2 pt-1">
                 {editing && (
                   <Button variant="ghost" size="sm" onClick={resetForm}>
-                    취소
+                    {uiCopy("ux.copy19b2d19bc1")}
                   </Button>
                 )}
                 <Button
@@ -2098,7 +2099,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
                     (mediaType === "none" && !content.trim())
                   }
                 >
-                  {editing ? "수정" : "추가"}
+                  {editing ? uiCopy("ux.copye1407b5115") : uiCopy("ux.copy5794299536")}
                 </Button>
               </div>
             </div>
@@ -2106,7 +2107,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
-            닫기
+            {uiCopy("ux.copy94b7dba159")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2129,11 +2130,11 @@ function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void
     mutationFn: async (customerId: string) =>
       linkFn({ data: { chatRowId: chat.id, customerId } }),
     onSuccess: () => {
-      toast.success("고객이 연결되었습니다");
+      toast.success(uiCopy("ux.copy007b3cbe11"));
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
       onClose();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "실패"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1")),
   });
 
   useEffect(() => {
@@ -2145,18 +2146,18 @@ function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>고객 연결</DialogTitle>
+          <DialogTitle>{uiCopy("ux.copyd88c6293ee")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="flex gap-2">
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="이름 또는 전화번호로 검색"
+              placeholder={uiCopy("ux.copy4bc1e83559")}
               onKeyDown={(e) => e.key === "Enter" && searchMut.mutate(q)}
             />
             <Button onClick={() => searchMut.mutate(q)} disabled={searchMut.isPending}>
-              검색
+              {uiCopy("ux.copy4f5a3f69b7")}
             </Button>
           </div>
           <div className="max-h-80 overflow-y-auto rounded border">
@@ -2179,14 +2180,14 @@ function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void
               ))
             ) : (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                {searchMut.isPending ? "검색 중..." : "결과가 없습니다."}
+                {searchMut.isPending ? uiCopy("ux.copy4b58c50289") : uiCopy("ux.copyc342b44870")}
               </div>
             )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
-            취소
+            {uiCopy("ux.copy19b2d19bc1")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2218,11 +2219,11 @@ function SendSmsDialog({
   const handleSend = async () => {
     const msg = message.trim();
     if (!msg) {
-      toast.error("메시지를 입력하세요");
+      toast.error(uiCopy("ux.copy591df23695"));
       return;
     }
     if (!isValidKrPhone) {
-      toast.error("올바른 한국 휴대폰 번호를 입력하세요 (예: 010-1234-5678)");
+      toast.error(uiCopy("ux.copyf405af215e"));
       return;
     }
     try {
@@ -2238,7 +2239,7 @@ function SendSmsDialog({
         title: title.trim() || undefined,
       });
       if (res?.ok === false) {
-        toast.error(res?.aligo?.message || "SMS 발송 실패");
+        toast.error(res?.aligo?.message || uiCopy("ux.copy0efbf5e456"));
         return;
       }
       // Mark chat as read even though we replied via SMS (Telegram delivery is blocked)
@@ -2248,10 +2249,10 @@ function SendSmsDialog({
       } catch {
         // non-fatal
       }
-      toast.success("SMS 발송 완료 · 읽음 처리됨");
+      toast.success(uiCopy("ux.copyd7b6a39358"));
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "SMS 발송 실패");
+      toast.error(e instanceof Error ? e.message : uiCopy("ux.copy0efbf5e456"));
     }
   };
 
@@ -2259,24 +2260,24 @@ function SendSmsDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>SMS 발송 (차단된 고객)</DialogTitle>
+          <DialogTitle>{uiCopy("ux.copy769bcd3793")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="text-xs text-muted-foreground">
-            수신자:{" "}
+            {uiCopy("ux.copybcea1ddb69")}{" "}
             <span className="font-medium text-foreground">
-              {customerName ?? chat.first_name ?? "고객"}
+              {customerName ?? chat.first_name ?? uiCopy("ux.copya58673ab1d")}
             </span>
             {customerPhone && (
               <span className="ml-1">
-                · 텔레그램 등록 번호:{" "}
+                {uiCopy("ux.copy42730f04b4")}{" "}
                 <span className="font-mono">{customerPhone}</span>
               </span>
             )}
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-foreground">
-              수신 번호 (한국 휴대폰)
+              {uiCopy("ux.copyc561f13f8f")}
             </label>
             <Input
               placeholder="010-1234-5678"
@@ -2287,7 +2288,7 @@ function SendSmsDialog({
             />
             {phone && !isValidKrPhone && (
               <div className="text-xs text-destructive">
-                올바른 한국 휴대폰 번호를 입력하세요 (010으로 시작하는 10-11자리)
+                {uiCopy("ux.copy7fb40b86b9")}
               </div>
             )}
             {customerPhone && phone.replace(/[^\d]/g, "") !== customerPhone.replace(/[^\d]/g, "") && (
@@ -2296,33 +2297,33 @@ function SendSmsDialog({
                 onClick={() => setPhone(customerPhone)}
                 className="text-xs text-primary hover:underline"
               >
-                원본 번호로 되돌리기
+                {uiCopy("ux.copydf0984747f")}
               </button>
             )}
           </div>
           <Input
-            placeholder="제목 (LMS일 때만 사용, 선택)"
+            placeholder={uiCopy("ux.copy5aa63d2b3a")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={44}
           />
           <Textarea
-            placeholder="메시지 내용을 입력하세요"
+            placeholder={uiCopy("ux.copya29053f55a")}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
           />
           <div className="text-xs text-muted-foreground">
-            90바이트 초과 시 자동으로 LMS로 전환됩니다.
+            {uiCopy("ux.copy637f851561")}
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={sendSms.isPending}>
-            취소
+            {uiCopy("ux.copy19b2d19bc1")}
           </Button>
           <Button onClick={handleSend} disabled={sendSms.isPending || !message.trim() || !isValidKrPhone}>
             <Send className="mr-2 h-4 w-4" />
-            {sendSms.isPending ? "발송중..." : "SMS 발송"}
+            {sendSms.isPending ? uiCopy("ux.copydef390ab23") : uiCopy("ux.copy0e0a08f1ea")}
           </Button>
         </DialogFooter>
 
@@ -2346,30 +2347,30 @@ function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
     mutationFn: async () => registerFn({ data: { webhookUrl: url } }),
     onSuccess: (data) => {
       setResult(data);
-      toast.success(`웹훅 등록됨: @${(data as any).bot?.username}`);
+      toast.success(uiCopy("ux.copy01fe455170", { value0: (data as any).bot?.username }));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "실패"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : uiCopy("ux.copy732fe33ab1")),
   });
 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>텔레그램 웹훅 설정</DialogTitle>
+          <DialogTitle>{uiCopy("ux.copy5154aef071")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 text-sm">
           <p className="text-muted-foreground">
-            BotFather에서 봇을 만든 후, 아래 URL을 텔레그램에 웹훅으로 등록하세요. 등록되면 고객이 봇에게 메시지를 보낼 때 CRM에 자동으로 나타납니다.
+            {uiCopy("ux.copyc8f721271f")}
           </p>
           <div>
-            <label className="text-xs font-medium">Webhook URL</label>
+            <label className="text-xs font-medium">{uiCopy("ux.copyfa7517b6b6")}</label>
             <Input value={url} onChange={(e) => setUrl(e.target.value)} />
             <p className="mt-1 text-xs text-muted-foreground">
-              팁: 배포된 URL(예: https://hanpassmobile.lovable.app/api/public/telegram/webhook)을 사용하세요.
+              {uiCopy("ux.copyb28408b312")}
             </p>
           </div>
           <Button onClick={() => mut.mutate()} disabled={mut.isPending || !url} className="w-full">
-            {mut.isPending ? "등록 중..." : "웹훅 등록"}
+            {mut.isPending ? uiCopy("ux.copy9ace4cd899") : uiCopy("ux.copy08151dbbb3")}
           </Button>
           {result && (
             <pre className="max-h-48 overflow-auto rounded bg-muted p-2 text-xs">
@@ -2379,7 +2380,7 @@ function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
-            닫기
+            {uiCopy("ux.copy94b7dba159")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
@@ -68,7 +69,7 @@ export function AppSidebar() {
     { title: t("nav.customers"), url: "/customers", icon: Users },
     { title: t("nav.sms"), url: "/sms", icon: MessageSquare },
     ...(telegramEnabled
-      ? [{ title: "텔레그램 상담", url: "/telegram", icon: Send, badge: telegramUnread }]
+      ? [{ title: uiCopy("ux.copy8918c4d3ab"), url: "/telegram", icon: Send, badge: telegramUnread }]
       : []),
     { title: t("nav.callLogs"), url: "/call-logs", icon: PhoneCall },
   ] as Array<{ title: string; url: string; icon: typeof LayoutDashboard; badge?: number; external?: string }>;
@@ -82,12 +83,12 @@ export function AppSidebar() {
     ...(isAdmin
       ? [{ title: t("nav.systemHealth"), url: "/system-health", icon: ShieldAlert, badge: healthErrors }]
       : []),
-    ...(isAdmin ? [{ title: "관리자 공지", url: "/notifications", icon: Bell }] : []),
-    ...(isAdmin ? [{ title: "브로드캐스트", url: "/broadcast", icon: Megaphone }] : []),
-    ...(isAdmin ? [{ title: "AI 학습", url: "/ai-faq", icon: Bot }] : []),
+    ...(isAdmin ? [{ title: uiCopy("ux.copy79500c9b6b"), url: "/notifications", icon: Bell }] : []),
+    ...(isAdmin ? [{ title: uiCopy("ux.copyc4da70b633"), url: "/broadcast", icon: Megaphone }] : []),
+    ...(isAdmin ? [{ title: uiCopy("ux.copy79a3beb296"), url: "/ai-faq", icon: Bot }] : []),
     ...(isAdmin ? [{ title: t("nav.staffMgmt"), url: "/staff", icon: Users2 }] : []),
     { title: t("nav.settings"), url: "/settings", icon: Settings },
-    { title: "AI 어시스턴트", url: "/ai-assistant", icon: Bot },
+    { title: uiCopy("ux.copy6eb7d86174"), url: "/ai-assistant", icon: Bot },
   ];
 
 
@@ -143,9 +144,9 @@ export function AppSidebar() {
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
               <span className="font-display text-[15px] font-bold leading-tight tracking-normal text-sidebar-foreground">
-                HANPASS MOBILE
+                {uiCopy("ux.copy3b198d601e")}
               </span>
-              <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">OB Call CRM</span>
+              <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">{uiCopy("ux.copybfcfd42d77")}</span>
             </div>
           </div>
         </SidebarHeader>
@@ -180,9 +181,9 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-display text-[15px] font-bold leading-tight tracking-normal text-sidebar-foreground">
-              HANPASS MOBILE
+              {uiCopy("ux.copy3b198d601e")}
             </span>
-            <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">OB Call CRM</span>
+            <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">{uiCopy("ux.copybfcfd42d77")}</span>
           </div>
         </div>
       </SidebarHeader>
@@ -222,11 +223,11 @@ function SidebarPrefs() {
   };
   return (
     <div className="flex items-center gap-1 px-2 py-1 group-data-[collapsible=icon]:hidden">
-      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-[13px] font-medium text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={switchLang} title="Language">
+      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-[13px] font-medium text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={switchLang} title={uiCopy("ux.copy89b86ab0e6")}>
         <Languages className="h-4 w-4" />
-        {i18nInst.language === "ko" ? "한국어" : "English"}
+        {i18nInst.language === "ko" ? uiCopy("ux.copy6e081b5948") : "English"}
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={toggle} title="Theme">
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={toggle} title={uiCopy("ux.copya797e30923")}>
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
     </div>

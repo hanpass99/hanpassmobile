@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,9 +54,9 @@ function formatDuration(sec: number) {
 
 function DirectionBadge({ direction }: { direction: string }) {
   const map: Record<string, { icon: React.ReactNode; className: string; label: string }> = {
-    incoming: { icon: <PhoneIncoming className="h-3 w-3" />, className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200", label: "수신" },
-    outgoing: { icon: <PhoneOutgoing className="h-3 w-3" />, className: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200", label: "발신" },
-    missed:   { icon: <PhoneMissed className="h-3 w-3" />, className: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200", label: "부재중" },
+    incoming: { icon: <PhoneIncoming className="h-3 w-3" />, className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200", label: uiCopy("ux.copy9bb563dfcf") },
+    outgoing: { icon: <PhoneOutgoing className="h-3 w-3" />, className: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200", label: uiCopy("ux.copy1c2f41fedd") },
+    missed:   { icon: <PhoneMissed className="h-3 w-3" />, className: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200", label: uiCopy("ux.copya00c889f47") },
   };
   const it = map[direction] ?? { icon: null, className: "bg-muted text-muted-foreground", label: direction };
   return (
@@ -124,7 +125,7 @@ function CallLogsPage() {
     const map = new Map<string, { name: string; total: number; statuses: Record<string, number> }>();
     (data ?? []).forEach((r) => {
       const key = r.staff_id ?? "unknown";
-      const name = r.staff?.display_name ?? (r.staff_id ? "—" : "미배정");
+      const name = r.staff?.display_name ?? (r.staff_id ? "—" : uiCopy("ux.copy246b8838e3"));
       if (!map.has(key)) map.set(key, { name, total: 0, statuses: {} });
       const entry = map.get(key)!;
       entry.total += 1;

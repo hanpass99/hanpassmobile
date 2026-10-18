@@ -1,3 +1,4 @@
+import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
   component: Consent,
   errorComponent: ({ error }) => (
     <main className="mx-auto max-w-md p-8">
-      <h1 className="mb-2 text-lg font-semibold">인증 요청을 불러오지 못했습니다</h1>
+      <h1 className="mb-2 text-lg font-semibold">{uiCopy("ux.copy9cfe1fbbce")}</h1>
       <p className="text-sm text-muted-foreground">{String((error as Error)?.message ?? error)}</p>
     </main>
   ),
@@ -58,7 +59,7 @@ function Consent() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const clientName = details?.client?.name ?? "외부 앱";
+  const clientName = details?.client?.name ?? uiCopy("ux.copy35c062e8ea");
 
   async function decide(approve: boolean) {
     setBusy(true);
@@ -85,15 +86,14 @@ function Consent() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-8">
       <div className="rounded-2xl border bg-card p-8 shadow-sm">
         <h1 className="text-xl font-semibold text-primary">
-          {clientName}을(를) Hanpass OB CRM에 연결
+          {clientName}{uiCopy("ux.copy754faed9d3")}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          승인하면 <b>{clientName}</b>이(가) 로그인된 사용자로서 이 앱의 MCP 도구를 호출할 수
-          있습니다. 접근 권한은 계정의 RLS 정책이 그대로 적용됩니다.
+          {uiCopy("ux.copy9c5782d683")} <b>{clientName}</b>{uiCopy("ux.copy74e3c6101a")}
         </p>
         {details?.scope ? (
           <p className="mt-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-            요청된 권한: {details.scope}
+            {uiCopy("ux.copy5f218d9514")} {details.scope}
           </p>
         ) : null}
         {error && (
@@ -107,14 +107,14 @@ function Consent() {
             onClick={() => decide(true)}
             className="h-11 rounded-lg bg-primary text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
           >
-            {busy ? "처리 중…" : "승인"}
+            {busy ? uiCopy("ux.copy24cd06a1a4") : uiCopy("ux.copy0d1cd67197")}
           </button>
           <button
             disabled={busy}
             onClick={() => decide(false)}
             className="h-11 rounded-lg border text-sm font-medium text-muted-foreground hover:bg-muted disabled:opacity-60"
           >
-            거부
+            {uiCopy("ux.copy36fa753787")}
           </button>
         </div>
       </div>
