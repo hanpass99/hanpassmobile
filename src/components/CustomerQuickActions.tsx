@@ -18,12 +18,14 @@ export function CustomerQuickActions({
   onCall,
   onStatus,
   userId,
+  canSms,
 }: {
   customer: CustomerRow;
   telHref: string;
   onCall: () => void;
   onStatus: (status: CustomerStatus) => void;
   userId?: string;
+  canSms: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -42,7 +44,7 @@ export function CustomerQuickActions({
         </TooltipTrigger>
         <TooltipContent>{t("customers.quickCallAction")}</TooltipContent>
       </Tooltip>
-      <Tooltip>
+      {canSms && <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
             <Link
@@ -62,7 +64,7 @@ export function CustomerQuickActions({
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t("customers.quickSms")}</TooltipContent>
-      </Tooltip>
+      </Tooltip>}
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger asChild>

@@ -1699,7 +1699,11 @@ function CustomersPage() {
           elements[next]?.focus();
         } else if (event.key.toLowerCase() === "s" && target === row) {
           event.preventDefault();
-          row.querySelector<HTMLButtonElement>("[data-quick-status]")?.click();
+          const trigger = row.querySelector<HTMLButtonElement>("[data-quick-status]");
+          if (trigger) {
+            trigger.focus();
+            trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+          }
         } else if (event.key === "Enter" && target === row) {
           event.preventDefault();
           setDetailTarget(c);
@@ -1730,6 +1734,7 @@ function CustomersPage() {
           onCall={() => setCallLogTarget(c)}
           onStatus={(status) => setQuickStatusTarget({ customer: c, status })}
           userId={user?.id}
+          canSms={!hanpassOnly}
         />
         <Button size="sm" variant="ghost" onClick={() => setMemoTarget(c)}>
           <StickyNote className="mr-1 h-3.5 w-3.5" /> {t("customers.col.memo")}
