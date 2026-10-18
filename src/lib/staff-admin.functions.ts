@@ -12,7 +12,7 @@ export const setStaffActive = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Disable database access first: an already-issued JWT must stop working immediately.
     if (!data.active) {
-      const { error } = await context.supabase.rpc("admin_set_profile_active", { _user_id: data.user_id, _active: false });
+      const { error } = await supabaseAdmin.rpc("admin_set_profile_active", { _user_id: data.user_id, _active: false });
       if (error) throw new Error("staff_update_failed");
     }
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, { ban_duration: staffBanDuration(data.active) });
@@ -23,7 +23,7 @@ export const setStaffActive = createServerFn({ method: "POST" })
         const { error } = await context.supabase.rpc("admin_set_user_role", { _user_id: data.user_id, _role: "staff" });
         if (error) throw new Error("staff_role_update_failed");
       }
-      const { error } = await context.supabase.rpc("admin_set_profile_active", { _user_id: data.user_id, _active: true });
+      const { error } = await supabaseAdmin.rpc("admin_set_profile_active", { _user_id: data.user_id, _active: true });
       if (error) throw new Error("staff_update_failed");
     }
     return { ok: true };
@@ -55,7 +55,7 @@ export const createStaff = createServerFn({ method: "POST" })
       return { ok: true, user_id: uid };
     } catch {
       await supabaseAdmin.auth.admin.updateUserById(uid, { ban_duration: staffBanDuration(false) });
-      await context.supabase.rpc("admin_set_profile_active", { _user_id: uid, _active: false });
+      await supabaseAdmin.rpc("admin_set_profile_active", { _user_id: uid, _active: false });
       throw new Error("staff_provision_failed");
     }
   });
