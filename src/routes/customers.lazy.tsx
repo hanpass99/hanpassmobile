@@ -1565,6 +1565,26 @@ function CustomersPage() {
                 </Button>
               </>
             )}
+            {tab === "qr_activation" && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={SHEET_URL_QR} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-1 h-4 w-4" /> QR 시트 열기
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncQrMut.mutate()}
+                  disabled={syncQrMut.isPending}
+                  aria-busy={syncQrMut.isPending}
+                  title="QR 개통 신청 시트 동기화"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncQrMut.isPending ? "animate-spin" : ""}`} />
+                  동기화
+                </Button>
+              </>
+            )}
             {tab === "friend_referral" && (
               <>
                 <Button variant="outline" size="sm" asChild>
