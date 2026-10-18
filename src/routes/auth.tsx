@@ -1,8 +1,9 @@
+import hanpassLogo from "@/assets/hanpass-logo.png";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
-import { Mail, Lock, ArrowLeft, ShieldCheck, Languages, Phone } from "lucide-react";
+import { Mail, Lock, ArrowLeft, ShieldCheck, Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -122,7 +123,7 @@ function AuthPage() {
         <div className="relative hidden flex-col justify-between bg-primary p-10 text-primary-foreground md:flex">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-foreground text-primary">
-              <Phone className="h-6 w-6" />
+              <img src={hanpassLogo} alt={uiCopy("brand.logoAlt")} width={40} height={40} className="h-10 w-10 object-contain" />
             </div>
             <div>
               <div className="text-[20px] font-bold leading-tight">{uiCopy("ux.copyca8c605ac7")}</div>
@@ -131,7 +132,7 @@ function AuthPage() {
           </div>
 
           <div className="space-y-5">
-            <h1 className="text-[22px] font-semibold leading-snug tracking-normal whitespace-nowrap">
+            <h1 className="text-[22px] font-semibold leading-snug tracking-normal">
               {t("auth.brandTagline")}
             </h1>
             <p className="text-[14px] leading-relaxed text-primary-foreground/70">
@@ -150,9 +151,7 @@ function AuthPage() {
         <div className="flex flex-col bg-card p-8 md:p-12">
           <div className="flex items-center justify-between mb-8">
             <div className="md:hidden flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Phone className="h-5 w-5" />
-              </div>
+              <img src={hanpassLogo} alt={uiCopy("brand.logoAlt")} width={40} height={40} className="h-10 w-10 object-contain" />
               <div>
                 <div className="text-sm font-bold text-primary">{uiCopy("ux.copyca8c605ac7")}</div>
                 <div className="text-xs text-muted-foreground">{uiCopy("ux.copybfcfd42d77")}</div>

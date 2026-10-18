@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,6 +48,7 @@ export function formatKst(iso: string | null | undefined) {
 }
 
 export function CallLogIngestPanel() {
+  useTranslation();
   const qc = useQueryClient();
   const [onlyProblems, setOnlyProblems] = useState(false);
   const [linkRow, setLinkRow] = useState<Ingest | null>(null);

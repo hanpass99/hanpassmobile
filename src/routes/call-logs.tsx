@@ -25,7 +25,7 @@ import { dayEndIso, dayStartIso } from "@/lib/date-range";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/call-logs")({
-  head: () => ({ meta: [{ title: i18n.t("head.callLogs", { defaultValue: "통화 로그 — Hanpass OB CRM" }) }] }),
+  head: () => ({ meta: [{ title: i18n.t("head.callLogs", { }) }] }),
   component: CallLogsPage,
 });
 
@@ -53,6 +53,7 @@ function formatDuration(sec: number) {
 }
 
 function DirectionBadge({ direction }: { direction: string }) {
+  useTranslation();
   const map: Record<string, { icon: React.ReactNode; className: string; label: string }> = {
     incoming: { icon: <PhoneIncoming className="h-3 w-3" />, className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200", label: uiCopy("ux.copy9bb563dfcf") },
     outgoing: { icon: <PhoneOutgoing className="h-3 w-3" />, className: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200", label: uiCopy("ux.copy1c2f41fedd") },
@@ -143,8 +144,8 @@ function CallLogsPage() {
   return (
     <div className="space-y-5 p-0 md:p-2">
       <PageHeader
-        title={t("nav.callLogs", { defaultValue: "통화 로그" })}
-        description={t("callLogs.desc", { defaultValue: "직원별 통화 이력을 최신순으로 확인합니다." })}
+        title={t("nav.callLogs", { })}
+        description={t("callLogs.desc", { })}
         actions={
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
@@ -156,22 +157,22 @@ function CallLogsPage() {
       {/* Date range filter */}
       <div className="grid grid-cols-2 items-end gap-3 rounded-lg border bg-card p-4 sm:flex sm:flex-wrap">
         <div>
-          <Label className="text-xs">{t("common.from", { defaultValue: "시작일" })}</Label>
+          <Label className="text-xs">{t("common.from", { })}</Label>
           <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 w-full sm:w-[160px]" />
         </div>
         <div>
-          <Label className="text-xs">{t("common.to", { defaultValue: "종료일" })}</Label>
+          <Label className="text-xs">{t("common.to", { })}</Label>
           <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 w-full sm:w-[160px]" />
         </div>
         <div className="col-span-2 flex flex-wrap gap-1 text-sm sm:ml-auto">
           <Button variant="ghost" size="sm" onClick={() => { setDateFrom(todayStr()); setDateTo(todayStr()); }}>
-            {t("callLogs.today", { defaultValue: "오늘" })}
+            {t("callLogs.today", { })}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => { setDateFrom(daysAgoStr(6)); setDateTo(todayStr()); }}>
-            {t("callLogs.last7", { defaultValue: "최근 7일" })}
+            {t("callLogs.last7", { })}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => { setDateFrom(daysAgoStr(29)); setDateTo(todayStr()); }}>
-            {t("callLogs.last30", { defaultValue: "최근 30일" })}
+            {t("callLogs.last30", { })}
           </Button>
         </div>
       </div>
@@ -179,22 +180,22 @@ function CallLogsPage() {
       {/* Dashboard summary */}
       <div className="grid grid-cols-3 gap-2 md:gap-4">
         <Card>
-          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{t("callLogs.totalCalls", { defaultValue: "총 통화 수" })}</CardTitle></CardHeader>
+          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{t("callLogs.totalCalls", { })}</CardTitle></CardHeader>
           <CardContent className="p-3 pt-0"><div className="text-xl font-bold sm:text-2xl">{totalCalls}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{t("callLogs.totalActivated", { defaultValue: "개통 완료" })}</CardTitle></CardHeader>
+          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{t("callLogs.totalActivated", { })}</CardTitle></CardHeader>
           <CardContent className="p-3 pt-0"><div className="text-xl font-bold text-emerald-600 sm:text-2xl">{totalActivated}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{isAdmin ? t("callLogs.activeStaff", { defaultValue: "활동 직원" }) : t("callLogs.avgDuration", { defaultValue: "평균 통화(초)" })}</CardTitle></CardHeader>
+          <CardHeader className="p-3 pb-1"><CardTitle className="text-xs text-muted-foreground sm:text-sm">{isAdmin ? t("callLogs.activeStaff", { }) : t("callLogs.avgDuration", { })}</CardTitle></CardHeader>
           <CardContent className="p-3 pt-0"><div className="text-xl font-bold sm:text-2xl">{isAdmin ? stats.length : (totalCalls ? Math.round((data ?? []).reduce((a, r) => a + (r.duration_sec ?? 0), 0) / totalCalls) : 0)}</div></CardContent>
         </Card>
       </div>
 
       {/* Pretty status grid */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold">{t("callLogs.statusOverview", { defaultValue: "상태별 통계" })}</h2>
+        <h2 className="mb-3 text-sm font-semibold">{t("callLogs.statusOverview", { })}</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {CUSTOMER_STATUSES.map((s) => {
             const count = (data ?? []).filter((r) => r.call_status === s).length;
@@ -212,18 +213,18 @@ function CallLogsPage() {
       {isAdmin && (
       <div className="rounded-lg border bg-card overflow-x-auto">
         <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">{t("callLogs.staffStats", { defaultValue: "직원별 통계" })}</h2>
-          <p className="text-xs text-muted-foreground">{t("callLogs.staffStatsDesc", { defaultValue: "선택한 기간 동안의 직원별 통화 건수와 상태별 결과" })}</p>
+          <h2 className="text-sm font-semibold">{t("callLogs.staffStats", { })}</h2>
+          <p className="text-xs text-muted-foreground">{t("callLogs.staffStatsDesc", { })}</p>
         </div>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("callLogs.staff", { defaultValue: "직원" })}</TableHead>
-              <TableHead className="text-right">{t("callLogs.totalCalls", { defaultValue: "총 통화" })}</TableHead>
+              <TableHead>{t("callLogs.staff", { })}</TableHead>
+              <TableHead className="text-right">{t("callLogs.totalCalls", { })}</TableHead>
               {CUSTOMER_STATUSES.map((s) => (
                 <TableHead key={s} className="text-right whitespace-nowrap">{STATUS_LABEL[s]}</TableHead>
               ))}
-              <TableHead className="text-right">{t("callLogs.unset", { defaultValue: "미분류" })}</TableHead>
+              <TableHead className="text-right">{t("callLogs.unset", { })}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -232,7 +233,7 @@ function CallLogsPage() {
             ) : stats.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={CUSTOMER_STATUSES.length + 3} className="h-24 text-center text-sm text-muted-foreground">
-                  {t("callLogs.empty", { defaultValue: "통화 로그가 없습니다." })}
+                  {t("callLogs.empty", { })}
                 </TableCell>
               </TableRow>
             ) : (
@@ -259,20 +260,20 @@ function CallLogsPage() {
       {/* Recent calls */}
       <div className="rounded-lg border bg-card overflow-x-auto">
         <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">{t("callLogs.recentTitle", { defaultValue: "통화 목록" })}</h2>
+          <h2 className="text-sm font-semibold">{t("callLogs.recentTitle", { })}</h2>
         </div>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("callLogs.startedAt", { defaultValue: "시작 시각" })}</TableHead>
-              <TableHead>{t("callLogs.staff", { defaultValue: "직원" })}</TableHead>
-              <TableHead>{t("callLogs.employeePhone", { defaultValue: "직원 번호" })}</TableHead>
-              <TableHead>{t("callLogs.direction", { defaultValue: "방향" })}</TableHead>
-              <TableHead>{t("callLogs.customer", { defaultValue: "고객" })}</TableHead>
-              <TableHead>{t("callLogs.customerPhone", { defaultValue: "고객 번호" })}</TableHead>
-              <TableHead>{t("callLogs.callStatus", { defaultValue: "통화 상태" })}</TableHead>
-              <TableHead>{t("callLogs.memo", { defaultValue: "메모" })}</TableHead>
-              <TableHead className="text-right">{t("callLogs.duration", { defaultValue: "통화 시간" })}</TableHead>
+              <TableHead>{t("callLogs.startedAt", { })}</TableHead>
+              <TableHead>{t("callLogs.staff", { })}</TableHead>
+              <TableHead>{t("callLogs.employeePhone", { })}</TableHead>
+              <TableHead>{t("callLogs.direction", { })}</TableHead>
+              <TableHead>{t("callLogs.customer", { })}</TableHead>
+              <TableHead>{t("callLogs.customerPhone", { })}</TableHead>
+              <TableHead>{t("callLogs.callStatus", { })}</TableHead>
+              <TableHead>{t("callLogs.memo", { })}</TableHead>
+              <TableHead className="text-right">{t("callLogs.duration", { })}</TableHead>
               <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
@@ -288,7 +289,7 @@ function CallLogsPage() {
             ) : !data || data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="h-32 text-center text-sm text-muted-foreground">
-                  {t("callLogs.empty", { defaultValue: "통화 로그가 없습니다." })}
+                  {t("callLogs.empty", { })}
                 </TableCell>
               </TableRow>
             ) : (
@@ -317,7 +318,7 @@ function CallLogsPage() {
                   <TableCell className="text-right font-mono text-xs">{formatDuration(row.duration_sec)}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => setPopupRow(row)}>
-                      {t("common.edit", { defaultValue: "편집" })}
+                      {t("common.edit", { })}
                     </Button>
                   </TableCell>
                 </TableRow>

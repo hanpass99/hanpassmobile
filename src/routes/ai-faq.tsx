@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -55,6 +56,7 @@ type Faq = {
 };
 
 function AiFaqPage() {
+  useTranslation();
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const listFn = useServerFn(listAiFaqs);
@@ -282,6 +284,7 @@ function FaqEditor({
   }) => void;
   saving: boolean;
 }) {
+  useTranslation();
   const [category, setCategory] = useState(initial.category ?? "");
   const [examples, setExamples] = useState<string[]>(
     initial.question_examples?.length ? initial.question_examples : [""],
@@ -381,6 +384,7 @@ function FaqEditor({
 
 // Auto-detected FAQ candidates from repeated real operator replies.
 function CandidatesSection() {
+  useTranslation();
   const qc = useQueryClient();
   const listFn = useServerFn(listAiFaqCandidates);
   const approveFn = useServerFn(approveAiFaqCandidate);

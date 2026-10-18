@@ -26,7 +26,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useCallGoal } from "@/hooks/use-call-goal";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { AutoTranslator } from "@/components/AutoTranslator";
+import { InterfaceLanguage } from "@/i18n/interface-language";
 import i18n from "@/i18n";
 import { useTranslation } from "react-i18next";
 
@@ -83,8 +83,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "Hanpass Mobile OB Call CRM" },
       { property: "og:description", content: i18n.t("app.desc") },
       { name: "twitter:description", content: i18n.t("app.desc") },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/96e0c5b7-82e3-4549-93b5-0c50b870f682/id-preview-eb1cbe12--0aa97a0a-ffc3-4991-bbe0-f78345f76740.lovable.app-1778318358520.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/96e0c5b7-82e3-4549-93b5-0c50b870f682/id-preview-eb1cbe12--0aa97a0a-ffc3-4991-bbe0-f78345f76740.lovable.app-1778318358520.png" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
@@ -224,7 +222,7 @@ function RootComponent() {
             <AuthGate />
           </ErrorBoundary>
           <Toaster richColors position="top-right" />
-          <AutoTranslator />
+          <InterfaceLanguage />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

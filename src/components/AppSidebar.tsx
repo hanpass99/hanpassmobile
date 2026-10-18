@@ -1,8 +1,9 @@
+import hanpassLogo from "@/assets/hanpass-logo.png";
 import { uiCopy } from "@/i18n/ui-copy";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Radio, AlertTriangle, BarChart3,
-  Settings, Users2, Phone, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
+  Settings, Users2, LogOut, Moon, Sun, Languages, MessageSquare, PhoneCall, Bot, Bell, Send, Megaphone,
   ShieldAlert,
 } from "lucide-react";
 
@@ -139,9 +140,7 @@ export function AppSidebar() {
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border">
           <div className="flex items-center gap-2.5 px-2 py-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-              <Phone className="h-4 w-4" />
-            </div>
+            <img src={hanpassLogo} alt={uiCopy("brand.logoAlt")} width={32} height={32} className="h-8 w-8 shrink-0 object-contain" />
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
               <span className="font-display text-[15px] font-bold leading-tight tracking-normal text-sidebar-foreground">
                 {uiCopy("ux.copy3b198d601e")}
@@ -176,9 +175,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 px-2 py-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-            <Phone className="h-4 w-4" />
-          </div>
+          <img src={hanpassLogo} alt={uiCopy("brand.logoAlt")} width={32} height={32} className="h-8 w-8 shrink-0 object-contain" />
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-display text-[15px] font-bold leading-tight tracking-normal text-sidebar-foreground">
               {uiCopy("ux.copy3b198d601e")}

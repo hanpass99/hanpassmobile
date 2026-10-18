@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { AiChatPanel } from "@/components/AiChatPanel";
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/ai-assistant")({
 });
 
 function AiAssistantPage() {
+  useTranslation();
   return (
     <div className="flex h-[calc(100dvh-5.5rem)] min-h-[420px] flex-col gap-3 sm:h-[calc(100vh-100px)] sm:gap-4">
       <PageHeader title={uiCopy("ux.copy6eb7d86174")} description={uiCopy("ux.copy1cbbac0407")} />

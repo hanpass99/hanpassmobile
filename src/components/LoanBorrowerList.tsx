@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 // 대출자 명단 — 고객 관리 화면의 "대출자" 탭에서 표시되는 목록.
 // 국가별 탭, 조회 기간(오늘/이번 주/이번 달), 이름·전화번호 검색을 제공합니다.
@@ -90,6 +91,7 @@ export function useLoanBorrowers(enabled: boolean) {
 }
 
 export function LoanBorrowerList() {
+  useTranslation();
   const [countries, setCountries] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");

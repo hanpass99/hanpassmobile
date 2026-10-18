@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -48,6 +49,7 @@ const LANG_LABEL: Record<LangFilter, string> = {
 };
 
 function BroadcastPage() {
+  useTranslation();
   const { isAdmin, user } = useAuth();
   const qc = useQueryClient();
 

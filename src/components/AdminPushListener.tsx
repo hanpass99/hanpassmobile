@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ type PendingNoti = {
 };
 
 export function AdminPushListener() {
+  useTranslation();
   const { user } = useAuth();
   const [queue, setQueue] = useState<PendingNoti[]>([]);
   const [acking, setAcking] = useState(false);

@@ -520,6 +520,7 @@ function StaffCallFinesCard(props: {
   isAdmin: boolean;
   today: string;
 }) {
+  useTranslation();
   const [focusDate, setFocusDate] = useState<string>(props.today);
   const fines = useStaffCallFines(props.periodStart, props.periodEnd, focusDate);
   const toggle = useToggleCallWaiver();

@@ -143,6 +143,7 @@ function StatusChangedCell({ c, staffById, fmtDateTime }: { c: CustomerRow; staf
 }
 
 function CheckCell({ c, isAdmin, selected, onToggle }: { c: CustomerRow; isAdmin: boolean; selected: Set<string>; onToggle: (id: string) => void }) {
+  useTranslation();
   if (!isAdmin) return null;
   return (
     <TableCell className="w-10">

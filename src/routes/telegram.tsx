@@ -549,6 +549,7 @@ function TelegramPage() {
 }
 
 function ConversationPane({ chat }: { chat: Chat }) {
+  useTranslation();
   const qc = useQueryClient();
   const { user } = useAuth();
   const [text, setText] = useState("");
@@ -1486,6 +1487,7 @@ function ParticipationHistory({
   messages: Message[];
   profileMap: Record<string, Profile>;
 }) {
+  useTranslation();
   const runs = useMemo(() => {
     const out: { operatorId: string; start: string; end: string }[] = [];
     for (const m of messages) {
@@ -1573,6 +1575,7 @@ function MediaTemplateConfirmDialog({
   onClose: () => void;
   onSend: (caption: string) => Promise<void>;
 }) {
+  useTranslation();
   const [caption, setCaption] = useState(template.content ?? "");
   const [sending, setSending] = useState(false);
   const isImage = template.media_type === "image";
@@ -1660,6 +1663,7 @@ function QuotedReplyPreview({
   isOut: boolean;
   profileMap: Record<string, Profile>;
 }) {
+  useTranslation();
   if (!target) {
     return (
       <div
@@ -1699,6 +1703,7 @@ function MessageBody({
   m: Message;
   onPhotoClick?: (url: string) => void;
 }) {
+  useTranslation();
   const kind = m.message_type ?? "text";
   const mediaQ = useSignedMediaUrl(m.media_storage_path);
   const url = mediaQ.data;
@@ -1791,6 +1796,7 @@ function MessageBody({
 
 
 function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
+  useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Template | null>(null);
@@ -2117,6 +2123,7 @@ function TemplatesManagerDialog({ onClose }: { onClose: () => void }) {
 
 
 function LinkCustomerDialog({ chat, onClose }: { chat: Chat; onClose: () => void }) {
+  useTranslation();
   const qc = useQueryClient();
   const [q, setQ] = useState(chat.phone ?? "");
   const searchFn = useServerFn(searchCustomersForTelegram);
@@ -2206,6 +2213,7 @@ function SendSmsDialog({
   customerPhone: string;
   onClose: () => void;
 }) {
+  useTranslation();
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState("");
   const [phone, setPhone] = useState(customerPhone ?? "");
@@ -2335,6 +2343,7 @@ function SendSmsDialog({
 
 
 function WebhookSettingsDialog({ onClose }: { onClose: () => void }) {
+  useTranslation();
   const defaultUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/api/public/telegram/webhook`

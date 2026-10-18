@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useRef, useState } from "react";
 import { Send, Loader2, Trash2 } from "lucide-react";
@@ -12,6 +13,7 @@ type Msg = {
 };
 
 export function AiChatPanel({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  useTranslation();
   const { session } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");

@@ -44,7 +44,7 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"];
+const PIE_COLORS = Array.from({ length: 8 }, (_, i) => `var(--chart-${i + 1})`);
 
 type StatusCounts = Record<CustomerStatus, number>;
 type DailyRow = { date: string; [k: string]: string | number };
@@ -308,10 +308,10 @@ function Dashboard() {
             {loading ? <Skeleton className="h-full w-full" /> : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="date" fontSize={12} /><YAxis fontSize={12} /><Tooltip /><Legend />
-                <Line type="monotone" dataKey={t("dashboard.calls")} stroke="#3b82f6" strokeWidth={2} />
-                <Line type="monotone" dataKey={t("dashboard.activations")} stroke="#10b981" strokeWidth={2} />
+                <Line type="monotone" dataKey={t("dashboard.calls")} stroke="var(--chart-1)" strokeWidth={2} />
+                <Line type="monotone" dataKey={t("dashboard.activations")} stroke="var(--success)" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
             )}
@@ -347,8 +347,8 @@ function Dashboard() {
               <XAxis type="number" fontSize={11} />
               <YAxis type="category" dataKey="name" fontSize={10} width={82} />
               <Tooltip /><Legend />
-              <Bar dataKey={t("dashboard.customers")} fill="#3b82f6" radius={[0, 6, 6, 0]} />
-              <Bar dataKey={t("dashboard.activations")} fill="#10b981" radius={[0, 6, 6, 0]} />
+              <Bar dataKey={t("dashboard.customers")} fill="var(--chart-1)" radius={[0, 6, 6, 0]} />
+              <Bar dataKey={t("dashboard.activations")} fill="var(--success)" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
           )}

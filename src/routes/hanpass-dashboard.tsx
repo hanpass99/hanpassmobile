@@ -311,10 +311,10 @@ function HanpassDashboardPage() {
           {loading ? <Skeleton className="h-full w-full" /> : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="date" fontSize={11} /><YAxis fontSize={11} /><Tooltip /><Legend />
-                <Line type="monotone" dataKey={t("hanpassDash.handled")} stroke="#3b82f6" strokeWidth={2} />
-                <Line type="monotone" dataKey={t("hanpassDash.activated")} stroke="#10b981" strokeWidth={2} />
+                <Line type="monotone" dataKey={t("hanpassDash.handled")} stroke="var(--chart-1)" strokeWidth={2} />
+                <Line type="monotone" dataKey={t("hanpassDash.activated")} stroke="var(--success)" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -480,8 +480,8 @@ function HanpassDashboardPage() {
                           title={`${r.name} · ${day} · ${n}`}
                           className="h-7 w-7 rounded text-center"
                           style={{
-                            backgroundColor: n ? `hsl(var(--primary) / ${alpha})` : "hsl(var(--muted))",
-                            color: alpha > 0.6 ? "hsl(var(--primary-foreground))" : undefined,
+                            backgroundColor: n ? `color-mix(in srgb, var(--chart-1) ${alpha * 100}%, var(--card))` : "var(--muted)",
+                            color: alpha > 0.6 ? "var(--primary-foreground)" : undefined,
                           }}
                         >
                           {n || ""}

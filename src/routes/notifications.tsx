@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -49,6 +50,7 @@ type SentRow = {
 };
 
 function NotificationsPage() {
+  useTranslation();
   const { isAdmin, user } = useAuth();
   const qc = useQueryClient();
 

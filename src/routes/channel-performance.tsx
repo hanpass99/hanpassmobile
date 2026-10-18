@@ -152,8 +152,8 @@ function ChannelPerf() {
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="total" name={t("channelPerf.barCustomers")} fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="activated" name={t("channelPerf.barActivated")} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="total" name={t("channelPerf.barCustomers")} fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="activated" name={t("channelPerf.barActivated")} fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
 
                 </BarChart>
               </ResponsiveContainer>
