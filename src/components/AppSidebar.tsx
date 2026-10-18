@@ -96,10 +96,10 @@ export function AppSidebar() {
       const active = item.external ? false : isActive(item.url);
       const inner = (
         <>
-          <item.icon className={cn("h-4 w-4 text-sidebar-foreground/55", active && "text-primary")} />
+          <item.icon className={cn("h-[18px] w-[18px] shrink-0 text-sidebar-foreground/80", active && "text-primary")} />
           <span className="flex-1 truncate">{item.title}</span>
           {item.badge && item.badge > 0 ? (
-            <span className="ml-auto rounded-full bg-sidebar-primary px-1.5 text-xs font-bold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
+            <span className="ml-auto rounded-full bg-sidebar-primary px-2 py-0.5 text-[12px] font-bold leading-none text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
               {item.badge > 99 ? "99+" : item.badge}
             </span>
           ) : null}
@@ -112,9 +112,9 @@ export function AppSidebar() {
             isActive={active}
             tooltip={item.title}
             className={cn(
-              "h-9 rounded-md text-[13px] font-normal text-sidebar-foreground/70 transition-colors",
+              "relative h-10 rounded-md text-[15px] font-medium text-sidebar-foreground transition-colors",
               "hover:bg-sidebar-accent hover:text-sidebar-foreground",
-              "data-[active=true]:bg-primary/8 data-[active=true]:text-primary data-[active=true]:font-medium",
+              "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-bold data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-full data-[active=true]:before:bg-primary",
             )}
           >
             {item.external ? (
@@ -131,7 +131,7 @@ export function AppSidebar() {
       );
     });
 
-  const groupLabel = "px-2 text-xs font-medium tracking-normal text-sidebar-foreground/45";
+  const groupLabel = "px-2 text-[13px] font-bold tracking-normal text-sidebar-foreground/75";
 
   if (isHanpass) {
     return (
@@ -142,10 +142,10 @@ export function AppSidebar() {
               <Phone className="h-4 w-4" />
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-              <span className="font-display text-[13px] font-semibold leading-tight tracking-normal text-sidebar-foreground">
+              <span className="font-display text-[15px] font-bold leading-tight tracking-normal text-sidebar-foreground">
                 HANPASS MOBILE
               </span>
-              <span className="text-xs font-normal tracking-normal text-sidebar-foreground/40">OB Call CRM</span>
+              <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">OB Call CRM</span>
             </div>
           </div>
         </SidebarHeader>
@@ -179,10 +179,10 @@ export function AppSidebar() {
             <Phone className="h-4 w-4" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-display text-[13px] font-semibold leading-tight tracking-normal text-sidebar-foreground">
+            <span className="font-display text-[15px] font-bold leading-tight tracking-normal text-sidebar-foreground">
               HANPASS MOBILE
             </span>
-            <span className="text-xs font-normal tracking-normal text-sidebar-foreground/40">OB Call CRM</span>
+            <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">OB Call CRM</span>
           </div>
         </div>
       </SidebarHeader>
@@ -222,11 +222,11 @@ function SidebarPrefs() {
   };
   return (
     <div className="flex items-center gap-1 px-2 py-1 group-data-[collapsible=icon]:hidden">
-      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-xs text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={switchLang} title="Language">
+      <Button variant="ghost" size="sm" className="h-8 flex-1 justify-start gap-2 text-[13px] font-medium text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={switchLang} title="Language">
         <Languages className="h-4 w-4" />
         {i18nInst.language === "ko" ? "한국어" : "English"}
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={toggle} title="Theme">
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={toggle} title="Theme">
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
     </div>
@@ -249,10 +249,10 @@ function SidebarUserFooter() {
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
-        <span className="truncate text-xs font-semibold text-sidebar-foreground">{displayName || user.email}</span>
-        <span className="text-xs font-normal tracking-normal text-sidebar-foreground/45">{isAdmin ? t("common.admin") : t("common.staff")}</span>
+        <span className="truncate text-[14px] font-bold text-sidebar-foreground">{displayName || user.email}</span>
+        <span className="text-[13px] font-medium tracking-normal text-sidebar-foreground/70">{isAdmin ? t("common.admin") : t("common.staff")}</span>
       </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
         onClick={() => signOut()} title={t("common.logout")}>
         <LogOut className="h-4 w-4" />
       </Button>
