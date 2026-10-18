@@ -2289,23 +2289,6 @@ function CustomersPage() {
     return () => clearInterval(timer);
   }, [tab]);
 
-  if (listError) {
-    return (
-      <div className="space-y-5">
-        <PageHeader title={t("customers.title")} description="" />
-        <Card role="alert">
-          <CardContent className="space-y-3 p-6 text-center">
-            <div className="text-sm font-semibold">{t("customers.loadFailedTitle")}</div>
-            <div className="text-xs text-muted-foreground">{(listError as Error).message}</div>
-            <Button onClick={() => void refetchList()} size="sm" aria-busy={listFetching}>
-              <RefreshCw className="mr-2 h-4 w-4" /> {t("customers.retry")}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const SHEET_URL =
     "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
   const SHEET_URL_INTER =
