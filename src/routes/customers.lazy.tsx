@@ -7,7 +7,7 @@ import {
   Search, Plus, RefreshCw, Upload, Download, FileSpreadsheet,
   StickyNote, Trash2, ArrowUpDown, ArrowUp, ArrowDown, CalendarIcon, X, Phone, ExternalLink,
 } from "lucide-react";
-import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals, syncGoogleFormReceived } from "@/lib/google-form-sync.functions";
+import { syncGoogleFormApplications, syncGoogleFormApplicationsInter, syncFriendReferrals, syncGoogleFormReceived, syncQrActivation } from "@/lib/google-form-sync.functions";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -303,7 +303,7 @@ function CustomersPage() {
   const visiblePools = useMemo<readonly CustomerPool[]>(
     () =>
       hanpassOnly
-        ? (["activation_request", "friend_referral", "prepaid_charge"] as const)
+        ? (["activation_request", "qr_activation", "friend_referral", "prepaid_charge"] as const)
         : POOLS,
     [hanpassOnly],
   );
@@ -1015,7 +1015,7 @@ function CustomersPage() {
     if (effPool === "existing") {
       header = ["고객명", "선후불", "전화번호", "개통일", "요금제", "국적", "신분증번호"];
       sample = [{ 고객명: "Nguyen Van A", 선후불: "선불", 전화번호: "010-1234-5678", 개통일: "2026-01-15", 요금제: "LTE 5G 무제한", 국적: "VN", 신분증번호: "900512-5123456" }];
-    } else if (effPool === "activation_request" || effPool === "google_form_activation") {
+    } else if (effPool === "activation_request" || effPool === "google_form_activation" || effPool === "qr_activation") {
       header = ["고객명", "전화번호", "국적", "신청일", "신청요금제", "메모"];
       sample = [{ 고객명: "Ivan", 전화번호: "010-5555-6666", 국적: "CIS", 신청일: "2026-05-08", 신청요금제: "선불 1만원", 메모: "" }];
 
@@ -1422,6 +1422,28 @@ function CustomersPage() {
     },
     onError: (e: Error) => toast.error(t("customers.googleFormSyncFail", { msg: e.message })),
   });
+  // === QR 개통 신청 자동 동기화 ===
+  const syncQrFn = useServerFn(syncQrActivation);
+  const syncQrMut = useMutation({
+    mutationFn: () => syncQrFn(),
+    onSuccess: (r) => {
+      if (r.inserted > 0) {
+        toast.success(`QR 개통 신청 ${r.inserted}건을 가져왔습니다`);
+        void refetchList();
+        void refetchPoolCounts();
+      }
+      if (r.errors && r.errors.length > 0) toast.error(`QR 개통 신청 동기화 오류: ${r.errors[0]}`);
+    },
+    onError: (e: Error) => toast.error(`QR 개통 신청 동기화 실패: ${e.message}`),
+  });
+  const syncQrMutRef = useRef(syncQrMut);
+  syncQrMutRef.current = syncQrMut;
+  useEffect(() => {
+    if (tab !== "qr_activation") return;
+    syncQrMutRef.current.mutate();
+    const timer = setInterval(() => syncQrMutRef.current.mutate(), 30_000);
+    return () => clearInterval(timer);
+  }, [tab]);
   const syncReceivedMutRef = useRef(syncGoogleFormReceivedMut);
   syncReceivedMutRef.current = syncGoogleFormReceivedMut;
   useEffect(() => {
@@ -1508,6 +1530,7 @@ function CustomersPage() {
 
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
   const SHEET_URL_INTER = "https://docs.google.com/spreadsheets/d/1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM/edit";
+  const SHEET_URL_QR = "https://docs.google.com/spreadsheets/d/16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM/edit";
   const SHEET_URL_FRIEND = "https://docs.google.com/spreadsheets/d/1OwC6pQ2as5VsyDTYVzUSGsNru9ki2jFvScn5kk2zZ1w/edit";
 
   return (
@@ -2495,7 +2518,7 @@ function AddCustomerDialog({
   const [requestedPlan, setRequestedPlan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const requiresApplication = pool === "activation_request" || pool === "google_form_activation";
+  const requiresApplication = pool === "activation_request" || pool === "google_form_activation" || pool === "qr_activation";
 
   useEffect(() => {
     if (open) {
