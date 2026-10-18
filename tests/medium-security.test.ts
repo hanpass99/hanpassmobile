@@ -78,6 +78,31 @@ it("acknowledges duplicate inbound updates without any automated reply or chat u
     () => (config: unknown) => config, () => "fixture-secret", (a: string,b: string) => a === b, supabaseAdmin, inboundInsertOutcome, failSend, failSend, failSend, normalizePhone, (p: string) => p,
   );
   for (const input of [{ text: "/start" }, { text: "question" }, { voice: { file_id: "fixture" } }, { contact: { phone_number: "01012345678" } }, { text: "/stop" }]) {
-    const response = await handler(new Request("https://fixture.invalid", { method: "POST" }));
+    const request = new Request("https://fixture.invalid", {
+      method: "POST", headers: { "Content-Type": "application/json", "X-Telegram-Bot-Api-Secret-Token": "fixture-secret" },
+      body: JSON.stringify({ update_id: 1, message: { message_id: 1, chat: { id: 1 }, date: 1, ...input } }),
+    });
+    const response = await handler({ request });
+    expect(await response.json()).toEqual({ ok: true, duplicate: true });
   }
+  expect(sends).toEqual([]);
+  expect(writes).toBe(0);
+});
+
+it("generates unique 20-character temporary passwords with letters, digits and symbols", () => {
+  const source = readFileSync(new URL("../supabase/functions/admin-reset-staff-password/index.ts", import.meta.url), "utf8");
+  const start = source.indexOf("export function generateTemporaryPassword");
+  const end = source.indexOf("\nDeno.serve", start);
+  const compiled = new Bun.Transpiler({ loader: "ts" }).transformSync(source.slice(start, end).replace("export function", "function"));
+  const generate = new Function("crypto", compiled + "\nreturn generateTemporaryPassword;")(crypto);
+  const passwords = new Set<string>();
+  for (let i = 0; i < 100; i++) {
+    const password = generate();
+    expect(password.length).toBe(20);
+    expect(/[a-zA-Z]/.test(password)).toBe(true);
+    expect(/[0-9]/.test(password)).toBe(true);
+    expect(/[^a-zA-Z0-9]/.test(password)).toBe(true);
+    passwords.add(password);
+  }
+  expect(passwords.size).toBe(100);
 });
