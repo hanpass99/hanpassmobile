@@ -1,5 +1,10 @@
 # Current requests
 
+- [x] UX batch 3: customer tables, per-user filter/tab/page-size restoration, chips and reset
+- [x] UX batch 3: call/SMS/status quick actions, safe confirmation and row keyboard navigation
+- [x] UX batch 3: consistent loading/empty/error states; 118 regression tests, automatic type-check/build and desktop/mobile simulated workflows passed
+- [ ] UX batch 3: changed-file lint is blocked by 12 existing customer-file errors; other changed files pass. Real staff verification requires preview sign-in (self-session mint found no matching account).
+
 - [x] UX batch 2: equal-period KPI comparisons using existing RPC/filters and one call-completed definition
 - [x] UX batch 2: searchable top-10 staff ranking, country bars with others, and date presets
 - [x] UX batch 2: dashboard changed-file lint, 114 regression tests, automatic type-check/build, and desktop/mobile mock browser verification

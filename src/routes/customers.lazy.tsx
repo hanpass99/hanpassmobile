@@ -110,6 +110,17 @@ import {
   type CustomerRow,
   SERVER_SORT_KEYS,
 } from "@/hooks/use-customers";
+import { CustomerQuickActions } from "@/components/CustomerQuickActions";
+import { EmptyState } from "@/components/EmptyState";
+import { TableSkeleton } from "@/components/TableSkeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  CUSTOMER_PAGE_SIZES,
+  customerPreferencesKey,
+  readCustomerPreferences,
+  rowNavigationIndex,
+  type CustomerPageSize,
+} from "@/lib/customer-preferences";
 import { LoanBorrowerList, useLoanBorrowerCount } from "@/components/LoanBorrowerList";
 
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
@@ -166,8 +177,6 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
   return pages;
 }
 
-const PAGE_SIZE = 25;
-
 function SortHead({
   k,
   children,
@@ -198,7 +207,14 @@ function SortHead({
         ? "descending"
         : "none";
   return (
-    <TableHead className={className} aria-sort={ariaSort}>
+    <TableHead
+      className={cn(
+        className,
+        /date|imported_at|phone|call_round/.test(k) &&
+          "text-right tabular-nums [&_button]:justify-end [&_button]:w-full",
+      )}
+      aria-sort={ariaSort}
+    >
       <button
         type="button"
         onClick={() => onSort(k)}
@@ -221,7 +237,7 @@ function StatusChangedCell({
 }) {
   const who = c.status_changed_by ? staffById.get(c.status_changed_by) : null;
   return (
-    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+    <TableCell className="text-xs text-muted-foreground whitespace-nowrap text-right tabular-nums">
       <div>{fmtDateTime(c.status_changed_at)}</div>
       {who && <div className="text-xs opacity-70">{who}</div>}
     </TableCell>
@@ -436,7 +452,7 @@ function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
 
 function CustomersPage() {
   const { t } = useTranslation();
-  const { isAdmin, isHanpass } = useAuth();
+  const { isAdmin, isHanpass, user } = useAuth();
   const hanpassOnly = isHanpass;
   const visiblePools = useMemo<readonly CustomerPool[]>(
     () =>
@@ -461,34 +477,13 @@ function CustomersPage() {
     return "existing";
   })();
   const [tab, setTab] = useState<TabValue>(initialTab);
-  const tabRestoredRef = useRef(false);
-  useEffect(() => {
-    if (tabRestoredRef.current) return;
-    tabRestoredRef.current = true;
-    if (initialSearch.pool) return;
-    try {
-      let saved = window.localStorage.getItem("customers.lastTab");
-      if (saved === "loan_borrowers") saved = "loan_borrower";
-      if (!saved) return;
-      if (
-        visiblePools.includes(saved as CustomerPool) ||
-        (saved === "loan_borrowers" && showLoanTab)
-      ) {
-        setTab(saved as TabValue);
-      }
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => {
-    if (!tabRestoredRef.current) return;
-    try {
-      window.localStorage.setItem("customers.lastTab", tab);
-    } catch {
-      /* ignore */
-    }
-  }, [tab]);
+  const [preferencesReadyFor, setPreferencesReadyFor] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState<CustomerPageSize>(20);
+  const [quickStatusTarget, setQuickStatusTarget] = useState<{
+    customer: CustomerRow;
+    status: CustomerStatus;
+  } | null>(null);
+  const [quickStatusSaving, setQuickStatusSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [jumpPage, setJumpPage] = useState("");
 
@@ -517,6 +512,92 @@ function CustomersPage() {
   const [dateTo, setDateTo] = useState<Date | undefined>(
     initialSearch.to ? new Date(initialSearch.to) : undefined,
   );
+  useEffect(() => {
+    if (!user?.id || preferencesReadyFor === user.id) return;
+    let saved = null;
+    try {
+      saved = readCustomerPreferences(localStorage.getItem(customerPreferencesKey(user.id)));
+    } catch {
+      /* storage unavailable */
+    }
+    const savedTab = saved?.tab === "loan_borrowers" ? "loan_borrower" : saved?.tab;
+    if (!initialSearch.pool && savedTab && visiblePools.includes(savedTab as CustomerPool))
+      setTab(savedTab as TabValue);
+    const hasUrlFilters = [
+      initialSearch.status,
+      initialSearch.country,
+      initialSearch.from,
+      initialSearch.to,
+      initialSearch.pool,
+    ].some(Boolean);
+    if (saved && !hasUrlFilters) {
+      setSearchInput(saved.search);
+      setCountryIds(saved.countryIds);
+      setAssignedCountry(saved.assignedCountry);
+      if (
+        saved.status === "all" ||
+        saved.status === "__call_completed__" ||
+        CUSTOMER_STATUSES.includes(saved.status as CustomerStatus)
+      )
+        setStatusF(saved.status as typeof statusF);
+      setStaffF(saved.staff);
+      if (["all", "none", "1", "2", "3"].includes(saved.callRound))
+        setCallRoundF(saved.callRound as typeof callRoundF);
+      setDateFrom(saved.dateFrom ? new Date(saved.dateFrom + "T00:00:00") : undefined);
+      setDateTo(saved.dateTo ? new Date(saved.dateTo + "T00:00:00") : undefined);
+    }
+    if (saved) setPageSize(saved.pageSize);
+    setPreferencesReadyFor(user.id);
+  }, [user?.id, preferencesReadyFor, initialSearch, visiblePools]);
+
+  useEffect(() => {
+    if (!user?.id || preferencesReadyFor !== user.id) return;
+    try {
+      localStorage.setItem(
+        customerPreferencesKey(user.id),
+        JSON.stringify({
+          tab,
+          search: searchInput,
+          countryIds,
+          assignedCountry,
+          status: statusF,
+          staff: staffF,
+          callRound: callRoundF,
+          dateFrom: dateFrom ? format(dateFrom, "yyyy-MM-dd") : undefined,
+          dateTo: dateTo ? format(dateTo, "yyyy-MM-dd") : undefined,
+          pageSize,
+        }),
+      );
+    } catch {
+      /* storage unavailable */
+    }
+  }, [
+    user?.id,
+    preferencesReadyFor,
+    tab,
+    searchInput,
+    countryIds,
+    assignedCountry,
+    statusF,
+    staffF,
+    callRoundF,
+    dateFrom,
+    dateTo,
+    pageSize,
+  ]);
+
+  const resetFilters = () => {
+    setSearchInput("");
+    setCountryIds([]);
+    setAssignedCountry("all");
+    setStatusF("all");
+    setStaffF("all");
+    setCallRoundF("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setPage(1);
+  };
+
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
@@ -559,6 +640,7 @@ function CustomersPage() {
     sortDir,
     dateFrom,
     dateTo,
+    pageSize,
   ]);
 
   // 탭 전환 시 기본 정렬: 1년 개통자는 개통일 오름차순(만기 임박 우선), 친구 추천은 가입일 최신순, QR 개통 신청은 오래된 접수부터
@@ -595,7 +677,7 @@ function CustomersPage() {
     sortKey,
     sortDir,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize: pageSize,
     dateFromIso: fromIso,
     dateToIso: toIso,
   });
@@ -619,7 +701,7 @@ function CustomersPage() {
 
   const loading = listLoading;
   const loadingMore = listFetching && !listLoading;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const schedulePoolCountRefresh = () => {
     if (poolCountRefreshTimer.current) return;
@@ -744,7 +826,7 @@ function CustomersPage() {
     // 낙관적 업데이트: 자동 재정렬 없이 현재 위치 유지
     cache.patchRow(id, {
       status,
-      ...(status === "activated" ? { activation_date: patch.activation_date! } : {}),
+      ...(status === "activated" ? { activation_date: patch.activation_date } : {}),
       ...(status === "new" ? { assigned_to: null } : {}),
     });
     const { error } = await supabase.rpc("staff_update_customer_basic", {
@@ -1593,8 +1675,69 @@ function CustomersPage() {
 
     const extraCols = isAdmin ? 1 : 0;
 
+    const rowProps = (c: CustomerRow) => ({
+      tabIndex: 0,
+      "data-customer-row": c.id,
+      onKeyDown: (event: React.KeyboardEvent<HTMLTableRowElement>) => {
+        const target = event.target;
+        if (
+          !(target instanceof HTMLElement) ||
+          target.closest(
+            "input, textarea, select, [contenteditable=true], [role=combobox], [role=menu], [role=checkbox]",
+          )
+        )
+          return;
+        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        const row = event.currentTarget;
+        const table = row.closest("table");
+        const elements = table
+          ? Array.from(table.querySelectorAll<HTMLTableRowElement>("[data-customer-row]"))
+          : [];
+        const next = rowNavigationIndex(event.key, elements.indexOf(row), elements.length);
+        if (next !== null) {
+          event.preventDefault();
+          elements[next]?.focus();
+        } else if (event.key.toLowerCase() === "s" && target === row) {
+          event.preventDefault();
+          const trigger = row.querySelector<HTMLButtonElement>("[data-quick-status]");
+          if (trigger) {
+            trigger.focus();
+            trigger.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+            );
+          }
+        } else if (event.key === "Enter" && target === row) {
+          event.preventDefault();
+          setDetailTarget(c);
+        }
+      },
+    });
+
+    const renderName = (c: CustomerRow) => (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="link"
+            className="h-auto max-w-[180px] justify-start truncate p-0 text-left font-medium"
+            onClick={() => setDetailTarget(c)}
+          >
+            <span className="truncate">{c.name}</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-sm break-words">{c.name}</TooltipContent>
+      </Tooltip>
+    );
+
     const renderActions = (c: CustomerRow) => (
       <TableCell className="text-right whitespace-nowrap">
+        <CustomerQuickActions
+          customer={c}
+          telHref={toTelHref(c.phone)}
+          onCall={() => setCallLogTarget(c)}
+          onStatus={(status) => setQuickStatusTarget({ customer: c, status })}
+          userId={user?.id}
+          canSms={!hanpassOnly}
+        />
         <Button size="sm" variant="ghost" onClick={() => setMemoTarget(c)}>
           <StickyNote className="mr-1 h-3.5 w-3.5" /> {t("customers.col.memo")}
         </Button>
@@ -1619,7 +1762,10 @@ function CustomersPage() {
 
     if (p === "existing") {
       return (
-        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
+        <Table
+          className="sticky-head min-w-max tabular-nums [&_th]:whitespace-nowrap [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
+          aria-label={uiCopy("ux.copy9965e7b0f5")}
+        >
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
@@ -1661,22 +1807,16 @@ function CustomersPage() {
           </TableHeader>
           <TableBody>
             {filtered.map((c) => (
-              <TableRow key={c.id} className="hover:bg-muted/30">
+              <TableRow key={c.id} {...rowProps(c)} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-                <TableCell className="font-medium">
-                  <button
-                    type="button"
-                    onClick={() => setDetailTarget(c)}
-                    className="text-left hover:underline"
-                  >
-                    {c.name}
-                  </button>
-                </TableCell>
+                <TableCell className="font-medium">{renderName(c)}</TableCell>
                 <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
-                <TableCell className="font-mono text-xs">
+                <TableCell className="font-mono text-xs text-right tabular-nums">
                   <PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} />
                 </TableCell>
-                <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
+                <TableCell className="text-xs text-right tabular-nums">
+                  {fmtDate(c.activation_date)}
+                </TableCell>
                 <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
                 <CountryCell
                   c={c}
@@ -1685,7 +1825,9 @@ function CustomersPage() {
                   countries={countries}
                   onChangeCountry={changeCountry}
                 />
-                <TableCell className="font-mono text-xs">{c.id_number ?? "-"}</TableCell>
+                <TableCell className="font-mono text-xs text-right tabular-nums">
+                  {c.id_number ?? "-"}
+                </TableCell>
                 <Assigned
                   c={c}
                   staffById={staffById}
@@ -1696,7 +1838,7 @@ function CustomersPage() {
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                 <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
-                <TableCell className="text-xs text-muted-foreground">
+                <TableCell className="text-xs text-muted-foreground text-right tabular-nums">
                   {fmtDate(c.imported_at)}
                 </TableCell>
                 <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>
@@ -1713,7 +1855,10 @@ function CustomersPage() {
 
     if (p === "friend_referral" || p === "prepaid_charge") {
       return (
-        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
+        <Table
+          className="sticky-head min-w-max tabular-nums [&_th]:whitespace-nowrap [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
+          aria-label={uiCopy("ux.copy9965e7b0f5")}
+        >
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
@@ -1757,18 +1902,10 @@ function CustomersPage() {
           </TableHeader>
           <TableBody>
             {filtered.map((c) => (
-              <TableRow key={c.id} className="hover:bg-muted/30">
+              <TableRow key={c.id} {...rowProps(c)} className="hover:bg-muted/30">
                 <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-                <TableCell className="font-medium">
-                  <button
-                    type="button"
-                    onClick={() => setDetailTarget(c)}
-                    className="text-left hover:underline"
-                  >
-                    {c.name}
-                  </button>
-                </TableCell>
-                <TableCell className="font-mono text-xs">
+                <TableCell className="font-medium">{renderName(c)}</TableCell>
+                <TableCell className="font-mono text-xs text-right tabular-nums">
                   <PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} />
                 </TableCell>
                 <CountryCell
@@ -1778,7 +1915,7 @@ function CustomersPage() {
                   countries={countries}
                   onChangeCountry={changeCountry}
                 />
-                <TableCell className="text-xs">
+                <TableCell className="text-xs text-right tabular-nums">
                   {fmtDate(p === "prepaid_charge" ? c.charge_date : c.signup_date)}
                 </TableCell>
                 <Assigned
@@ -1791,7 +1928,7 @@ function CustomersPage() {
                 <StatusCell c={c} onChangeStatus={changeStatus} />
                 <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
                 <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
-                <TableCell className="text-xs text-muted-foreground">
+                <TableCell className="text-xs text-muted-foreground text-right tabular-nums">
                   {fmtDate(c.imported_at)}
                 </TableCell>
                 <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>
@@ -1852,7 +1989,10 @@ function CustomersPage() {
       };
 
       return (
-        <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
+        <Table
+          className="sticky-head min-w-max tabular-nums [&_th]:whitespace-nowrap [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
+          aria-label={uiCopy("ux.copy9965e7b0f5")}
+        >
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
@@ -1894,21 +2034,14 @@ function CustomersPage() {
               return (
                 <TableRow
                   key={c.id}
+                  {...rowProps(c)}
                   className={cn(
                     "hover:bg-muted/30",
                     isNearMaturity(dday) && "bg-emerald-50/50 dark:bg-emerald-950/20",
                   )}
                 >
                   <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-                  <TableCell className="font-medium">
-                    <button
-                      type="button"
-                      onClick={() => setDetailTarget(c)}
-                      className="text-left hover:underline"
-                    >
-                      {c.name}
-                    </button>
-                  </TableCell>
+                  <TableCell className="font-medium">{renderName(c)}</TableCell>
                   <CountryCell
                     c={c}
                     countryById={countryById}
@@ -1916,11 +2049,15 @@ function CustomersPage() {
                     countries={countries}
                     onChangeCountry={changeCountry}
                   />
-                  <TableCell className="font-mono text-xs">
+                  <TableCell className="font-mono text-xs text-right tabular-nums">
                     <PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} />
                   </TableCell>
-                  <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
-                  <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
+                  <TableCell className="text-xs text-right tabular-nums">
+                    {fmtDate(c.activation_date)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">
+                    {ddayBadge(dday)}
+                  </TableCell>
                   <Assigned
                     c={c}
                     staffById={staffById}
@@ -1944,7 +2081,10 @@ function CustomersPage() {
     }
 
     return (
-      <Table aria-label={uiCopy("ux.copy9965e7b0f5")}>
+      <Table
+        className="sticky-head min-w-max tabular-nums [&_th]:whitespace-nowrap [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
+        aria-label={uiCopy("ux.copy9965e7b0f5")}
+      >
         <TableHeader>
           <TableRow className="bg-muted/60 border-b border-border">
             {CheckHead}
@@ -1984,18 +2124,10 @@ function CustomersPage() {
         </TableHeader>
         <TableBody>
           {filtered.map((c) => (
-            <TableRow key={c.id} className="hover:bg-muted/30">
+            <TableRow key={c.id} {...rowProps(c)} className="hover:bg-muted/30">
               <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-              <TableCell className="font-medium">
-                <button
-                  type="button"
-                  onClick={() => setDetailTarget(c)}
-                  className="text-left hover:underline"
-                >
-                  {c.name}
-                </button>
-              </TableCell>
-              <TableCell className="font-mono text-xs">
+              <TableCell className="font-medium">{renderName(c)}</TableCell>
+              <TableCell className="font-mono text-xs text-right tabular-nums">
                 <PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} />
               </TableCell>
               <CountryCell
@@ -2005,7 +2137,9 @@ function CustomersPage() {
                 countries={countries}
                 onChangeCountry={changeCountry}
               />
-              <TableCell className="text-xs">{fmtDate(c.application_date)}</TableCell>
+              <TableCell className="text-xs text-right tabular-nums">
+                {fmtDate(c.application_date)}
+              </TableCell>
               <TableCell className="text-xs">{c.requested_plan ?? "-"}</TableCell>
               <Assigned
                 c={c}
@@ -2017,7 +2151,7 @@ function CustomersPage() {
               <StatusCell c={c} onChangeStatus={changeStatus} />
               <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
               <StatusChangedCell c={c} staffById={staffById} fmtDateTime={fmtDateTime} />
-              <TableCell className="text-xs text-muted-foreground">
+              <TableCell className="text-xs text-muted-foreground text-right tabular-nums">
                 {fmtDate(c.imported_at)}
               </TableCell>
               <TableCell className="text-xs max-w-[180px] truncate" title={c.notes ?? ""}>
@@ -2154,23 +2288,6 @@ function CustomersPage() {
     const timer = setInterval(() => syncFriendMutRef.current.mutate(), 60_000);
     return () => clearInterval(timer);
   }, [tab]);
-
-  if (listError) {
-    return (
-      <div className="space-y-5">
-        <PageHeader title={t("customers.title")} description="" />
-        <Card role="alert">
-          <CardContent className="space-y-3 p-6 text-center">
-            <div className="text-sm font-semibold">{t("customers.loadFailedTitle")}</div>
-            <div className="text-xs text-muted-foreground">{(listError as Error).message}</div>
-            <Button onClick={() => void refetchList()} size="sm" aria-busy={listFetching}>
-              <RefreshCw className="mr-2 h-4 w-4" /> {t("customers.retry")}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const SHEET_URL =
     "https://docs.google.com/spreadsheets/d/1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU/edit";
@@ -2510,16 +2627,26 @@ function CustomersPage() {
                         onRemove: () => setSearchInput(""),
                       });
                     }
-                    if (countryIds.length > 0) {
-                      const codes = countryIds
-                        .map((id) => countryById.get(id)?.code ?? id)
-                        .join(", ");
+                    countryIds.forEach((id) =>
                       chips.push({
-                        key: "country",
-                        label: t("customers.chipCountry", { value: codes }),
-                        onRemove: () => setCountryIds([]),
+                        key: `country-${id}`,
+                        label: t("customers.chipCountry", {
+                          value: countryById.get(id)?.code ?? id,
+                        }),
+                        onRemove: () => setCountryIds((ids) => ids.filter((value) => value !== id)),
+                      }),
+                    );
+                    if (assignedCountry !== "all")
+                      chips.push({
+                        key: "assignedCountry",
+                        label: t("customers.chipAssignedCountry", {
+                          value:
+                            assignedCountry === "__none__"
+                              ? t("common.unassigned")
+                              : (countryById.get(assignedCountry)?.code ?? assignedCountry),
+                        }),
+                        onRemove: () => setAssignedCountry("all"),
                       });
-                    }
                     if (statusF !== "all") {
                       const statusLabel =
                         statusF === "__call_completed__"
@@ -2569,7 +2696,7 @@ function CustomersPage() {
                         onRemove: () => setDateTo(undefined),
                       });
                     }
-                    if (!chips.length) return null;
+
                     return (
                       <div className="flex flex-wrap items-center gap-2">
                         {chips.map((chip) => (
@@ -2578,31 +2705,22 @@ function CustomersPage() {
                             className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
                           >
                             {chip.label}
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               type="button"
                               onClick={chip.onRemove}
                               className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
                               aria-label={t("customers.chipRemove", { label: chip.label })}
                             >
                               <X className="h-3 w-3" />
-                            </button>
+                            </Button>
                           </span>
                         ))}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSearchInput("");
-                            setCountryIds([]);
-                            setStatusF("all");
-                            setStaffF("all");
-                            setCallRoundF("all");
-                            setDateFrom(undefined);
-                            setDateTo(undefined);
-                          }}
-                          className="rounded-full border border-dashed px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground"
-                        >
-                          {t("customers.resetAll")}
-                        </button>
+                        <Button variant="outline" size="sm" onClick={resetFilters}>
+                          <X className="mr-1 h-3.5 w-3.5" />
+                          {t("customers.resetFilters")}
+                        </Button>
                       </div>
                     );
                   })()}
@@ -2676,13 +2794,62 @@ function CustomersPage() {
                     </div>
                   )}
 
-                  <div className="table-scroll rounded-lg border border-border/60 [--table-max-h:70dvh]">
-                    {renderTable(p)}
-                  </div>
-                  {total > PAGE_SIZE && (
+                  {loading ? (
+                    <TableSkeleton rows={8} columns={6} />
+                  ) : listError ? (
+                    <EmptyState
+                      title={t("customers.errorTitle")}
+                      description={t("customers.errorDescription")}
+                      action={
+                        <Button variant="outline" onClick={() => refetchList()}>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          {t("customers.retry")}
+                        </Button>
+                      }
+                    />
+                  ) : filtered.length === 0 ? (
+                    <EmptyState
+                      title={t("customers.emptyTitle")}
+                      description={t("customers.emptyDescription")}
+                      action={
+                        <Button variant="outline" onClick={resetFilters}>
+                          {t("customers.resetFilters")}
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <div className="table-scroll rounded-lg border border-border/60 [--table-max-h:70dvh] [&>div]:overflow-visible">
+                      {renderTable(p)}
+                    </div>
+                  )}
+                  {!loading && !listError && (
                     <div className="flex flex-col items-center gap-2 pt-3">
                       <div className="max-w-full overflow-x-auto pb-1">
-                        <div className="flex w-max items-center gap-3">
+                        <div className="flex w-max items-center gap-3 tabular-nums">
+                          <Label htmlFor={`page-size-${p}`} className="text-xs">
+                            {t("customers.pageSize")}
+                          </Label>
+                          <Select
+                            value={String(pageSize)}
+                            onValueChange={(value) =>
+                              setPageSize(Number(value) as CustomerPageSize)
+                            }
+                          >
+                            <SelectTrigger
+                              id={`page-size-${p}`}
+                              className="h-8 w-20"
+                              aria-label={t("customers.pageSize")}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CUSTOMER_PAGE_SIZES.map((size) => (
+                                <SelectItem key={size} value={String(size)}>
+                                  {size}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <Pagination>
                             <PaginationContent>
                               <PaginationItem>
@@ -2778,7 +2945,7 @@ function CustomersPage() {
                               page: page.toLocaleString(),
                               total: totalPages.toLocaleString(),
                               count: total.toLocaleString(),
-                              size: PAGE_SIZE,
+                              size: pageSize,
                             })}
                       </div>
                     </div>
@@ -2790,6 +2957,48 @@ function CustomersPage() {
         })}
       </Tabs>
 
+      <Dialog
+        open={!!quickStatusTarget}
+        onOpenChange={(open) => {
+          if (!open && !quickStatusSaving) setQuickStatusTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("customers.quickStatus")}</DialogTitle>
+            <DialogDescription>
+              {t("customers.confirmStatus", {
+                name: quickStatusTarget?.customer.name,
+                status: quickStatusTarget ? STATUS_LABEL[quickStatusTarget.status] : "",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={quickStatusSaving}
+              onClick={() => setQuickStatusTarget(null)}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              disabled={quickStatusSaving}
+              onClick={async () => {
+                if (!quickStatusTarget || quickStatusSaving) return;
+                setQuickStatusSaving(true);
+                try {
+                  await changeStatus(quickStatusTarget.customer.id, quickStatusTarget.status);
+                  setQuickStatusTarget(null);
+                } finally {
+                  setQuickStatusSaving(false);
+                }
+              }}
+            >
+              {t("customers.confirmStatusAction")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <MemoDialog customer={memoTarget} onClose={() => setMemoTarget(null)} staffById={staffById} />
       <CustomerDetailSheet
         customer={detailTarget}

@@ -1,6 +1,6 @@
 import { localizeError } from "@/i18n/localize-error";
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MessageSquare,
   Send,
@@ -118,6 +118,19 @@ function SendTab() {
   const [title, setTitle] = useState("");
   const [pickTpl, setPickTpl] = useState<string>("");
   const [manualPhones, setManualPhones] = useState("");
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const key = `sms.prefill.${user.id}`;
+      const phone = sessionStorage.getItem(key);
+      if (phone) {
+        setManualPhones(phone);
+        sessionStorage.removeItem(key);
+      }
+    } catch {
+      /* storage unavailable */
+    }
+  }, [user?.id]);
   const sending = sendMutation.isPending;
 
   const filtered = useMemo(() => {
@@ -401,14 +414,12 @@ function TemplatesTab() {
       if (error) return toast.error(localizeError(t("sms.editFailed", { msg: error.message })));
       toast.success(t("sms.edited"));
     } else {
-      const { error } = await supabase
-        .from("sms_templates")
-        .insert({
-          user_id: user.id,
-          title: form.title,
-          content: form.content,
-          is_shared: form.is_shared,
-        });
+      const { error } = await supabase.from("sms_templates").insert({
+        user_id: user.id,
+        title: form.title,
+        content: form.content,
+        is_shared: form.is_shared,
+      });
       if (error) return toast.error(localizeError(t("sms.saveFailed", { msg: error.message })));
       toast.success(t("sms.saved"));
     }
