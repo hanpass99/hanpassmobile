@@ -58,7 +58,7 @@ it("acknowledges duplicate inbound updates without any automated reply or chat u
   const source = readFileSync(new URL("../src/routes/api/public/telegram/webhook.ts", import.meta.url), "utf8")
     .replace(/^import[\s\S]*?from ["'][^"']+["'];\s*/gm, "")
     .replace('export const Route =', 'const Route =')
-    .replace('await import("@/integrations/supabase/client.server")', '({ supabaseAdmin })');
+    .replace('await import("@/integrations/supabase/client.server")', '({ supabaseAdmin: fixtureClient })');
   const sends: string[] = [];
   let writes = 0;
   const supabaseAdmin = { from(table: string) {
@@ -73,7 +73,7 @@ it("acknowledges duplicate inbound updates without any automated reply or chat u
   } };
   const transformed = new Bun.Transpiler({ loader: "ts" }).transformSync(source);
   const failSend = () => { sends.push("reply"); throw new Error("Duplicate must never send"); };
-  const names = ["createFileRoute", "deriveWebhookSecret", "safeFixture", "supabaseAdmin", "inboundInsertOutcome", "sendTelegramMessage", "sendLanguagePicker", "removeKeyboard", "normalizePhone", "formatKoreanPhone"];
+  const names = ["createFileRoute", "deriveWebhookSecret", "safeFixture", "fixtureClient", "inboundInsertOutcome", "sendTelegramMessage", "sendLanguagePicker", "removeKeyboard", "normalizePhone", "formatKoreanPhone"];
   const handler = new Function(...names, transformed.replace(/function safeEqual\([\s\S]*?\n\}/, "function safeEqual(a,b) { return safeFixture(a,b); }") + '\nreturn Route.server.handlers.POST;')(
     () => (config: unknown) => config, () => "fixture-secret", (a: string,b: string) => a === b, supabaseAdmin, inboundInsertOutcome, failSend, failSend, failSend, normalizePhone, (p: string) => p,
   );

@@ -10,7 +10,7 @@ describe("existing Excel import/export compatibility", () => {
       const book = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(book, sheet, "Customers");
       const bytes = XLSX.write(book, { type: "array", bookType });
-      const restored = XLSX.read(bytes, { type: "array", cellDates: true });
+      const restored = XLSX.read(bytes, { type: "array", cellDates: true, raw: bookType === "csv" });
       const result = XLSX.utils.sheet_to_json(restored.Sheets[restored.SheetNames[0]], { defval: "", raw: true });
       expect(result).toEqual(rows);
     });
