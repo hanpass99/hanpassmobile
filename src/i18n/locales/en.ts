@@ -1,4 +1,5 @@
 export default {
+  mobile: { filters: "Filters", backToConversations: "Back to conversations" },
   app: { desc: "Hanpass Mobile outbound-call CRM" },
   nav: {
     main: "Main",

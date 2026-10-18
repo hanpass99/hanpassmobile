@@ -1,3 +1,4 @@
+import { MobileFilters } from "@/components/MobileFilters";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
 import { createFileRoute } from "@tanstack/react-router";
@@ -154,37 +155,40 @@ function ChannelPerf() {
         description={loading ? t("common.loading") : t("channelPerf.subtitle")}
       />
 
-      <Card>
-        <CardContent className="grid grid-cols-2 items-center gap-2 p-4 sm:flex sm:flex-wrap">
-          <DateBtn
-            value={dateFrom}
-            onChange={setDateFrom}
-            placeholder={t("common.from") || uiCopy("ux.copy453c56f595")}
-          />
-          <span className="text-muted-foreground">~</span>
-          <DateBtn
-            value={dateTo}
-            onChange={setDateTo}
-            placeholder={t("common.to") || uiCopy("ux.copycad7c84c3e")}
-          />
-          {(dateFrom || dateTo) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setDateFrom(undefined);
-                setDateTo(undefined);
-              }}
-            >
-              <X className="mr-1 h-3.5 w-3.5" /> {t("common.reset") || uiCopy("ux.copyff75b4ff24")}
-            </Button>
-          )}
-          <label className="col-span-2 flex items-center gap-2 text-sm cursor-pointer select-none sm:ml-auto">
-            <Checkbox checked={showEmpty} onCheckedChange={(v) => setShowEmpty(v === true)} />
-            {t("channelPerf.showEmpty")}
-          </label>
-        </CardContent>
-      </Card>
+      <MobileFilters>
+        <Card>
+          <CardContent className="grid grid-cols-2 items-center gap-2 p-4 sm:flex sm:flex-wrap">
+            <DateBtn
+              value={dateFrom}
+              onChange={setDateFrom}
+              placeholder={t("common.from") || uiCopy("ux.copy453c56f595")}
+            />
+            <span className="text-muted-foreground">~</span>
+            <DateBtn
+              value={dateTo}
+              onChange={setDateTo}
+              placeholder={t("common.to") || uiCopy("ux.copycad7c84c3e")}
+            />
+            {(dateFrom || dateTo) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setDateFrom(undefined);
+                  setDateTo(undefined);
+                }}
+              >
+                <X className="mr-1 h-3.5 w-3.5" />{" "}
+                {t("common.reset") || uiCopy("ux.copyff75b4ff24")}
+              </Button>
+            )}
+            <label className="col-span-2 flex items-center gap-2 text-sm cursor-pointer select-none sm:ml-auto">
+              <Checkbox checked={showEmpty} onCheckedChange={(v) => setShowEmpty(v === true)} />
+              {t("channelPerf.showEmpty")}
+            </label>
+          </CardContent>
+        </Card>
+      </MobileFilters>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard

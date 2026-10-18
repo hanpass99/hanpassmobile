@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bot, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { AiChatPanel } from "@/components/AiChatPanel";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Pos = { x: number; y: number };
@@ -118,7 +119,8 @@ export function AiAssistant() {
 
   return (
     <>
-      <button
+      <Button
+        data-mobile-assistant
         type="button"
         aria-label={uiCopy("accessibility.assistant")}
         onPointerDown={onPointerDown}
@@ -130,11 +132,11 @@ export function AiAssistant() {
         )}
       >
         {open ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
-      </button>
+      </Button>
 
       {open && (
         <AiChatPanel
-          className="fixed z-40 shadow-2xl"
+          className="mobile-assistant-panel fixed z-40 shadow-2xl"
           style={{
             left: panelLeft,
             top: panelTop,

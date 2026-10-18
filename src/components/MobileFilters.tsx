@@ -12,9 +12,16 @@ export function MobileFilters({ children }: { children: ReactNode }) {
   if (!mobile) return <>{children}</>;
   return (
     <Sheet>
-      <SheetTrigger asChild><Button variant="outline" className="w-full"><SlidersHorizontal />{t("mobile.filters")}</Button></SheetTrigger>
+      <SheetTrigger asChild>
+        <Button variant="outline" className="w-full">
+          <SlidersHorizontal />
+          {t("mobile.filters")}
+        </Button>
+      </SheetTrigger>
       <SheetContent side="right" className="mobile-filter-sheet flex flex-col overflow-y-auto">
-        <SheetHeader><SheetTitle>{t("mobile.filters")}</SheetTitle></SheetHeader>
+        <SheetHeader>
+          <SheetTitle>{t("mobile.filters")}</SheetTitle>
+        </SheetHeader>
         <div className="mobile-filter-controls min-w-0 space-y-4 pt-4">{children}</div>
       </SheetContent>
     </Sheet>
