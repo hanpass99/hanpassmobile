@@ -1,5 +1,10 @@
 # Current requests
 
+- [ ] UX batch 1: Korean/English locale coverage and matching-key verification; preserve Korean copy and all behavior
+- [ ] UX batch 1: real Hanpass logo in sidebar and login
+- [ ] UX batch 1: semantic chart palette in light and dark themes
+- [ ] UX batch 1: regression tests, lint and preview diagnostics
+
 - [x] Medium security: unique temporary reset passwords and enforced password change
 - [x] Medium security: Telegram inbound deduplication and correct timezone sessions
 - [x] Medium security: indexed exact call matching, ambiguity handling, constant-time token check
