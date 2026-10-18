@@ -48,7 +48,14 @@ export function StatCard({
       )}
     >
       <div className={cn("flex min-w-0 flex-col gap-1", footer && "w-full")}>
-        <span className={cn(footer ? "min-h-8 break-words pr-9 text-xs font-medium tracking-normal" : "truncate text-xs font-medium tracking-normal", labels[tone])}>
+        <span
+          className={cn(
+            footer
+              ? "min-h-8 break-words pr-9 text-xs font-medium tracking-normal"
+              : "truncate text-xs font-medium tracking-normal",
+            labels[tone],
+          )}
+        >
           {label}
         </span>
         <span className="font-display text-[22px] font-semibold leading-none tracking-normal tabular-nums text-foreground">
