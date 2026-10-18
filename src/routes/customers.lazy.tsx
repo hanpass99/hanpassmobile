@@ -1702,7 +1702,9 @@ function CustomersPage() {
           const trigger = row.querySelector<HTMLButtonElement>("[data-quick-status]");
           if (trigger) {
             trigger.focus();
-            trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+            trigger.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+            );
           }
         } else if (event.key === "Enter" && target === row) {
           event.preventDefault();
@@ -1761,7 +1763,7 @@ function CustomersPage() {
     if (p === "existing") {
       return (
         <Table
-          className="sticky-head tabular-nums [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
+          className="sticky-head min-w-max tabular-nums [&_th]:whitespace-nowrap [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
           aria-label={uiCopy("ux.copy9965e7b0f5")}
         >
           <TableHeader>
@@ -1854,7 +1856,7 @@ function CustomersPage() {
     if (p === "friend_referral" || p === "prepaid_charge") {
       return (
         <Table
-          className="sticky-head tabular-nums [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
+          className="sticky-head min-w-max tabular-nums [&_th]:whitespace-nowrap [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
           aria-label={uiCopy("ux.copy9965e7b0f5")}
         >
           <TableHeader>
@@ -1988,7 +1990,7 @@ function CustomersPage() {
 
       return (
         <Table
-          className="sticky-head tabular-nums [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
+          className="sticky-head min-w-max tabular-nums [&_th]:whitespace-nowrap [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
           aria-label={uiCopy("ux.copy9965e7b0f5")}
         >
           <TableHeader>
@@ -2080,7 +2082,7 @@ function CustomersPage() {
 
     return (
       <Table
-        className="sticky-head tabular-nums [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
+        className="sticky-head min-w-max tabular-nums [&_th]:whitespace-nowrap [&_tbody_tr:focus-visible]:outline [&_tbody_tr:focus-visible]:outline-2 [&_tbody_tr:focus-visible]:outline-ring [&_tbody_tr:focus-visible]:-outline-offset-2"
         aria-label={uiCopy("ux.copy9965e7b0f5")}
       >
         <TableHeader>

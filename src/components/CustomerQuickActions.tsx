@@ -44,27 +44,29 @@ export function CustomerQuickActions({
         </TooltipTrigger>
         <TooltipContent>{t("customers.quickCallAction")}</TooltipContent>
       </Tooltip>
-      {canSms && <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link
-              to="/sms"
-              aria-label={t("customers.quickSms")}
-              onClick={() => {
-                if (!userId) return;
-                try {
-                  sessionStorage.setItem(`sms.prefill.${userId}`, customer.phone);
-                } catch {
-                  /* storage unavailable */
-                }
-              }}
-            >
-              <MessageSquare className="h-4 w-4" />
-            </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t("customers.quickSms")}</TooltipContent>
-      </Tooltip>}
+      {canSms && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+              <Link
+                to="/sms"
+                aria-label={t("customers.quickSms")}
+                onClick={() => {
+                  if (!userId) return;
+                  try {
+                    sessionStorage.setItem(`sms.prefill.${userId}`, customer.phone);
+                  } catch {
+                    /* storage unavailable */
+                  }
+                }}
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t("customers.quickSms")}</TooltipContent>
+        </Tooltip>
+      )}
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger asChild>
