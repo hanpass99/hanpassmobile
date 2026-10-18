@@ -21,8 +21,7 @@ import {
   Legend,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
+  LabelList,
   Cell,
 } from "recharts";
 import { PageHeader } from "@/components/PageHeader";
@@ -30,6 +29,17 @@ import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { KpiDelta } from "@/components/dashboard/KpiDelta";
+import {
+  dashboardCountryBars,
+  dashboardDatePreset,
+  dashboardMetrics,
+  dashboardRanking,
+  previousDashboardPeriod,
+  type DashboardPreset,
+} from "@/lib/dashboard-presentation";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -66,8 +76,6 @@ export const Route = createFileRoute("/")({
     ],
   }),
   loader: ({ context: { queryClient } }) => {
-    const today = new Date();
-    const from = new Date(today.getFullYear(), today.getMonth(), 1);
     queryClient.prefetchQuery({
       queryKey: ["dashboard", "countries"],
       staleTime: Infinity,
@@ -80,21 +88,17 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const PIE_COLORS = Array.from({ length: 8 }, (_, i) => `var(--chart-${i + 1})`);
+const COUNTRY_COLORS = Array.from({ length: 8 }, (_, i) => `var(--chart-${i + 1})`);
 
 type StatusCounts = Record<CustomerStatus, number>;
 type DailyRow = { date: string; [k: string]: string | number };
 type ChannelRow = { name: string; [k: string]: string | number };
 type CountryRow = { name: string; value: number };
-type RankRow = { id: string; name: string; totalCalls: number; activated: number; target: number };
 type DashboardData = {
   statusCounts: StatusCounts;
-  totals: { totalCalls: number; totalCustomers: number; monthlyTargetTotal: number };
   dailyData: DailyRow[];
   channelData: ChannelRow[];
   countryData: CountryRow[];
-  ranking: RankRow[];
-  callCompleted: number;
 };
 
 const emptyStatus = (): StatusCounts => ({
@@ -124,12 +128,19 @@ function Dashboard() {
   const [from, setFrom] = useState<Date>(monthStart);
   const [to, setTo] = useState<Date>(today);
   const [countryF, setCountryF] = useState<string>("all");
+  const [staffSearch, setStaffSearch] = useState("");
+  const [showAllStaff, setShowAllStaff] = useState(false);
+  const previousPeriod = previousDashboardPeriod(from, to);
 
   const { data: countries = [] } = useDashboardCountries();
   const slaCountQ = useSlaViolationCount();
   const summaryQ = useDashboardSummary({
     from,
     to,
+    countryId: countryF === "all" ? null : countryF,
+  });
+  const previousQ = useDashboardSummary({
+    ...previousPeriod,
     countryId: countryF === "all" ? null : countryF,
   });
   const loading = summaryQ.isLoading;
@@ -142,13 +153,6 @@ function Dashboard() {
       if (sMap[status as CustomerStatus] !== undefined)
         sMap[status as CustomerStatus] = Number(cnt ?? 0);
     });
-
-    const ttRow = summary.totals ?? {};
-    const nextTotals = {
-      totalCalls: Number(ttRow.total_calls ?? 0),
-      totalCustomers: Number(ttRow.total_customers ?? 0),
-      monthlyTargetTotal: Number(ttRow.monthly_target_total ?? 0),
-    };
 
     const dayMap = new Map<string, { calls: number; activations: number }>();
     for (const r of summary.daily_calls ?? []) {
@@ -169,10 +173,7 @@ function Dashboard() {
       cur.setDate(cur.getDate() + 1);
     }
 
-    const cd = (summary.country_activated ?? [])
-      .map((r) => ({ name: r.code, value: Number(r.activated) }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
+    const cd = dashboardCountryBars(summary.country_activated ?? [], t("dashboard.others"));
 
     const chd = (summary.channel_summary ?? []).map((r) => ({
       name: String(r.name).replace(uiCopy("ux.copyc46bee0f62", undefined, "ko"), ""),
@@ -180,50 +181,30 @@ function Dashboard() {
       [t("dashboard.activations")]: Number(r.activations),
     }));
 
-    const rkd = (summary.staff_ranking ?? []).map((r) => ({
-      id: r.user_id,
-      name: r.display_name,
-      totalCalls: Number(r.total_calls),
-      activated: Number(r.activated),
-      target: Number(r.activation_target ?? 0),
-    }));
-
     return {
       statusCounts: sMap,
-      totals: nextTotals,
       dailyData: days,
       countryData: cd,
       channelData: chd,
-      ranking: rkd,
-      callCompleted: Number(summary.call_completed ?? 0),
     };
   }, [summaryQ.data, from, to, t]);
 
-  const {
-    statusCounts,
-    totals,
-    dailyData,
-    channelData,
-    countryData,
-    ranking,
-    callCompleted: callCompletedFromRpc,
-  } = dashboard;
-
-  const totalCustomers = totals.totalCustomers;
-  void totalCustomers;
-  const totalCalls = totals.totalCalls;
-  void totalCalls;
-  const activated = statusCounts.activated;
-  // 콜 완료 = 미처리 제외 전체 상태 합산 (모든 성과 화면에서 동일 계산)
-  const callCompleted = Object.entries(statusCounts).reduce(
-    (sum, [s, n]) => (s === "new" ? sum : sum + (Number(n) || 0)),
-    0,
+  const { statusCounts, dailyData, channelData, countryData } = dashboard;
+  const metrics = dashboardMetrics(summaryQ.data);
+  const previousMetrics = dashboardMetrics(previousQ.data);
+  const { activated, callCompleted } = metrics;
+  const ranking = dashboardRanking(summaryQ.data?.staff_ranking ?? [], staffSearch, showAllStaff);
+  const delta = (key: keyof typeof metrics, decreaseIsGood = false) => (
+    <KpiDelta
+      current={metrics[key]}
+      previous={previousMetrics[key]}
+      decreaseIsGood={decreaseIsGood}
+      ready={previousQ.isSuccess && !previousQ.isFetching}
+    />
   );
-  const monthlyTargetTotal = totals.monthlyTargetTotal;
-  void monthlyTargetTotal;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 tabular-nums">
       <PageHeader
         title={t("dashboard.title")}
         description={
@@ -261,6 +242,33 @@ function Dashboard() {
             <div className="text-xs font-medium text-muted-foreground">{t("common.endDate")}</div>
             <DatePick value={to} onChange={setTo} />
           </div>
+          <div
+            className="col-span-2 flex flex-wrap gap-1.5"
+            role="group"
+            aria-label={t("dashboard.datePresets")}
+          >
+            {(["thisMonth", "lastMonth", "last7Days", "today"] as DashboardPreset[]).map(
+              (preset) => {
+                const range = dashboardDatePreset(preset);
+                const selected =
+                  dateKey(from) === dateKey(range.from) && dateKey(to) === dateKey(range.to);
+                return (
+                  <Button
+                    key={preset}
+                    size="sm"
+                    variant={selected ? "secondary" : "ghost"}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setFrom(range.from);
+                      setTo(range.to);
+                    }}
+                  >
+                    {t(`dashboard.${preset}`)}
+                  </Button>
+                );
+              },
+            )}
+          </div>
           <div className="space-y-1.5">
             <div className="text-xs font-medium text-muted-foreground">
               {t("dashboard.countryFilter")}
@@ -296,6 +304,13 @@ function Dashboard() {
         </CardContent>
       </Card>
 
+      <p className="text-xs text-muted-foreground">
+        {t("dashboard.comparisonPeriod", {
+          from: format(previousPeriod.from, "yyyy.MM.dd"),
+          to: format(previousPeriod.to, "yyyy.MM.dd"),
+        })}
+      </p>
+
       {/* 핵심 지표: 미처리 / 콜 완료 / 개통 완료 / 개통 성공률 */}
       {loading ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -321,6 +336,7 @@ function Dashboard() {
               value={statusCounts.new.toLocaleString()}
               icon={Inbox}
               tone="muted"
+              footer={delta("notStarted", true)}
             />
           </Link>
           <Link
@@ -339,7 +355,7 @@ function Dashboard() {
               value={callCompleted.toLocaleString()}
               icon={PhoneCall}
               tone="primary"
-              hint={t("dashboard.callCompletedHint")}
+              footer={delta("callCompleted")}
             />
           </Link>
           <Link
@@ -358,14 +374,16 @@ function Dashboard() {
               value={activated.toLocaleString()}
               icon={Award}
               tone="success"
+              footer={delta("activated")}
             />
           </Link>
           <StatCard
             label={t("dashboard.activationSuccessRate")}
-            value={(callCompleted ? (activated / callCompleted) * 100 : 0).toFixed(1)}
+            value={metrics.activationSuccessRate.toFixed(1)}
             suffix="%"
             icon={TrendingUp}
             tone="info"
+            footer={delta("activationSuccessRate")}
             hint={t("dashboard.activationSuccessHint") + ` (${activated}/${callCompleted})`}
           />
         </div>
@@ -470,9 +488,9 @@ function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>{t("dashboard.countryDist")}</CardTitle>
-            <CardDescription>{t("dashboard.countryDistDesc")}</CardDescription>
+            <CardDescription>{t("dashboard.countryBarsDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="h-[260px] px-2 sm:h-[280px] sm:px-5">
+          <CardContent className="h-[320px] px-4">
             {loading ? (
               <Skeleton className="h-full w-full" />
             ) : countryData.every((c) => c.value === 0) ? (
@@ -481,21 +499,39 @@ function Dashboard() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={countryData}
+                <BarChart
+                  data={countryData}
+                  layout="vertical"
+                  margin={{ top: 4, right: 42, bottom: 4, left: 0 }}
+                >
+                  <XAxis type="number" hide />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={64}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "var(--foreground)", fontSize: 12 }}
+                  />
+                  <Tooltip cursor={{ fill: "var(--muted)" }} />
+                  <Bar
                     dataKey="value"
-                    nameKey="name"
-                    innerRadius={50}
-                    outerRadius={90}
+                    name={t("dashboard.activations")}
+                    barSize={18}
+                    radius={[0, 4, 4, 0]}
                   >
-                    {countryData.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    {countryData.map((row, index) => (
+                      <Cell key={row.name} fill={COUNTRY_COLORS[index % COUNTRY_COLORS.length]} />
                     ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                </PieChart>
+                    <LabelList
+                      dataKey="value"
+                      position="right"
+                      fill="var(--foreground)"
+                      fontSize={12}
+                      formatter={(value: number) => value.toLocaleString()}
+                    />
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
@@ -541,9 +577,24 @@ function Dashboard() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>{t("dashboard.staffRanking")}</CardTitle>
-          <CardDescription>{t("dashboard.staffRankingDesc")}</CardDescription>
+        <CardHeader className="gap-3">
+          <div>
+            <CardTitle>{t("dashboard.staffRanking")}</CardTitle>
+            <CardDescription>{t("dashboard.staffRankingDesc")}</CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Input
+              value={staffSearch}
+              onChange={(event) => setStaffSearch(event.target.value)}
+              placeholder={t("dashboard.searchStaff")}
+              aria-label={t("dashboard.searchStaff")}
+              className="w-full sm:max-w-xs"
+            />
+            <label className="flex shrink-0 items-center gap-2 text-sm font-medium">
+              <Switch checked={showAllStaff} onCheckedChange={setShowAllStaff} />
+              {t("dashboard.showAllStaff")}
+            </label>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -553,49 +604,63 @@ function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="space-y-3">
-              {ranking.map((u, i) => {
-                const pct = u.target ? (u.activated / u.target) * 100 : 0;
-                return (
-                  <div
-                    key={u.id}
-                    className="flex min-w-0 items-center gap-3 rounded-lg border border-border/60 p-3 sm:gap-4"
-                  >
-                    <div
-                      className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${
-                        i === 0
-                          ? "bg-warning/20 text-warning-foreground"
-                          : i === 1
-                            ? "bg-muted text-foreground"
-                            : i === 2
-                              ? "bg-destructive/15 text-destructive"
-                              : "bg-secondary text-secondary-foreground"
-                      }`}
-                    >
-                      {i + 1}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                        <span className="truncate text-sm font-semibold">{u.name}</span>
-                        <span className="text-right text-xs text-muted-foreground sm:text-xs">
-                          {t("dashboard.activations")} {u.activated} / {u.target || "—"}{" "}
-                          {u.target ? `(${pct.toFixed(0)}%)` : ""}
-                        </span>
-                      </div>
-                      <Progress value={Math.min(100, pct)} className="mt-2 h-2" />
-                    </div>
-                    <div className="hidden gap-6 text-xs sm:flex">
-                      <div>
-                        <div className="text-muted-foreground">{t("dashboard.calls")}</div>
-                        <div className="font-semibold">{u.totalCalls}</div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[520px] text-sm">
+                <thead className="border-b text-xs text-muted-foreground">
+                  <tr>
+                    <th scope="col" className="w-12 py-2 pr-3 text-left font-medium">
+                      {t("dashboard.rank")}
+                    </th>
+                    <th scope="col" className="py-2 pr-4 text-left font-medium">
+                      {t("dashboard.staffName")}
+                    </th>
+                    <th scope="col" className="py-2 pr-4 text-right font-medium">
+                      {t("dashboard.calls")}
+                    </th>
+                    <th scope="col" className="w-40 py-2 pr-4 text-right font-medium">
+                      {t("dashboard.activationsTarget")}
+                    </th>
+                    <th scope="col" className="w-16 py-2 text-right font-medium">
+                      {t("dashboard.percentage")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ranking.map((u) => {
+                    const target = Number(u.activation_target ?? 0);
+                    const pct = target ? (u.activated / target) * 100 : 0;
+                    return (
+                      <tr key={u.user_id} className="border-b border-border/60 last:border-0">
+                        <td className="py-3 pr-3 font-semibold">{u.rank}</td>
+                        <th
+                          scope="row"
+                          className="max-w-64 py-3 pr-4 text-left font-semibold break-words"
+                        >
+                          {u.display_name}
+                        </th>
+                        <td className="py-3 pr-4 text-right">{u.total_calls.toLocaleString()}</td>
+                        <td className="py-3 pr-4 text-right">
+                          <span>
+                            {u.activated.toLocaleString()} /{" "}
+                            {target ? target.toLocaleString() : "—"}
+                          </span>
+                          <Progress
+                            value={Math.min(100, pct)}
+                            className="mt-1.5 h-1.5"
+                            aria-label={t("dashboard.achievement")}
+                          />
+                        </td>
+                        <td className="py-3 text-right font-semibold">
+                          {target ? `${pct.toFixed(0)}%` : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
               {!ranking.length && (
-                <div className="text-center text-sm text-muted-foreground py-6">
-                  {t("dashboard.noStaff")}
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  {t(staffSearch.trim() ? "dashboard.noStaffMatches" : "dashboard.noStaff")}
                 </div>
               )}
             </div>
@@ -613,7 +678,7 @@ function DatePick({ value, onChange }: { value: Date; onChange: (d: Date) => voi
         <Button
           variant="outline"
           className={cn(
-            "w-[160px] justify-start text-left font-normal",
+            "w-full sm:w-[160px] justify-start text-left font-normal",
             !value && "text-muted-foreground",
           )}
         >
