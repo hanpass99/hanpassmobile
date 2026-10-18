@@ -1,9 +1,10 @@
 # Current requests
 
-- [ ] UX batch 1: Korean/English locale coverage and matching-key verification; preserve Korean copy and all behavior
-- [ ] UX batch 1: real Hanpass logo in sidebar and login
-- [ ] UX batch 1: semantic chart palette in light and dark themes
-- [ ] UX batch 1: regression tests, lint and preview diagnostics
+- [x] UX batch 1: Korean/English locale coverage and matching-key verification; preserve Korean copy and all behavior
+- [x] UX batch 1: real Hanpass logo in sidebar and login
+- [x] UX batch 1: semantic chart palette in light and dark themes
+- [x] UX batch 1: 101 regression tests, new translation-module lint, automatic type-check/build and mock/public browser checks
+- [ ] UX batch 1: full-project lint remains blocked by pre-existing formatting/type lint debt; real staff session verification needs preview sign-in
 
 - [x] Medium security: unique temporary reset passwords and enforced password change
 - [x] Medium security: Telegram inbound deduplication and correct timezone sessions
