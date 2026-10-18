@@ -69,7 +69,7 @@ type SyncResult = {
 
 type SyncConfig = {
   spreadsheetId: string;
-  pool: "google_form_activation" | "google_form_activation_inter";
+  pool: "google_form_activation" | "google_form_activation_inter" | "qr_activation";
   source: string;
   notesLabel: string;
   /** 시트 탭 이름 (기본: 설문지 응답 시트1) */
@@ -339,6 +339,27 @@ export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" }
       pool: "google_form_activation",
       source: "inter",
       notesLabel: "구글폼 인터 자동 등록",
+    });
+  });
+
+// QR 개통 신청 시트 동기화 (A=타임스탬프, B=Name, C=Nationality, D=Phone, E=SNS)
+// 2026-10-18 복구: 10월 1일 이후 접수 건만 수집
+const QR_SPREADSHEET_ID = "16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM";
+const QR_SHEET_NAME = "설문지 응답 시트 (AUTOFILL)";
+
+export const syncQrActivation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<SyncResult> => {
+    return runSync({
+      spreadsheetId: QR_SPREADSHEET_ID,
+      pool: "qr_activation",
+      source: "qr",
+      notesLabel: "QR 개통 신청 자동 등록",
+      sheetName: QR_SHEET_NAME,
+      rangeSuffix: "A2:E",
+      columns: { ts: 0, name: 1, country: 2, phone: 3, sns: 4 },
+      minDate: "2026-10-01",
+      allowAllCountries: true,
     });
   });
 

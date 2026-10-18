@@ -5,6 +5,7 @@ import type { HanpassDashboard } from "@/types/rpc";
 
 export const HANPASS_POOLS = [
   "activation_request",
+  "qr_activation",
   "friend_referral",
   "prepaid_charge",
 ] as const;

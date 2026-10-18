@@ -50,6 +50,13 @@
       "when": 1792315127180,
       "tag": "0006_skip_old_facebook_sheet_rows",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792315924029,
+      "tag": "0007_skip_old_qr_sheet_rows",
+      "breakpoints": true
     }
   ]
 }
