@@ -229,7 +229,7 @@ function ChannelPerf() {
                     textAnchor="end"
                     height={60}
                   />
-                  <YAxis tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fill: "var(--muted-foreground)" }} tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
                   <Bar

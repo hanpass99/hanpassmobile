@@ -445,8 +445,8 @@ function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="date" fontSize={12} />
-                  <YAxis fontSize={12} />
+                  <XAxis tick={{ fill: "var(--muted-foreground)" }} dataKey="date" fontSize={12} />
+                  <YAxis tick={{ fill: "var(--muted-foreground)" }} fontSize={12} />
                   <Tooltip />
                   <Legend />
                   <Line
@@ -514,8 +514,14 @@ function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={channelData} layout="vertical" margin={{ left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" fontSize={11} />
-                <YAxis type="category" dataKey="name" fontSize={10} width={82} />
+                <XAxis tick={{ fill: "var(--muted-foreground)" }} type="number" fontSize={11} />
+                <YAxis
+                  tick={{ fill: "var(--muted-foreground)" }}
+                  type="category"
+                  dataKey="name"
+                  fontSize={10}
+                  width={82}
+                />
                 <Tooltip />
                 <Legend />
                 <Bar

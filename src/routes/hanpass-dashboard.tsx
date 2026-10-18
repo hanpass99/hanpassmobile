@@ -381,8 +381,8 @@ function HanpassDashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="date" fontSize={11} />
-                <YAxis fontSize={11} />
+                <XAxis tick={{ fill: "var(--muted-foreground)" }} dataKey="date" fontSize={11} />
+                <YAxis tick={{ fill: "var(--muted-foreground)" }} fontSize={11} />
                 <Tooltip />
                 <Legend />
                 <Line
