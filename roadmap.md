@@ -1,5 +1,9 @@
 # Current requests
 
+- [ ] UX batch 3: customer tables, per-user filter/tab/page-size restoration, chips and reset
+- [ ] UX batch 3: call/SMS/status quick actions, safe confirmation and row keyboard navigation
+- [ ] UX batch 3: consistent loading/empty/error states, regression tests, changed-file lint and browser verification
+
 - [x] UX batch 2: equal-period KPI comparisons using existing RPC/filters and one call-completed definition
 - [x] UX batch 2: searchable top-10 staff ranking, country bars with others, and date presets
 - [x] UX batch 2: dashboard changed-file lint, 114 regression tests, automatic type-check/build, and desktop/mobile mock browser verification
