@@ -221,6 +221,7 @@ export default {
     friend_referral: "Friend referrals",
     prepaid_charge: "Hanpass App prepaid chargers",
     one_year_activation: "1-Year activated",
+    loan_borrower: "Loan borrowers",
     short: {
       existing: "Existing",
       activation_request: "Hanpass App",
@@ -230,6 +231,7 @@ export default {
       friend_referral: "Friend referral",
       prepaid_charge: "Prepaid charge",
       one_year_activation: "1Y activated",
+    loan_borrower: "Loan borrowers",
     },
     emptyPool: "No customers in {{name}} pool.",
 
