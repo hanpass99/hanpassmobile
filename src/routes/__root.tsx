@@ -90,6 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "stylesheet", href: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
@@ -172,7 +173,7 @@ function AuthedShell() {
               <SidebarTrigger className="text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground" />
               <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[13px]">
                 <Link to="/" className="inline-flex shrink-0 items-center gap-2 font-medium text-header-foreground/70 hover:text-header-foreground">
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-[10px] font-black text-brand-foreground">H</span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded bg-brand text-xs font-black text-brand-foreground">H</span>
                   <span className="hidden sm:inline">Hanpass Mobile</span>
                 </Link>
                 <span className="hidden text-header-foreground/30 sm:inline">/</span>
@@ -186,7 +187,7 @@ function AuthedShell() {
                 </a>
               </nav>
               <div className="hidden flex-1 md:block" />
-              <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-[10px] font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
+              <span className="hidden items-center gap-2 rounded-full border border-header-foreground/15 bg-header-foreground/10 px-2.5 py-1 text-xs font-medium tracking-normal text-header-foreground/90 lg:inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 OB Call Management
               </span>

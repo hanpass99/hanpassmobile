@@ -420,7 +420,7 @@ function CandidatesSection() {
           </div>
           <div className="mb-2 flex flex-wrap gap-1">
             {(c.question_examples ?? []).map((qe: string, i: number) => (
-              <span key={i} className="rounded bg-muted px-1.5 py-0.5 text-[11px]">
+              <span key={i} className="rounded bg-muted px-1.5 py-0.5 text-xs">
                 {qe}
               </span>
             ))}

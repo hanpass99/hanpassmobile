@@ -266,7 +266,7 @@ function NotificationsPage() {
                   {hasPhone ? (
                     <span className="text-xs text-muted-foreground">{s.phone}</span>
                   ) : (
-                    <Badge variant="outline" className="text-[10px]">번호 없음</Badge>
+                    <Badge variant="outline" className="text-xs">번호 없음</Badge>
                   )}
                 </label>
               );

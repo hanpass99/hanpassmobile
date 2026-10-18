@@ -179,7 +179,7 @@ export function CallLogIngestPanel() {
                     </Badge>
                   )}
                   {r.error_reason && (
-                    <div className="mt-1 max-w-[220px] truncate text-[11px] text-muted-foreground" title={r.error_reason}>
+                    <div className="mt-1 max-w-[220px] truncate text-xs text-muted-foreground" title={r.error_reason}>
                       {r.error_reason}
                     </div>
                   )}

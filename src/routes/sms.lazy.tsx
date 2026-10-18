@@ -264,7 +264,7 @@ function SendTab() {
           <div>
             <div className="flex items-center justify-between">
               <Label className="text-xs">{t("sms.content")}</Label>
-              <span className={`text-[11px] ${isLms ? "text-orange-500" : "text-muted-foreground"}`}>
+              <span className={`text-xs ${isLms ? "text-orange-500" : "text-muted-foreground"}`}>
                 {t("sms.bytesInfo", { bytes, type: isLms ? t("sms.typeLms") : t("sms.typeSms") })}
               </span>
             </div>
@@ -276,7 +276,7 @@ function SendTab() {
             />
           </div>
 
-          <div className="rounded-md bg-muted/40 p-2 text-[11px] text-muted-foreground">
+          <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
             {t("sms.senderNotice")}<br />
             {t("sms.lmsNotice")}
           </div>
@@ -378,7 +378,7 @@ function TemplatesTab() {
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                 className="h-40"
               />
-              <div className="text-[11px] text-muted-foreground mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 {t("sms.bytesInfo", { bytes: byteLength(form.content), type: byteLength(form.content) > 90 ? "LMS" : "SMS" })}
               </div>
             </div>
@@ -416,7 +416,7 @@ function TemplateList({
           <div className="flex items-start justify-between gap-2">
             <div className="font-medium text-sm">{tpl.title}</div>
             <div className="flex gap-1">
-              {tpl.is_shared && <Badge variant="secondary" className="text-[10px]">{t("sms.sharedBadge")}</Badge>}
+              {tpl.is_shared && <Badge variant="secondary" className="text-xs">{t("sms.sharedBadge")}</Badge>}
               {editable && (
                 <>
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(tpl)} aria-label={t("common.edit")}>
@@ -430,7 +430,7 @@ function TemplateList({
             </div>
           </div>
           <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">{tpl.content}</p>
-          <div className="text-[10px] text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             {t("sms.bytesInfo", { bytes: byteLength(tpl.content), type: byteLength(tpl.content) > 90 ? "LMS" : "SMS" })}
           </div>
         </div>

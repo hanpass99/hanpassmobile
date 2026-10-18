@@ -53,13 +53,13 @@ export function MultiCountrySelect({
                 {value.slice(0, 3).map((id) => {
                   const c = options.find((o) => o.id === id);
                   return (
-                    <Badge key={id} variant="secondary" className="h-5 px-1.5 text-[10px]">
+                    <Badge key={id} variant="secondary" className="h-5 px-1.5 text-xs">
                       {c?.code ?? "?"}
                     </Badge>
                   );
                 })}
                 {value.length > 3 && (
-                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                  <Badge variant="secondary" className="h-5 px-1.5 text-xs">
                     +{value.length - 3}
                   </Badge>
                 )}

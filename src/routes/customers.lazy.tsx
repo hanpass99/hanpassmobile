@@ -136,7 +136,7 @@ function StatusChangedCell({ c, staffById, fmtDateTime }: { c: CustomerRow; staf
   return (
     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
       <div>{fmtDateTime(c.status_changed_at)}</div>
-      {who && <div className="text-[11px] opacity-70">{who}</div>}
+      {who && <div className="text-xs opacity-70">{who}</div>}
     </TableCell>
   );
 }
@@ -1271,9 +1271,9 @@ function CustomersPage() {
         if (n === null) return <span className="text-muted-foreground">-</span>;
         const near = isNearMaturity(n);
         if (n < 0) {
-          return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${near ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{t("customers.matured", { n: Math.abs(n) })}</span>;
+          return <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${near ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{t("customers.matured", { n: Math.abs(n) })}</span>;
         }
-        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">D-DAY</span>;
+        if (n === 0) return <span className="inline-flex rounded px-1.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">D-DAY</span>;
         const cls = near
           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
           : n <= 30
@@ -1281,7 +1281,7 @@ function CustomersPage() {
           : n <= 60
           ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
           : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
-        return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${cls}`}>D-{n}</span>;
+        return <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${cls}`}>D-{n}</span>;
       };
 
       return (
@@ -1627,7 +1627,7 @@ function CustomersPage() {
                       statusF === "all" ? "border-primary ring-1 ring-primary" : "border-border/60"
                     )}
                   >
-                    <div className="text-[11px] font-medium text-muted-foreground">{t("status.allStatus")}</div>
+                    <div className="text-xs font-medium text-muted-foreground">{t("status.allStatus")}</div>
                     <div className="text-sm font-semibold tracking-normal tabular-nums">{statusTotal.toLocaleString()}</div>
                   </button>
                   {CUSTOMER_STATUSES.map((s) => {
@@ -1643,7 +1643,7 @@ function CustomersPage() {
                           active ? "border-primary ring-1 ring-primary" : "border-border/60"
                         )}
                       >
-                        <div className={cn("inline-block rounded px-1.5 py-0.5 text-[10px] font-medium", STATUS_CLASS[s])}>
+                        <div className={cn("inline-block rounded px-1.5 py-0.5 text-xs font-medium", STATUS_CLASS[s])}>
                           {STATUS_LABEL[s]}
                         </div>
                         <div className="text-sm font-semibold tracking-normal tabular-nums">{n.toLocaleString()}</div>

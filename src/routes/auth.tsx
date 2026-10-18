@@ -154,7 +154,7 @@ function AuthPage() {
               </div>
               <div>
                 <div className="text-sm font-bold text-primary">Hanpass Mobile</div>
-                <div className="text-[10px] text-muted-foreground">OB Call CRM</div>
+                <div className="text-xs text-muted-foreground">OB Call CRM</div>
               </div>
             </div>
             <button

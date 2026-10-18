@@ -97,7 +97,7 @@ export function AiChatPanel({ className, style }: { className?: string; style?: 
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           <span className="text-sm font-semibold">AI 어시스턴트</span>
-          <span className="hidden truncate text-[10px] text-muted-foreground sm:inline">한국어 · English · O'zbekcha · Русский</span>
+          <span className="hidden truncate text-xs text-muted-foreground sm:inline">한국어 · English · O'zbekcha · Русский</span>
         </div>
         <Button
           variant="ghost"

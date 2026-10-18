@@ -378,7 +378,7 @@ function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <span className="truncate text-sm font-semibold">{u.name}</span>
-                      <span className="text-right text-[11px] text-muted-foreground sm:text-xs">{t("dashboard.activations")} {u.activated} / {u.target || "—"} {u.target ? `(${pct.toFixed(0)}%)` : ""}</span>
+                      <span className="text-right text-xs text-muted-foreground sm:text-xs">{t("dashboard.activations")} {u.activated} / {u.target || "—"} {u.target ? `(${pct.toFixed(0)}%)` : ""}</span>
                     </div>
                     <Progress value={Math.min(100, pct)} className="mt-2 h-2" />
                   </div>

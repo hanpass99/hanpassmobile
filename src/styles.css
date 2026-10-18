@@ -14,7 +14,7 @@
 }
 
 @theme inline {
-  --font-sans: "Manrope", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+  --font-sans: "Pretendard Variable", "Pretendard", "Manrope", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
   --font-display: "Sora", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
@@ -72,10 +72,10 @@
 
 :root {
   --radius: 0.5rem;
-  --background: #F4F6F9;
-  --foreground: #1B2430;
+  --background: #F1F3F6;
+  --foreground: #111827;
   --card: #FFFFFF;
-  --card-foreground: #1B2430;
+  --card-foreground: #111827;
   --popover: #FFFFFF;
   --popover-foreground: #1B2430;
   --primary: #D61C29;
@@ -87,7 +87,7 @@
   --secondary: #EEF1F5;
   --secondary-foreground: #1B2430;
   --muted: #EEF1F5;
-  --muted-foreground: #64748B;
+  --muted-foreground: #4B5563;
   --accent: #FCE7EA;
   --accent-foreground: #B3121F;
   --destructive: #DC2626;
@@ -98,8 +98,8 @@
   --warning-foreground: #FFFFFF;
   --info: #2563EB;
   --info-foreground: #FFFFFF;
-  --border: #E5E9EF;
-  --input: #E5E9EF;
+  --border: #D5DBE3;
+  --input: #CBD2DC;
   --ring: #D61C29;
   --chart-1: #121E33;
   --chart-2: #D61C29;
@@ -114,7 +114,7 @@
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #F3F5F8;
   --sidebar-accent-foreground: #1B2430;
-  --sidebar-border: #E9ECF1;
+  --sidebar-border: #D9DEE6;
   --sidebar-ring: #D61C29;
 }
 
@@ -182,8 +182,12 @@
   table {
     font-variant-numeric: tabular-nums;
   }
+  body { font-size: 14px; line-height: 1.55; }
+  td { font-size: 14px; }
+  tbody tr:nth-child(even) { background-color: color-mix(in oklab, var(--color-muted) 45%, transparent); }
+  tbody tr:hover { background-color: var(--color-muted); }
   th {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0;
     color: var(--color-muted-foreground);

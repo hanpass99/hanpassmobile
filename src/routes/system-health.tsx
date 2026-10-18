@@ -136,7 +136,7 @@ function SystemHealthPage() {
                   {item.metric != null && (
                     <span className="text-xs font-semibold text-muted-foreground">{Number(item.metric)}</span>
                   )}
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {format(new Date(item.checked_at), "MM-dd HH:mm")}
                   </span>
                 </div>

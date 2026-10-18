@@ -392,7 +392,7 @@ function HanpassDashboardPage() {
                   <div className="space-y-2 border-t border-border/60 p-3">
                     <div className="flex flex-wrap gap-1.5">
                       {Object.entries(teamRow.status_counts ?? {}).map(([s, n]) => (
-                        <Badge key={s} variant="outline" className={cn("text-[11px]", STATUS_CLASS[s as CustomerStatus])}>
+                        <Badge key={s} variant="outline" className={cn("text-xs", STATUS_CLASS[s as CustomerStatus])}>
                           {t(`status.${s}`)} {n}
                         </Badge>
                       ))}
@@ -456,7 +456,7 @@ function HanpassDashboardPage() {
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {loading ? <Skeleton className="h-40 w-full" /> : (
-            <table className="w-full min-w-[640px] border-separate border-spacing-0.5 text-[11px]">
+            <table className="w-full min-w-[640px] border-separate border-spacing-0.5 text-xs">
               <thead>
                 <tr>
                   <th className="sticky left-0 z-10 bg-card p-1 text-left font-medium text-muted-foreground">
@@ -513,7 +513,7 @@ function HanpassDashboardPage() {
                 key={`${r.at}-${i}`}
                 className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-border/50 px-3 py-2 text-xs"
               >
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <span className="font-mono text-xs text-muted-foreground">
                   {format(new Date(r.at), "MM.dd HH:mm")}
                 </span>
                 <span className="min-w-0 truncate">
@@ -522,7 +522,7 @@ function HanpassDashboardPage() {
                   <span>{r.customer}</span>
                   {r.code && <span className="ml-1 text-muted-foreground">({r.code})</span>}
                 </span>
-                <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[r.status as CustomerStatus])}>
+                <Badge variant="outline" className={cn("text-xs", STATUS_CLASS[r.status as CustomerStatus])}>
                   {t(`status.${r.status}`)}
                 </Badge>
               </div>
@@ -553,7 +553,7 @@ function deltaText(v: number | null, label: string) {
 function Metric({ label, value }: { label: string; value: number | string }) {
   return (
     <span className="flex flex-col items-end leading-tight">
-      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <span className="font-semibold">{typeof value === "number" ? value.toLocaleString() : value}</span>
     </span>
   );
@@ -570,10 +570,10 @@ function StaffLine({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{row.name}</span>
         {(row.teams ?? []).map((c) => (
-          <Badge key={c} variant="secondary" className="text-[10px]">{c}</Badge>
+          <Badge key={c} variant="secondary" className="text-xs">{c}</Badge>
         ))}
         {selCount !== null && (
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="outline" className="text-xs">
             {t(`status.${statusSel}`)} {selCount}
           </Badge>
         )}
@@ -585,12 +585,12 @@ function StaffLine({
       </div>
       {detailed && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {t("hanpassDash.activeDays")} {row.active_days} · {t("hanpassDash.lastActivity")}{" "}
             {row.last_at ? format(new Date(row.last_at), "MM.dd HH:mm") : "—"}
           </span>
           {Object.entries(row.status_counts ?? {}).map(([s, n]) => (
-            <Badge key={s} variant="outline" className={cn("text-[10px]", STATUS_CLASS[s as CustomerStatus])}>
+            <Badge key={s} variant="outline" className={cn("text-xs", STATUS_CLASS[s as CustomerStatus])}>
               {t(`status.${s}`)} {n}
             </Badge>
           ))}

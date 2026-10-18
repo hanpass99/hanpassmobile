@@ -131,7 +131,7 @@ export function LoanBorrowerList() {
   const summary = (label: string, count: number, active: boolean, onClick: () => void) => (
     <Button key={label} variant="outline" onClick={onClick} aria-pressed={active}
       className={cn("h-auto min-h-12 min-w-0 flex-col items-start gap-0 rounded-md bg-card px-2.5 py-1.5 text-left font-normal hover:shadow-card-hover", active ? "border-primary ring-1 ring-primary" : "border-border/60")}>
-      <span className="w-full truncate text-[11px] font-medium text-muted-foreground">{label}</span>
+      <span className="w-full truncate text-xs font-medium text-muted-foreground">{label}</span>
       <span className="text-sm font-semibold tabular-nums">{isLoading ? "—" : count.toLocaleString()}</span>
     </Button>
   );
