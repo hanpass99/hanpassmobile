@@ -1,5 +1,9 @@
 # Current requests
 
+- [ ] Critical security: approval gate on all authenticated public/storage access; trusted signup metadata and approval country grant
+- [ ] Critical security: auth bans on disable, admin-only AI settings writes, no UI text changes
+- [ ] Critical security: real RLS/signup regression verification preserving 104 approved staff
+
 - [x] 대출자 목록을 다른 고객 탭과 같은 집계·필터·표·페이지 구성으로 정리
 
 - [x] 대출자 명단 메뉴 (국적 2자리, 국가별 보기, 전체 직원)
