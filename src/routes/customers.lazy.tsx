@@ -1070,7 +1070,12 @@ function CustomersPage() {
         toast.error(t("customers.toastNoDownloadData"), { id: toastId });
         return;
       }
-      const rowsForXlsx = all.map((c) => ({
+      const rowsForXlsx = tab === "one_year_activation" ? all.map((c) => ({
+        고객명: c.name,
+        국적: countryById.get(c.country_id ?? "")?.code ?? "",
+        개통번호: c.phone,
+        개통일: c.activation_date ?? "",
+      })) : all.map((c) => ({
         고객명: c.name,
         전화번호: c.phone,
         국적: countryById.get(c.country_id ?? "")?.code ?? "",
@@ -1284,16 +1289,11 @@ function CustomersPage() {
           <TableHeader>
             <TableRow className="bg-muted/60 border-b border-border">
               {CheckHead}
-              <TableHead>{t("customers.col.storeName")}</TableHead>
               <SortHead k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.customerName")}</SortHead>
-              <TableHead>{t("customers.col.customerType")}</TableHead>
-              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationNumber")}</SortHead>
               <SortHead k="country" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.country")}</SortHead>
-              <TableHead>{t("customers.col.birthDate")}</TableHead>
+              <SortHead k="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationNumber")}</SortHead>
               <SortHead k="activation_date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.activationDate")}</SortHead>
               <TableHead className="whitespace-nowrap">{t("customers.col.oneYearMaturity")}</TableHead>
-              <SortHead k="carrier_plan" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.carrierPlan")}</SortHead>
-              <TableHead>{t("customers.col.monthlyFee")}</TableHead>
               <SortHead k="assigned" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.assigned")}</SortHead>
               <SortHead k="status" className="min-w-[140px]" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>{t("customers.col.status")}</SortHead>
               {CallRoundHead}
@@ -1308,16 +1308,11 @@ function CustomersPage() {
                 <TableRow key={c.id} className={cn("hover:bg-muted/30", isNearMaturity(dday) && "bg-emerald-50/50 dark:bg-emerald-950/20")}>
 
                   <CheckCell c={c} isAdmin={isAdmin} selected={selected} onToggle={toggleOne} />
-                  <TableCell className="text-xs">{c.store_name ?? "-"}</TableCell>
                   <TableCell className="font-medium"><button type="button" onClick={() => setDetailTarget(c)} className="text-left hover:underline">{c.name}</button></TableCell>
-                  <TableCell className="text-xs">{c.customer_type ?? "-"}</TableCell>
-                  <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
                   <CountryCell c={c} countryById={countryById} isAdmin={isAdmin} countries={countries} onChangeCountry={changeCountry} />
-                  <TableCell className="text-xs">{fmtDate(c.birth_date)}</TableCell>
+                  <TableCell className="font-mono text-xs"><PhoneLink phone={c.phone} onCall={() => setCallLogTarget(c)} /></TableCell>
                   <TableCell className="text-xs">{fmtDate(c.activation_date)}</TableCell>
                   <TableCell className="whitespace-nowrap">{ddayBadge(dday)}</TableCell>
-                  <TableCell className="text-xs">{c.carrier_plan ?? "-"}</TableCell>
-                  <TableCell className="text-xs text-right tabular-nums">{c.monthly_fee != null ? Number(c.monthly_fee).toLocaleString() : "-"}</TableCell>
                   <Assigned c={c} staffById={staffById} isAdmin={isAdmin} staff={staff} onChangeAssigned={changeAssigned} />
                   <StatusCell c={c} onChangeStatus={changeStatus} />
                   <CallRoundCell c={c} onChangeCallRound={changeCallRound} />
@@ -1326,7 +1321,7 @@ function CustomersPage() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <EmptyRow cols={15 + extraCols} loading={loading} pool={p} />}
+            {filtered.length === 0 && <EmptyRow cols={10 + extraCols} loading={loading} pool={p} />}
           </TableBody>
         </Table>
       );
