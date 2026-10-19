@@ -10,6 +10,8 @@
 
 # Presentation architecture
 
+- Company-specific customer-tab visibility uses a shared pure predicate and the existing visible-pool list, so tab restoration and form options stay consistent without changing database access.
+
 - Interface copy uses matching ko/en locale entries and reactive React rendering; never translate stored business identifiers or outgoing message content, to preserve data behavior.
 - Language changes update document metadata without rerunning business loaders; automatic DOM/AI translation is not mounted, to keep customer data unchanged.
 - Charts reference global semantic chart/status tokens; the palette lives in global CSS so both themes remain consistent.
