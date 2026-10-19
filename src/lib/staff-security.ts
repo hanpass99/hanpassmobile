@@ -7,3 +7,7 @@ export function isApprovedStaff(profile: { approval_status?: string; is_active?:
 export function staffBanDuration(active: boolean) {
   return active ? "none" : DISABLED_BAN_DURATION;
 }
+
+export function canViewOneYearActivation(company: string) {
+  return company === "한패스 모바일";
+}

@@ -453,14 +453,14 @@ function PhoneLink({ phone, onCall }: { phone: string; onCall: () => void }) {
 
 function CustomersPage() {
   const { t } = useTranslation();
-  const { isAdmin, isHanpass, user } = useAuth();
+  const { isAdmin, isHanpass, company, user } = useAuth();
   const hanpassOnly = isHanpass;
   const visiblePools = useMemo<readonly CustomerPool[]>(
     () =>
       hanpassOnly
         ? (["activation_request", "qr_activation", "friend_referral", "prepaid_charge"] as const)
-        : POOLS,
-    [hanpassOnly],
+        : POOLS.filter((pool) => pool !== "one_year_activation" || canViewOneYearActivation(company)),
+    [hanpassOnly, company],
   );
   const showLoanTab = !hanpassOnly;
   const loanCount = useLoanBorrowerCount();
