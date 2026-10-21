@@ -373,6 +373,7 @@ export default {
     uploading: "업로드 중...",
     sample: "샘플",
     searchPlaceholder: "이름 / 전화 / 이메일 / 담당자명",
+    cardsScopeNote: "※ 위 상태 카드 숫자는 고객 국적·기간만 반영됩니다. 검색어·담당 국가·담당자·라운드 필터는 아래 목록에만 적용됩니다.",
     allAssigned: "전체 담당자",
     assigned: "담당자",
     staffStats: "담당자별 현황 (현재 필터 기준)",

@@ -373,6 +373,7 @@ export default {
     uploading: "Uploading...",
     sample: "Sample",
     searchPlaceholder: "Name / Phone / Email / Assignee",
+    cardsScopeNote: "※ Status cards reflect customer nationality and period only. Search, assigned country, assignee and round filters apply to the list below.",
     allAssigned: "All assignees",
     assigned: "Assignee",
     staffStats: "Per-assignee summary (current filters)",
