@@ -1549,11 +1549,8 @@ function CustomersPage() {
           _sort_dir: sortDirForRpc,
           _page: p,
           _page_size: pageSize,
-          _call_round: (callRoundF === "all"
-            ? undefined
-            : callRoundF === "none"
-              ? null
-              : Number(callRoundF)) as number | undefined,
+          _call_round:
+            callRoundF === "all" ? undefined : callRoundF === "none" ? 0 : Number(callRoundF),
           _call_completed: statusF === "__call_completed__",
         });
         if (error) throw new Error(error.message);
@@ -2536,6 +2533,13 @@ function CustomersPage() {
                       );
                     })}
                   </div>
+                  {(debouncedSearch.trim() ||
+                    assignedCountry !== "all" ||
+                    staffF !== "all" ||
+                    callRoundF !== "all") && (
+                    <p className="text-xs text-muted-foreground">{t("customers.cardsScopeNote")}</p>
+                  )}
+
 
                   <MobileFilters>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
