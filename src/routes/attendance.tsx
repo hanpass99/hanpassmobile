@@ -174,7 +174,7 @@ function AttendancePage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">{format(date, "yyyy.MM.dd")}</CardTitle>
+          <CardTitle className="text-base">{format(date, "yyyy-MM-dd")}</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <Table>
@@ -373,7 +373,7 @@ function DatePick({ value, onChange }: { value: Date; onChange: (d: Date) => voi
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-[160px] justify-start text-left font-normal">
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {format(value, "yyyy.MM.dd")}
+          {format(value, "yyyy-MM-dd")}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { localizeError } from "@/i18n/localize-error";
 import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
@@ -339,7 +340,7 @@ function NotificationsPage() {
               {history.map((h) => (
                 <TableRow key={h.id}>
                   <TableCell className="whitespace-nowrap text-xs">
-                    {new Date(h.created_at).toLocaleString()}
+                    {formatDateTime(h.created_at)}
                   </TableCell>
                   <TableCell className="text-sm">{h.title ?? "-"}</TableCell>
                   <TableCell className="max-w-md truncate text-sm text-muted-foreground">
@@ -392,7 +393,7 @@ function NotificationsPage() {
             <DialogDescription>
               {detailNoti ? (
                 <>
-                  {new Date(detailNoti.created_at).toLocaleString()} ·{" "}
+                  {formatDateTime(detailNoti.created_at)} ·{" "}
                   {detailNoti.title ?? uiCopy("ux.copy79500c9b6b")}
                 </>
               ) : null}

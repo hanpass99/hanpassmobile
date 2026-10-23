@@ -670,7 +670,7 @@ function HistoryTab() {
                 filtered.map((l) => (
                   <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetail(l)}>
                     <TableCell className="text-xs whitespace-nowrap">
-                      {format(new Date(l.sent_at), "MM-dd HH:mm")}
+                      {format(new Date(l.sent_at), "yyyy-MM-dd HH:mm")}
                     </TableCell>
                     <TableCell>{l.receiver_name || "-"}</TableCell>
                     <TableCell className="font-mono text-xs">{l.receiver_phone}</TableCell>

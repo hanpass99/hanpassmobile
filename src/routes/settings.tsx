@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
 import i18n from "@/i18n";
@@ -63,7 +64,7 @@ function Settings() {
                 <Clock className="h-3.5 w-3.5" /> {t("settings.lastLogin")}
               </div>
               <div className="mt-1 text-sm font-semibold">
-                {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : "-"}
+                {user?.last_sign_in_at ? formatDateTime(user.last_sign_in_at) : "-"}
               </div>
             </div>
           </div>

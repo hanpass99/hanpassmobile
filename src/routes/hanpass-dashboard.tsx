@@ -219,7 +219,7 @@ function HanpassDashboardPage() {
     <div className="space-y-5">
       <PageHeader
         title={t("hanpassDash.title")}
-        description={`${t("hanpassDash.subtitle")} · ${format(from, "yyyy.MM.dd")} ~ ${format(to, "yyyy.MM.dd")}`}
+        description={`${t("hanpassDash.subtitle")} · ${format(from, "yyyy-MM-dd")} ~ ${format(to, "yyyy-MM-dd")}`}
       />
 
       {/* 필터 */}
@@ -641,7 +641,7 @@ function HanpassDashboardPage() {
                 className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-border/50 px-3 py-2 text-xs"
               >
                 <span className="font-mono text-xs text-muted-foreground">
-                  {format(new Date(r.at), "MM.dd HH:mm")}
+                  {format(new Date(r.at), "yyyy-MM-dd HH:mm")}
                 </span>
                 <span className="min-w-0 truncate">
                   <span className="font-medium">{r.staff}</span>
@@ -729,7 +729,7 @@ function StaffLine({
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <span className="text-xs text-muted-foreground">
             {t("hanpassDash.activeDays")} {row.active_days} · {t("hanpassDash.lastActivity")}{" "}
-            {row.last_at ? format(new Date(row.last_at), "MM.dd HH:mm") : "—"}
+            {row.last_at ? format(new Date(row.last_at), "yyyy-MM-dd HH:mm") : "—"}
           </span>
           {Object.entries(row.status_counts ?? {}).map(([s, n]) => (
             <Badge
@@ -755,7 +755,7 @@ function DatePick({ value, onChange }: { value: Date; onChange: (d: Date) => voi
           className={cn("w-full justify-start text-left font-normal lg:w-[150px]")}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {format(value, "yyyy.MM.dd")}
+          {format(value, "yyyy-MM-dd")}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

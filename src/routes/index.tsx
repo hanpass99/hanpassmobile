@@ -213,7 +213,7 @@ function Dashboard() {
         description={
           loading
             ? t("common.loading")
-            : `${t("dashboard.subtitle")} · ${format(from, "MM.dd")} ~ ${format(to, "MM.dd")} ${t("dashboard.basisDate")}`
+            : `${t("dashboard.subtitle")} · ${format(from, "yyyy-MM-dd")} ~ ${format(to, "yyyy-MM-dd")} ${t("dashboard.basisDate")}`
         }
       />
 
@@ -313,8 +313,8 @@ function Dashboard() {
 
       <p className="text-xs text-muted-foreground">
         {t("dashboard.comparisonPeriod", {
-          from: format(previousPeriod.from, "yyyy.MM.dd"),
-          to: format(previousPeriod.to, "yyyy.MM.dd"),
+          from: format(previousPeriod.from, "yyyy-MM-dd"),
+          to: format(previousPeriod.to, "yyyy-MM-dd"),
         })}
       </p>
 
@@ -460,7 +460,7 @@ function Dashboard() {
           <CardHeader>
             <CardTitle>{t("dashboard.dailyTrend")}</CardTitle>
             <CardDescription>
-              {format(from, "yyyy.MM.dd")} ~ {format(to, "yyyy.MM.dd")}
+              {format(from, "yyyy-MM-dd")} ~ {format(to, "yyyy-MM-dd")}
             </CardDescription>
           </CardHeader>
           <CardContent className="h-[260px] px-2 sm:h-[280px] sm:px-5">
@@ -695,7 +695,7 @@ function DatePick({ value, onChange }: { value: Date; onChange: (d: Date) => voi
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "yyyy.MM.dd") : <span>{i18n.t("dashboard.pick")}</span>}
+          {value ? format(value, "yyyy-MM-dd") : <span>{i18n.t("dashboard.pick")}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

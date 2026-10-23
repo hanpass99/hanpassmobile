@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { useEffect, useState, useCallback } from "react";
@@ -125,7 +126,7 @@ export function AdminPushListener() {
           <p className="mb-6 text-base text-muted-foreground">
             {current.sender_name ? `${current.sender_name}` : ""}
             {current.created_at
-              ? `${current.sender_name ? " · " : ""}${new Date(current.created_at).toLocaleString()}`
+              ? `${current.sender_name ? " · " : ""}${formatDateTime(current.created_at)}`
               : ""}
           </p>
 

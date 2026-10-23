@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
 import { countryName, companyName } from "@/i18n/display-values";
@@ -1010,7 +1011,7 @@ function StaffAdmin() {
                     <TableCell className="text-xs whitespace-nowrap">
                       {r.last_sign_in_at ? (
                         <span className="text-foreground">
-                          {new Date(r.last_sign_in_at).toLocaleString()}
+                          {formatDateTime(r.last_sign_in_at)}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">{t("settings.notSignedIn")}</span>
@@ -1304,7 +1305,7 @@ function StaffAdmin() {
                 [
                   t("settings.lastAccess"),
                   infoTarget.last_sign_in_at
-                    ? new Date(infoTarget.last_sign_in_at).toLocaleString()
+                    ? formatDateTime(infoTarget.last_sign_in_at)
                     : t("settings.notSignedIn"),
                 ],
                 [
