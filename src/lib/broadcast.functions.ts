@@ -84,40 +84,67 @@ export const sendBroadcastBatch = createServerFn({ method: "POST" })
     const { supabase } = context;
     const lockId = crypto.randomUUID();
     const { data: claimed, error: claimError } = await supabase.rpc("claim_broadcast_delivery", {
-      broadcast_id: data.broadcastId, lock_id: lockId,
+      broadcast_id: data.broadcastId,
+      lock_id: lockId,
     });
     if (claimError) throw new Error(claimError.message);
     const b = claimed as {
-      message: string; lang_filter: string; media_storage_path: string | null;
-      media_file_name: string | null; media_mime: string | null; media_kind: string | null;
-      success_count: number; failed_count: number; delivery_cursor: string | null; status: string;
+      message: string;
+      lang_filter: string;
+      media_storage_path: string | null;
+      media_file_name: string | null;
+      media_mime: string | null;
+      media_kind: string | null;
+      success_count: number;
+      failed_count: number;
+      delivery_cursor: string | null;
+      status: string;
     };
-    if (b.status === "completed") return { done: true, totalSuccess: b.success_count, totalFailed: b.failed_count };
+    if (b.status === "completed")
+      return { done: true, totalSuccess: b.success_count, totalFailed: b.failed_count };
     let cursor = b.delivery_cursor;
     const checkpoint = async (sent: number, failed: number, completed: boolean) => {
       const { error } = await supabase.rpc("checkpoint_broadcast_delivery", {
-        broadcast_id: data.broadcastId, lock_id: lockId, cursor_id: cursor,
-        sent, failed, completed,
+        broadcast_id: data.broadcastId,
+        lock_id: lockId,
+        cursor_id: cursor,
+        sent,
+        failed,
+        completed,
       });
       if (error) throw new Error(error.message);
     };
-    let q = supabase.from("telegram_chats").select("id, chat_id, language")
-      .eq("marketing_opt_in", true).eq("is_blocked", false).order("id", { ascending: true }).limit(1);
+    let q = supabase
+      .from("telegram_chats")
+      .select("id, chat_id, language")
+      .eq("marketing_opt_in", true)
+      .eq("is_blocked", false)
+      .order("id", { ascending: true })
+      .limit(1);
     if (b.lang_filter !== "all") q = q.eq("language", b.lang_filter);
     if (cursor) q = q.gt("id", cursor);
     const { data: chats, error: chatsError } = await q;
-    if (chatsError) { await checkpoint(0, 0, false); throw new Error(chatsError.message); }
+    if (chatsError) {
+      await checkpoint(0, 0, false);
+      throw new Error(chatsError.message);
+    }
     const chat = chats?.[0];
     if (!chat) {
       await checkpoint(0, 0, true);
       return { done: true, totalSuccess: b.success_count, totalFailed: b.failed_count };
     }
-    const { BOT_COPY, sendTelegramMessage, sendTelegramMedia, unsubscribeMarkup } = await import("@/lib/telegram.server");
+    const { BOT_COPY, sendTelegramMessage, sendTelegramMedia, unsubscribeMarkup } =
+      await import("@/lib/telegram.server");
     let mediaBytes: Uint8Array | null = null;
     if (b.media_storage_path) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: dl, error } = await supabaseAdmin.storage.from("telegram-media").download(b.media_storage_path);
-      if (error || !dl) { await checkpoint(0, 0, false); throw new Error("첨부파일을 불러올 수 없습니다."); }
+      const { data: dl, error } = await supabaseAdmin.storage
+        .from("telegram-media")
+        .download(b.media_storage_path);
+      if (error || !dl) {
+        await checkpoint(0, 0, false);
+        throw new Error("첨부파일을 불러올 수 없습니다.");
+      }
       mediaBytes = new Uint8Array(await dl.arrayBuffer());
     }
     const lang = chat.language === "ru" ? "ru" : "uz";
@@ -127,30 +154,57 @@ export const sendBroadcastBatch = createServerFn({ method: "POST" })
     try {
       const signal = AbortSignal.timeout(10_000);
       if (mediaBytes && b.media_kind) {
-        await sendTelegramMedia(Number(chat.chat_id), b.media_kind === "photo" ? "photo" : "document",
-          mediaBytes, b.media_file_name ?? "file", b.media_mime ?? "application/octet-stream",
-          body.slice(0, 1024), null, unsubscribeMarkup(lang), signal);
+        await sendTelegramMedia(
+          Number(chat.chat_id),
+          b.media_kind === "photo" ? "photo" : "document",
+          mediaBytes,
+          b.media_file_name ?? "file",
+          b.media_mime ?? "application/octet-stream",
+          body.slice(0, 1024),
+          null,
+          unsubscribeMarkup(lang),
+          signal,
+        );
       } else {
-        await sendTelegramMessage(Number(chat.chat_id), body, null, unsubscribeMarkup(lang), signal);
+        await sendTelegramMessage(
+          Number(chat.chat_id),
+          body,
+          null,
+          unsubscribeMarkup(lang),
+          signal,
+        );
       }
       sent = 1;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       // An uncertain response may have delivered: keep the claim, never blindly resend.
       if (!/failed \[4\d\d\]/.test(msg)) throw new Error("broadcast_delivery_uncertain");
-      if (/\[429\]/.test(msg)) { await checkpoint(0, 0, false); throw new Error("broadcast_rate_limited"); }
+      if (/\[429\]/.test(msg)) {
+        await checkpoint(0, 0, false);
+        throw new Error("broadcast_rate_limited");
+      }
       failed = 1;
       if (/\[403\]|chat not found/i.test(msg)) {
-        const { error } = await supabase.from("telegram_chats").update({
-          marketing_opt_in: false, opt_in_date: null, is_blocked: true, blocked_at: new Date().toISOString(),
-        }).eq("id", chat.id);
+        const { error } = await supabase
+          .from("telegram_chats")
+          .update({
+            marketing_opt_in: false,
+            opt_in_date: null,
+            is_blocked: true,
+            blocked_at: new Date().toISOString(),
+          })
+          .eq("id", chat.id);
         if (error) console.error("[broadcast] blocked recipient update failed");
       }
       console.error(`[broadcast] delivery rejected: ${msg}`);
     }
     cursor = chat.id;
     await checkpoint(sent, failed, false);
-    return { done: false, totalSuccess: b.success_count + sent, totalFailed: b.failed_count + failed };
+    return {
+      done: false,
+      totalSuccess: b.success_count + sent,
+      totalFailed: b.failed_count + failed,
+    };
   });
 
 /** Recent broadcast history (admin only). */

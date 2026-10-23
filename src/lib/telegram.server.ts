@@ -12,9 +12,7 @@ export function getBotToken(): string {
 }
 
 export function deriveWebhookSecret(): string {
-  return createHash("sha256")
-    .update(`telegram-webhook:${getBotToken()}`)
-    .digest("base64url");
+  return createHash("sha256").update(`telegram-webhook:${getBotToken()}`).digest("base64url");
 }
 
 async function callBot<T = unknown>(
@@ -37,9 +35,7 @@ async function callBot<T = unknown>(
     throw new Error(`Telegram ${method} non-JSON response: ${text.slice(0, 200)}`);
   }
   if (!res.ok || parsed?.ok === false) {
-    throw new Error(
-      `Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`,
-    );
+    throw new Error(`Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`);
   }
   return parsed.result as T;
 }
@@ -110,9 +106,7 @@ export async function sendTelegramMedia(
     throw new Error(`Telegram ${method} non-JSON response: ${text.slice(0, 200)}`);
   }
   if (!res.ok || parsed?.ok === false) {
-    throw new Error(
-      `Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`,
-    );
+    throw new Error(`Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`);
   }
   return parsed.result as { message_id: number };
 }
@@ -135,8 +129,7 @@ export const BOT_COPY = {
     uz: "📱 Telefon raqamni yuborish",
     ru: "📱 Отправить номер телефона",
   },
-  languagePrompt:
-    "Iltimos, tilni tanlang / Пожалуйста, выберите язык:",
+  languagePrompt: "Iltimos, tilni tanlang / Пожалуйста, выберите язык:",
   conversationClosed: {
     uz: "Murojaatingiz uchun rahmat! ✅ Suhbatingiz yakunlandi. Agar yana savolingiz bo'lsa, quyidagi tugmani bosing yoki /start yuboring. Sog' bo'ling!",
     ru: "Спасибо за обращение! ✅ Ваш диалог завершён. Если появятся вопросы, нажмите кнопку ниже или отправьте /start. Всего доброго!",
@@ -187,19 +180,18 @@ export async function sendMessageWithInlineButton(
   });
 }
 
-
-
-
 /** Show the initial language picker (inline keyboard). */
 export async function sendLanguagePicker(chatId: number) {
   return callBot<{ message_id: number }>("sendMessage", {
     chat_id: chatId,
     text: BOT_COPY.languagePrompt,
     reply_markup: {
-      inline_keyboard: [[
-        { text: "🇺🇿 O'zbek", callback_data: "lang:uz" },
-        { text: "🇷🇺 Русский", callback_data: "lang:ru" },
-      ]],
+      inline_keyboard: [
+        [
+          { text: "🇺🇿 O'zbek", callback_data: "lang:uz" },
+          { text: "🇷🇺 Русский", callback_data: "lang:ru" },
+        ],
+      ],
     },
   });
 }

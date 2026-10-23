@@ -1,5 +1,7 @@
 # Security architecture
 
+- Broadcast delivery uses a database-owned exclusive claim and per-recipient checkpoints; uncertain sends retain their claim and legacy campaigns without checkpoints cannot resume, preventing duplicate delivery.
+
 - Authenticated business access requires the database approval helper in addition to existing row scopes; this preserves approved staff scopes while blocking pending and disabled sessions.
 - Staff activation and creation use authenticated server functions with approved-admin checks before privileged auth operations; client metadata never establishes privilege.
 - Global server-function middleware verifies approval for bearer-authenticated calls before privileged handlers execute; database RPCs that bypass RLS enforce the same gate.
