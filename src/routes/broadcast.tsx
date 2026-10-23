@@ -164,7 +164,7 @@ function BroadcastPage() {
           });
       let ok = 0;
       let fail = 0;
-      // Batches are throttled server-side to ~1 message/second.
+      // One recipient per request; throttle between requests rather than inside them.
       for (;;) {
         const r = await batchFn({ data: { broadcastId } });
         ok = r.totalSuccess;
@@ -180,7 +180,7 @@ function BroadcastPage() {
       setMedia(null);
       qc.invalidateQueries({ queryKey: ["broadcast-history"] });
       qc.invalidateQueries({ queryKey: ["broadcast-audience"] });
-    } catch (e) {
+    } catch {
       toast.error(uiCopy("broadcastDelivery.stopped"));
     } finally {
       sendingRef.current = false;
@@ -326,7 +326,7 @@ function BroadcastPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(history?.broadcasts ?? []).map((b: any) => (
+              {(history?.broadcasts ?? []).map((b) => (
                 <TableRow key={b.id}>
                   <TableCell className="whitespace-nowrap text-xs">
                     {new Date(b.created_at).toLocaleString("ko-KR")}

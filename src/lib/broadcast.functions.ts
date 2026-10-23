@@ -1,10 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 const langFilterSchema = z.enum(["all", "uz", "ru"]);
 
-async function assertAdmin(context: { supabase: any; userId: string }) {
+async function assertAdmin(context: { supabase: SupabaseClient<Database>; userId: string }) {
   const { data: isAdmin } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
@@ -104,14 +106,16 @@ export const sendBroadcastBatch = createServerFn({ method: "POST" })
       return { done: true, totalSuccess: b.success_count, totalFailed: b.failed_count };
     let cursor = b.delivery_cursor;
     const checkpoint = async (sent: number, failed: number, completed: boolean) => {
-      const { error } = await supabase.rpc("checkpoint_broadcast_delivery", {
+      const args = {
         broadcast_id: data.broadcastId,
         lock_id: lockId,
         cursor_id: cursor,
         sent,
         failed,
         completed,
-      });
+      };
+      // Generated RPC types omit nullable SQL arguments.
+      const { error } = await supabase.rpc("checkpoint_broadcast_delivery", args as never);
       if (error) throw new Error(error.message);
     };
     let q = supabase

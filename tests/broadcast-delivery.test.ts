@@ -22,7 +22,8 @@ function fixture(options: { legacy?: boolean; sendError?: string; completed?: bo
     from() {
       const builder = {
         select() { return builder; }, eq() { return builder; }, gt() { return builder; }, order() { return builder; },
-        limit(n: number) { state.limits.push(n); return Promise.resolve({ data: options.empty || state.cursor ? [] : [{ id: "recipient-1", chat_id: 1, language: "uz" }], error: null }); },
+        limit(n: number) { state.limits.push(n); return builder; },
+        then(resolve: (value: unknown) => unknown) { return Promise.resolve({ data: options.empty || state.cursor ? [] : [{ id: "recipient-1", chat_id: 1, language: "uz" }], error: null }).then(resolve); },
         update() { state.optedOut = true; return { eq: async () => ({ error: null }) }; },
       };
       return builder;
