@@ -20,12 +20,14 @@ export function deriveWebhookSecret(): string {
 async function callBot<T = unknown>(
   method: string,
   body: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<T> {
   const token = getBotToken();
   const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
   const text = await res.text();
   let parsed: any;
@@ -47,13 +49,14 @@ export async function sendTelegramMessage(
   text: string,
   replyToMessageId?: number | null,
   replyMarkup?: Record<string, unknown> | null,
+  signal?: AbortSignal,
 ) {
   const body: Record<string, unknown> = { chat_id: chatId, text };
   if (replyToMessageId) {
     body.reply_parameters = { message_id: replyToMessageId, allow_sending_without_reply: true };
   }
   if (replyMarkup) body.reply_markup = replyMarkup;
-  return callBot<{ message_id: number }>("sendMessage", body);
+  return callBot<{ message_id: number }>("sendMessage", body, signal);
 }
 
 /** Inline keyboard with a single "unsubscribe from ads" button (localized). */
@@ -73,6 +76,7 @@ export async function sendTelegramMedia(
   caption?: string,
   replyToMessageId?: number | null,
   replyMarkup?: Record<string, unknown> | null,
+  signal?: AbortSignal,
 ): Promise<{ message_id: number }> {
   const token = getBotToken();
   const method = kind === "photo" ? "sendPhoto" : "sendDocument";
@@ -96,6 +100,7 @@ export async function sendTelegramMedia(
   const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/${method}`, {
     method: "POST",
     body: form,
+    signal,
   });
   const text = await res.text();
   let parsed: any;
