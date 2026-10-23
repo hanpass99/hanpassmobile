@@ -1,5 +1,9 @@
 # Current requests
 
+- [x] Broadcast: shorten requests, timeout Telegram calls, persist each recipient, serialize delivery and offer safe resume for new campaigns; legacy campaigns remain blocked to prevent duplicates
+- [x] Broadcast: checkpoint/timeout/block/rate-limit regression tests, changed-function and route lint, automatic type-check/build passed
+- [ ] Broadcast: real authenticated sending verification (requesting account session unavailable); earlier campaign cannot safely resume because recipient checkpoints were never recorded; publish required for new delivery method
+
 - [x] UX batch 3: customer tables, per-user filter/tab/page-size restoration, chips and reset
 - [x] UX batch 3: call/SMS/status quick actions, safe confirmation and row keyboard navigation
 - [x] UX batch 3: consistent loading/empty/error states; 118 regression tests, automatic type-check/build and desktop/mobile simulated workflows passed

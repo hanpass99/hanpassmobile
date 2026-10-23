@@ -1,4 +1,12 @@
 export default {
+  broadcastDelivery: {
+    resume: "Resume sending",
+    paused: "In progress / stopped",
+    stopped: "Sending stopped. Please check the broadcast history.",
+    uncertain: "Processing or delivery confirmation required",
+    legacyStopped:
+      "Broadcasts started with the previous delivery method have no recipient checkpoints. Automatic resending is disabled to prevent duplicates.",
+  },
   mobile: { filters: "Filters", backToConversations: "Back to conversations" },
   app: { desc: "Hanpass Mobile outbound-call CRM" },
   nav: {
@@ -373,7 +381,8 @@ export default {
     uploading: "Uploading...",
     sample: "Sample",
     searchPlaceholder: "Name / Phone / Email / Assignee",
-    cardsScopeNote: "※ Status cards reflect customer nationality and period only. Search, assigned country, assignee and round filters apply to the list below.",
+    cardsScopeNote:
+      "※ Status cards reflect customer nationality and period only. Search, assigned country, assignee and round filters apply to the list below.",
     allAssigned: "All assignees",
     assigned: "Assignee",
     staffStats: "Per-assignee summary (current filters)",

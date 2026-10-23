@@ -12,20 +12,20 @@ export function getBotToken(): string {
 }
 
 export function deriveWebhookSecret(): string {
-  return createHash("sha256")
-    .update(`telegram-webhook:${getBotToken()}`)
-    .digest("base64url");
+  return createHash("sha256").update(`telegram-webhook:${getBotToken()}`).digest("base64url");
 }
 
 async function callBot<T = unknown>(
   method: string,
   body: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<T> {
   const token = getBotToken();
   const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
   const text = await res.text();
   let parsed: any;
@@ -35,9 +35,7 @@ async function callBot<T = unknown>(
     throw new Error(`Telegram ${method} non-JSON response: ${text.slice(0, 200)}`);
   }
   if (!res.ok || parsed?.ok === false) {
-    throw new Error(
-      `Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`,
-    );
+    throw new Error(`Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`);
   }
   return parsed.result as T;
 }
@@ -47,13 +45,14 @@ export async function sendTelegramMessage(
   text: string,
   replyToMessageId?: number | null,
   replyMarkup?: Record<string, unknown> | null,
+  signal?: AbortSignal,
 ) {
   const body: Record<string, unknown> = { chat_id: chatId, text };
   if (replyToMessageId) {
     body.reply_parameters = { message_id: replyToMessageId, allow_sending_without_reply: true };
   }
   if (replyMarkup) body.reply_markup = replyMarkup;
-  return callBot<{ message_id: number }>("sendMessage", body);
+  return callBot<{ message_id: number }>("sendMessage", body, signal);
 }
 
 /** Inline keyboard with a single "unsubscribe from ads" button (localized). */
@@ -73,6 +72,7 @@ export async function sendTelegramMedia(
   caption?: string,
   replyToMessageId?: number | null,
   replyMarkup?: Record<string, unknown> | null,
+  signal?: AbortSignal,
 ): Promise<{ message_id: number }> {
   const token = getBotToken();
   const method = kind === "photo" ? "sendPhoto" : "sendDocument";
@@ -96,6 +96,7 @@ export async function sendTelegramMedia(
   const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/${method}`, {
     method: "POST",
     body: form,
+    signal,
   });
   const text = await res.text();
   let parsed: any;
@@ -105,9 +106,7 @@ export async function sendTelegramMedia(
     throw new Error(`Telegram ${method} non-JSON response: ${text.slice(0, 200)}`);
   }
   if (!res.ok || parsed?.ok === false) {
-    throw new Error(
-      `Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`,
-    );
+    throw new Error(`Telegram ${method} failed [${res.status}]: ${parsed?.description ?? text}`);
   }
   return parsed.result as { message_id: number };
 }
@@ -130,8 +129,7 @@ export const BOT_COPY = {
     uz: "📱 Telefon raqamni yuborish",
     ru: "📱 Отправить номер телефона",
   },
-  languagePrompt:
-    "Iltimos, tilni tanlang / Пожалуйста, выберите язык:",
+  languagePrompt: "Iltimos, tilni tanlang / Пожалуйста, выберите язык:",
   conversationClosed: {
     uz: "Murojaatingiz uchun rahmat! ✅ Suhbatingiz yakunlandi. Agar yana savolingiz bo'lsa, quyidagi tugmani bosing yoki /start yuboring. Sog' bo'ling!",
     ru: "Спасибо за обращение! ✅ Ваш диалог завершён. Если появятся вопросы, нажмите кнопку ниже или отправьте /start. Всего доброго!",
@@ -182,19 +180,18 @@ export async function sendMessageWithInlineButton(
   });
 }
 
-
-
-
 /** Show the initial language picker (inline keyboard). */
 export async function sendLanguagePicker(chatId: number) {
   return callBot<{ message_id: number }>("sendMessage", {
     chat_id: chatId,
     text: BOT_COPY.languagePrompt,
     reply_markup: {
-      inline_keyboard: [[
-        { text: "🇺🇿 O'zbek", callback_data: "lang:uz" },
-        { text: "🇷🇺 Русский", callback_data: "lang:ru" },
-      ]],
+      inline_keyboard: [
+        [
+          { text: "🇺🇿 O'zbek", callback_data: "lang:uz" },
+          { text: "🇷🇺 Русский", callback_data: "lang:ru" },
+        ],
+      ],
     },
   });
 }

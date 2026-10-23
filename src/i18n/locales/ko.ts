@@ -1,4 +1,12 @@
 export default {
+  broadcastDelivery: {
+    resume: "이어서 발송",
+    paused: "진행 중 / 중단",
+    stopped: "발송이 중단되었습니다. 발송 내역을 확인해 주세요.",
+    uncertain: "처리 중이거나 결과 확인이 필요합니다",
+    legacyStopped:
+      "이전 방식으로 시작한 발송은 수신자별 기록이 없어 중복 방지를 위해 자동 재발송하지 않습니다.",
+  },
   mobile: { filters: "필터", backToConversations: "상담 목록으로" },
   app: { desc: "한패스 모바일 아웃바운드 콜 관리 시스템" },
   nav: {
@@ -373,7 +381,8 @@ export default {
     uploading: "업로드 중...",
     sample: "샘플",
     searchPlaceholder: "이름 / 전화 / 이메일 / 담당자명",
-    cardsScopeNote: "※ 위 상태 카드 숫자는 고객 국적·기간만 반영됩니다. 검색어·담당 국가·담당자·라운드 필터는 아래 목록에만 적용됩니다.",
+    cardsScopeNote:
+      "※ 위 상태 카드 숫자는 고객 국적·기간만 반영됩니다. 검색어·담당 국가·담당자·라운드 필터는 아래 목록에만 적용됩니다.",
     allAssigned: "전체 담당자",
     assigned: "담당자",
     staffStats: "담당자별 현황 (현재 필터 기준)",

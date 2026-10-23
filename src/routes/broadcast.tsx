@@ -2,7 +2,7 @@ import { localizeError } from "@/i18n/localize-error";
 import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -98,6 +98,7 @@ function BroadcastPage() {
   const [uploading, setUploading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, ok: 0, fail: 0 });
   const [result, setResult] = useState<{ ok: number; fail: number } | null>(null);
 
@@ -112,6 +113,7 @@ function BroadcastPage() {
     queryKey: ["broadcast-history"],
     enabled: isAdmin,
     queryFn: () => listFn(),
+    refetchInterval: 5_000,
   });
 
   const audienceCount = audience?.count ?? 0;
@@ -147,26 +149,30 @@ function BroadcastPage() {
     }
   };
 
-  const runBroadcast = async () => {
+  const runBroadcast = async (resumeId?: string) => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     setConfirmOpen(false);
     setSending(true);
     setResult(null);
     setProgress({ done: 0, total: audienceCount, ok: 0, fail: 0 });
     try {
-      const { broadcastId } = await createFn({
-        data: { message, langFilter, media, targetCount: audienceCount },
-      });
-      let afterId: string | null = null;
+      const { broadcastId } = resumeId
+        ? { broadcastId: resumeId }
+        : await createFn({
+            data: { message, langFilter, media, targetCount: audienceCount },
+          });
       let ok = 0;
       let fail = 0;
-      // Batches are throttled server-side to ~1 message/second.
+      // One recipient per request; throttle between requests rather than inside them.
       for (;;) {
-        const r = await batchFn({ data: { broadcastId, afterId, batchSize: 15 } });
+        const r = await batchFn({ data: { broadcastId } });
         ok = r.totalSuccess;
         fail = r.totalFailed;
-        afterId = r.lastId;
+
         setProgress({ done: ok + fail, total: Math.max(audienceCount, ok + fail), ok, fail });
         if (r.done) break;
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
       }
       setResult({ ok, fail });
       toast.success(uiCopy("ux.copyed7dd9ebba", { value0: ok, value1: fail }));
@@ -174,10 +180,13 @@ function BroadcastPage() {
       setMedia(null);
       qc.invalidateQueries({ queryKey: ["broadcast-history"] });
       qc.invalidateQueries({ queryKey: ["broadcast-audience"] });
-    } catch (e) {
-      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copyc7df7ab9d2")));
+    } catch {
+      toast.error(uiCopy("broadcastDelivery.stopped"));
     } finally {
+      sendingRef.current = false;
       setSending(false);
+      qc.invalidateQueries({ queryKey: ["broadcast-history"] });
+      qc.invalidateQueries({ queryKey: ["broadcast-audience"] });
     }
   };
 
@@ -296,6 +305,9 @@ function BroadcastPage() {
         </Card>
       </div>
 
+      {(history?.broadcasts ?? []).some(
+        (b) => b.status !== "completed" && b.delivery_version === 0,
+      ) && <p className="text-sm text-destructive">{uiCopy("broadcastDelivery.legacyStopped")}</p>}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{uiCopy("ux.copyed11019be9")}</CardTitle>
@@ -314,7 +326,7 @@ function BroadcastPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(history?.broadcasts ?? []).map((b: any) => (
+              {(history?.broadcasts ?? []).map((b) => (
                 <TableRow key={b.id}>
                   <TableCell className="whitespace-nowrap text-xs">
                     {new Date(b.created_at).toLocaleString("ko-KR")}
@@ -332,8 +344,24 @@ function BroadcastPage() {
                     <Badge variant={b.status === "completed" ? "secondary" : "outline"}>
                       {b.status === "completed"
                         ? uiCopy("ux.copy8d8680373c")
-                        : uiCopy("ux.copy0dae9079ff")}
+                        : uiCopy("broadcastDelivery.paused")}
                     </Badge>
+                    {b.status !== "completed" && b.delivery_version === 1 && !b.delivery_lock && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-2"
+                        disabled={sending}
+                        onClick={() => runBroadcast(b.id)}
+                      >
+                        {uiCopy("broadcastDelivery.resume")}
+                      </Button>
+                    )}
+                    {b.status !== "completed" && b.delivery_lock && (
+                      <span className="ml-2 text-xs text-destructive">
+                        {uiCopy("broadcastDelivery.uncertain")}
+                      </span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -360,7 +388,7 @@ function BroadcastPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{uiCopy("ux.copy19b2d19bc1")}</AlertDialogCancel>
-            <AlertDialogAction onClick={runBroadcast}>
+            <AlertDialogAction onClick={() => runBroadcast()}>
               {uiCopy("ux.copy6979bfc484")}
             </AlertDialogAction>
           </AlertDialogFooter>

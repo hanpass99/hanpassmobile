@@ -406,6 +406,10 @@ export type Database = {
       broadcasts: {
         Row: {
           created_at: string
+          delivery_cursor: string | null
+          delivery_lock: string | null
+          delivery_lock_at: string | null
+          delivery_version: number
           failed_count: number
           id: string
           lang_filter: string
@@ -422,6 +426,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_cursor?: string | null
+          delivery_lock?: string | null
+          delivery_lock_at?: string | null
+          delivery_version?: number
           failed_count?: number
           id?: string
           lang_filter?: string
@@ -438,6 +446,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_cursor?: string | null
+          delivery_lock?: string | null
+          delivery_lock_at?: string | null
+          delivery_version?: number
           failed_count?: number
           id?: string
           lang_filter?: string
@@ -1854,6 +1866,21 @@ export type Database = {
         Returns: string
       }
       can_access_new_signup: { Args: { _user_id: string }; Returns: boolean }
+      checkpoint_broadcast_delivery: {
+        Args: {
+          broadcast_id: string
+          completed: boolean
+          cursor_id: string
+          failed: number
+          lock_id: string
+          sent: number
+        }
+        Returns: undefined
+      }
+      claim_broadcast_delivery: {
+        Args: { broadcast_id: string; lock_id: string }
+        Returns: Json
+      }
       current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
       customer_pool_counts: {
