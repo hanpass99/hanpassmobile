@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/date-format";
 import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
@@ -1605,12 +1606,7 @@ function ParticipationHistory({
   if (runs.length === 0) return null;
 
   const fmt = (iso: string) =>
-    new Date(iso).toLocaleString([], {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    formatDateTime(iso);
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-b bg-muted/30 px-4 py-1.5 text-xs">

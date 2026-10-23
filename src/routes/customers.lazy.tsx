@@ -1650,12 +1650,7 @@ function CustomersPage() {
     formatDate(s);
 
   const fmtDateTime = (s: string | null | undefined) =>
-    s
-      ? new Date(s).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR", {
-          dateStyle: "short",
-          timeStyle: "short",
-        })
-      : "-";
+    formatDateTime(s);
 
   const StatusChangedHead = (
     <TableHead className="whitespace-nowrap">{t("customers.col.statusChanged")}</TableHead>
@@ -3301,9 +3296,7 @@ function MemoPanel({
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="font-medium">{staffById.get(n.author_id) ?? "—"}</span>
                 <span>
-                  {new Date(n.created_at).toLocaleString(
-                    i18n.language === "en" ? "en-US" : "ko-KR",
-                  )}
+                  {formatDateTime(n.created_at)}
                 </span>
               </div>
               <div className="mt-1 whitespace-pre-wrap">{n.content}</div>
@@ -3503,7 +3496,7 @@ function CallLogPanel({
                   )}
                 </div>
                 <span>
-                  {new Date(l.call_date).toLocaleString(i18n.language === "en" ? "en-US" : "ko-KR")}
+                  {formatDateTime(l.call_date)}
                 </span>
               </div>
               {l.notes && <div className="mt-1 whitespace-pre-wrap">{l.notes}</div>}
