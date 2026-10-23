@@ -5,7 +5,7 @@ export default {
     stopped: "Sending stopped. Please check the broadcast history.",
     uncertain: "Processing or delivery confirmation required",
     legacyStopped:
-      "The earlier broadcast stopped at 27 successful and 3 failed deliveries. Recipient checkpoints were not recorded, so automatic resending is disabled to prevent duplicates.",
+      "Broadcasts started with the previous delivery method have no recipient checkpoints. Automatic resending is disabled to prevent duplicates.",
   },
   mobile: { filters: "Filters", backToConversations: "Back to conversations" },
   app: { desc: "Hanpass Mobile outbound-call CRM" },
