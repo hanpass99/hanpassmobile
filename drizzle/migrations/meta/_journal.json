@@ -92,6 +92,13 @@
       "when": 1792572381773,
       "tag": "0012_search_customers_round_none_assignee",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792734575860,
+      "tag": "0013_broadcast_delivery_checkpoints",
+      "breakpoints": true
     }
   ]
 }
