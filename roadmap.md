@@ -1,5 +1,8 @@
 # Current requests
 
+- [ ] Broadcast: diagnose stopped delivery, shorten requests, persist progress and provide safe resume without resending legacy recipients
+- [ ] Broadcast: regression checks and authenticated verification (requesting account session unavailable)
+
 - [x] UX batch 3: customer tables, per-user filter/tab/page-size restoration, chips and reset
 - [x] UX batch 3: call/SMS/status quick actions, safe confirmation and row keyboard navigation
 - [x] UX batch 3: consistent loading/empty/error states; 118 regression tests, automatic type-check/build and desktop/mobile simulated workflows passed
