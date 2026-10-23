@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { localizeError } from "@/i18n/localize-error";
 import { useTranslation } from "react-i18next";
 import { uiCopy } from "@/i18n/ui-copy";
@@ -329,7 +330,7 @@ function BroadcastPage() {
               {(history?.broadcasts ?? []).map((b) => (
                 <TableRow key={b.id}>
                   <TableCell className="whitespace-nowrap text-xs">
-                    {new Date(b.created_at).toLocaleString("ko-KR")}
+                    {formatDateTime(b.created_at)}
                   </TableCell>
                   <TableCell className="max-w-[360px] truncate text-xs">
                     {b.message || (b.media_file_name ?? uiCopy("ux.copy3809a0592f"))}

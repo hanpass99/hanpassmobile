@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
 import { uiCopy } from "@/i18n/ui-copy";
@@ -237,7 +238,7 @@ function SlaPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {new Date(r.since).toLocaleString(locale)}
+                          {formatDateTime(r.since)}
                         </TableCell>
                         <TableCell>
                           <span className="font-semibold text-destructive">
@@ -305,7 +306,7 @@ function SlaPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {new Date(r.deadline).toLocaleString(locale)}
+                            {formatDateTime(r.deadline)}
                           </TableCell>
                           <TableCell>
                             <span
@@ -365,7 +366,7 @@ function SlaPage() {
                     {adjustmentsQ.data!.map((a) => (
                       <TableRow key={a.id}>
                         <TableCell className="text-xs">
-                          {new Date(a.created_at).toLocaleString(locale)}
+                          {formatDateTime(a.created_at)}
                         </TableCell>
                         <TableCell>
                           <Badge

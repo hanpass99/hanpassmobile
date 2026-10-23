@@ -160,7 +160,7 @@ function SystemHealthPage() {
                     </span>
                   )}
                   <span className="text-xs text-muted-foreground">
-                    {format(new Date(item.checked_at), "MM-dd HH:mm")}
+                    {format(new Date(item.checked_at), "yyyy-MM-dd HH:mm")}
                   </span>
                 </div>
               ))}

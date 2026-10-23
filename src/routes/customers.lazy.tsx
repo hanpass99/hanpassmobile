@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
 import { countryName, companyName } from "@/i18n/display-values";
@@ -1597,7 +1598,7 @@ function CustomersPage() {
                 : { 가입일: c.signup_date ?? "" }),
               이메일: c.email ?? "",
               충전번호: c.charge_phone ?? "",
-              "데이터 등록일": c.imported_at ? new Date(c.imported_at).toLocaleString("ko-KR") : "",
+              "데이터 등록일": c.imported_at ? formatDateTime(c.imported_at) : "",
               ...(tab === "existing"
                 ? { 선후불: c.customer_type ?? "", 신분증번호: c.id_number ?? "" }
                 : {}),
@@ -1646,7 +1647,7 @@ function CustomersPage() {
   }, [filtered, staffById]);
 
   const fmtDate = (s: string | null | undefined) =>
-    s ? new Date(s).toLocaleDateString(i18n.language === "en" ? "en-US" : "ko-KR") : "-";
+    formatDate(s);
 
   const fmtDateTime = (s: string | null | undefined) =>
     s
@@ -3176,7 +3177,7 @@ function DateRangePicker({
           )}
         >
           <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-          {value ? format(value, "yyyy.MM.dd") : <span>{label}</span>}
+          {value ? format(value, "yyyy-MM-dd") : <span>{label}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
