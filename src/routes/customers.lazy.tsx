@@ -7,7 +7,6 @@ import { createLazyFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import * as XLSX from "xlsx";
 import {
   Search,
   Plus,
@@ -126,6 +125,9 @@ import {
 } from "@/lib/customer-preferences";
 import { LoanBorrowerList, useLoanBorrowerCount } from "@/components/LoanBorrowerList";
 
+// 엑셀 라이브러리(약 400KB)는 업로드/다운로드 버튼을 누를 때만 불러옴
+const loadXlsx = () => import("xlsx");
+
 const STATUS_LABEL = new Proxy({} as Record<CustomerStatus, string>, {
   get: (_t, p: string) => i18n.t(`status.${p}`),
 });
@@ -166,6 +168,38 @@ type ImportCustomer = {
 };
 
 type SortDir = "asc" | "desc" | null;
+
+/**
+ * 시트 자동 동기화 타이머.
+ * - 브라우저 탭이 화면에 보일 때만 실행 (다른 탭/최소화 상태에서는 멈춤)
+ * - 다시 보이면 바로 한 번 실행
+ * 서버 쪽에서도 전체 직원 기준으로 20초에 1번만 실제 동기화가 돌도록 막혀 있음.
+ */
+function startVisibleSync(run: () => void, intervalMs: number): () => void {
+  if (typeof document === "undefined") return () => {};
+  let timer: ReturnType<typeof setInterval> | null = null;
+  const start = () => {
+    if (timer) return;
+    run();
+    timer = setInterval(run, intervalMs);
+  };
+  const stop = () => {
+    if (timer) clearInterval(timer);
+    timer = null;
+  };
+  const onVisibility = () => (document.visibilityState === "visible" ? start() : stop());
+  onVisibility();
+  document.addEventListener("visibilitychange", onVisibility);
+  return () => {
+    stop();
+    document.removeEventListener("visibilitychange", onVisibility);
+  };
+}
+
+/** 이전 동기화 요청이 아직 끝나지 않았으면 새 요청을 겹쳐 보내지 않음 */
+function runIfIdle(m: { isPending: boolean; mutate: () => void }) {
+  if (!m.isPending) m.mutate();
+}
 
 /** 페이지네이션 번호 목록: 1, ..., 4, 5, 6, ..., 110 형태로 줄임표 포함 */
 function getPageNumbers(current: number, total: number): (number | "...")[] {
@@ -711,6 +745,9 @@ function CustomersPage() {
     poolCountRefreshTimer.current = setTimeout(() => {
       poolCountRefreshTimer.current = null;
       void refetchPoolCounts();
+      // 시트 동기화는 이제 전체 직원 중 한 명의 화면에서만 실행되므로,
+      // 다른 직원 화면도 새로 들어온 고객을 볼 수 있도록 목록을 다시 읽음
+      cache.invalidateList();
     }, 1500);
   };
 
@@ -732,17 +769,36 @@ function CustomersPage() {
   };
   const load = refresh;
 
-  // 실시간 동기화: 화면에 보이는 행만 in-place 업데이트, 신규/삭제는 카운트 갱신
+  // 실시간 동기화: 화면에 보이는 행만 in-place 업데이트, 신규/삭제는 카운트 갱신.
+  // 변경 이벤트는 0.5초 동안 모았다가 한 번에 반영해서, 동기화·일괄 수정 때
+  // 고객 1명마다 페이지 전체가 다시 그려지지 않도록 함.
   useEffect(() => {
+    const patches = new Map<string, Partial<CustomerRow>>();
+    const removed = new Set<string>();
+    let flushTimer: ReturnType<typeof setTimeout> | null = null;
+    const flush = () => {
+      flushTimer = null;
+      if (patches.size === 0 && removed.size === 0) return;
+      cache.applyRealtimeBatch(new Map(patches), new Set(removed));
+      patches.clear();
+      removed.clear();
+    };
+    const scheduleFlush = () => {
+      if (!flushTimer) flushTimer = setTimeout(flush, 500);
+    };
     const ch = supabase
       .channel("customers-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, (payload) => {
         if (payload.eventType === "UPDATE") {
           const n = payload.new as CustomerRow;
-          cache.patchRow(n.id, n);
+          removed.delete(n.id);
+          patches.set(n.id, { ...(patches.get(n.id) ?? {}), ...n });
+          scheduleFlush();
         } else if (payload.eventType === "DELETE") {
           const o = payload.old as { id: string };
-          cache.removeRow(o.id);
+          patches.delete(o.id);
+          removed.add(o.id);
+          scheduleFlush();
         } else if (payload.eventType === "INSERT") {
           // 대량 업로드 중에는 1건마다 재집계하지 않고 업로드 완료 후 한 번만 새로고침
           if (!importingRef.current) schedulePoolCountRefresh();
@@ -750,6 +806,7 @@ function CustomersPage() {
       })
       .subscribe();
     return () => {
+      if (flushTimer) clearTimeout(flushTimer);
       if (poolCountRefreshTimer.current) clearTimeout(poolCountRefreshTimer.current);
       supabase.removeChannel(ch);
     };
@@ -1004,7 +1061,7 @@ function CustomersPage() {
     setImporting(true);
     const toastId = toast.loading(t("customers.toastExcelParsing"));
     try {
-      const buf = await file.arrayBuffer();
+      const [buf, XLSX] = await Promise.all([file.arrayBuffer(), loadXlsx()]);
       const wb = XLSX.read(buf, { type: "array", cellDates: true });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "", raw: true });
@@ -1377,7 +1434,8 @@ function CustomersPage() {
     }
   };
 
-  const downloadSample = () => {
+  const downloadSample = async () => {
+    const XLSX = await loadXlsx();
     const effPool: CustomerPool = tab === "all" || tab === "loan_borrowers" ? "existing" : tab;
     let sample: Record<string, unknown>[] = [];
     let header: string[] = [];
@@ -1604,6 +1662,7 @@ function CustomersPage() {
                 : {}),
               메모: c.notes ?? "",
             }));
+      const XLSX = await loadXlsx();
       const ws = XLSX.utils.json_to_sheet(rowsForXlsx);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Customers");
@@ -2215,26 +2274,19 @@ function CustomersPage() {
   syncQrMutRef.current = syncQrMut;
   useEffect(() => {
     if (tab !== "qr_activation") return;
-    syncQrMutRef.current.mutate();
-    const timer = setInterval(() => syncQrMutRef.current.mutate(), 30_000);
-    return () => clearInterval(timer);
+    return startVisibleSync(() => runIfIdle(syncQrMutRef.current), 60_000);
   }, [tab]);
   const syncReceivedMutRef = useRef(syncGoogleFormReceivedMut);
   syncReceivedMutRef.current = syncGoogleFormReceivedMut;
   useEffect(() => {
     if (tab === "google_form_activation") {
-      syncMutRef.current.mutate();
-      syncInterMutRef.current.mutate();
-      const timer = setInterval(() => {
-        syncMutRef.current.mutate();
-        syncInterMutRef.current.mutate();
-      }, 30_000);
-      return () => clearInterval(timer);
+      return startVisibleSync(() => {
+        runIfIdle(syncMutRef.current);
+        runIfIdle(syncInterMutRef.current);
+      }, 60_000);
     }
     if (tab === "activation_request") {
-      syncReceivedMutRef.current.mutate();
-      const timer = setInterval(() => syncReceivedMutRef.current.mutate(), 10_000);
-      return () => clearInterval(timer);
+      return startVisibleSync(() => runIfIdle(syncReceivedMutRef.current), 30_000);
     }
   }, [tab]);
 
@@ -2279,9 +2331,7 @@ function CustomersPage() {
   syncFriendMutRef.current = syncFriendReferralsMut;
   useEffect(() => {
     if (tab !== "friend_referral") return;
-    syncFriendMutRef.current.mutate();
-    const timer = setInterval(() => syncFriendMutRef.current.mutate(), 60_000);
-    return () => clearInterval(timer);
+    return startVisibleSync(() => runIfIdle(syncFriendMutRef.current), 120_000);
   }, [tab]);
 
   const SHEET_URL =

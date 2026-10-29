@@ -19,17 +19,18 @@ type PendingNoti = {
 export function AdminPushListener() {
   useTranslation();
   const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [queue, setQueue] = useState<PendingNoti[]>([]);
   const [acking, setAcking] = useState(false);
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     const { data, error } = await supabase
       .from("admin_notification_recipients")
       .select(
         "id, notification_id, admin_notifications!inner(id, title, message, created_at, sender_id)",
       )
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .is("acknowledged_at", null)
       .order("created_at", { ascending: true });
     if (error || !data) return;
@@ -54,20 +55,20 @@ export function AdminPushListener() {
         sender_name: senderMap.get(r.admin_notifications?.sender_id) ?? null,
       })),
     );
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     load();
     const channel = supabase
-      .channel(`admin-push-${user.id}`)
+      .channel(`admin-push-${userId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "admin_notification_recipients",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         () => {
           load();
@@ -85,7 +86,7 @@ export function AdminPushListener() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, load]);
+  }, [userId, load]);
 
   const current = queue[0];
   const ack = async () => {

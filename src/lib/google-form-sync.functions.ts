@@ -92,12 +92,66 @@ function parseFormDate(raw: string): string | null {
   return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
 }
 
+/** 서버에서 동기화 결과가 "건너뜀"일 때 돌려주는 빈 결과 */
+const EMPTY_RESULT = (): SyncResult => ({ fetched: 0, inserted: 0, skipped: 0, errors: [] });
+
+/**
+ * 같은 시트 동기화가 최근 `minIntervalSeconds` 안에 이미 시작됐으면 false.
+ * 직원 브라우저가 여러 개 열려 있어도 시트 다운로드·DB 비교는 전체에서 한 번만 실행됨.
+ * DB 함수(claim_sync_job)가 아직 없으면 예전처럼 매번 실행(true).
+ */
+type UntypedRpc = {
+  rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
+};
+
+async function claimSyncRun(
+  admin: object,
+  job: string,
+  minIntervalSeconds = SYNC_MIN_INTERVAL_SECONDS,
+): Promise<boolean> {
+  try {
+    // claim_sync_job 은 0014 마이그레이션에서 추가되어 생성된 타입에 아직 없음
+    const { data, error } = await (admin as UntypedRpc).rpc("claim_sync_job", {
+      _job: job,
+      _min_interval_seconds: minIntervalSeconds,
+    });
+    if (error) return true;
+    return data === true;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Supabase는 한 번에 최대 1,000행만 돌려주므로, 중복 체크용 목록은 끝까지 나눠서 읽음.
+ * (예전에는 1,000행 이후가 잘려서 이미 있는 고객을 매번 다시 넣으려 했음)
+ */
+async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const PAGE = 1000;
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await page(from, from + PAGE - 1);
+    if (error) throw error;
+    const rows = data ?? [];
+    out.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+  return out;
+}
+
+const SYNC_MIN_INTERVAL_SECONDS = 20;
+
 async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   const lovableKey = process.env.LOVABLE_API_KEY;
   const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
   if (!lovableKey || !sheetsKey) {
     throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
   }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  if (!(await claimSyncRun(supabaseAdmin, `sheet:${cfg.source}`))) return EMPTY_RESULT();
 
   const range = `'${cfg.sheetName ?? SHEET_NAME}'!${cfg.rangeSuffix ?? "A2:D"}`;
   const url = `${GATEWAY_URL}/spreadsheets/${cfg.spreadsheetId}/values/${range}`;
@@ -132,16 +186,17 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   const data = (await res.json()) as { values?: string[][] };
   const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
   // dedupe key: submissions filtered by source so each sheet has its own log
-  const { data: existing, error: exErr } = await supabaseAdmin
-    .from("google_form_submissions")
-    .select("timestamp_raw, name, phone")
-    .eq("source", cfg.source);
-  if (exErr) throw exErr;
+  const existing = await fetchAllRows((from, to) =>
+    supabaseAdmin
+      .from("google_form_submissions")
+      .select("timestamp_raw, name, phone")
+      .eq("source", cfg.source)
+      .order("id")
+      .range(from, to),
+  );
   const existingKeys = new Set(
-    (existing ?? [])
+    existing
       .map((r) => {
         const normalized = normalizePhone(r.phone ?? "");
         return normalized ? `${r.timestamp_raw}|${r.name}|${normalized}` : null;
@@ -150,25 +205,31 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   );
 
   // 같은 pool 안에서는 같은 전화번호가 이미 있으면 무조건 스킵 (이름/날짜 무관)
-  const { data: existingCust, error: ecErr } = await supabaseAdmin
-    .from("customers")
-    .select("phone")
-    .eq("pool", cfg.pool);
-  if (ecErr) throw ecErr;
+  const existingCust = await fetchAllRows((from, to) =>
+    supabaseAdmin
+      .from("customers")
+      .select("phone")
+      .eq("pool", cfg.pool)
+      .order("id")
+      .range(from, to),
+  );
   const existingPhones = new Set(
-    (existingCust ?? [])
+    existingCust
       .map((r) => normalizePhone(r.phone ?? ""))
       .filter((p): p is string => Boolean(p)),
   );
 
   // 개통 신청자(activation_request - 접수완료 시트)에 이미 있는 phone 도 스킵
-  const { data: arCust, error: arErr } = await supabaseAdmin
-    .from("customers")
-    .select("phone")
-    .eq("pool", "activation_request");
-  if (arErr) throw arErr;
+  const arCust = await fetchAllRows((from, to) =>
+    supabaseAdmin
+      .from("customers")
+      .select("phone")
+      .eq("pool", "activation_request")
+      .order("id")
+      .range(from, to),
+  );
   const arPhones = new Set(
-    (arCust ?? [])
+    arCust
       .map((r) => normalizePhone(r.phone ?? ""))
       .filter((p): p is string => Boolean(p)),
   );
@@ -414,6 +475,9 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
       throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
     }
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (!(await claimSyncRun(supabaseAdmin, "sheet:received"))) return EMPTY_RESULT();
+
     const range = `'${RECEIVED_SHEET_NAME}'!A2:L`;
     const url = `${GATEWAY_URL}/spreadsheets/${RECEIVED_SPREADSHEET_ID}/values/${range}`;
 
@@ -443,8 +507,6 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
     const data = (await res.json()) as { values?: string[][] };
     const rows = (data.values ?? []).filter((r) => r && (r[8] || r[9]));
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
     const { data: countries, error: coErr } = await supabaseAdmin
       .from("countries")
       .select("id, code");
@@ -453,18 +515,23 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
 
     // 기존 고객 (name|phone|signup_date) 로 중복 판정 → 다른 날짜면 신규 등록
     // 이미 들어온 고객이라도 요금제/통신사 컬럼이 비어 있으면 시트 값으로 보강
-    const { data: existingCust, error: ecErr } = await supabaseAdmin
-      .from("customers")
-      .select("id, name, phone, signup_date, requested_plan, carrier_plan, notes")
-      .eq("pool", "activation_request");
-    if (ecErr) throw ecErr;
+    // RECEIVED_MIN_DATE 이전 접수분은 아래 루프에서 어차피 건너뛰므로 그 이후 고객만 읽음
+    const existingCust = await fetchAllRows((from, to) =>
+      supabaseAdmin
+        .from("customers")
+        .select("id, name, phone, signup_date, requested_plan, carrier_plan, notes")
+        .eq("pool", "activation_request")
+        .gte("signup_date", RECEIVED_MIN_DATE)
+        .order("id")
+        .range(from, to),
+    );
     const existingCustByKey = new Map<string, {
       id: string;
       requested_plan: string | null;
       carrier_plan: string | null;
       notes: string | null;
     }>();
-    for (const r of existingCust ?? []) {
+    for (const r of existingCust) {
       const p = normalizeReceivedPhone(r.phone ?? "");
       if (!p) continue;
       existingCustByKey.set(`${r.name}|${p}|${r.signup_date ?? ""}`, {
@@ -656,6 +723,9 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
       throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
     }
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (!(await claimSyncRun(supabaseAdmin, "sheet:friend"))) return EMPTY_RESULT();
+
     const range = `'${FRIEND_REFERRAL_SHEET_NAME}'!A2:H`;
     const url = `${GATEWAY_URL}/spreadsheets/${FRIEND_REFERRAL_SPREADSHEET_ID}/values/${range}`;
 
@@ -686,13 +756,17 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
     // 시트 첫 컬럼은 빈 컬럼 → B부터 데이터. A2:H 로 요청했으므로 [0]=A(빈), [1]=회원번호 ...
     const rows = (data.values ?? []).filter((r) => r && (r[1] || r[2] || r[3]));
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
     const { data: countries, error: coErr } = await supabaseAdmin
       .from("countries")
       .select("id, code");
     if (coErr) throw coErr;
     const codeToId = new Map((countries ?? []).map((c) => [c.code, c.id]));
+
+    // 이미 기록된 회원번호는 한 번에 읽어 두고 건너뜀 (예전: 시트 모든 행마다 upsert 요청 1번씩)
+    const knownMembers = await fetchAllRows((from, to) =>
+      supabaseAdmin.from("friend_referrals").select("member_no").order("member_no").range(from, to),
+    );
+    const knownMemberNos = new Set(knownMembers.map((r) => String(r.member_no ?? "").trim()));
 
     const result: SyncResult = { fetched: rows.length, inserted: 0, skipped: 0, errors: [] };
     const today = new Date().toISOString().slice(0, 10);
@@ -717,6 +791,10 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
         continue;
       }
       seenMemberNos.add(member_no);
+      if (knownMemberNos.has(member_no)) {
+        result.skipped++;
+        continue;
+      }
 
       const isCis = CIS_CODES.has(country_raw);
       const storedCode = isCis ? "CIS" : (country_raw || null);

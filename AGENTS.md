@@ -22,3 +22,13 @@
 - Customer SMS shortcuts use a one-time user-scoped session-storage handoff into the existing manual receiver flow, keeping phone numbers out of URLs and leaving sending permissions unchanged.
 
 - Mobile layouts share a hydration-safe MobileFilters wrapper and mobile-scoped control/overlay/table CSS; desktop markup and page-owned filter state remain unchanged.
+
+# Performance architecture
+
+- Sheet auto-sync runs only while the browser tab is visible, never overlaps itself, and the server takes a database claim (`claim_sync_job`) so each sheet is synced at most once per 20 seconds across all staff; without the claim function it falls back to running every time.
+- Sync dedupe lists are read page by page past the 1,000-row API limit, so existing customers are never re-inserted.
+- Auth state shows the full-screen loading gate only for the first profile load of a user; token refreshes and tab refocus keep the app mounted, and the context value is memoized.
+- Realtime customer changes are batched into one cache write per 0.5 seconds; SLA, sidebar unread and call-log refetches are debounced.
+- Telegram reply-lock countdowns tick only inside the small component that shows them and only while a lock is active.
+- The Excel library is loaded on demand when importing or exporting.
+- Customer search uses trigram indexes; the assignee-name match uses `= ANY (ARRAY(...))` so the planner can combine indexes.

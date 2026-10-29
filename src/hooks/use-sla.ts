@@ -137,16 +137,26 @@ export function useSlaAdjustments(limit = 50) {
 export function useSlaRealtime() {
   const qc = useQueryClient();
   useEffect(() => {
+    // 고객 변경이 몰려 와도 SLA 집계(무거운 DB 함수 여러 개)는 3초에 한 번만 다시 실행
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleInvalidate = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        qc.invalidateQueries({ queryKey: ["sla"] });
+      }, 3000);
+    };
     const ch = supabase
       .channel("sla-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, () => {
-        qc.invalidateQueries({ queryKey: ["sla"] });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "sla_fine_adjustments" }, () => {
-        qc.invalidateQueries({ queryKey: ["sla"] });
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, scheduleInvalidate)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sla_fine_adjustments" },
+        scheduleInvalidate,
+      )
       .subscribe();
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(ch);
     };
   }, [qc]);

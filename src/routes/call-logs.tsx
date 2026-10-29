@@ -140,13 +140,20 @@ function CallLogsPage() {
   });
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel("phone_call_logs:table")
-      .on("postgres_changes", { event: "*", schema: "public", table: "phone_call_logs" }, () =>
-        qc.invalidateQueries({ queryKey: ["phone_call_logs"] }),
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "phone_call_logs" }, () => {
+        // 통화가 연달아 기록돼도 목록(최대 1,000건)은 1초에 한 번만 다시 읽음
+        if (timer) return;
+        timer = setTimeout(() => {
+          timer = null;
+          qc.invalidateQueries({ queryKey: ["phone_call_logs"] });
+        }, 1000);
+      })
       .subscribe();
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
   }, [qc]);

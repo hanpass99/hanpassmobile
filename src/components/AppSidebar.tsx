@@ -60,14 +60,26 @@ function useTelegramUnreadTotal(enabled: boolean) {
       setTotal(sum);
     };
     refresh();
+    // 메시지가 몰려 들어와도 미읽음 합계는 1초에 한 번만 다시 계산
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleRefresh = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        void refresh();
+      }, 1000);
+    };
     const ch = supabase
       .channel("sidebar-telegram-unread")
-      .on("postgres_changes", { event: "*", schema: "public", table: "telegram_chats" }, () =>
-        refresh(),
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "telegram_chats" },
+        scheduleRefresh,
       )
       .subscribe();
     return () => {
       mounted = false;
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(ch);
     };
   }, [enabled]);

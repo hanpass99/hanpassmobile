@@ -99,6 +99,13 @@
       "when": 1792734575860,
       "tag": "0013_broadcast_delivery_checkpoints",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793270000000,
+      "tag": "0014_performance_sync_claim_and_search_indexes",
+      "breakpoints": true
     }
   ]
 }

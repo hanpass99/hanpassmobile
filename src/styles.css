@@ -22,10 +22,11 @@
 
 @theme inline {
   --font-sans:
-    "Pretendard Variable", "Pretendard", "Manrope", "Noto Sans KR", system-ui, -apple-system,
-    "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+    "Pretendard Variable", "Pretendard", system-ui, -apple-system, "Segoe UI",
+    "Apple SD Gothic Neo", sans-serif;
   --font-display:
-    "Sora", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+    "Sora", "Pretendard Variable", "Pretendard", system-ui, -apple-system, "Segoe UI",
+    "Apple SD Gothic Neo", sans-serif;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);

@@ -241,6 +241,35 @@ export function useCustomersCache() {
         return { ...old, rows: old.rows.map((r) => (r.id === id ? { ...r, ...patch } : r)) };
       });
     },
+    /**
+     * Apply many realtime changes at once (one cache write → one re-render),
+     * instead of one cache write per changed customer.
+     */
+    applyRealtimeBatch(patches: Map<string, Partial<CustomerRow>>, removedIds: Set<string>) {
+      if (patches.size === 0 && removedIds.size === 0) return;
+      qc.setQueriesData<CustomersListResult>({ queryKey: ["customers", "list"] }, (old) => {
+        if (!old) return old;
+        let changed = false;
+        let removed = 0;
+        const rows: CustomerRow[] = [];
+        for (const r of old.rows) {
+          if (removedIds.has(r.id)) {
+            changed = true;
+            removed++;
+            continue;
+          }
+          const patch = patches.get(r.id);
+          if (patch) {
+            changed = true;
+            rows.push({ ...r, ...patch });
+          } else {
+            rows.push(r);
+          }
+        }
+        if (!changed) return old;
+        return { rows, total: Math.max(0, old.total - removed) };
+      });
+    },
     /** Remove a row from every cached customers list. */
     removeRow(id: string) {
       qc.setQueriesData<CustomersListResult>({ queryKey: ["customers", "list"] }, (old) => {

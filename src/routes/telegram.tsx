@@ -106,6 +106,38 @@ function replyLockSecondsLeft(chat: Chat, myId: string | null | undefined, nowMs
   return left > 0 ? left : 0;
 }
 
+/**
+ * 답장 잠금 남은 초. 잠금이 살아 있는 동안에만 1초마다 다시 그림.
+ * (예전에는 잠금이 없어도 페이지 전체가 1초마다 다시 그려졌음)
+ */
+function useReplyLockSeconds(chat: Chat, myId: string | null | undefined) {
+  const [, setTick] = useState(0);
+  const left = replyLockSecondsLeft(chat, myId, Date.now());
+  const active = left > 0;
+  useEffect(() => {
+    if (!active) return;
+    const t = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [active, chat.reply_lock_at, chat.reply_lock_by]);
+  return left;
+}
+
+/** 채팅 목록의 "답장 잠금 N초" 배지 — 이 배지만 따로 1초마다 갱신됨 */
+function ReplyLockBadge({ chat, myId }: { chat: Chat; myId: string | null | undefined }) {
+  const left = useReplyLockSeconds(chat, myId);
+  if (left <= 0) return null;
+  return (
+    <Badge
+      variant="outline"
+      className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-xs text-amber-700 dark:text-amber-300"
+    >
+      {uiCopy("ux.copyaa3fa94efd")}
+      {left}
+      {uiCopy("ux.copy0445c19584")}
+    </Badge>
+  );
+}
+
 type Message = {
   id: string;
   telegram_chat_row_id: string;
@@ -192,10 +224,10 @@ function chatDisplayName(c: Chat): string {
 function TelegramPage() {
   const { i18n: i18nInst } = useTranslation();
   const { isAdmin, user } = useAuth();
-  // 1초 간격 틱 — 답장 잠금 카운트다운용
-  const [nowMs, setNowMs] = useState(() => Date.now());
+  // 채팅 목록의 "N분 전" 표시만 신선하게 유지 (1분에 한 번이면 충분)
+  const [, setMinuteTick] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setNowMs(Date.now()), 1000);
+    const t = setInterval(() => setMinuteTick((n) => n + 1), 60_000);
     return () => clearInterval(t);
   }, []);
   const locale = i18nInst.language === "ko" ? ko : enUS;
@@ -541,16 +573,7 @@ function TelegramPage() {
                               {uiCopy("ux.copy495bd02a6f")}
                             </Badge>
                           )}
-                          {replyLockSecondsLeft(c, user?.id, nowMs) > 0 && (
-                            <Badge
-                              variant="outline"
-                              className="h-4 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1 text-xs text-amber-700 dark:text-amber-300"
-                            >
-                              {uiCopy("ux.copyaa3fa94efd")}
-                              {replyLockSecondsLeft(c, user?.id, nowMs)}
-                              {uiCopy("ux.copy0445c19584")}
-                            </Badge>
-                          )}
+                          <ReplyLockBadge chat={c} myId={user?.id} />
 
                           {c.assigned_operator_id && operatorMap[c.assigned_operator_id] ? (
                             <Badge
@@ -709,13 +732,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
     },
   });
 
-  // 1분 답장 잠금 상태 (다른 담당자가 방금 답장했으면 입력 잠금)
-  const [lockNow, setLockNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setLockNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const lockSecondsLeft = replyLockSecondsLeft(chat, user?.id, lockNow);
+  // 답장 잠금 상태 (다른 담당자가 방금 답장했으면 입력 잠금). 잠금 중일 때만 1초마다 갱신.
+  const lockSecondsLeft = useReplyLockSeconds(chat, user?.id);
 
   const sendReply = useServerFn(sendTelegramReply);
   const sendMediaFn = useServerFn(sendTelegramMedia);
