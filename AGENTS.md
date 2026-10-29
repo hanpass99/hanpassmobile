@@ -32,3 +32,5 @@
 - Telegram reply-lock countdowns tick only inside the small component that shows them and only while a lock is active.
 - The Excel library is loaded on demand when importing or exporting.
 - Customer search uses trigram indexes; the assignee-name match uses `= ANY (ARRAY(...))` so the planner can combine indexes.
+- Telegram realtime events patch the cached chat list and open conversation directly; only a chat outside the loaded 200 or an insert/delete triggers a refetch.
+- Call-round statistics rely on the (staff_id, customer_id, call_date) unique index: count rows with non-null staff_id and call_date instead of string DISTINCT or DISTINCT ON sorting.
