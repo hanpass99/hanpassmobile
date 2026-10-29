@@ -120,6 +120,20 @@
       "when": 1793272000000,
       "tag": "0016_search_customers_page_then_json",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793273000000,
+      "tag": "0017_dashboard_daily_and_completed_single_pass",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793274000000,
+      "tag": "0018_rls_policies_evaluate_helpers_once",
+      "breakpoints": true
     }
   ]
 }

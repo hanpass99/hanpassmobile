@@ -37,3 +37,4 @@
 - `search_customers` picks the visible page first (ordered by the sort key, then id) and converts only those rows to JSON; the id tie-breaker keeps paging stable when many rows share a timestamp.
 - Only the Korean locale ships in the first bundle; switch languages through `setInterfaceLanguage`, which loads English on demand before changing.
 - The customer search box keeps keystrokes local (`DebouncedSearchInput`) and commits to the page after 250 ms.
+- RLS policies call row-independent helpers (`has_role(auth.uid(), …)`, `current_user_countries()`, `is_approved_staff(auth.uid())`) wrapped as `( SELECT … )` so they run once per query, not once per row; write new policies the same way (arrays: `(( SELECT current_user_countries()))::uuid[]`).
