@@ -231,6 +231,36 @@ export function useCustomersList(p: CustomersSearchParams, options?: { enabled?:
 }
 
 // === Cache helpers for optimistic / realtime updates ===
+
+/**
+ * Pure helper: apply collected realtime updates/deletes to one cached page.
+ * Returns the same object when nothing on the page changed (no re-render).
+ */
+export function applyCustomerChanges(
+  old: CustomersListResult,
+  patches: Map<string, Partial<CustomerRow>>,
+  removedIds: Set<string>,
+): CustomersListResult {
+  let changed = false;
+  let removed = 0;
+  const rows: CustomerRow[] = [];
+  for (const r of old.rows) {
+    if (removedIds.has(r.id)) {
+      changed = true;
+      removed++;
+      continue;
+    }
+    const patch = patches.get(r.id);
+    if (patch) {
+      changed = true;
+      rows.push({ ...r, ...patch });
+    } else {
+      rows.push(r);
+    }
+  }
+  if (!changed) return old;
+  return { rows, total: Math.max(0, old.total - removed) };
+}
 export function useCustomersCache() {
   const qc = useQueryClient();
   return {
@@ -247,28 +277,9 @@ export function useCustomersCache() {
      */
     applyRealtimeBatch(patches: Map<string, Partial<CustomerRow>>, removedIds: Set<string>) {
       if (patches.size === 0 && removedIds.size === 0) return;
-      qc.setQueriesData<CustomersListResult>({ queryKey: ["customers", "list"] }, (old) => {
-        if (!old) return old;
-        let changed = false;
-        let removed = 0;
-        const rows: CustomerRow[] = [];
-        for (const r of old.rows) {
-          if (removedIds.has(r.id)) {
-            changed = true;
-            removed++;
-            continue;
-          }
-          const patch = patches.get(r.id);
-          if (patch) {
-            changed = true;
-            rows.push({ ...r, ...patch });
-          } else {
-            rows.push(r);
-          }
-        }
-        if (!changed) return old;
-        return { rows, total: Math.max(0, old.total - removed) };
-      });
+      qc.setQueriesData<CustomersListResult>({ queryKey: ["customers", "list"] }, (old) =>
+        old ? applyCustomerChanges(old, patches, removedIds) : old,
+      );
     },
     /** Remove a row from every cached customers list. */
     removeRow(id: string) {

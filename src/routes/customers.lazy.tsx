@@ -1289,20 +1289,35 @@ function CustomersPage() {
 
       // === 1년 개통자 pool: 기존 고객 있으면 pool/필드 업데이트, 없으면 insert ===
       if (tab === "one_year_activation") {
-        const phones = finalPayload.map((r) => r.phone);
-        const { data: existingRows } = await supabase
-          .from("customers")
-          .select("id, phone")
-          .in("phone", phones);
+        // 전화번호 조회는 200개씩 나눠서 (한 번에 수천 개를 넣으면 요청 URL이 너무 길어지고
+        // 응답도 1,000행에서 잘림)
+        const phones = Array.from(new Set(finalPayload.map((r) => r.phone)));
         const idByPhone = new Map<string, string>();
-        (existingRows ?? []).forEach((r: any) => {
-          idByPhone.set(r.phone, r.id);
-        });
+        const LOOKUP_CHUNK = 200;
+        for (let i = 0; i < phones.length; i += LOOKUP_CHUNK) {
+          const { data: existingRows, error: lookupErr } = await supabase
+            .from("customers")
+            .select("id, phone")
+            .in("phone", phones.slice(i, i + LOOKUP_CHUNK))
+            .limit(5000);
+          if (lookupErr) throw lookupErr;
+          (existingRows ?? []).forEach((r) => {
+            idByPhone.set(r.phone, r.id);
+          });
+        }
 
         let updated = 0,
-          insertedCnt = 0;
-        for (let i = 0; i < finalPayload.length; i++) {
-          const r = finalPayload[i];
+          insertedCnt = 0,
+          processed = 0;
+        const reportProgress = () => {
+          toast.loading(
+            t("customers.toastProcessing", { i: processed, total: finalPayload.length }),
+            { id: toastId },
+          );
+        };
+        const toUpdate: Array<{ id: string; patch: Database["public"]["Tables"]["customers"]["Update"] }> = [];
+        const toInsert: ImportCustomer[] = [];
+        for (const r of finalPayload) {
           const eid = idByPhone.get(r.phone);
           if (eid) {
             const patch: Database["public"]["Tables"]["customers"]["Update"] = {
@@ -1317,18 +1332,38 @@ function CustomersPage() {
             if (r.monthly_fee !== undefined && r.monthly_fee !== null)
               patch.monthly_fee = r.monthly_fee;
             if (r.customer_type) patch.customer_type = r.customer_type;
-            const { error } = await supabase.from("customers").update(patch).eq("id", eid);
-            if (!error) updated++;
+            toUpdate.push({ id: eid, patch });
           } else {
-            const { error } = await supabase.from("customers").insert(r);
-            if (!error) insertedCnt++;
+            toInsert.push(r);
           }
-          if ((i + 1) % 25 === 0) {
-            toast.loading(
-              t("customers.toastProcessing", { i: i + 1, total: finalPayload.length }),
-              { id: toastId },
-            );
+        }
+
+        // 신규는 500건씩 한 번에 넣고, 실패한 묶음만 한 건씩 다시 시도
+        for (let i = 0; i < toInsert.length; i += 500) {
+          const chunk = toInsert.slice(i, i + 500);
+          const { error } = await supabase.from("customers").insert(chunk);
+          if (!error) {
+            insertedCnt += chunk.length;
+          } else {
+            for (const row of chunk) {
+              const { error: rowErr } = await supabase.from("customers").insert(row);
+              if (!rowErr) insertedCnt++;
+            }
           }
+          processed += chunk.length;
+          reportProgress();
+        }
+
+        // 기존 고객 수정은 행마다 내용이 달라 한 건씩이지만, 동시에 6건씩 처리
+        const UPDATE_CONCURRENCY = 6;
+        for (let i = 0; i < toUpdate.length; i += UPDATE_CONCURRENCY) {
+          const batch = toUpdate.slice(i, i + UPDATE_CONCURRENCY);
+          const results = await Promise.all(
+            batch.map(({ id, patch }) => supabase.from("customers").update(patch).eq("id", id)),
+          );
+          updated += results.filter((res) => !res.error).length;
+          processed += batch.length;
+          if (processed % 60 < UPDATE_CONCURRENCY) reportProgress();
         }
         toast.success(
           t("customers.toastPoolUpdated", {

@@ -114,7 +114,12 @@ function BroadcastPage() {
     queryKey: ["broadcast-history"],
     enabled: isAdmin,
     queryFn: () => listFn(),
-    refetchInterval: 5_000,
+    // 발송 중인 건이 있을 때만 5초마다 진행률 갱신, 아니면 1분 간격
+    refetchInterval: (query) => {
+      const list = (query.state.data as { broadcasts?: Array<{ status: string }> } | undefined)
+        ?.broadcasts;
+      return sending || (list ?? []).some((b) => b.status === "sending") ? 5_000 : 60_000;
+    },
   });
 
   const audienceCount = audience?.count ?? 0;

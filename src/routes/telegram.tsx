@@ -253,11 +253,10 @@ function TelegramPage() {
     },
   });
 
-  // Realtime: refresh chats & messages (debounced so bursts don't thrash the UI)
+  // Realtime: 변경된 채팅/메시지만 캐시에 바로 반영.
+  // (예전: 메시지 1개마다 채팅 200개 + 메시지 500개를 통째로 다시 조회)
   useEffect(() => {
     let chatsTimer: ReturnType<typeof setTimeout> | null = null;
-    const msgTimers = new Map<string, ReturnType<typeof setTimeout>>();
-
     const invalidateChats = () => {
       if (chatsTimer) return;
       chatsTimer = setTimeout(() => {
@@ -265,37 +264,74 @@ function TelegramPage() {
         qc.invalidateQueries({ queryKey: ["telegram-chats"] });
       }, 400);
     };
-    const invalidateMessages = (chatRowId: string) => {
-      if (msgTimers.has(chatRowId)) return;
-      msgTimers.set(
-        chatRowId,
-        setTimeout(() => {
-          msgTimers.delete(chatRowId);
-          qc.invalidateQueries({ queryKey: ["telegram-messages", chatRowId] });
-        }, 300),
+
+    const byRecent = (a: Chat, b: Chat) => {
+      const ta = a.last_message_at ? Date.parse(a.last_message_at) : -Infinity;
+      const tb = b.last_message_at ? Date.parse(b.last_message_at) : -Infinity;
+      return tb - ta;
+    };
+
+    const onChatChange = (payload: {
+      eventType: string;
+      new: Record<string, unknown>;
+      old: Record<string, unknown>;
+    }) => {
+      const current = qc.getQueryData<Chat[]>(["telegram-chats"]);
+      if (!current || payload.eventType !== "UPDATE") {
+        invalidateChats();
+        return;
+      }
+      const updated = payload.new as unknown as Chat;
+      if (!current.some((c) => c.id === updated.id)) {
+        // 목록(최근 200개) 밖에 있던 채팅이 새 메시지로 올라온 경우 → 목록 다시 읽기
+        invalidateChats();
+        return;
+      }
+      qc.setQueryData<Chat[]>(["telegram-chats"], (old) =>
+        (old ?? [])
+          .map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+          .sort(byRecent),
+      );
+    };
+
+    const onMessageInsert = (payload: { new: Record<string, unknown> }) => {
+      const row = payload.new as unknown as Message;
+      const key = ["telegram-messages", row.telegram_chat_row_id];
+      if (!qc.getQueryData<Message[]>(key)) return; // 열려 있지 않은 대화는 나중에 열 때 읽음
+      qc.setQueryData<Message[]>(key, (old) => {
+        const list = old ?? [];
+        if (list.some((m) => m.id === row.id)) return list;
+        const next = [...list, row];
+        next.sort((x, y) => Date.parse(x.created_at) - Date.parse(y.created_at));
+        return next.length > 500 ? next.slice(next.length - 500) : next;
+      });
+    };
+
+    const onMessageUpdate = (payload: { new: Record<string, unknown> }) => {
+      const row = payload.new as unknown as Message;
+      const key = ["telegram-messages", row.telegram_chat_row_id];
+      if (!qc.getQueryData<Message[]>(key)) return;
+      qc.setQueryData<Message[]>(key, (old) =>
+        (old ?? []).map((m) => (m.id === row.id ? { ...m, ...row } : m)),
       );
     };
 
     const channel = supabase
       .channel("telegram-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "telegram_chats" },
-        invalidateChats,
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "telegram_chats" }, onChatChange)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "telegram_messages" },
-        (payload) => {
-          const row = payload.new as { telegram_chat_row_id: string };
-          invalidateMessages(row.telegram_chat_row_id);
-          invalidateChats();
-        },
+        onMessageInsert,
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "telegram_messages" },
+        onMessageUpdate,
       )
       .subscribe();
     return () => {
       if (chatsTimer) clearTimeout(chatsTimer);
-      msgTimers.forEach((t) => clearTimeout(t));
       supabase.removeChannel(channel);
     };
   }, [qc]);
