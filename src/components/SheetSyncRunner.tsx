@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { syncAllSheets } from "@/lib/google-form-sync.functions";
+import { syncSheetJob } from "@/lib/google-form-sync.functions";
+import { SHEET_JOB_KEYS } from "@/lib/sheet-jobs";
 import { useAuth } from "@/hooks/use-auth";
 
 const INTERVAL_MS = 60_000;
@@ -16,7 +17,7 @@ const INTERVAL_MS = 60_000;
 export function SheetSyncRunner() {
   const { user, isActive } = useAuth();
   const userId = user?.id ?? null;
-  const run = useServerFn(syncAllSheets);
+  const run = useServerFn(syncSheetJob);
   const qc = useQueryClient();
   const runRef = useRef(run);
   runRef.current = run;
@@ -30,8 +31,17 @@ export function SheetSyncRunner() {
       if (busy) return;
       busy = true;
       try {
-        const r = await runRef.current();
-        if (r.inserted > 0) {
+        // 시트마다 따로 요청 (한 요청에 모두 넣으면 서버 외부 호출 한도에 걸려 뒤쪽 시트가 끊김)
+        let inserted = 0;
+        for (const job of SHEET_JOB_KEYS) {
+          try {
+            const r = await runRef.current({ data: { job } });
+            inserted += r.inserted;
+          } catch {
+            // 실패 이유는 서버가 sync_job_runs.last_error 에 기록함. 다른 시트는 계속 진행
+          }
+        }
+        if (inserted > 0) {
           void qc.invalidateQueries({ queryKey: ["customers", "list"] });
           void qc.invalidateQueries({ queryKey: ["customers", "poolCounts"] });
           void qc.invalidateQueries({ queryKey: ["customers", "statusCounts"] });

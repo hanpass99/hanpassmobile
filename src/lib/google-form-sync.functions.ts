@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { SHEET_JOB_KEYS, type SheetJob } from "@/lib/sheet-jobs";
 
 const DEFAULT_SPREADSHEET_ID = "1EO-U_KC27ZTYT74R5q7sODVysiv9gyfgajDskLtX3fU";
 const INTER_SPREADSHEET_ID = "1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM";
@@ -162,9 +163,25 @@ async function markSyncSuccess(admin: object, job: string, result: SyncResult): 
 async function runClaimed(job: string, run: () => Promise<SyncResult>): Promise<SyncResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   if (!(await claimSyncRun(supabaseAdmin, job))) return EMPTY_RESULT();
-  const result = await run();
+  let result: SyncResult;
+  try {
+    result = await run();
+  } catch (err) {
+    await markSyncFailure(supabaseAdmin, job, err);
+    throw err;
+  }
   await markSyncSuccess(supabaseAdmin, job, result);
   return result;
+}
+
+/** 동기화가 중간에 실패하면 이유를 남김 (시스템 점검·원인 확인용). */
+async function markSyncFailure(admin: object, job: string, err: unknown): Promise<void> {
+  try {
+    const message = err instanceof Error ? err.message : String(err);
+    await (admin as UntypedRpc).rpc("fail_sync_job", { _job: job, _message: message.slice(0, 500) });
+  } catch {
+    // 기록 실패는 무시
+  }
 }
 
 const SYNC_MIN_INTERVAL_SECONDS = 20;
@@ -902,39 +919,24 @@ async function runFriendSync(): Promise<SyncResult> {
     return result;
 }
 
-export type AllSheetsSyncResult = {
-  inserted: number;
-  /** 시트별 결과 (건너뛴 시트는 fetched 0) */
-  sheets: Record<string, SyncResult>;
-  /** 실패한 시트와 이유 */
-  failures: Record<string, string>;
+const SHEET_JOBS: Record<SheetJob, () => Promise<SyncResult>> = {
+  "sheet:received": runReceivedSync,
+  "sheet:default": () => runSync(SYNC_DEFAULT),
+  "sheet:inter": () => runSync(SYNC_INTER),
+  "sheet:qr": () => runSync(SYNC_QR),
+  "sheet:friend": runFriendSync,
 };
 
 /**
- * 모든 시트를 한 번에 동기화 (로그인한 직원 화면 어디서든 주기적으로 호출).
- * 각 시트는 서버 잠금으로 전 직원 기준 20초에 한 번만 실제 실행되므로,
- * 누가 어느 탭을 보고 있든 새 신청이 고객 목록에 들어옴.
+ * 시트 하나를 동기화 (로그인한 직원 화면 어디서든 주기적으로 호출 — SheetSyncRunner).
+ * 시트마다 따로 요청함: 한 요청에서 5개 시트를 모두 돌리면 서버(Cloudflare) 요청당 외부 호출 한도에 걸려
+ * 뒤쪽 시트(QR·친구추천)가 중간에 끊겼음.
+ * 각 시트는 서버 잠금으로 전 직원 기준 20초에 한 번만 실제 실행됨.
  */
-export const syncAllSheets = createServerFn({ method: "POST" })
+export const syncSheetJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<AllSheetsSyncResult> => {
-    const jobs: Array<[string, () => Promise<SyncResult>]> = [
-      ["sheet:received", runReceivedSync],
-      ["sheet:default", () => runSync(SYNC_DEFAULT)],
-      ["sheet:inter", () => runSync(SYNC_INTER)],
-      ["sheet:qr", () => runSync(SYNC_QR)],
-      ["sheet:friend", runFriendSync],
-    ];
-    const out: AllSheetsSyncResult = { inserted: 0, sheets: {}, failures: {} };
-    const settled = await Promise.allSettled(jobs.map(([job, run]) => runClaimed(job, run)));
-    settled.forEach((r, i) => {
-      const job = jobs[i][0];
-      if (r.status === "fulfilled") {
-        out.sheets[job] = r.value;
-        out.inserted += r.value.inserted;
-      } else {
-        out.failures[job] = r.reason instanceof Error ? r.reason.message : String(r.reason);
-      }
-    });
-    return out;
-  });
+  .inputValidator((d: { job: string }) => {
+    if (!d || !(SHEET_JOB_KEYS as readonly string[]).includes(d.job)) throw new Error("알 수 없는 시트입니다");
+    return { job: d.job as SheetJob };
+  })
+  .handler(({ data }) => runClaimed(data.job, SHEET_JOBS[data.job]));
