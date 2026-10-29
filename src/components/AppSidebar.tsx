@@ -44,6 +44,7 @@ import i18n from "@/i18n";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useSystemChecks } from "@/hooks/use-system-health";
+import { setInterfaceLanguage } from "@/i18n";
 
 function useTelegramUnreadTotal(enabled: boolean) {
   const [total, setTotal] = useState(0);
@@ -303,7 +304,7 @@ function SidebarPrefs() {
   const { i18n: i18nInst } = useTranslation();
   const switchLang = () => {
     const next = i18nInst.language === "ko" ? "en" : "ko";
-    i18nInst.changeLanguage(next);
+    void setInterfaceLanguage(next);
     localStorage.setItem("lang", next);
   };
   return (

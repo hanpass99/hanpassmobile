@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouterState } from "@tanstack/react-router";
+import { setInterfaceLanguage } from "@/i18n";
 
 /** Keep document metadata in sync without refetching business data or mutating customer text. */
 export function InterfaceLanguage() {
@@ -24,7 +25,7 @@ export function InterfaceLanguage() {
     }
     const saved = localStorage.getItem("lang");
     if ((saved === "ko" || saved === "en") && saved !== i18n.language)
-      void i18n.changeLanguage(saved);
+      void setInterfaceLanguage(saved);
   }, [i18n, i18n.language, matches]);
   return null;
 }

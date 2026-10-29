@@ -106,7 +106,6 @@ import {
   useCustomersList,
   useCustomersCache,
   useCustomerStatusCounts,
-  useDebouncedValue,
   type Country,
   type Channel,
   type CustomerRow,
@@ -199,6 +198,47 @@ function startVisibleSync(run: () => void, intervalMs: number): () => void {
 /** 이전 동기화 요청이 아직 끝나지 않았으면 새 요청을 겹쳐 보내지 않음 */
 function runIfIdle(m: { isPending: boolean; mutate: () => void }) {
   if (!m.isPending) m.mutate();
+}
+
+/**
+ * 검색 입력창. 타이핑은 이 작은 컴포넌트 안에서만 다시 그려지고,
+ * 입력이 0.25초 멈추면 onCommit 으로 페이지에 한 번 전달됨.
+ * 바깥에서 value 가 바뀌면(필터 초기화, 저장된 검색 복원 등) 입력창도 따라감.
+ */
+function DebouncedSearchInput({
+  value,
+  onCommit,
+  delay = 250,
+  ...rest
+}: {
+  value: string;
+  onCommit: (v: string) => void;
+  delay?: number;
+  placeholder?: string;
+  className?: string;
+}) {
+  const [local, setLocal] = useState(value);
+  const committedRef = useRef(value);
+  const onCommitRef = useRef(onCommit);
+  onCommitRef.current = onCommit;
+
+  useEffect(() => {
+    if (value !== committedRef.current) {
+      committedRef.current = value;
+      setLocal(value);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (local === committedRef.current) return;
+    const h = setTimeout(() => {
+      committedRef.current = local;
+      onCommitRef.current(local);
+    }, delay);
+    return () => clearTimeout(h);
+  }, [local, delay]);
+
+  return <Input {...rest} value={local} onChange={(e) => setLocal(e.target.value)} />;
 }
 
 /** 페이지네이션 번호 목록: 1, ..., 4, 5, 6, ..., 110 형태로 줄임표 포함 */
@@ -525,7 +565,9 @@ function CustomersPage() {
   const [jumpPage, setJumpPage] = useState("");
 
   const [searchInput, setSearchInput] = useState("");
-  const debouncedSearch = useDebouncedValue(searchInput, 250);
+  // 검색창 입력은 DebouncedSearchInput 안에서만 처리되고, 0.25초 멈췄을 때만 여기로 반영됨
+  // (예전: 글자 하나 칠 때마다 고객 페이지 전체가 다시 그려짐)
+  const debouncedSearch = searchInput;
   const [countryIds, setCountryIds] = useState<string[]>(
     initialSearch.country && initialSearch.country !== "all" ? [initialSearch.country] : [],
   );
@@ -659,7 +701,7 @@ function CustomersPage() {
   const { counts: poolCounts, refetch: refetchPoolCounts } = useCustomerPoolCounts();
   const cache = useCustomersCache();
 
-  // 검색어 디바운스는 useDebouncedValue 훅에서 처리
+  // 검색어 디바운스는 DebouncedSearchInput 컴포넌트에서 처리
 
   // 필터/정렬/탭 변경 시 1페이지로 리셋 + 핀 해제
   useEffect(() => {
@@ -2626,10 +2668,10 @@ function CustomersPage() {
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
                       <div className="relative md:col-span-2">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
+                        <DebouncedSearchInput
                           placeholder={t("customers.searchPlaceholder")}
                           value={searchInput}
-                          onChange={(e) => setSearchInput(e.target.value)}
+                          onCommit={setSearchInput}
                           className="pl-9"
                         />
                       </div>

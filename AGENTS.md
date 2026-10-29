@@ -34,3 +34,6 @@
 - Customer search uses trigram indexes; the assignee-name match uses `= ANY (ARRAY(...))` so the planner can combine indexes.
 - Telegram realtime events patch the cached chat list and open conversation directly; only a chat outside the loaded 200 or an insert/delete triggers a refetch.
 - Call-round statistics rely on the (staff_id, customer_id, call_date) unique index: count rows with non-null staff_id and call_date instead of string DISTINCT or DISTINCT ON sorting.
+- `search_customers` picks the visible page first (ordered by the sort key, then id) and converts only those rows to JSON; the id tie-breaker keeps paging stable when many rows share a timestamp.
+- Only the Korean locale ships in the first bundle; switch languages through `setInterfaceLanguage`, which loads English on demand before changing.
+- The customer search box keeps keystrokes local (`DebouncedSearchInput`) and commits to the page after 250 ms.

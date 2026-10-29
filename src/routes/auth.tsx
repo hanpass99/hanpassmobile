@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { setInterfaceLanguage } from "@/i18n";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -81,7 +82,7 @@ function AuthPage() {
 
   const switchLang = () => {
     const next = i18nInst.language === "ko" ? "en" : "ko";
-    i18nInst.changeLanguage(next);
+    void setInterfaceLanguage(next);
     localStorage.setItem("lang", next);
   };
 
