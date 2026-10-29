@@ -141,6 +141,32 @@ async function fetchAllRows<T>(
   return out;
 }
 
+/** 동기화가 끝까지 성공하면 그 시각을 기록 (시스템 점검의 "마지막 동기화"에 사용). */
+async function markSyncSuccess(admin: object, job: string, result: SyncResult): Promise<void> {
+  try {
+    await (admin as UntypedRpc).rpc("finish_sync_job", {
+      _job: job,
+      _fetched: result.fetched,
+      _inserted: result.inserted,
+      _errors: result.errors.length,
+    });
+  } catch {
+    // 기록 실패는 동기화 결과에 영향을 주지 않음
+  }
+}
+
+/**
+ * 전 직원 기준으로 같은 시트는 일정 간격에 한 번만 실행하고,
+ * 끝까지 성공하면 성공 시각을 남긴다. 이미 다른 화면에서 방금 실행됐으면 빈 결과.
+ */
+async function runClaimed(job: string, run: () => Promise<SyncResult>): Promise<SyncResult> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  if (!(await claimSyncRun(supabaseAdmin, job))) return EMPTY_RESULT();
+  const result = await run();
+  await markSyncSuccess(supabaseAdmin, job, result);
+  return result;
+}
+
 const SYNC_MIN_INTERVAL_SECONDS = 20;
 
 async function runSync(cfg: SyncConfig): Promise<SyncResult> {
@@ -151,7 +177,6 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   }
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  if (!(await claimSyncRun(supabaseAdmin, `sheet:${cfg.source}`))) return EMPTY_RESULT();
 
   const range = `'${cfg.sheetName ?? SHEET_NAME}'!${cfg.rangeSuffix ?? "A2:D"}`;
   const url = `${GATEWAY_URL}/spreadsheets/${cfg.spreadsheetId}/values/${range}`;
@@ -381,50 +406,48 @@ async function runSync(cfg: SyncConfig): Promise<SyncResult> {
   return result;
 }
 
-export const syncGoogleFormApplications = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<SyncResult> => {
-    return runSync({
-      spreadsheetId: DEFAULT_SPREADSHEET_ID,
-      pool: "google_form_activation",
-      source: "default",
-      notesLabel: "구글폼 자동 등록",
-    });
-  });
+const SYNC_DEFAULT: SyncConfig = {
+  spreadsheetId: DEFAULT_SPREADSHEET_ID,
+  pool: "google_form_activation",
+  source: "default",
+  notesLabel: "구글폼 자동 등록",
+};
 
-export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<SyncResult> => {
-    return runSync({
-      spreadsheetId: INTER_SPREADSHEET_ID,
-      pool: "google_form_activation",
-      source: "inter",
-      notesLabel: "구글폼 인터 자동 등록",
-    });
-  });
+const SYNC_INTER: SyncConfig = {
+  spreadsheetId: INTER_SPREADSHEET_ID,
+  pool: "google_form_activation",
+  source: "inter",
+  notesLabel: "구글폼 인터 자동 등록",
+};
 
 // QR 개통 신청 시트 동기화 (A=타임스탬프, B=Name, C=Nationality, D=Phone, E=SNS)
 // 2026-10-18 복구: 10월 1일 이후 접수 건만 수집
 const QR_SPREADSHEET_ID = "16Lio6R_lS8jKqfnxlZcDPNHpx6_43R3zvstysTX49MM";
 const QR_SHEET_NAME = "설문지 응답 시트 (AUTOFILL)";
 
+const SYNC_QR: SyncConfig = {
+  spreadsheetId: QR_SPREADSHEET_ID,
+  pool: "qr_activation",
+  source: "qr",
+  notesLabel: "QR 개통 신청 자동 등록",
+  sheetName: QR_SHEET_NAME,
+  rangeSuffix: "A2:E",
+  columns: { ts: 0, name: 1, country: 2, phone: 3, sns: 4 },
+  minDate: "2026-10-01",
+  allowAllCountries: true,
+};
+
+export const syncGoogleFormApplications = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(() => runClaimed("sheet:default", () => runSync(SYNC_DEFAULT)));
+
+export const syncGoogleFormApplicationsInter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(() => runClaimed("sheet:inter", () => runSync(SYNC_INTER)));
+
 export const syncQrActivation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<SyncResult> => {
-    return runSync({
-      spreadsheetId: QR_SPREADSHEET_ID,
-      pool: "qr_activation",
-      source: "qr",
-      notesLabel: "QR 개통 신청 자동 등록",
-      sheetName: QR_SHEET_NAME,
-      rangeSuffix: "A2:E",
-      columns: { ts: 0, name: 1, country: 2, phone: 3, sns: 4 },
-      minDate: "2026-10-01",
-      allowAllCountries: true,
-    });
-  });
-
-
+  .handler(() => runClaimed("sheet:qr", () => runSync(SYNC_QR)));
 
 // ============================================================
 // 개통 신청자 - 접수완료 시트 자동 동기화 (google_form_activation 풀에 병합)
@@ -468,7 +491,9 @@ function parseReceivedDate(raw: string): string | null {
 
 export const syncGoogleFormReceived = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<SyncResult> => {
+  .handler(() => runClaimed("sheet:received", runReceivedSync));
+
+async function runReceivedSync(): Promise<SyncResult> {
     const lovableKey = process.env.LOVABLE_API_KEY;
     const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
     if (!lovableKey || !sheetsKey) {
@@ -476,7 +501,6 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    if (!(await claimSyncRun(supabaseAdmin, "sheet:received"))) return EMPTY_RESULT();
 
     const range = `'${RECEIVED_SHEET_NAME}'!A2:L`;
     const url = `${GATEWAY_URL}/spreadsheets/${RECEIVED_SPREADSHEET_ID}/values/${range}`;
@@ -635,7 +659,7 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
     }
 
     return result;
-  });
+}
 
 
 export type GoogleFormSubmissionRow = {
@@ -691,8 +715,12 @@ const NATIONALITY_LABEL: Record<string, string> = {
 const CIS_CODES = new Set(["UZ", "KZ", "KG", "TJ", "RU"]);
 
 function normalizeFriendPhone(raw: string): string | null {
-  const digits = (raw || "").toString().replace(/\D/g, "");
+  let digits = (raw || "").toString().replace(/\D/g, "");
   if (!digits) return null;
+  // 시트에 앞자리 0이 빠진 경우 (예: 1059627155) → 010XXXXXXXX 복원 (접수완료 시트와 같은 규칙)
+  if (digits.length === 10 && digits.startsWith("10")) {
+    digits = `0${digits}`;
+  }
   // 010XXXXXXXX (11자리) → 010-XXXX-XXXX
   if (digits.length === 11 && digits.startsWith("010")) {
     return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
@@ -701,6 +729,8 @@ function normalizeFriendPhone(raw: string): string | null {
   if (digits.length === 12 && digits.startsWith("8210")) {
     return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8)}`;
   }
+  // 9자리 미만은 전화할 수 없는 오타 (예: 4자리) → 등록하지 않음 (시스템 점검의 번호 형식 기준과 동일)
+  if (digits.length < 9) return null;
   // 외국 번호 등 그대로 반환
   return digits;
 }
@@ -716,7 +746,9 @@ function parseSheetDate(raw: string): string | null {
 
 export const syncFriendReferrals = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<SyncResult> => {
+  .handler(() => runClaimed("sheet:friend", runFriendSync));
+
+async function runFriendSync(): Promise<SyncResult> {
     const lovableKey = process.env.LOVABLE_API_KEY;
     const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
     if (!lovableKey || !sheetsKey) {
@@ -724,7 +756,6 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    if (!(await claimSyncRun(supabaseAdmin, "sheet:friend"))) return EMPTY_RESULT();
 
     const range = `'${FRIEND_REFERRAL_SHEET_NAME}'!A2:H`;
     const url = `${GATEWAY_URL}/spreadsheets/${FRIEND_REFERRAL_SPREADSHEET_ID}/values/${range}`;
@@ -869,5 +900,41 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
     }
 
     return result;
-  });
+}
 
+export type AllSheetsSyncResult = {
+  inserted: number;
+  /** 시트별 결과 (건너뛴 시트는 fetched 0) */
+  sheets: Record<string, SyncResult>;
+  /** 실패한 시트와 이유 */
+  failures: Record<string, string>;
+};
+
+/**
+ * 모든 시트를 한 번에 동기화 (로그인한 직원 화면 어디서든 주기적으로 호출).
+ * 각 시트는 서버 잠금으로 전 직원 기준 20초에 한 번만 실제 실행되므로,
+ * 누가 어느 탭을 보고 있든 새 신청이 고객 목록에 들어옴.
+ */
+export const syncAllSheets = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<AllSheetsSyncResult> => {
+    const jobs: Array<[string, () => Promise<SyncResult>]> = [
+      ["sheet:received", runReceivedSync],
+      ["sheet:default", () => runSync(SYNC_DEFAULT)],
+      ["sheet:inter", () => runSync(SYNC_INTER)],
+      ["sheet:qr", () => runSync(SYNC_QR)],
+      ["sheet:friend", runFriendSync],
+    ];
+    const out: AllSheetsSyncResult = { inserted: 0, sheets: {}, failures: {} };
+    const settled = await Promise.allSettled(jobs.map(([job, run]) => runClaimed(job, run)));
+    settled.forEach((r, i) => {
+      const job = jobs[i][0];
+      if (r.status === "fulfilled") {
+        out.sheets[job] = r.value;
+        out.inserted += r.value.inserted;
+      } else {
+        out.failures[job] = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      }
+    });
+    return out;
+  });

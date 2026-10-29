@@ -18,6 +18,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { CallLogPopupProvider } from "@/components/CallLogPopupProvider";
 import { AiAssistant } from "@/components/AiAssistant";
 import { AdminPushListener } from "@/components/AdminPushListener";
+import { SheetSyncRunner } from "@/components/SheetSyncRunner";
 import { AttendanceCheckInGate } from "@/components/AttendanceCheckInGate";
 import { CountrySetupGate } from "@/components/CountrySetupGate";
 import { Toaster } from "@/components/ui/sonner";
@@ -229,6 +230,7 @@ function AuthedShell() {
         <CallLogPopupProvider />
         <AiAssistant />
         <AdminPushListener />
+        <SheetSyncRunner />
       </SidebarProvider>
     </AttendanceCheckInGate>
   );

@@ -16,6 +16,8 @@ import {
   MessageSquare,
   PhoneCall,
   Bot,
+  CalendarCheck,
+  GraduationCap,
   Bell,
   Send,
   Megaphone,
@@ -126,6 +128,8 @@ export function AppSidebar() {
       : []),
     { title: t("nav.channel"), url: "/channel-performance", icon: Radio },
     { title: t("nav.sla"), url: "/sla", icon: AlertTriangle },
+    // 출근 기록은 SLA 벌금 계산에 쓰이므로 관리자가 메뉴에서 바로 관리할 수 있게 연결
+    ...(isAdmin ? [{ title: t("nav.attendance"), url: "/attendance", icon: CalendarCheck }] : []),
   ];
 
   const systemItems = [
@@ -143,7 +147,9 @@ export function AppSidebar() {
     ...(isAdmin
       ? [{ title: uiCopy("ux.copyc4da70b633"), url: "/broadcast", icon: Megaphone }]
       : []),
-    ...(isAdmin ? [{ title: uiCopy("ux.copy79a3beb296"), url: "/ai-faq", icon: Bot }] : []),
+    ...(isAdmin
+      ? [{ title: uiCopy("ux.copy79a3beb296"), url: "/ai-faq", icon: GraduationCap }]
+      : []),
     ...(isAdmin ? [{ title: t("nav.staffMgmt"), url: "/staff", icon: Users2 }] : []),
     { title: t("nav.settings"), url: "/settings", icon: Settings },
     { title: uiCopy("ux.copy6eb7d86174"), url: "/ai-assistant", icon: Bot },
