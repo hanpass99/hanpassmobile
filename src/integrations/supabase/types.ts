@@ -2019,6 +2019,22 @@ export type Database = {
       }
       current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
+      customer_filtered_status_counts: {
+        Args: {
+          _assigned_country?: string
+          _assigned_to?: string
+          _call_round?: number
+          _country_ids?: string[]
+          _date_from?: string
+          _date_to?: string
+          _pool?: Database["public"]["Enums"]["customer_pool"]
+          _search?: string
+        }
+        Returns: {
+          cnt: number
+          status: string
+        }[]
+      }
       customer_pool_counts: {
         Args: never
         Returns: {
