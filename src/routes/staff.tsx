@@ -59,6 +59,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createStaff, setStaffActive } from "@/lib/staff-admin.functions";
+import { staffCreationErrorCodes } from "@/lib/staff-creation-errors";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -1522,7 +1523,7 @@ function CreateStaffDialog({
       },
     })
       .then((res) => ({ res: res as AdminCreateStaffResponse, error: null }))
-      .catch(() => ({ res: null, error: { message: "staff_create_failed" } }));
+      .catch((cause: unknown) => ({ res: null, error: { message: cause instanceof Error ? cause.message : "staff_create_failed" } }));
     setSaving(false);
     let errMsg: string | undefined = res?.error;
     if (error) {
@@ -1549,7 +1550,8 @@ function CreateStaffDialog({
     }
 
     if (errMsg) {
-      return toast.error(localizeError(t("settings.createFailed", { msg: errMsg })));
+      const code = staffCreationErrorCodes.find((code) => code === errMsg) ?? "staff_create_failed";
+      return toast.error(t(`staffCreationErrors.${code}`));
     }
     toast.success(t("settings.createDone", { name: displayName }));
     onCreated();
