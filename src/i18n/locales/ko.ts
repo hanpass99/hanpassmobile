@@ -1,10 +1,12 @@
 export default {
   staffCreationErrors: {
-    staff_email_exists: "이미 등록된 이메일입니다. 직원 목록에서 해당 이메일을 검색해 주세요. 비활성 계정이면 새로 생성하지 말고 기존 계정을 확인해 주세요.",
+    staff_email_exists:
+      "이미 등록된 이메일입니다. 직원 목록에서 해당 이메일을 검색해 주세요. 비활성 계정이면 새로 생성하지 말고 기존 계정을 확인해 주세요.",
     staff_password_rejected: "사용할 수 없는 비밀번호입니다. 더 안전한 비밀번호를 입력해 주세요.",
     staff_create_failed: "계정을 생성하지 못했습니다. 입력 내용을 확인하고 다시 시도해 주세요.",
     staff_provision_failed: "직원 설정에 실패하여 새 계정 생성을 취소했습니다. 다시 시도해 주세요.",
-    staff_cleanup_failed: "직원 설정과 생성 취소를 완료하지 못했습니다. 직원 목록에서 해당 이메일의 계정 상태를 확인해 주세요.",
+    staff_cleanup_failed:
+      "직원 설정과 생성 취소를 완료하지 못했습니다. 직원 목록에서 해당 이메일의 계정 상태를 확인해 주세요.",
   },
   broadcastDelivery: {
     resume: "이어서 발송",
