@@ -106,6 +106,7 @@ import {
   useCustomersList,
   useCustomersCache,
   useCustomerStatusCounts,
+  useCustomerCountryFilterOptions,
   type Country,
   type Channel,
   type CustomerRow,
@@ -698,6 +699,7 @@ function CustomersPage() {
 
   // === React Query: 룩업 / 풀 카운트 / 리스트 ===
   const { countries, channels, staff } = useCustomersLookups();
+  const filterCountries = useCustomerCountryFilterOptions();
   const { counts: poolCounts, refetch: refetchPoolCounts } = useCustomerPoolCounts();
   const cache = useCustomersCache();
 
@@ -2680,7 +2682,7 @@ function CustomersPage() {
                         />
                       </div>
                       <MultiCountrySelect
-                        options={countries}
+                        options={filterCountries}
                         value={countryIds}
                         onChange={setCountryIds}
                         placeholder={`${t("customers.col.customerCountry")} · ${t("dashboard.allCountries")}`}
@@ -2696,7 +2698,7 @@ function CustomersPage() {
                             {t("customers.col.assignedCountry")} · {t("dashboard.allCountries")}
                           </SelectItem>
                           <SelectItem value="__none__">{t("common.unassigned")}</SelectItem>
-                          {countries.map((c) => (
+                          {filterCountries.map((c) => (
                             <SelectItem key={c.id} value={c.id}>
                               {c.code} · {countryName(c)}
                             </SelectItem>
