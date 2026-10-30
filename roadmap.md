@@ -1,6 +1,6 @@
 # Current requests
 
-- [ ] Staff creation: identify duplicate-email failure, display actionable errors, and test safe provisioning cleanup without changing existing accounts
+- [x] Staff creation: confirmed existing disabled duplicate-email account; actionable localized errors and new-account-only cleanup; 21 tests and build passed (staff route retains 6 existing lint errors)
 - [ ] Staff creation: authenticated verification requires a signed-in requesting account
 
 - [x] Broadcast: shorten requests, timeout Telegram calls, persist each recipient, serialize delivery and offer safe resume for new campaigns; legacy campaigns remain blocked to prevent duplicates
