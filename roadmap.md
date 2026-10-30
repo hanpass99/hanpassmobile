@@ -1,5 +1,8 @@
 # Current requests
 
+- [x] Staff creation: confirmed existing disabled duplicate-email account; actionable localized errors and new-account-only cleanup; 21 tests and build passed (staff route retains 6 existing lint errors)
+- [ ] Staff creation: authenticated verification requires a signed-in requesting account
+
 - [x] Broadcast: shorten requests, timeout Telegram calls, persist each recipient, serialize delivery and offer safe resume for new campaigns; legacy campaigns remain blocked to prevent duplicates
 - [x] Broadcast: checkpoint/timeout/block/rate-limit regression tests, changed-function and route lint, automatic type-check/build passed
 - [ ] Broadcast: real authenticated sending verification (requesting account session unavailable); earlier campaign cannot safely resume because recipient checkpoints were never recorded; publish required for new delivery method

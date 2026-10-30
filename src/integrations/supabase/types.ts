@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      _backup_deleted_duplicate_customers_20261030: {
+        Row: {
+          activation_date: string | null
+          application_date: string | null
+          assigned_to: string | null
+          birth_date: string | null
+          call_round: number | null
+          carrier_plan: string | null
+          channel_id: string | null
+          charge_amount: number | null
+          charge_date: string | null
+          charge_phone: string | null
+          country_id: string | null
+          created_at: string | null
+          customer_type: string | null
+          email: string | null
+          id: string | null
+          id_number: string | null
+          imported_at: string | null
+          monthly_fee: number | null
+          name: string | null
+          notes: string | null
+          phone: string | null
+          phone_digits: string | null
+          pool: Database["public"]["Enums"]["customer_pool"] | null
+          requested_plan: string | null
+          signup_date: string | null
+          status: Database["public"]["Enums"]["customer_status"] | null
+          status_changed_at: string | null
+          status_changed_by: string | null
+          store_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activation_date?: string | null
+          application_date?: string | null
+          assigned_to?: string | null
+          birth_date?: string | null
+          call_round?: number | null
+          carrier_plan?: string | null
+          channel_id?: string | null
+          charge_amount?: number | null
+          charge_date?: string | null
+          charge_phone?: string | null
+          country_id?: string | null
+          created_at?: string | null
+          customer_type?: string | null
+          email?: string | null
+          id?: string | null
+          id_number?: string | null
+          imported_at?: string | null
+          monthly_fee?: number | null
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          phone_digits?: string | null
+          pool?: Database["public"]["Enums"]["customer_pool"] | null
+          requested_plan?: string | null
+          signup_date?: string | null
+          status?: Database["public"]["Enums"]["customer_status"] | null
+          status_changed_at?: string | null
+          status_changed_by?: string | null
+          store_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activation_date?: string | null
+          application_date?: string | null
+          assigned_to?: string | null
+          birth_date?: string | null
+          call_round?: number | null
+          carrier_plan?: string | null
+          channel_id?: string | null
+          charge_amount?: number | null
+          charge_date?: string | null
+          charge_phone?: string | null
+          country_id?: string | null
+          created_at?: string | null
+          customer_type?: string | null
+          email?: string | null
+          id?: string | null
+          id_number?: string | null
+          imported_at?: string | null
+          monthly_fee?: number | null
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          phone_digits?: string | null
+          pool?: Database["public"]["Enums"]["customer_pool"] | null
+          requested_plan?: string | null
+          signup_date?: string | null
+          status?: Database["public"]["Enums"]["customer_status"] | null
+          status_changed_at?: string | null
+          status_changed_by?: string | null
+          store_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       admin_notification_recipients: {
         Row: {
           acknowledged_at: string | null
@@ -1440,6 +1539,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_job_runs: {
+        Row: {
+          job: string
+          last_error: string | null
+          last_error_at: string | null
+          last_errors: number | null
+          last_fetched: number | null
+          last_inserted: number | null
+          last_started_at: string
+          last_success_at: string | null
+        }
+        Insert: {
+          job: string
+          last_error?: string | null
+          last_error_at?: string | null
+          last_errors?: number | null
+          last_fetched?: number | null
+          last_inserted?: number | null
+          last_started_at?: string
+          last_success_at?: string | null
+        }
+        Update: {
+          job?: string
+          last_error?: string | null
+          last_error_at?: string | null
+          last_errors?: number | null
+          last_fetched?: number | null
+          last_inserted?: number | null
+          last_started_at?: string
+          last_success_at?: string | null
+        }
+        Relationships: []
+      }
       system_checks: {
         Row: {
           category: string
@@ -1881,6 +2013,10 @@ export type Database = {
         Args: { broadcast_id: string; lock_id: string }
         Returns: Json
       }
+      claim_sync_job: {
+        Args: { _job: string; _min_interval_seconds: number }
+        Returns: boolean
+      }
       current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
       customer_pool_counts: {
@@ -1900,6 +2036,19 @@ export type Database = {
         }[]
       }
       dedupe_ai_faq_entries: { Args: { _similarity?: number }; Returns: number }
+      fail_sync_job: {
+        Args: { _job: string; _message: string }
+        Returns: undefined
+      }
+      finish_sync_job: {
+        Args: {
+          _errors: number
+          _fetched: number
+          _inserted: number
+          _job: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

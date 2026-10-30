@@ -1,4 +1,13 @@
 export default {
+  staffCreationErrors: {
+    staff_email_exists:
+      "This email is already registered. Search for it in the staff list. If the account is inactive, review the existing account instead of creating another one.",
+    staff_password_rejected: "This password cannot be used. Please enter a more secure password.",
+    staff_create_failed: "The account could not be created. Check the details and try again.",
+    staff_provision_failed: "Staff setup failed, so the new account was removed. Please try again.",
+    staff_cleanup_failed:
+      "Staff setup and account removal could not be completed. Check this email's account status in the staff list.",
+  },
   broadcastDelivery: {
     resume: "Resume sending",
     paused: "In progress / stopped",
