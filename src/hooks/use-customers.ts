@@ -3,7 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { POOLS, type CustomerPool, type CustomerStatus } from "@/lib/labels";
 import type { CustomerPoolCountRow } from "@/types/rpc";
-import { customerQueryFilters, customerStatusCountsKey, customerStatusFilter, type CustomerQueryFilters } from "@/lib/customer-query-filters";
+import {
+  customerQueryFilters,
+  customerStatusCountsKey,
+  customerStatusFilter,
+  type CustomerQueryFilters,
+} from "@/lib/customer-query-filters";
 
 /** Debounce a value. Default 250ms — used for customer search input. */
 export function useDebouncedValue<T>(value: T, delay = 250): T {
@@ -18,7 +23,12 @@ export function useDebouncedValue<T>(value: T, delay = 250): T {
 // === Types ===
 export type Country = { id: string; code: string; name_ko: string };
 export type Channel = { id: string; name: string };
-export type Profile = { id: string; display_name: string; country_id: string | null; is_active: boolean };
+export type Profile = {
+  id: string;
+  display_name: string;
+  country_id: string | null;
+  is_active: boolean;
+};
 
 export type CustomerRow = {
   id: string;
@@ -67,8 +77,15 @@ export type CustomersSearchParams = {
 };
 
 export const SERVER_SORT_KEYS = new Set([
-  "name", "phone", "status", "imported_at", "activation_date",
-  "application_date", "carrier_plan", "requested_plan", "signup_date",
+  "name",
+  "phone",
+  "status",
+  "imported_at",
+  "activation_date",
+  "application_date",
+  "carrier_plan",
+  "requested_plan",
+  "signup_date",
 ]);
 
 // === Lookups (countries / channels / staff) ===
@@ -81,7 +98,11 @@ export function useCustomersLookups() {
       const [co, ch, sf] = await Promise.all([
         supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
         supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
-        supabase.from("profiles").select("id, display_name, country_id, is_active").order("sort_order").order("display_name"),
+        supabase
+          .from("profiles")
+          .select("id, display_name, country_id, is_active")
+          .order("sort_order")
+          .order("display_name"),
       ]);
       return {
         countries: (co.data ?? []) as Country[],
@@ -116,10 +137,15 @@ export function useCustomerPoolCounts() {
         return out;
       }
       const fallback: Record<string, number> = {};
-      await Promise.all(POOLS.map(async (p) => {
-        const { count } = await supabase.from("customers").select("id", { count: "exact", head: true }).eq("pool", p);
-        fallback[p] = count ?? 0;
-      }));
+      await Promise.all(
+        POOLS.map(async (p) => {
+          const { count } = await supabase
+            .from("customers")
+            .select("id", { count: "exact", head: true })
+            .eq("pool", p);
+          fallback[p] = count ?? 0;
+        }),
+      );
       return fallback;
     },
   });
@@ -136,7 +162,10 @@ export function useCustomerStatusCounts(p: StatusCountsParams) {
     gcTime: 30 * 60_000,
     refetchOnMount: false,
     queryFn: async (): Promise<{ counts: Record<string, number>; total: number }> => {
-      const { data, error } = await supabase.rpc("customer_filtered_status_counts", customerQueryFilters(p));
+      const { data, error } = await supabase.rpc(
+        "customer_filtered_status_counts",
+        customerQueryFilters(p),
+      );
       if (error) throw new Error(error.message);
       const counts: Record<string, number> = {};
       let total = 0;
@@ -164,11 +193,21 @@ export type CustomersListResult = { rows: CustomerRow[]; total: number };
 export function customersListQueryKey(p: CustomersSearchParams) {
   const idsKey = (p.countryIds ?? []).slice().sort().join(",");
   return [
-    "customers", "list",
-    p.pool, p.search ?? "", idsKey,
-    p.assignedCountry ?? "all", p.status ?? "all", p.staff ?? "all",
-    p.callRound ?? "all", p.sortKey, p.sortDir,
-    p.page, p.pageSize, p.dateFromIso ?? "", p.dateToIso ?? "",
+    "customers",
+    "list",
+    p.pool,
+    p.search ?? "",
+    idsKey,
+    p.assignedCountry ?? "all",
+    p.status ?? "all",
+    p.staff ?? "all",
+    p.callRound ?? "all",
+    p.sortKey,
+    p.sortDir,
+    p.page,
+    p.pageSize,
+    p.dateFromIso ?? "",
+    p.dateToIso ?? "",
   ] as const;
 }
 
@@ -189,7 +228,7 @@ export function useCustomersList(p: CustomersSearchParams, options?: { enabled?:
         _page_size: p.pageSize,
       });
       if (error) throw new Error(error.message);
-      const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
+      const fetched = (data ?? []) as Array<{ data: CustomerRow; total_count: number }>;
       return {
         rows: fetched.map((r) => r.data),
         total: fetched[0]?.total_count ?? 0,
