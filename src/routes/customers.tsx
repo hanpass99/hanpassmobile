@@ -33,13 +33,12 @@ export const Route = createFileRoute("/customers")({
   loader: ({ context: { queryClient } }) => {
     queryClient.prefetchQuery({
       queryKey: ["customers", "lookups"],
-      staleTime: Infinity,
+      staleTime: 60_000,
       queryFn: async () => {
         const [co, ch, sf] = await Promise.all([
           supabase
             .from("countries")
             .select("id, code, name_ko")
-            .eq("is_active", true)
             .order("code"),
           supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
           supabase

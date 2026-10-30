@@ -13,6 +13,8 @@
 
 # Presentation architecture
 
+- Customer list and status cards share a pure RPC filter mapper and an invoker-rights filtered-count RPC; status selection narrows only the list so every card retains its actionable count.
+
 - Company-specific customer-tab visibility uses a shared pure predicate and the existing visible-pool list, so tab restoration and form options stay consistent without changing database access.
 
 - Interface copy uses matching ko/en locale entries and reactive React rendering; never translate stored business identifiers or outgoing message content, to preserve data behavior.
