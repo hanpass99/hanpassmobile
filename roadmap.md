@@ -1,7 +1,7 @@
 # Current requests
 
-- [ ] Customer status counts: align search, nationality, assigned-country, assignee and round scope with the customer list; verify PH empty/nonempty cases with the requesting session.
-- [ ] Customer nationality and assigned-country selectors: show only database countries with actual customers, using the same country list.
+- [x] Customer status counts: shared filter scope and authenticated PH verification; PH 미처리 0 matches empty list, all countries 미처리 82 matches 82 total; 14 regression tests and build passed.
+- [x] Customer nationality and assigned-country selectors: same 38 countries with actual visible customers, verified with the requesting session; unused countries excluded without changing customer data or permissions.
 
 - [x] Staff creation: confirmed existing disabled duplicate-email account; actionable localized errors and new-account-only cleanup; 21 tests and build passed (staff route retains 6 existing lint errors)
 - [ ] Staff creation: authenticated verification requires a signed-in requesting account
