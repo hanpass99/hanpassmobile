@@ -36,10 +36,7 @@ export const Route = createFileRoute("/customers")({
       staleTime: 60_000,
       queryFn: async () => {
         const [co, ch, sf] = await Promise.all([
-          supabase
-            .from("countries")
-            .select("id, code, name_ko")
-            .order("code"),
+          supabase.from("countries").select("id, code, name_ko").order("code"),
           supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
           supabase
             .from("profiles")

@@ -121,6 +121,21 @@ export function useCustomersLookups() {
   };
 }
 
+/** Filter options use only countries represented by customers visible under RLS. */
+export function useCustomerCountryFilterOptions() {
+  const q = useQuery({
+    queryKey: ["customers", "countryFilterOptions"],
+    staleTime: 60_000,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("customer_country_filter_options");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+  return q.data ?? [];
+}
+
 // === Pool counts (tab badges) ===
 export function useCustomerPoolCounts() {
   const q = useQuery({
@@ -308,6 +323,7 @@ export function useCustomersCache() {
     invalidateList() {
       qc.invalidateQueries({ queryKey: ["customers", "list"] });
       qc.invalidateQueries({ queryKey: ["customers", "statusCounts"] });
+      qc.invalidateQueries({ queryKey: ["customers", "countryFilterOptions"] });
     },
     invalidatePoolCounts() {
       qc.invalidateQueries({ queryKey: ["customers", "poolCounts"] });

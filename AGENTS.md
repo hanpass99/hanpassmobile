@@ -13,7 +13,7 @@
 
 # Presentation architecture
 
-- Customer list and status cards share a pure RPC filter mapper and an invoker-rights filtered-count RPC; status selection narrows only the list so every card retains its actionable count.
+- Customer list/cards share RPC filter mapping; invoker-rights counts retain all statuses, and both country filters share an EXISTS-based visible-customer country RPC to preserve RLS.
 
 - Company-specific customer-tab visibility uses a shared pure predicate and the existing visible-pool list, so tab restoration and form options stay consistent without changing database access.
 
