@@ -92,11 +92,12 @@ export const SERVER_SORT_KEYS = new Set([
 export function useCustomersLookups() {
   const q = useQuery({
     queryKey: ["customers", "lookups"],
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnMount: "always",
     queryFn: async () => {
       const [co, ch, sf] = await Promise.all([
-        supabase.from("countries").select("id, code, name_ko").eq("is_active", true).order("code"),
+        supabase.from("countries").select("id, code, name_ko").order("code"),
         supabase.from("channels").select("id, name").eq("is_active", true).order("name"),
         supabase
           .from("profiles")
