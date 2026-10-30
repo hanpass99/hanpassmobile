@@ -162,6 +162,13 @@
       "when": 1793349513625,
       "tag": "0022_customer_status_counts_matching_filters",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793349765510,
+      "tag": "0023_customer_country_filter_options",
+      "breakpoints": true
     }
   ]
 }

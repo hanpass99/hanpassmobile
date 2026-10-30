@@ -2019,6 +2019,14 @@ export type Database = {
       }
       current_user_countries: { Args: never; Returns: string[] }
       current_user_country: { Args: never; Returns: string }
+      customer_country_filter_options: {
+        Args: never
+        Returns: {
+          code: string
+          id: string
+          name_ko: string
+        }[]
+      }
       customer_filtered_status_counts: {
         Args: {
           _assigned_country?: string
