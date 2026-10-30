@@ -761,9 +761,13 @@ function CustomersPage() {
     dateToIso: toIso,
   });
 
-  const { counts: statusCounts, total: statusTotal } = useCustomerStatusCounts({
+  const { counts: statusCounts, total: statusTotal, isFetching: statusCountsFetching, error: statusCountsError } = useCustomerStatusCounts({
     pool: tab === "loan_borrowers" ? "existing" : tab,
+    search: debouncedSearch,
     countryIds,
+    assignedCountry,
+    staff: staffF,
+    callRound: callRoundF,
     dateFromIso: fromIso,
     dateToIso: toIso,
   });
@@ -2625,7 +2629,7 @@ function CustomersPage() {
                         {t("status.allStatus")}
                       </div>
                       <div className="text-sm font-semibold tracking-normal tabular-nums">
-                        {statusTotal.toLocaleString()}
+                        {statusCountsFetching || statusCountsError ? "—" : statusTotal.toLocaleString()}
                       </div>
                     </button>
                     {CUSTOMER_STATUSES.map((s) => {
@@ -2650,17 +2654,17 @@ function CustomersPage() {
                             {STATUS_LABEL[s]}
                           </div>
                           <div className="text-sm font-semibold tracking-normal tabular-nums">
-                            {n.toLocaleString()}
+                            {statusCountsFetching || statusCountsError ? "—" : n.toLocaleString()}
                           </div>
                         </button>
                       );
                     })}
                   </div>
-                  {(debouncedSearch.trim() ||
-                    assignedCountry !== "all" ||
-                    staffF !== "all" ||
-                    callRoundF !== "all") && (
-                    <p className="text-xs text-muted-foreground">{t("customers.cardsScopeNote")}</p>
+                  {statusCountsError && (
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      {t("customers.statusCountsFailed")}
+                      <Button variant="outline" size="sm" onClick={refresh}>{t("common.retry")}</Button>
+                    </div>
                   )}
 
 

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { POOLS, type CustomerPool, type CustomerStatus } from "@/lib/labels";
 import type { CustomerPoolCountRow } from "@/types/rpc";
+import { customerQueryFilters, customerStatusCountsKey, customerStatusFilter, type CustomerQueryFilters } from "@/lib/customer-query-filters";
 
 /** Debounce a value. Default 250ms — used for customer search input. */
 export function useDebouncedValue<T>(value: T, delay = 250): T {
@@ -126,32 +127,16 @@ export function useCustomerPoolCounts() {
 }
 
 // === Status counts (per tab cards) ===
-export type StatusCountsParams = {
-  pool: CustomerPool | "all";
-  countryIds?: string[];
-  dateFromIso?: string | null;
-  dateToIso?: string | null;
-};
+export type StatusCountsParams = CustomerQueryFilters;
 
 export function useCustomerStatusCounts(p: StatusCountsParams) {
-  const ids = p.countryIds ?? [];
-  const idsKey = ids.slice().sort().join(",");
   const q = useQuery({
-    queryKey: [
-      "customers", "statusCounts",
-      p.pool, idsKey, p.dateFromIso ?? "", p.dateToIso ?? "",
-    ] as const,
+    queryKey: customerStatusCountsKey(p),
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
     refetchOnMount: false,
-    placeholderData: (prev) => prev,
     queryFn: async (): Promise<{ counts: Record<string, number>; total: number }> => {
-      const { data, error } = await supabase.rpc("stats_status_counts", {
-        _pool: p.pool === "all" ? undefined : p.pool,
-        _country_ids: ids.length ? ids : undefined,
-        _date_from: p.dateFromIso ?? undefined,
-        _date_to: p.dateToIso ?? undefined,
-      });
+      const { data, error } = await supabase.rpc("customer_filtered_status_counts", customerQueryFilters(p));
       if (error) throw new Error(error.message);
       const counts: Record<string, number> = {};
       let total = 0;
@@ -168,6 +153,7 @@ export function useCustomerStatusCounts(p: StatusCountsParams) {
     total: q.data?.total ?? 0,
     isLoading: q.isLoading,
     isFetching: q.isFetching,
+    error: q.error,
     refetch: q.refetch,
   };
 }
@@ -194,23 +180,13 @@ export function useCustomersList(p: CustomersSearchParams, options?: { enabled?:
     queryFn: async (): Promise<CustomersListResult> => {
       const sortKeyForRpc = SERVER_SORT_KEYS.has(p.sortKey) ? p.sortKey : "imported_at";
       const sortDirForRpc = p.sortDir ?? "desc";
-      const ids = p.countryIds ?? [];
       const { data, error } = await supabase.rpc("search_customers", {
-        _pool: p.pool === "all" ? undefined : p.pool,
-        _search: p.search?.trim() || undefined,
-        _country_ids: ids.length ? ids : undefined,
-        _assigned_to: !p.staff || p.staff === "all" ? undefined : (p.staff === "__none__" ? "unassigned" : p.staff),
-        _assigned_country: !p.assignedCountry || p.assignedCountry === "all" ? undefined : (p.assignedCountry === "__none__" ? "none" : p.assignedCountry),
-        _status: (!p.status || p.status === "all" || p.status === "__call_completed__") ? undefined : p.status,
-        _date_from: p.dateFromIso ?? undefined,
-        _date_to: p.dateToIso ?? undefined,
+        ...customerQueryFilters(p),
+        ...customerStatusFilter(p.status),
         _sort_key: sortKeyForRpc,
         _sort_dir: sortDirForRpc,
         _page: p.page,
         _page_size: p.pageSize,
-        // 0 = "라운드 없음" (call_round IS NULL) sentinel understood by search_customers
-        _call_round: p.callRound === "all" || !p.callRound ? undefined : p.callRound === "none" ? 0 : Number(p.callRound),
-        _call_completed: p.status === "__call_completed__",
       });
       if (error) throw new Error(error.message);
       const fetched = ((data ?? []) as Array<{ data: CustomerRow; total_count: number }>);
@@ -291,6 +267,7 @@ export function useCustomersCache() {
     },
     invalidateList() {
       qc.invalidateQueries({ queryKey: ["customers", "list"] });
+      qc.invalidateQueries({ queryKey: ["customers", "statusCounts"] });
     },
     invalidatePoolCounts() {
       qc.invalidateQueries({ queryKey: ["customers", "poolCounts"] });
