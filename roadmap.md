@@ -1,5 +1,7 @@
 # Current requests
 
+- [ ] Customer status counts: align search, nationality, assigned-country, assignee and round scope with the customer list; verify PH empty/nonempty cases with the requesting session.
+
 - [x] Staff creation: confirmed existing disabled duplicate-email account; actionable localized errors and new-account-only cleanup; 21 tests and build passed (staff route retains 6 existing lint errors)
 - [ ] Staff creation: authenticated verification requires a signed-in requesting account
 
