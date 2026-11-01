@@ -1,5 +1,10 @@
 # Current requests
 
+- [ ] AWS migration: inspect existing AWS destination (blocked by AWS connection/access); keep current production untouched.
+- [ ] AWS migration: obtain official full database/auth export and separate storage files; inventory code and external integrations.
+- [ ] AWS migration: prepare isolated copy with outbound sends/sync disabled, validate accounts/permissions/data/files/integrations.
+- [ ] AWS migration: final data reconciliation and AWS-only cutover after successful testing and user acceptance; stop old production only after cutover, retain protected recovery backup.
+
 - [x] Customer status counts: shared filter scope and authenticated PH verification; PH 미처리 0 matches empty list, all countries 미처리 82 matches 82 total; 14 regression tests and build passed.
 - [x] Customer nationality and assigned-country selectors: same 38 countries with actual visible customers, verified with the requesting session; unused countries excluded without changing customer data or permissions.
 
