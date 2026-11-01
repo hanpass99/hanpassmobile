@@ -1,5 +1,6 @@
 # Current requests
 
+- [x] AWS connection access: explain how connection Owner grants project Owner Can use access; user action required before migration inspection.
 - [ ] AWS migration: inspect existing AWS destination (blocked by AWS connection/access); keep current production untouched.
 - [ ] AWS migration: obtain official full database/auth export and separate storage files; inventory code and external integrations.
 - [ ] AWS migration: prepare isolated copy with outbound sends/sync disabled, validate accounts/permissions/data/files/integrations.
