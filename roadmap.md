@@ -1,5 +1,8 @@
 # Current requests
 
+- [ ] AWS migration: connect staff subdomain (staff.hanpassmobile.co.kr) to AWS via Gabia DNS; needs Elastic IP, Gabia A record, security group 80/443, nginx+HTTPS, app rebuild, then login verification. Guide and server scripts delivered in Files.
+
+
 - [x] Slack daily applicant report: Hanpass Mobile Bot DM at 08:00 KST for previous-day activation-request applicants (신청/개통완료/미처리/월누적); test DM to asirojiddin123@hanpass.com sent and verified; pg_cron job registered (23:00 UTC); requires publish for the scheduled call to reach the deployed route.
 
 - [x] AWS connection access: explain how connection Owner grants project Owner Can use access; user action required before migration inspection.
