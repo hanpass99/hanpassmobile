@@ -84,3 +84,5 @@ the operational copy of a new application.
 - [ ] Publish + end-to-end verification against the real database (needs approval)
 - [x] 상단 '고객 관리' 제목 자리를 USIM 개통 링크로 교체, 오른쪽 USIM 버튼 삭제
 - [x] 대출자 목록도 시작일만 선택 시 하루치 조회
+
+- [ ] 시험 앱 PC 접속: SSH 터널(4173/8000) 연결 후 localhost:4173 확인 — 진행 중
