@@ -109,7 +109,19 @@ async function slackApi(method: string, body: Record<string, unknown>): Promise<
 
 /** Send the report DM to one recipient identified by email. */
 export async function sendReportToEmail(email: string, text: string): Promise<{ userId: string }> {
-  const lookup = await slackApi("users.lookupByEmail", { email });
+  // users.lookupByEmail only accepts form/query parameters, not a JSON body.
+  const token = process.env["SLACK_BOT_TOKEN"];
+  if (!token) throw new Error("SLACK_BOT_TOKEN is not configured");
+  const lookupRes = await fetch(
+    `https://slack.com/api/users.lookupByEmail?email=${encodeURIComponent(email)}`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}` } },
+  );
+  const lookup = await lookupRes.json().catch(() => ({}));
+  if (!lookupRes.ok || !lookup.ok) {
+    throw new Error(
+      `Slack users.lookupByEmail failed (HTTP ${lookupRes.status}): ${lookup.error ?? lookupRes.statusText}`,
+    );
+  }
   const userId: string | undefined = lookup.user?.id;
   if (!userId) throw new Error(`Slack user not found for ${email}`);
   const opened = await slackApi("conversations.open", { users: userId });
