@@ -98,7 +98,7 @@ the operational copy of a new application.
 - [x] 시험 백업복구: pg_dump(Fc) 15MB 백업 → restore_test 임시 DB 복원 성공, 건수 일치 확인(고객 26,219/프로필 108/계정 107). supabase_admin 계정으로 복원, pg_cron 제외 목록 사용. 백업 파일 보관 중(~/hanpass-test/backups, 권한 700/600)
 - [ ] 최종 데이터 동기화: 고객 31건 차이 등 backup 이후 유입분 반영
 - [x] 전환 일정: 사용자 요청으로 즉시 전환 준비 시작 승인(최종 검증·데이터 동기화 전 운영 중지 아님)
-- [ ] AWS 공개 접속 준비: 운영 도메인 결정, HTTPS와 접근 제한, 재부팅 자동 실행 확인 — 사용자 도메인 선택 및 AWS 설정 결과 필요
+- [ ] AWS 공개 접속 준비: 도메인·HTTPS 완료(ob.hanpassmobile.co.kr), 재부팅 자동 실행 설정 중 — setup-autostart.sh(systemd hanpass-app + docker/nginx enable) 서버 적용 및 reboot 확인 필요
 - [ ] 외부 연동 전환 검증: 텔레그램 수신·발신, 구글 시트, 문자 중계, 외부 신청 API 등 사용 연동 목록과 단일 처리 전환 순서 확인 — 시험 서버에서 미검증
 - [ ] 최종 복구 준비: 예약 작업·권한 포함 복구 절차와 최신 파일 백업 확인 — 현재 임시 복원은 pg_cron/소유권/권한 제외 및 3개 표 건수만 확인
 - [ ] 최종 전환: 위 검증 후 쓰기·자동 유입 통제, 최신 전체 데이터/계정/파일 동기화 및 대조, AWS 단독 전환 확인 후 구 운영 중지(원본 보존, 문자 서버 유지)
