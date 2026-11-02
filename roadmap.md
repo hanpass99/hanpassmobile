@@ -90,7 +90,7 @@ the operational copy of a new application.
 - [x] 시험 앱 서버 기능: 직원 생성 성공 — 원인은 시험 auth 버전이 created_by_admin 표시를 지연 적용하는 것. 시험 DB에 approve_admin_created_staff 트리거(승인+활성 동시 설정) 추가로 해결. 최종 전환 시에도 동일 적용 필요
 - [x] 시험 앱 실시간: 실시간 채팅 갱신 정상 (게시 표 9개 운영과 동일, 사용자 확인)
 - [x] AWS 전환 전: 서버 기능 3개(admin-delete-staff, admin-reset-staff-password, admin-list-staff-activity) 시험 서버 이전 — 삭제 성공 확인
-- [ ] 시험 백업복구: 시험 서버 데이터 백업과 복원 절차 확인
+- [x] 시험 백업복구: pg_dump(Fc) 15MB 백업 → restore_test 임시 DB 복원 성공, 건수 일치 확인(고객 26,219/프로필 108/계정 107). supabase_admin 계정으로 복원, pg_cron 제외 목록 사용. 백업 파일 보관 중(~/hanpass-test/backups, 권한 700/600)
 - [ ] 최종 데이터 동기화: 고객 31건 차이 등 backup 이후 유입분 반영
 - [ ] 전환 승인: 검증 완료 후 AWS 단독 전환 및 구 운영 중지 계획 승인
 
