@@ -1422,6 +1422,21 @@ export type Database = {
           },
         ]
       }
+      slack_daily_report_log: {
+        Row: {
+          sent_at: string
+          sent_on: string
+        }
+        Insert: {
+          sent_at?: string
+          sent_on: string
+        }
+        Update: {
+          sent_at?: string
+          sent_on?: string
+        }
+        Relationships: []
+      }
       sms_logs: {
         Row: {
           aligo_msg_id: string | null
