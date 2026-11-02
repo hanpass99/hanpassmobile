@@ -96,7 +96,7 @@ the operational copy of a new application.
 - [x] 시험 앱 실시간: 실시간 채팅 갱신 정상 (게시 표 9개 운영과 동일, 사용자 확인)
 - [x] AWS 전환 전: 서버 기능 3개(admin-delete-staff, admin-reset-staff-password, admin-list-staff-activity) 시험 서버 이전 — 삭제 성공 확인
 - [x] 시험 백업복구: pg_dump(Fc) 15MB 백업 → restore_test 임시 DB 복원 성공, 건수 일치 확인(고객 26,219/프로필 108/계정 107). supabase_admin 계정으로 복원, pg_cron 제외 목록 사용. 백업 파일 보관 중(~/hanpass-test/backups, 권한 700/600)
-- [ ] 최종 데이터 동기화: 고객 683건 차이(운영 26,902 / AWS 26,219) — 최신 export(09:49 UTC) 복원 완료, customers 26,902 / profiles 107 / auth.users 106 운영과 일치. 복원 오류 16건은 storage·extension·realtime 내부 구조 충돌뿐, 업무 표 오류 0건. 잔여: 직원 조회 권한 2개 과다(sync_job_runs, _backup_deleted_duplicate_customers_20261030) 회수, 파일 751(운영) vs 750(시험) 경로·크기 대조
+- [x] 최종 데이터 동기화: 최신 export(09:49 UTC 복원)로 고객 26,902 / 프로필 107 / 계정 106 운영과 일치. 복원 오류 16건은 storage·extension·realtime 내부 구조 충돌뿐(업무 표 0건). 직원 조회 권한 40/40 운영과 일치(과다 2개 회수 완료). 파일 DB 목록 750 = 실제 파일 750, 누락 6장 채팅 사진 업로드 완료(200), 로그인·채팅 사진 열림 사용자 확인 완료. 남은: 전환 직전 최종 증분 동기화(복원 시점 이후 신규 데이터) + 슬랙 pg_cron 호출 URL을 ob.hanpassmobile.co.kr로 변경
 - [x] 전환 일정: 사용자 요청으로 즉시 전환 준비 시작 승인(최종 검증·데이터 동기화 전 운영 중지 아님)
 - [x] AWS 공개 접속 준비: 도메인·HTTPS 완료(ob.hanpassmobile.co.kr). systemd hanpass-app + docker/nginx enable 적용, 서버 reboot(09:45:20) 후 3개 서비스 active·앱 응답 200 확인
 - [ ] 외부 연동 전환 검증: 텔레그램 수신·발신, 구글 시트, 문자 중계, 외부 신청 API 등 사용 연동 목록과 단일 처리 전환 순서 확인 — 시험 서버에서 미검증
