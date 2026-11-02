@@ -169,6 +169,13 @@
       "when": 1793349765510,
       "tag": "0023_customer_country_filter_options",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793606702374,
+      "tag": "0024_create_slack_daily_report_log",
+      "breakpoints": true
     }
   ]
 }

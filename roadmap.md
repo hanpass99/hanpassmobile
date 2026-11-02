@@ -1,6 +1,6 @@
 # Current requests
 
-- [ ] Slack daily applicant report: use existing Hanpass Mobile Bot for daily 08:00 KST previous-day message; initial test recipient asirojididin123@hanpass.com; credentials pending, accepted draft contains plan only, implementation and live verification still required.
+- [x] Slack daily applicant report: Hanpass Mobile Bot DM at 08:00 KST for previous-day activation-request applicants (신청/개통완료/미처리/월누적); test DM to asirojiddin123@hanpass.com sent and verified; pg_cron job registered (23:00 UTC); requires publish for the scheduled call to reach the deployed route.
 
 - [x] AWS connection access: explain how connection Owner grants project Owner Can use access; user action required before migration inspection.
 - [ ] AWS migration: inspect existing AWS destination (blocked by AWS connection/access); keep current production untouched.
