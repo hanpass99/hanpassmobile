@@ -1,5 +1,7 @@
 # Current requests
 
+- [ ] Slack daily applicant report: connect shared workspace for daily 08:00 KST previous-day report; initial test recipient asirojididin123@hanpass.com; accepted draft contains plan only, implementation and live verification still required.
+
 - [x] AWS connection access: explain how connection Owner grants project Owner Can use access; user action required before migration inspection.
 - [ ] AWS migration: inspect existing AWS destination (blocked by AWS connection/access); keep current production untouched.
 - [ ] AWS migration: obtain official full database/auth export and separate storage files; inventory code and external integrations.
