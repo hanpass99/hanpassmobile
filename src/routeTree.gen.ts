@@ -38,6 +38,7 @@ import { Route as ApiPublicCallLogRouteImport } from './routes/api/public/call-l
 import { Route as ApiPublicChangePasswordRouteImport } from './routes/api/public/change-password'
 import { Route as ApiPublicAiLearnRunRouteImport } from './routes/api/public/ai-learn/run'
 import { Route as ApiPublicApplicationsExternalApplicationIdRouteImport } from './routes/api/public/applications.$externalApplicationId'
+import { Route as ApiPublicHooksSlackDailyReportRouteImport } from './routes/api/public/hooks/slack-daily-report'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -189,6 +190,12 @@ const ApiPublicApplicationsExternalApplicationIdRoute =
     path: '/$externalApplicationId',
     getParentRoute: () => ApiPublicApplicationsRoute,
   } as any)
+const ApiPublicHooksSlackDailyReportRoute =
+  ApiPublicHooksSlackDailyReportRouteImport.update({
+    id: '/api/public/hooks/slack-daily-report',
+    path: '/api/public/hooks/slack-daily-report',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -226,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/api/public/change-password': typeof ApiPublicChangePasswordRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
   '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
+  '/api/public/hooks/slack-daily-report': typeof ApiPublicHooksSlackDailyReportRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -258,6 +266,7 @@ export interface FileRoutesByTo {
   '/api/public/change-password': typeof ApiPublicChangePasswordRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
   '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
+  '/api/public/hooks/slack-daily-report': typeof ApiPublicHooksSlackDailyReportRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -291,6 +300,7 @@ export interface FileRoutesById {
   '/api/public/change-password': typeof ApiPublicChangePasswordRoute
   '/api/public/ai-learn/run': typeof ApiPublicAiLearnRunRoute
   '/api/public/applications/$externalApplicationId': typeof ApiPublicApplicationsExternalApplicationIdRoute
+  '/api/public/hooks/slack-daily-report': typeof ApiPublicHooksSlackDailyReportRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/api/public/change-password'
     | '/api/public/ai-learn/run'
     | '/api/public/applications/$externalApplicationId'
+    | '/api/public/hooks/slack-daily-report'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -357,6 +368,7 @@ export interface FileRouteTypes {
     | '/api/public/change-password'
     | '/api/public/ai-learn/run'
     | '/api/public/applications/$externalApplicationId'
+    | '/api/public/hooks/slack-daily-report'
     | '/api/public/telegram/webhook'
   id:
     | '__root__'
@@ -389,6 +401,7 @@ export interface FileRouteTypes {
     | '/api/public/change-password'
     | '/api/public/ai-learn/run'
     | '/api/public/applications/$externalApplicationId'
+    | '/api/public/hooks/slack-daily-report'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -421,6 +434,7 @@ export interface RootRouteChildren {
   ApiPublicCallLogRoute: typeof ApiPublicCallLogRoute
   ApiPublicChangePasswordRoute: typeof ApiPublicChangePasswordRoute
   ApiPublicAiLearnRunRoute: typeof ApiPublicAiLearnRunRoute
+  ApiPublicHooksSlackDailyReportRoute: typeof ApiPublicHooksSlackDailyReportRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -629,6 +643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicApplicationsExternalApplicationIdRouteImport
       parentRoute: typeof ApiPublicApplicationsRoute
     }
+    '/api/public/hooks/slack-daily-report': {
+      id: '/api/public/hooks/slack-daily-report'
+      path: '/api/public/hooks/slack-daily-report'
+      fullPath: '/api/public/hooks/slack-daily-report'
+      preLoaderRoute: typeof ApiPublicHooksSlackDailyReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -683,6 +704,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCallLogRoute: ApiPublicCallLogRoute,
   ApiPublicChangePasswordRoute: ApiPublicChangePasswordRoute,
   ApiPublicAiLearnRunRoute: ApiPublicAiLearnRunRoute,
+  ApiPublicHooksSlackDailyReportRoute: ApiPublicHooksSlackDailyReportRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
