@@ -87,7 +87,7 @@ the operational copy of a new application.
 
 - [x] 시험 앱 PC 접속: SSH 터널(4173/8000) 연결 후 localhost:4173 확인
 - [x] 시험 앱 기능 확인: 로그인·대시보드·고객 목록·파일 열기 정상 (사용자 확인)
-- [ ] 시험 앱 서버 기능: 관리 키 설정 완료, 직원 생성 실패 원인 조사 중 — 함수 EXECUTE 권한 누락 여부 확인 필요 (운영 DB는 authenticated/service_role 모두 true)
+- [x] 시험 앱 서버 기능: 직원 생성 성공 — 원인은 시험 auth 버전이 created_by_admin 표시를 지연 적용하는 것. 시험 DB에 approve_admin_created_staff 트리거(승인+활성 동시 설정) 추가로 해결. 최종 전환 시에도 동일 적용 필요
 - [ ] 시험 앱 실시간: 실시간 채팅 갱신 연결 확인
 - [ ] 시험 백업복구: 시험 서버 데이터 백업과 복원 절차 확인
 - [ ] 최종 데이터 동기화: 고객 31건 차이 등 backup 이후 유입분 반영
