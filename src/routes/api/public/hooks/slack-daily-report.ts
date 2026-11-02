@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const REPORT_RECIPIENT_EMAIL = "asirojididin123@hanpass.com";
+const REPORT_RECIPIENT_EMAIL = "asirojiddin123@hanpass.com";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
