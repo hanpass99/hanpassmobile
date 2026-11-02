@@ -56,11 +56,19 @@ export function formatReportMessage(stats: DailyReportStats): string {
   ].join("\n");
 }
 
+/** The report covers Hanpass app activation applicants only (개통 신청자). */
+const REPORT_POOL = "activation_request";
+
 async function countCustomers(
   supabaseAdmin: any,
   build: (q: any) => any,
 ): Promise<number> {
-  const query = build(supabaseAdmin.from("customers").select("id", { count: "exact", head: true }));
+  const query = build(
+    supabaseAdmin
+      .from("customers")
+      .select("id", { count: "exact", head: true })
+      .eq("pool", REPORT_POOL),
+  );
   const { count, error } = await query;
   if (error) throw new Error(`customers count failed: ${error.message}`);
   return count ?? 0;
