@@ -632,6 +632,9 @@ function CustomersPage() {
       if (savedSource === "nh_allone" || savedSource === "hanpass_web") setSourceF(savedSource);
       setDateFrom(saved.dateFrom ? new Date(saved.dateFrom + "T00:00:00") : undefined);
       setDateTo(saved.dateTo ? new Date(saved.dateTo + "T00:00:00") : undefined);
+      const savedDateField = (saved as { dateField?: string }).dateField;
+      if (savedDateField === "status_changed_at" || savedDateField === "both")
+        setDateField(savedDateField);
     }
     if (saved) setPageSize(saved.pageSize);
     setPreferencesReadyFor(user.id);
@@ -653,6 +656,7 @@ function CustomersPage() {
           source: sourceF,
           dateFrom: dateFrom ? format(dateFrom, "yyyy-MM-dd") : undefined,
           dateTo: dateTo ? format(dateTo, "yyyy-MM-dd") : undefined,
+          dateField,
           pageSize,
         }),
       );
@@ -672,6 +676,7 @@ function CustomersPage() {
     sourceF,
     dateFrom,
     dateTo,
+    dateField,
     pageSize,
   ]);
 
@@ -685,6 +690,7 @@ function CustomersPage() {
     setSourceF("all");
     setDateFrom(undefined);
     setDateTo(undefined);
+    setDateField("imported_at");
     setPage(1);
   };
 
