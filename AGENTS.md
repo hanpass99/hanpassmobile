@@ -42,4 +42,4 @@
 - The customer search box keeps keystrokes local (`DebouncedSearchInput`) and commits to the page after 250 ms.
 - RLS policies call row-independent helpers (`has_role(auth.uid(), …)`, `current_user_countries()`, `is_approved_staff(auth.uid())`) wrapped as `( SELECT … )` so they run once per query, not once per row; write new policies the same way (arrays: `(( SELECT current_user_countries()))::uuid[]`).
 - All Google sheets sync from any signed-in screen through `SheetSyncRunner` → `syncAllSheets` (once a minute while visible); each sheet run goes through `runClaimed`, which takes the global claim and records `last_success_at` via `finish_sync_job` for the system-health check.
-- Customer source (유입) filter: only non-"all" selections query customers directly under RLS and filter client-side; "all" keeps the search_customers RPC path, so no DB change is needed.
+- Customer source (유입) filter: only non-"all" selections query customers directly under RLS and filter client-side; "all" keeps the search_customers RPC path. Date basis (기간 기준) flows as `_date_field` via customerQueryFilters; filterSourceRows mirrors it — keep in sync.
