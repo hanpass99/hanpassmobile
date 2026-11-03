@@ -1,6 +1,6 @@
 # Current requests
 
-- [ ] AWS Telegram migration: user requested next step; inspect running app token presence and unauthenticated webhook response first. Await AWS diagnostic output; do not register/change the production bot webhook before final data reconciliation and explicit cutover approval.
+- [ ] AWS Telegram migration: AWS app has no TELEGRAM_BOT_TOKEN (local webhook 500). User must enter the same bot token via hidden prompt into app-server.env; verify with read-only getMe/getWebhookInfo. Do not register/change the production bot webhook before final data reconciliation and explicit cutover approval.
 
 - [x] AWS Slack test DM to jskkiller@hanpass.com: recipient param built and deployed; same-day log blocked the automated send (`sent:false`), so a one-off direct DM was sent and the user confirmed receipt. Automated path already verified (`sent:true` for asirojiddin123). Temp read on migration-transfer bucket closed. Slack integration on AWS test server: done.
 
