@@ -2917,7 +2917,7 @@ function CustomersPage() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-medium text-muted-foreground">
-                        {t("common.registeredDate")}
+                        {t("customers.periodLabel")}
                       </span>
                       <DateRangePicker
                         label={t("customers.startLabel")}
@@ -2930,6 +2930,39 @@ function CustomersPage() {
                         value={dateTo}
                         onChange={setDateTo}
                       />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const today = new Date();
+                          setDateFrom(today);
+                          setDateTo(today);
+                        }}
+                      >
+                        {t("common.today")}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const today = new Date();
+                          setDateFrom(startOfWeek(today, { weekStartsOn: 1 }));
+                          setDateTo(endOfWeek(today, { weekStartsOn: 1 }));
+                        }}
+                      >
+                        {t("customers.thisWeek")}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const today = new Date();
+                          setDateFrom(startOfMonth(today));
+                          setDateTo(endOfMonth(today));
+                        }}
+                      >
+                        {t("customers.thisMonth")}
+                      </Button>
                       {(dateFrom || dateTo) && (
                         <Button
                           variant="ghost"
