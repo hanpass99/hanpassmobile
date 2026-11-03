@@ -509,6 +509,7 @@ export default {
     chipStatus: "상태: {{value}}",
     chipStaff: "담당자: {{value}}",
     chipCallRound: "콜 라운드: {{value}}",
+    source: { label: "유입", all: "전체", nhAllone: "농협 올원", hanpassWeb: "한패스 웹", nhBadge: "농협" },
     chipDateFrom: "등록일 시작: {{value}}",
     chipDateTo: "등록일 종료: {{value}}",
     chipRemove: "{{label}} 제거",
