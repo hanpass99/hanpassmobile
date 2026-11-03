@@ -33,7 +33,8 @@ import {
   syncGoogleFormReceived,
   syncQrActivation,
 } from "@/lib/google-form-sync.functions";
-import { format } from "date-fns";
+import { endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from "date-fns";
+import type { CustomerDateField } from "@/lib/customer-query-filters";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -589,6 +590,7 @@ function CustomersPage() {
   const [callLogTarget, setCallLogTarget] = useState<CustomerRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [dateField, setDateField] = useState<CustomerDateField>("imported_at");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(
     initialSearch.from ? new Date(initialSearch.from) : undefined,
   );
