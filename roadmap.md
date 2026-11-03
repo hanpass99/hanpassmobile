@@ -1,5 +1,7 @@
 # Current requests
 
+- [ ] AWS Telegram migration: user requested next step; inspect running app token presence and unauthenticated webhook response first. Await AWS diagnostic output; do not register/change the production bot webhook before final data reconciliation and explicit cutover approval.
+
 - [x] AWS Slack test DM to jskkiller@hanpass.com: recipient param built and deployed; same-day log blocked the automated send (`sent:false`), so a one-off direct DM was sent and the user confirmed receipt. Automated path already verified (`sent:true` for asirojiddin123). Temp read on migration-transfer bucket closed. Slack integration on AWS test server: done.
 
 - [x] AWS migration: staff domain connected — Elastic IP 52.78.241.202, Gabia A record ob.hanpassmobile.co.kr, security group 80/443, nginx+HTTPS cert issued, app rebuilt for domain (API 401 expected, app 200), user logged in successfully.
