@@ -1,5 +1,7 @@
 # Current requests
 
+- [ ] AWS Slack test DM to jskkiller@hanpass.com: date-only report log skipped the second recipient (`sent:false`); send one explicit test without deleting the daily log, then await receipt confirmation.
+
 - [x] AWS migration: staff domain connected — Elastic IP 52.78.241.202, Gabia A record ob.hanpassmobile.co.kr, security group 80/443, nginx+HTTPS cert issued, app rebuilt for domain (API 401 expected, app 200), user logged in successfully.
 
 
