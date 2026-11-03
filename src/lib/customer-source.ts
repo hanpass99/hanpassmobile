@@ -39,6 +39,7 @@ export type SourceFilterParams = {
   callRound?: "all" | "none" | "1" | "2" | "3";
   dateFromIso?: string | null;
   dateToIso?: string | null;
+  dateField?: "imported_at" | "status_changed_at" | "both";
 };
 
 /** search_customers 와 같은 규칙을 화면에서 재현 (status 제외 여부는 includeStatus로 선택). */
@@ -77,11 +78,22 @@ export function filterSourceRows<T extends Row>(
     }
     if (includeStatus && p.status && p.status !== "all" && !callCompleted && c.status !== p.status)
       return false;
-    if (!callCompleted) {
-      const t = Date.parse(c.imported_at);
-      if (from != null && t < from) return false;
-      if (to != null && t > to) return false;
-    } else if (!calledIds?.has(c.id)) return false;
+    if (!callCompleted && (from != null || to != null)) {
+      // 기간 기준: 등록일(기본) / 상태 변경일 / 둘 다 — search_customers 의 _date_field 와 같은 규칙
+      const inRange = (v: unknown) => {
+        if (typeof v !== "string" || !v) return false;
+        const t = Date.parse(v);
+        if (Number.isNaN(t)) return false;
+        if (from != null && t < from) return false;
+        if (to != null && t > to) return false;
+        return true;
+      };
+      if (p.dateField === "status_changed_at") {
+        if (!inRange(c.status_changed_at)) return false;
+      } else if (p.dateField === "both") {
+        if (!inRange(c.imported_at) && !inRange(c.status_changed_at)) return false;
+      } else if (!inRange(c.imported_at)) return false;
+    } else if (callCompleted && !calledIds?.has(c.id)) return false;
     if (p.callRound && p.callRound !== "all") {
       if (p.callRound === "none" ? c.call_round != null : c.call_round !== Number(p.callRound))
         return false;
