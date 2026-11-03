@@ -576,41 +576,14 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
   .handler(() => runClaimed("sheet:received", runReceivedSync));
 
 async function runReceivedSync(): Promise<SyncResult> {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
-    if (!lovableKey || !sheetsKey) {
-      throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
-    }
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const range = `'${RECEIVED_SHEET_NAME}'!A2:L`;
-    const url = `${GATEWAY_URL}/spreadsheets/${RECEIVED_SPREADSHEET_ID}/values/${range}`;
-
-    let res: Response | null = null;
-    let lastBody = "";
-    const delays = [1000, 3000, 7000];
-    for (let attempt = 0; attempt <= delays.length; attempt++) {
-      res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": sheetsKey,
-        },
-      });
-      if (res.ok) break;
-      lastBody = await res.text();
-      const retriable = res.status === 429 || res.status >= 500;
-      if (!retriable || attempt === delays.length) {
-        if (res.status === 429) {
-          throw new Error("구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.");
-        }
-        throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
-      }
-      await new Promise((r) => setTimeout(r, delays[attempt]));
-    }
-    if (!res || !res.ok) throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
-
-    const data = (await res.json()) as { values?: string[][] };
+    const data = await fetchSheetValues(
+      RECEIVED_SPREADSHEET_ID,
+      range,
+      "구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.",
+    );
     const rows = (data.values ?? []).filter((r) => r && (r[8] || r[9]));
 
     const { data: countries, error: coErr } = await supabaseAdmin
@@ -831,41 +804,14 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
   .handler(() => runClaimed("sheet:friend", runFriendSync));
 
 async function runFriendSync(): Promise<SyncResult> {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
-    if (!lovableKey || !sheetsKey) {
-      throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
-    }
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const range = `'${FRIEND_REFERRAL_SHEET_NAME}'!A2:H`;
-    const url = `${GATEWAY_URL}/spreadsheets/${FRIEND_REFERRAL_SPREADSHEET_ID}/values/${range}`;
-
-    let res: Response | null = null;
-    let lastBody = "";
-    const delays = [1000, 3000, 7000];
-    for (let attempt = 0; attempt <= delays.length; attempt++) {
-      res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": sheetsKey,
-        },
-      });
-      if (res.ok) break;
-      lastBody = await res.text();
-      const retriable = res.status === 429 || res.status >= 500;
-      if (!retriable || attempt === delays.length) {
-        if (res.status === 429) {
-          throw new Error("구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.");
-        }
-        throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
-      }
-      await new Promise((r) => setTimeout(r, delays[attempt]));
-    }
-    if (!res || !res.ok) throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
-
-    const data = (await res.json()) as { values?: string[][] };
+    const data = await fetchSheetValues(
+      FRIEND_REFERRAL_SPREADSHEET_ID,
+      range,
+      "구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.",
+    );
     // 시트 첫 컬럼은 빈 컬럼 → B부터 데이터. A2:H 로 요청했으므로 [0]=A(빈), [1]=회원번호 ...
     const rows = (data.values ?? []).filter((r) => r && (r[1] || r[2] || r[3]));
 
