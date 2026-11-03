@@ -2048,6 +2048,7 @@ export type Database = {
           _assigned_to?: string
           _call_round?: number
           _country_ids?: string[]
+          _date_field?: string
           _date_from?: string
           _date_to?: string
           _pool?: Database["public"]["Enums"]["customer_pool"]
@@ -2131,6 +2132,7 @@ export type Database = {
           _call_completed?: boolean
           _call_round?: number
           _country_ids?: string[]
+          _date_field?: string
           _date_from?: string
           _date_to?: string
           _page?: number

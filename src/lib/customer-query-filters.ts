@@ -1,5 +1,8 @@
 import type { CustomerPool, CustomerStatus } from "./labels";
 
+/** 기간 기준: 등록일(기본) / 상태 변경일 / 둘 다. search_customers·customer_filtered_status_counts 의 _date_field 와 동일 값. */
+export type CustomerDateField = "imported_at" | "status_changed_at" | "both";
+
 export type CustomerQueryFilters = {
   pool: CustomerPool | "all";
   search?: string;
@@ -9,6 +12,7 @@ export type CustomerQueryFilters = {
   callRound?: "all" | "none" | "1" | "2" | "3";
   dateFromIso?: string | null;
   dateToIso?: string | null;
+  dateField?: CustomerDateField;
 };
 
 /** Shared scope for list and status distribution; status selection is separate. */
@@ -33,6 +37,7 @@ export function customerQueryFilters(p: CustomerQueryFilters) {
           : Number(p.callRound),
     _date_from: p.dateFromIso ?? undefined,
     _date_to: p.dateToIso ?? undefined,
+    _date_field: p.dateField && p.dateField !== "imported_at" ? p.dateField : undefined,
   };
 }
 
@@ -48,6 +53,7 @@ export function customerStatusCountsKey(p: CustomerQueryFilters) {
     p.callRound ?? "all",
     p.dateFromIso ?? "",
     p.dateToIso ?? "",
+    p.dateField ?? "imported_at",
   ] as const;
 }
 
