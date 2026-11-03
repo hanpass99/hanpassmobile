@@ -2991,6 +2991,40 @@ function CustomersPage() {
                         </div>
                       )}
                     </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {t("customers.dateField.label")}
+                      </span>
+                      <div
+                        className="inline-flex rounded-md border border-border/60 bg-card p-0.5"
+                        role="group"
+                        aria-label={t("customers.dateField.label")}
+                      >
+                        {(
+                          [
+                            ["imported_at", t("customers.dateField.registered")],
+                            ["status_changed_at", t("customers.dateField.statusChanged")],
+                            ["both", t("customers.dateField.both")],
+                          ] as [CustomerDateField, string][]
+                        ).map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setDateField(value)}
+                            aria-pressed={dateField === value}
+                            className={cn(
+                              "rounded px-3 py-1.5 text-xs font-medium transition",
+                              dateField === value
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:text-foreground",
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </MobileFilters>
                   {staffStats.length > 0 && staffF === "all" && (
                     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
