@@ -7,6 +7,102 @@ const INTER_SPREADSHEET_ID = "1edZ1wlgbvbB6rVq5hoCSyfCTuIsHc3j2eKC3jFwl2DM";
 const SHEET_NAME = "설문지 응답 시트1";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
 
+// ============================================================
+// 구글 시트 읽기 — 두 가지 경로
+// 1) 기본: Lovable 커넥터 게이트웨이 (운영 사이트, 커넥터 키 사용)
+// 2) AWS 시험 서버: GOOGLE_OAUTH_REFRESH_TOKEN 이 설정되어 있으면
+//    본인 구글 계정의 OAuth 토큰으로 구글 API를 직접 읽는다.
+//    (회사 DLP 정책이 서비스 계정과의 시트 공유를 막아서 추가한 독립 경로.
+//     시트를 공유하지 않고, 시트에 접근 권한 있는 계정을 한 번 인증해 사용)
+// ============================================================
+const GOOGLE_SHEETS_API_URL = "https://sheets.googleapis.com/v4";
+const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+
+let cachedGoogleToken: { token: string; expiresAt: number } | null = null;
+
+async function getGoogleAccessToken(): Promise<string> {
+  if (cachedGoogleToken && cachedGoogleToken.expiresAt > Date.now() + 60_000) {
+    return cachedGoogleToken.token;
+  }
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error("구글 시트 인증 정보(GOOGLE_OAUTH_*)가 설정되지 않았습니다.");
+  }
+  const res = await fetch(GOOGLE_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`구글 인증 토큰 갱신 실패 [${res.status}]: ${await res.text()}`);
+  }
+  const data = (await res.json()) as { access_token?: string; expires_in?: number };
+  if (!data.access_token) throw new Error("구글 인증 토큰을 받지 못했습니다.");
+  cachedGoogleToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
+  };
+  return cachedGoogleToken.token;
+}
+
+/** 429·5xx 만 짧게 재시도하는 공용 fetch. */
+async function fetchWithRetry(
+  url: string,
+  headers: Record<string, string>,
+  rateLimitMessage: string,
+): Promise<Response> {
+  let lastBody = "";
+  const delays = [1000, 3000, 7000];
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    const res = await fetch(url, { headers });
+    if (res.ok) return res;
+    lastBody = await res.text();
+    const retriable = res.status === 429 || res.status >= 500;
+    if (!retriable || attempt === delays.length) {
+      if (res.status === 429) throw new Error(rateLimitMessage);
+      throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
+    }
+    await new Promise((r) => setTimeout(r, delays[attempt]));
+  }
+  throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
+}
+
+/**
+ * 시트 값을 읽어온다. GOOGLE_OAUTH_REFRESH_TOKEN 이 있으면 AWS 독립 경로(OAuth 토큰),
+ * 없으면 기존 커넥터 게이트웨이. 운영 사이트에는 OAuth 변수가 없어 기존 경로를 그대로 쓴다.
+ */
+async function fetchSheetValues(
+  spreadsheetId: string,
+  range: string,
+  rateLimitMessage: string,
+): Promise<{ values?: string[][] }> {
+  if (process.env.GOOGLE_OAUTH_REFRESH_TOKEN) {
+    const token = await getGoogleAccessToken();
+    const url = `${GOOGLE_SHEETS_API_URL}/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`;
+    const res = await fetchWithRetry(url, { Authorization: `Bearer ${token}` }, rateLimitMessage);
+    return (await res.json()) as { values?: string[][] };
+  }
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
+  if (!lovableKey || !sheetsKey) {
+    throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
+  }
+  const url = `${GATEWAY_URL}/spreadsheets/${spreadsheetId}/values/${range}`;
+  const res = await fetchWithRetry(
+    url,
+    { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": sheetsKey },
+    rateLimitMessage,
+  );
+  return (await res.json()) as { values?: string[][] };
+}
+
 // Country string (from form) → country code in our DB
 // Uzbekistan은 DB에 UZ 없음 → CIS(독립국가연합)로 매핑
 const COUNTRY_MAP: Record<string, string> = {
@@ -187,45 +283,14 @@ async function markSyncFailure(admin: object, job: string, err: unknown): Promis
 const SYNC_MIN_INTERVAL_SECONDS = 20;
 
 async function runSync(cfg: SyncConfig): Promise<SyncResult> {
-  const lovableKey = process.env.LOVABLE_API_KEY;
-  const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
-  if (!lovableKey || !sheetsKey) {
-    throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
-  }
-
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   const range = `'${cfg.sheetName ?? SHEET_NAME}'!${cfg.rangeSuffix ?? "A2:D"}`;
-  const url = `${GATEWAY_URL}/spreadsheets/${cfg.spreadsheetId}/values/${range}`;
-
-  let res: Response | null = null;
-  let lastBody = "";
-  const delays = [1000, 3000, 7000];
-  for (let attempt = 0; attempt <= delays.length; attempt++) {
-    res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": sheetsKey,
-      },
-    });
-    if (res.ok) break;
-    lastBody = await res.text();
-    const retriable = res.status === 429 || res.status >= 500;
-    if (!retriable || attempt === delays.length) {
-      if (res.status === 429) {
-        throw new Error(
-          "구글 시트 분당 요청 한도(1,500/min)를 초과했습니다. 1~2분 후 다시 시도해 주세요.",
-        );
-      }
-      throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
-    }
-    await new Promise((r) => setTimeout(r, delays[attempt]));
-  }
-  if (!res || !res.ok) {
-    throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
-  }
-
-  const data = (await res.json()) as { values?: string[][] };
+  const data = await fetchSheetValues(
+    cfg.spreadsheetId,
+    range,
+    "구글 시트 분당 요청 한도(1,500/min)를 초과했습니다. 1~2분 후 다시 시도해 주세요.",
+  );
   const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
 
   // dedupe key: submissions filtered by source so each sheet has its own log
@@ -511,41 +576,14 @@ export const syncGoogleFormReceived = createServerFn({ method: "POST" })
   .handler(() => runClaimed("sheet:received", runReceivedSync));
 
 async function runReceivedSync(): Promise<SyncResult> {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
-    if (!lovableKey || !sheetsKey) {
-      throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
-    }
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const range = `'${RECEIVED_SHEET_NAME}'!A2:L`;
-    const url = `${GATEWAY_URL}/spreadsheets/${RECEIVED_SPREADSHEET_ID}/values/${range}`;
-
-    let res: Response | null = null;
-    let lastBody = "";
-    const delays = [1000, 3000, 7000];
-    for (let attempt = 0; attempt <= delays.length; attempt++) {
-      res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": sheetsKey,
-        },
-      });
-      if (res.ok) break;
-      lastBody = await res.text();
-      const retriable = res.status === 429 || res.status >= 500;
-      if (!retriable || attempt === delays.length) {
-        if (res.status === 429) {
-          throw new Error("구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.");
-        }
-        throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
-      }
-      await new Promise((r) => setTimeout(r, delays[attempt]));
-    }
-    if (!res || !res.ok) throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
-
-    const data = (await res.json()) as { values?: string[][] };
+    const data = await fetchSheetValues(
+      RECEIVED_SPREADSHEET_ID,
+      range,
+      "구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.",
+    );
     const rows = (data.values ?? []).filter((r) => r && (r[8] || r[9]));
 
     const { data: countries, error: coErr } = await supabaseAdmin
@@ -766,41 +804,14 @@ export const syncFriendReferrals = createServerFn({ method: "POST" })
   .handler(() => runClaimed("sheet:friend", runFriendSync));
 
 async function runFriendSync(): Promise<SyncResult> {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
-    if (!lovableKey || !sheetsKey) {
-      throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
-    }
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const range = `'${FRIEND_REFERRAL_SHEET_NAME}'!A2:H`;
-    const url = `${GATEWAY_URL}/spreadsheets/${FRIEND_REFERRAL_SPREADSHEET_ID}/values/${range}`;
-
-    let res: Response | null = null;
-    let lastBody = "";
-    const delays = [1000, 3000, 7000];
-    for (let attempt = 0; attempt <= delays.length; attempt++) {
-      res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": sheetsKey,
-        },
-      });
-      if (res.ok) break;
-      lastBody = await res.text();
-      const retriable = res.status === 429 || res.status >= 500;
-      if (!retriable || attempt === delays.length) {
-        if (res.status === 429) {
-          throw new Error("구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.");
-        }
-        throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
-      }
-      await new Promise((r) => setTimeout(r, delays[attempt]));
-    }
-    if (!res || !res.ok) throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
-
-    const data = (await res.json()) as { values?: string[][] };
+    const data = await fetchSheetValues(
+      FRIEND_REFERRAL_SPREADSHEET_ID,
+      range,
+      "구글 시트 분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.",
+    );
     // 시트 첫 컬럼은 빈 컬럼 → B부터 데이터. A2:H 로 요청했으므로 [0]=A(빈), [1]=회원번호 ...
     const rows = (data.values ?? []).filter((r) => r && (r[1] || r[2] || r[3]));
 
