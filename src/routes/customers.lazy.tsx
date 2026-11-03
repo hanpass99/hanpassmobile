@@ -2886,6 +2886,19 @@ function CustomersPage() {
                           onRemove: () => setDateTo(undefined),
                         });
                       }
+                      if (dateField !== "imported_at") {
+                        chips.push({
+                          key: "dateField",
+                          label: t("customers.chipDateField", {
+                            value: t(
+                              dateField === "status_changed_at"
+                                ? "customers.dateField.statusChanged"
+                                : "customers.dateField.both",
+                            ),
+                          }),
+                          onRemove: () => setDateField("imported_at"),
+                        });
+                      }
 
                       return (
                         <div className="flex flex-wrap items-center gap-2">
