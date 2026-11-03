@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { getCustomerSource, type CustomerSource } from "@/lib/customer-source";
 import { formatDate, formatDateTime } from "@/lib/date-format";
 import { MobileFilters } from "@/components/MobileFilters";
