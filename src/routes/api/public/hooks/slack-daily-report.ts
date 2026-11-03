@@ -19,9 +19,14 @@ export const Route = createFileRoute("/api/public/hooks/slack-daily-report")({
         }
 
         try {
+          const override = new URL(request.url).searchParams.get("email")?.trim();
+          const recipient =
+            override && /^[^@\s]+@hanpass\.com$/i.test(override)
+              ? override
+              : REPORT_RECIPIENT_EMAIL;
           const { sendDailyReportOnce } = await import("@/lib/slack-daily-report.server");
-          const result = await sendDailyReportOnce(REPORT_RECIPIENT_EMAIL);
-          return json({ success: true, ...result });
+          const result = await sendDailyReportOnce(recipient);
+          return json({ success: true, recipient, ...result });
         } catch (error) {
           console.error("slack-daily-report failed:", error);
           return json(
