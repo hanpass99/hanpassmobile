@@ -9,6 +9,48 @@ import {
   customerStatusFilter,
   type CustomerQueryFilters,
 } from "@/lib/customer-query-filters";
+import {
+  filterSourceRows,
+  sortSourceRows,
+  sourceMark,
+  type CustomerSource,
+} from "@/lib/customer-source";
+
+/** 유입 필터 전용: RLS 그대로 customers 를 직접 조회 (DB 변경 없음). */
+async function fetchSourceDataset(source: Exclude<CustomerSource, "all">, needCallRounds: boolean, p: { dateFromIso?: string | null; dateToIso?: string | null }) {
+  const rows: CustomerRow[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("pool", "activation_request")
+      .ilike("notes", `%${sourceMark(source)}%`)
+      .order("id")
+      .range(from, from + 999);
+    if (error) throw new Error(error.message);
+    rows.push(...((data ?? []) as unknown as CustomerRow[]));
+    if (!data || data.length < 1000) break;
+  }
+  const { data: sf, error: sfErr } = await supabase
+    .from("profiles")
+    .select("id, display_name, country_id");
+  if (sfErr) throw new Error(sfErr.message);
+  let calledIds: Set<string> | null = null;
+  if (needCallRounds) {
+    calledIds = new Set();
+    const ids = rows.map((r) => r.id);
+    for (let i = 0; i < ids.length; i += 200) {
+      let q = supabase.from("customer_call_rounds").select("customer_id").in("customer_id", ids.slice(i, i + 200));
+      if (p.dateFromIso) q = q.gte("call_date", p.dateFromIso.slice(0, 10));
+      if (p.dateToIso) q = q.lte("call_date", p.dateToIso.slice(0, 10));
+      const { data, error } = await q;
+      if (error) throw new Error(error.message);
+      (data ?? []).forEach((r) => calledIds!.add(r.customer_id));
+    }
+  }
+  return { rows, staff: (sf ?? []) as Array<{ id: string; display_name: string; country_id: string | null }>, calledIds };
+}
+
 
 /** Debounce a value. Default 250ms — used for customer search input. */
 export function useDebouncedValue<T>(value: T, delay = 250): T {
@@ -74,6 +116,7 @@ export type CustomersSearchParams = {
   pageSize: number;
   dateFromIso?: string | null;
   dateToIso?: string | null;
+  source?: CustomerSource;
 };
 
 export const SERVER_SORT_KEYS = new Set([
@@ -169,15 +212,22 @@ export function useCustomerPoolCounts() {
 }
 
 // === Status counts (per tab cards) ===
-export type StatusCountsParams = CustomerQueryFilters;
+export type StatusCountsParams = CustomerQueryFilters & { source?: CustomerSource };
 
 export function useCustomerStatusCounts(p: StatusCountsParams) {
   const q = useQuery({
-    queryKey: customerStatusCountsKey(p),
+    queryKey: [...customerStatusCountsKey(p), p.source ?? "all"],
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
     refetchOnMount: false,
     queryFn: async (): Promise<{ counts: Record<string, number>; total: number }> => {
+      if (p.source && p.source !== "all" && p.pool === "activation_request") {
+        const ds = await fetchSourceDataset(p.source, false, p);
+        const rows = filterSourceRows(ds.rows, p, ds.staff, null, false);
+        const counts: Record<string, number> = {};
+        rows.forEach((r) => (counts[r.status] = (counts[r.status] ?? 0) + 1));
+        return { counts, total: rows.length };
+      }
       const { data, error } = await supabase.rpc(
         "customer_filtered_status_counts",
         customerQueryFilters(p),
@@ -224,6 +274,7 @@ export function customersListQueryKey(p: CustomersSearchParams) {
     p.pageSize,
     p.dateFromIso ?? "",
     p.dateToIso ?? "",
+    p.source ?? "all",
   ] as const;
 }
 
@@ -235,6 +286,13 @@ export function useCustomersList(p: CustomersSearchParams, options?: { enabled?:
     queryFn: async (): Promise<CustomersListResult> => {
       const sortKeyForRpc = SERVER_SORT_KEYS.has(p.sortKey) ? p.sortKey : "imported_at";
       const sortDirForRpc = p.sortDir ?? "desc";
+      if (p.source && p.source !== "all" && p.pool === "activation_request") {
+        const ds = await fetchSourceDataset(p.source, p.status === "__call_completed__", p);
+        const filtered = filterSourceRows(ds.rows, p, ds.staff, ds.calledIds, true);
+        const sorted = sortSourceRows(filtered, sortKeyForRpc, sortDirForRpc);
+        const start = Math.max(0, (p.page - 1) * p.pageSize);
+        return { rows: sorted.slice(start, start + p.pageSize), total: sorted.length };
+      }
       const { data, error } = await supabase.rpc("search_customers", {
         ...customerQueryFilters(p),
         ...customerStatusFilter(p.status),

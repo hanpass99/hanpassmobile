@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+import { getCustomerSource, type CustomerSource } from "@/lib/customer-source";
 import { formatDate, formatDateTime } from "@/lib/date-format";
 import { MobileFilters } from "@/components/MobileFilters";
 import { localizeError } from "@/i18n/localize-error";
@@ -578,6 +580,7 @@ function CustomersPage() {
   );
   const [staffF, setStaffF] = useState("all");
   const [callRoundF, setCallRoundF] = useState<"all" | "none" | "1" | "2" | "3">("all");
+  const [sourceF, setSourceF] = useState<CustomerSource>("all");
   const [sortKey, setSortKey] = useState<string>("imported_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -623,6 +626,8 @@ function CustomersPage() {
       setStaffF(saved.staff);
       if (["all", "none", "1", "2", "3"].includes(saved.callRound))
         setCallRoundF(saved.callRound as typeof callRoundF);
+      const savedSource = (saved as { source?: string }).source;
+      if (savedSource === "nh_allone" || savedSource === "hanpass_web") setSourceF(savedSource);
       setDateFrom(saved.dateFrom ? new Date(saved.dateFrom + "T00:00:00") : undefined);
       setDateTo(saved.dateTo ? new Date(saved.dateTo + "T00:00:00") : undefined);
     }
@@ -643,6 +648,7 @@ function CustomersPage() {
           status: statusF,
           staff: staffF,
           callRound: callRoundF,
+          source: sourceF,
           dateFrom: dateFrom ? format(dateFrom, "yyyy-MM-dd") : undefined,
           dateTo: dateTo ? format(dateTo, "yyyy-MM-dd") : undefined,
           pageSize,
@@ -661,6 +667,7 @@ function CustomersPage() {
     statusF,
     staffF,
     callRoundF,
+    sourceF,
     dateFrom,
     dateTo,
     pageSize,
@@ -673,6 +680,7 @@ function CustomersPage() {
     setStatusF("all");
     setStaffF("all");
     setCallRoundF("all");
+    setSourceF("all");
     setDateFrom(undefined);
     setDateTo(undefined);
     setPage(1);
@@ -717,6 +725,7 @@ function CustomersPage() {
     statusF,
     staffF,
     callRoundF,
+    sourceF,
     sortKey,
     sortDir,
     dateFrom,
@@ -740,6 +749,7 @@ function CustomersPage() {
   // 시작일만 선택하면 그날 하루만 조회 (종료일을 시작일과 같은 날로 간주)
   const toIso = dateTo ? dayEndIso(dateTo) : dateFrom ? dayEndIso(dateFrom) : null;
 
+  const effSource: CustomerSource = tab === "activation_request" ? sourceF : "all";
   const {
     rows,
     total,
@@ -761,6 +771,7 @@ function CustomersPage() {
     pageSize: pageSize,
     dateFromIso: fromIso,
     dateToIso: toIso,
+    source: effSource,
   });
 
   const { counts: statusCounts, total: statusTotal, isFetching: statusCountsFetching, error: statusCountsError } = useCustomerStatusCounts({
@@ -772,6 +783,7 @@ function CustomersPage() {
     callRound: callRoundF,
     dateFromIso: fromIso,
     dateToIso: toIso,
+    source: effSource,
   });
 
   useEffect(() => {
@@ -1859,6 +1871,11 @@ function CustomersPage() {
             onClick={() => setDetailTarget(c)}
           >
             <span className="truncate">{c.name}</span>
+            {tab === "activation_request" && getCustomerSource(c.notes) === "nh_allone" && (
+              <Badge variant="secondary" className="ml-1 shrink-0 px-1.5 py-0 text-[10px]">
+                {t("customers.source.nhBadge")}
+              </Badge>
+            )}
           </Button>
         </TooltipTrigger>
         <TooltipContent className="max-w-sm break-words">{c.name}</TooltipContent>
@@ -2755,6 +2772,21 @@ function CustomersPage() {
                           <SelectItem value="3">{t("dashboard.round3")}</SelectItem>
                         </SelectContent>
                       </Select>
+                      {tab === "activation_request" && (
+                        <Select
+                          value={sourceF}
+                          onValueChange={(v) => setSourceF(v as CustomerSource)}
+                        >
+                          <SelectTrigger aria-label={t("customers.source.label")}>
+                            <SelectValue placeholder={t("customers.source.label")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">{t("customers.source.all")}</SelectItem>
+                            <SelectItem value="nh_allone">{t("customers.source.nhAllone")}</SelectItem>
+                            <SelectItem value="hanpass_web">{t("customers.source.hanpassWeb")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
 
                     {(() => {
@@ -2818,6 +2850,13 @@ function CustomersPage() {
                           key: "callRound",
                           label: t("customers.chipCallRound", { value: roundLabel }),
                           onRemove: () => setCallRoundF("all"),
+                        });
+                      }
+                      if (effSource !== "all") {
+                        chips.push({
+                          key: "source",
+                          label: `${t("customers.source.label")}: ${t(effSource === "nh_allone" ? "customers.source.nhAllone" : "customers.source.hanpassWeb")}`,
+                          onRemove: () => setSourceF("all"),
                         });
                       }
                       if (dateFrom) {

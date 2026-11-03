@@ -509,6 +509,7 @@ export default {
     chipStatus: "Status: {{value}}",
     chipStaff: "Assignee: {{value}}",
     chipCallRound: "Round: {{value}}",
+    source: { label: "Source", all: "All", nhAllone: "NH All One", hanpassWeb: "Hanpass Web", nhBadge: "NH" },
     chipDateFrom: "Registered from: {{value}}",
     chipDateTo: "Registered to: {{value}}",
     chipRemove: "Remove {{label}}",
