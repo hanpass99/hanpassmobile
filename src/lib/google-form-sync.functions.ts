@@ -283,45 +283,14 @@ async function markSyncFailure(admin: object, job: string, err: unknown): Promis
 const SYNC_MIN_INTERVAL_SECONDS = 20;
 
 async function runSync(cfg: SyncConfig): Promise<SyncResult> {
-  const lovableKey = process.env.LOVABLE_API_KEY;
-  const sheetsKey = process.env.GOOGLE_SHEETS_API_KEY;
-  if (!lovableKey || !sheetsKey) {
-    throw new Error("Google Sheets 커넥터가 연결되지 않았습니다.");
-  }
-
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   const range = `'${cfg.sheetName ?? SHEET_NAME}'!${cfg.rangeSuffix ?? "A2:D"}`;
-  const url = `${GATEWAY_URL}/spreadsheets/${cfg.spreadsheetId}/values/${range}`;
-
-  let res: Response | null = null;
-  let lastBody = "";
-  const delays = [1000, 3000, 7000];
-  for (let attempt = 0; attempt <= delays.length; attempt++) {
-    res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": sheetsKey,
-      },
-    });
-    if (res.ok) break;
-    lastBody = await res.text();
-    const retriable = res.status === 429 || res.status >= 500;
-    if (!retriable || attempt === delays.length) {
-      if (res.status === 429) {
-        throw new Error(
-          "구글 시트 분당 요청 한도(1,500/min)를 초과했습니다. 1~2분 후 다시 시도해 주세요.",
-        );
-      }
-      throw new Error(`Google Sheets 요청 실패 [${res.status}]: ${lastBody}`);
-    }
-    await new Promise((r) => setTimeout(r, delays[attempt]));
-  }
-  if (!res || !res.ok) {
-    throw new Error(`Google Sheets 요청 실패: ${lastBody}`);
-  }
-
-  const data = (await res.json()) as { values?: string[][] };
+  const data = await fetchSheetValues(
+    cfg.spreadsheetId,
+    range,
+    "구글 시트 분당 요청 한도(1,500/min)를 초과했습니다. 1~2분 후 다시 시도해 주세요.",
+  );
   const rows = (data.values ?? []).filter((r) => r && (r[0] || r[1] || r[2]));
 
   // dedupe key: submissions filtered by source so each sheet has its own log
