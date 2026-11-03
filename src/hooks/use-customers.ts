@@ -7,6 +7,7 @@ import {
   customerQueryFilters,
   customerStatusCountsKey,
   customerStatusFilter,
+  type CustomerDateField,
   type CustomerQueryFilters,
 } from "@/lib/customer-query-filters";
 import {
@@ -116,6 +117,7 @@ export type CustomersSearchParams = {
   pageSize: number;
   dateFromIso?: string | null;
   dateToIso?: string | null;
+  dateField?: CustomerDateField;
   source?: CustomerSource;
 };
 
@@ -274,6 +276,7 @@ export function customersListQueryKey(p: CustomersSearchParams) {
     p.pageSize,
     p.dateFromIso ?? "",
     p.dateToIso ?? "",
+    p.dateField ?? "imported_at",
     p.source ?? "all",
   ] as const;
 }
