@@ -738,6 +738,7 @@ function CustomersPage() {
     sortDir,
     dateFrom,
     dateTo,
+    dateField,
     pageSize,
   ]);
 
@@ -779,6 +780,7 @@ function CustomersPage() {
     pageSize: pageSize,
     dateFromIso: fromIso,
     dateToIso: toIso,
+    dateField,
     source: effSource,
   });
 
@@ -791,6 +793,7 @@ function CustomersPage() {
     callRound: callRoundF,
     dateFromIso: fromIso,
     dateToIso: toIso,
+    dateField,
     source: effSource,
   });
 
