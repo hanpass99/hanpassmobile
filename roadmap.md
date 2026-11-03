@@ -1,7 +1,7 @@
 # Current requests
 
 - [ ] AWS Telegram migration: deferred at the user's request; AWS token remains unverified/unconfigured. Keep production webhook unchanged until final data reconciliation and explicit cutover approval.
-- [ ] AWS Google Sheets migration: user confirmed both gateway keys absent from app-server.env and app/.env; existing Google Sheets OAuth connection is linked and accessible in Lovable. AWS lacks verified credential-transfer path; decide retained Lovable dependency versus independent Google authorization before changes. Preserve production sync.
+- [ ] AWS Google Sheets migration: user chose independent Google authorization. Next: prepare dedicated Google service account with read-only spreadsheet sharing, verify all required sheet access without writes, then adapt AWS sync and test isolated imports. Blocked on company Google service account setup; preserve production sync and never request private key contents in chat.
 
 - [x] AWS Slack test DM to jskkiller@hanpass.com: recipient param built and deployed; same-day log blocked the automated send (`sent:false`), so a one-off direct DM was sent and the user confirmed receipt. Automated path already verified (`sent:true` for asirojiddin123). Temp read on migration-transfer bucket closed. Slack integration on AWS test server: done.
 
