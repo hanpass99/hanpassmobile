@@ -124,7 +124,9 @@ import {
   readCustomerPreferences,
   rowNavigationIndex,
   type CustomerPageSize,
+  DEFAULT_CUSTOMER_DATE_FIELD,
 } from "@/lib/customer-preferences";
+import type { CustomerDateField } from "@/lib/customer-query-filters";
 import { LoanBorrowerList, useLoanBorrowerCount } from "@/components/LoanBorrowerList";
 
 // 엑셀 라이브러리(약 400KB)는 업로드/다운로드 버튼을 누를 때만 불러옴
@@ -595,6 +597,7 @@ function CustomersPage() {
   const [dateTo, setDateTo] = useState<Date | undefined>(
     initialSearch.to ? new Date(initialSearch.to) : undefined,
   );
+  const [dateField, setDateField] = useState<CustomerDateField>(DEFAULT_CUSTOMER_DATE_FIELD);
   useEffect(() => {
     if (!user?.id || preferencesReadyFor === user.id) return;
     let saved = null;
@@ -630,6 +633,7 @@ function CustomersPage() {
       if (savedSource === "nh_allone" || savedSource === "hanpass_web") setSourceF(savedSource);
       setDateFrom(saved.dateFrom ? new Date(saved.dateFrom + "T00:00:00") : undefined);
       setDateTo(saved.dateTo ? new Date(saved.dateTo + "T00:00:00") : undefined);
+      setDateField(saved.dateField);
     }
     if (saved) setPageSize(saved.pageSize);
     setPreferencesReadyFor(user.id);
@@ -651,6 +655,7 @@ function CustomersPage() {
           source: sourceF,
           dateFrom: dateFrom ? format(dateFrom, "yyyy-MM-dd") : undefined,
           dateTo: dateTo ? format(dateTo, "yyyy-MM-dd") : undefined,
+          dateField,
           pageSize,
         }),
       );
@@ -670,6 +675,7 @@ function CustomersPage() {
     sourceF,
     dateFrom,
     dateTo,
+    dateField,
     pageSize,
   ]);
 
@@ -683,6 +689,7 @@ function CustomersPage() {
     setSourceF("all");
     setDateFrom(undefined);
     setDateTo(undefined);
+    setDateField(DEFAULT_CUSTOMER_DATE_FIELD);
     setPage(1);
   };
 
