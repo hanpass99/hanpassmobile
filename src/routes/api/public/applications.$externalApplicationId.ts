@@ -9,6 +9,7 @@
  * never a name, phone number, notes or any other stored field.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { forwardPartnerRequest } from "@/lib/partner-forward";
 import {
   deriveCustomerId,
   integrationEnabled,
@@ -35,6 +36,14 @@ export const Route = createFileRoute("/api/public/applications/$externalApplicat
   server: {
     handlers: {
       GET: async ({ request, params }) => {
+        // Migration forwarder first: on the legacy deployment a configured
+        // PARTNER_FORWARD_URL hands the request to AWS untouched.
+        const forwarded = await forwardPartnerRequest(
+          request,
+          "/" + encodeURIComponent(params.externalApplicationId ?? "")
+        );
+        if (forwarded) return forwarded;
+
         const requestId = newRequestId();
         try {
           if (!integrationEnabled(process.env.PARTNER_API_ENABLED)) {

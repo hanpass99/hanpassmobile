@@ -16,6 +16,7 @@
  * resolve to a partner before any database module is imported.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { forwardPartnerRequest } from "@/lib/partner-forward";
 import {
   applicationRequestSchema,
   buildHashPayload,
@@ -61,6 +62,11 @@ export const Route = createFileRoute("/api/public/applications")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Migration forwarder first: on the legacy deployment a configured
+        // PARTNER_FORWARD_URL hands the request to AWS untouched.
+        const forwarded = await forwardPartnerRequest(request, "");
+        if (forwarded) return forwarded;
+
         const requestId = newRequestId();
         try {
           // ---- 1. Feature flag (fail-closed, no DB touched) ----------------
