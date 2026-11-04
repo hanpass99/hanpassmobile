@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { z } from "zod";
+import { isTelegramBotBlocked } from "../src/lib/telegram-delivery";
 
 function fixture(options: { legacy?: boolean; sendError?: string; completed?: boolean; checkpointError?: boolean; empty?: boolean } = {}) {
   const state = { lock: false, cursor: null as string | null, success: 27, failed: 3, calls: 0, optedOut: false, limits: [] as number[] };
@@ -45,7 +46,7 @@ function fixture(options: { legacy?: boolean; sendError?: string; completed?: bo
     const builder = { middleware: () => builder, inputValidator: () => builder, handler: (fn: unknown) => fn };
     return builder;
   };
-  const handler = new Function("createServerFn", "z", "requireSupabaseAuth", "telegram", new Bun.Transpiler({ loader: "ts" }).transformSync(source) + "\nreturn sendBroadcastBatch;")(createServerFn, z, {}, telegram);
+  const handler = new Function("createServerFn", "z", "requireSupabaseAuth", "telegram", "isTelegramBotBlocked", new Bun.Transpiler({ loader: "ts" }).transformSync(source) + "\nreturn sendBroadcastBatch;")(createServerFn, z, {}, telegram, isTelegramBotBlocked);
   return { state, run: () => handler({ data: { broadcastId: "fixture" }, context: { supabase: client, userId: "admin" } }) };
 }
 
@@ -77,7 +78,7 @@ describe("broadcast checkpoint delivery", () => {
     expect(f.state.cursor).toBeNull();
   });
   it("counts a confirmed block and moves past it", async () => {
-    const f = fixture({ sendError: "Telegram sendMessage failed [403]: blocked" });
+    const f = fixture({ sendError: "Telegram sendMessage failed [403]: Forbidden: bot was blocked by the user" });
     expect(await f.run()).toEqual({ done: false, totalSuccess: 27, totalFailed: 4 });
     expect(f.state.optedOut).toBe(true);
     expect(f.state.cursor).toBe("recipient-1");
@@ -89,6 +90,16 @@ describe("broadcast checkpoint delivery", () => {
     expect(f.state.cursor).toBeNull();
     expect(f.state.failed).toBe(3);
     expect(f.state.lock).toBe(false);
+  });
+  it("does not mark a chat-not-found rejection as a customer block or opt-out", async () => {
+    const f = fixture({ sendError: "Telegram sendMessage failed [400]: Bad Request: chat not found" });
+    expect(await f.run()).toEqual({ done: false, totalSuccess: 27, totalFailed: 4 });
+    expect(f.state.optedOut).toBe(false);
+  });
+  it("does not mark a generic forbidden rejection as a customer block or opt-out", async () => {
+    const f = fixture({ sendError: "Telegram sendMessage failed [403]: Forbidden: bot can't initiate conversation with a user" });
+    expect(await f.run()).toEqual({ done: false, totalSuccess: 27, totalFailed: 4 });
+    expect(f.state.optedOut).toBe(false);
   });
   it("a failed checkpoint never reports successful progress", async () => {
     const f = fixture({ checkpointError: true });

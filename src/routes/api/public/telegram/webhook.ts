@@ -839,6 +839,18 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
         const inboundMessageId = insertedMsg.id;
 
+        // A fresh private message from this customer disproves an older block.
+        // Do not apply this to edits, duplicate retries, or older queued messages.
+        if (update.message && message.chat.type === "private" && from?.id === chatId) {
+          const { error: unblockError } = await supabaseAdmin
+            .from("telegram_chats")
+            .update({ is_blocked: false, blocked_at: null })
+            .eq("id", rowId)
+            .eq("is_blocked", true)
+            .lte("blocked_at", nowIso);
+          if (unblockError) console.error("[telegram webhook] clear stale block failed", unblockError.code);
+        }
+
         // /stop and /reklama → marketing opt-out / opt-in. Never touches the consultation flow.
         const cmdText =
           typeof message.text === "string" ? message.text.trim().toLowerCase() : "";
