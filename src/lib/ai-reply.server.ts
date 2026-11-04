@@ -2,8 +2,8 @@
 // Never import from browser code.
 
 import type { BotLang } from "@/lib/telegram.server";
+import { chatCompletion, embedTextViaProvider } from "@/lib/ai-gateway.server";
 
-const GATEWAY_BASE = "https://ai.gateway.lovable.dev/v1";
 const EMBEDDING_MODEL = "openai/text-embedding-3-small"; // 1536 dims
 const CHAT_MODEL = "google/gemini-3.6-flash";
 
@@ -26,29 +26,10 @@ const SAFETY_KEYWORDS = [
 ];
 
 
-function getApiKey(): string {
-  const k = process.env.LOVABLE_API_KEY;
-  if (!k) throw new Error("LOVABLE_API_KEY is not configured");
-  return k;
-}
-
 export async function embedText(text: string): Promise<number[]> {
   const trimmed = text.trim().slice(0, 4000);
   if (!trimmed) return [];
-  const res = await fetch(`${GATEWAY_BASE}/embeddings`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": getApiKey(),
-    },
-    body: JSON.stringify({ model: EMBEDDING_MODEL, input: trimmed }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Embedding failed [${res.status}]: ${body.slice(0, 300)}`);
-  }
-  const json = (await res.json()) as { data: Array<{ embedding: number[] }> };
-  return json.data[0]?.embedding ?? [];
+  return embedTextViaProvider(EMBEDDING_MODEL, trimmed);
 }
 
 export function containsSafetyKeyword(text: string): boolean {
@@ -139,29 +120,10 @@ ${knownBlock ? `\n${knownBlock}\n` : ""}
 ${question}`;
 
 
-  const res = await fetch(`${GATEWAY_BASE}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": getApiKey(),
-    },
-    body: JSON.stringify({
-      model: CHAT_MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userContent },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Chat completion failed [${res.status}]: ${body.slice(0, 300)}`);
-  }
-  const json = (await res.json()) as {
-    choices: Array<{ message: { content: string } }>;
-  };
-  const raw = json.choices[0]?.message?.content ?? "{}";
+  const raw = await chatCompletion(CHAT_MODEL, [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: userContent },
+  ]);
   let parsed: Record<string, unknown>;
   try {
     parsed = JSON.parse(raw);
