@@ -16,6 +16,7 @@
  * resolve to a partner before any database module is imported.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { forwardPartnerRequest } from "@/lib/partner-forward";
 import {
   applicationRequestSchema,
   buildHashPayload,
