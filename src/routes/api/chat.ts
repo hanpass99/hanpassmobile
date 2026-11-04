@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { streamText, tool, stepCountIs, convertToModelMessages, type UIMessage } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { resolveAiSdkModel } from "@/lib/ai-gateway.server";
 import type { Database } from "@/integrations/supabase/types";
 
 type Sb = SupabaseClient<Database>;
@@ -260,8 +260,7 @@ export const Route = createFileRoute("/api/chat")({
         } as never);
         const isAdmin = Boolean(isAdminData);
 
-        const gateway = createLovableAiGatewayProvider(LOVABLE_API_KEY);
-        const model = gateway("google/gemini-3.5-flash");
+        const model = resolveAiSdkModel("google/gemini-3.5-flash");
 
         const systemPrompt = `You are the AI assistant for the Hanpass Mobile Outbound CRM used by call-center staff.
 
