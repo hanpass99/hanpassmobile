@@ -3,14 +3,9 @@
 // synthesizes FAQ candidates, de-duplicates against the existing knowledge
 // base, and stores new entries with embeddings.
 
-const GATEWAY_BASE = "https://ai.gateway.lovable.dev/v1";
-const CHAT_MODEL = "google/gemini-3.6-flash";
+import { chatCompletion } from "@/lib/ai-gateway.server";
 
-function getApiKey(): string {
-  const k = process.env.LOVABLE_API_KEY;
-  if (!k) throw new Error("LOVABLE_API_KEY is not configured");
-  return k;
-}
+const CHAT_MODEL = "google/gemini-3.6-flash";
 
 type Pair = { question: string; answer: string };
 
@@ -42,29 +37,13 @@ export async function synthesizeCandidates(pairs: Pair[]): Promise<Candidate[]> 
     .map((p, i) => `#${i + 1}\nQ: ${p.question.slice(0, 400)}\nA: ${p.answer.slice(0, 600)}`)
     .join("\n\n");
 
-  const res = await fetch(`${GATEWAY_BASE}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": getApiKey(),
-    },
-    body: JSON.stringify({
-      model: CHAT_MODEL,
-      messages: [
-        { role: "system", content: SYNTH_PROMPT },
-        { role: "user", content: block },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`FAQ synthesis failed [${res.status}]: ${body.slice(0, 300)}`);
-  }
-  const json = (await res.json()) as { choices: Array<{ message: { content: string } }> };
+  const raw = await chatCompletion(CHAT_MODEL, [
+    { role: "system", content: SYNTH_PROMPT },
+    { role: "user", content: block },
+  ]);
   let parsed: { entries?: Candidate[] };
   try {
-    parsed = JSON.parse(json.choices[0]?.message?.content ?? "{}");
+    parsed = JSON.parse(raw || "{}");
   } catch {
     return [];
   }

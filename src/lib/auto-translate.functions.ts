@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
-import { generateText } from "ai";
+import { aiChatAvailable, chatCompletion } from "@/lib/ai-gateway.server";
 import { z } from "zod";
 
 const InputSchema = z.object({
@@ -37,16 +36,14 @@ export const translateBatch = createServerFn({ method: "POST" })
     const missing = uniq.filter((t) => !(t in result));
     if (missing.length === 0) return result;
 
-    // 2. Translate missing via Lovable AI (single JSON call)
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) {
+    // 2. Translate missing via AI (single JSON call)
+    if (!aiChatAvailable()) {
       // No key — return source as fallback
       for (const t of missing) result[t] = t;
       return result;
     }
 
     try {
-      const gateway = createLovableAiGatewayProvider(key);
       const langName = targetLang === "en" ? "English" : "Korean";
       const prompt =
         `Translate each of the following UI strings to ${langName}. ` +
@@ -55,10 +52,9 @@ export const translateBatch = createServerFn({ method: "POST" })
         `Return ONLY a JSON array of strings in the same order, no explanations, no markdown fences.\n\n` +
         `Input (JSON array):\n${JSON.stringify(missing)}`;
 
-      const { text } = await generateText({
-        model: gateway("google/gemini-2.5-flash"),
-        prompt,
-      });
+      const text = await chatCompletion("google/gemini-2.5-flash", [
+        { role: "user", content: prompt },
+      ]);
 
       // Robust JSON parse
       const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
