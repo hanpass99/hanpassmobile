@@ -65,5 +65,5 @@ test("status selection narrows only the list and never the status-card distribut
     _status: undefined,
     _call_completed: true,
   });
-  expect(customerQueryFilters({ pool: "activation_request" })).not.toHaveProperty("_status");
+  expect(customerQueryFilters({ pool: "activation_request" })).not.toHaveProperty("_status"));
 });
