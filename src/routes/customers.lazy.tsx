@@ -778,7 +778,7 @@ function CustomersPage() {
     pageSize: pageSize,
     dateFromIso: fromIso,
     dateToIso: toIso,
-    dateField: "status_changed_at",
+    dateField,
     source: effSource,
   });
 
@@ -791,7 +791,7 @@ function CustomersPage() {
     callRound: callRoundF,
     dateFromIso: fromIso,
     dateToIso: toIso,
-    dateField: "status_changed_at",
+    dateField,
     source: effSource,
   });
 
