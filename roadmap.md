@@ -19,7 +19,7 @@
 - [ ] AWS migration: obtain official full database/auth export and separate storage files; inventory code and external integrations.
 - [ ] AWS migration: prepare isolated copy with outbound sends/sync disabled, validate accounts/permissions/data/files/integrations.
 - [x] AWS migration: user confirmed the exposed test database password was rotated before continuing.
-- [ ] AWS migration: final data reconciliation and AWS-only cutover after successful testing and user acceptance; stop old production only after cutover, retain protected recovery backup.
+- [ ] AWS cutover 2026-11-04: 03:37 UTC backup restored and the 124-row delta applied (data-delta-1104_v4) — AWS now customers 27,045 / chats 2,027 / messages 28,335 / calls 16,609 / rounds 13,180 / history 41,899. Remaining diffs vs production (27,046 / 2,027 / 28,342 / 16,609 / 13,180 / 41,898): 1 customer + 7 messages created after the 05:15 UTC delta extract while the Telegram webhook still points at production. Next: user runs telegram-slack-cutover-1104.sh (webhook + Slack cron URL to ob.hanpassmobile.co.kr), then one final delta extract/apply, verification, then stop old production. AI auto-reply still deferred until GEMINI/OPENAI keys are provided.
 
 - [x] Customer status counts: shared filter scope and authenticated PH verification; PH 미처리 0 matches empty list, all countries 미처리 82 matches 82 total; 14 regression tests and build passed.
 - [x] Customer nationality and assigned-country selectors: same 38 countries with actual visible customers, verified with the requesting session; unused countries excluded without changing customer data or permissions.
