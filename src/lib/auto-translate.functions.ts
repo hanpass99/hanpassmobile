@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
-import { generateText } from "ai";
+import { aiChatAvailable, chatCompletion } from "@/lib/ai-gateway.server";
 import { z } from "zod";
 
 const InputSchema = z.object({
