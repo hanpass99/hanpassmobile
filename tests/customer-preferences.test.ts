@@ -26,10 +26,17 @@ test("all filters and tab round-trip", () => {
     callRound: "2",
     dateFrom: "2026-10-01",
     dateTo: "2026-10-18",
+    dateField: "status_changed_at",
     pageSize: 50,
   };
   expect(readCustomerPreferences(JSON.stringify(preferences))).toEqual(preferences);
   expect(readCustomerPreferences("broken")).toBeNull();
+});
+test("date basis round-trips and falls back to 상태 변경일", () => {
+  expect(readCustomerPreferences('{"dateField":"imported_at"}')?.dateField).toBe("imported_at");
+  expect(readCustomerPreferences('{"dateField":"both"}')?.dateField).toBe("both");
+  expect(readCustomerPreferences('{"dateField":"nope"}')?.dateField).toBe("status_changed_at");
+  expect(readCustomerPreferences("{}")?.dateField).toBe("status_changed_at");
 });
 test("arrow navigation stays within visible rows", () => {
   expect(rowNavigationIndex("ArrowDown", 0, 3)).toBe(1);
