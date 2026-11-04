@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { streamText, tool, stepCountIs, convertToModelMessages, type UIMessage } from "ai";
 import { z } from "zod";
-import { resolveAiSdkModel } from "@/lib/ai-gateway.server";
+import { aiChatAvailable, resolveAiSdkModel } from "@/lib/ai-gateway.server";
 import type { Database } from "@/integrations/supabase/types";
 
 type Sb = SupabaseClient<Database>;
