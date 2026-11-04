@@ -674,6 +674,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [text, setText] = useState("");
+  const [retryChatId, setRetryChatId] = useState<string | null>(null);
+  const deliveryBlocked = !!chat.is_blocked && retryChatId !== chat.id;
 
   // Operator typing → tell the server to stop AI auto-sending in this chat.
   const pingTypingFn = useServerFn(setTelegramOperatorTyping);
@@ -800,8 +802,11 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     },
-    onError: (e) =>
-      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy7851126014"))),
+    onError: (e) => {
+      setRetryChatId(null);
+      qc.invalidateQueries({ queryKey: ["telegram-chats"] });
+      toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy7851126014")));
+    },
   });
 
   const editMut = useMutation({
@@ -853,6 +858,8 @@ function ConversationPane({ chat }: { chat: Chat }) {
       qc.invalidateQueries({ queryKey: ["telegram-messages", chat.id] });
       qc.invalidateQueries({ queryKey: ["telegram-chats"] });
     } catch (e) {
+      setRetryChatId(null);
+      qc.invalidateQueries({ queryKey: ["telegram-chats"] });
       toast.error(localizeError(e instanceof Error ? e.message : uiCopy("ux.copy1938fe147b")));
     } finally {
       setIsUploading(false);
@@ -1131,7 +1138,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
                     {m.edited_at && (
                       <span className="italic opacity-70">{uiCopy("ux.copy8e7ea3f3b8")}</span>
                     )}
-                    {!isEditing && !chat.is_blocked && (
+                    {!isEditing && !deliveryBlocked && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1241,7 +1248,7 @@ function ConversationPane({ chat }: { chat: Chat }) {
             </div>
           </div>
         </div>
-      ) : chat.is_blocked ? (
+      ) : deliveryBlocked ? (
         <div className="border-t p-4 space-y-3 bg-red-500/5">
           <div className="flex items-start gap-2">
             <span className="text-2xl">🚫</span>
@@ -1255,6 +1262,10 @@ function ConversationPane({ chat }: { chat: Chat }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setRetryChatId(chat.id)}>
+              <Send className="mr-2 h-4 w-4" />
+              {uiCopy("ux.telegramRetryDelivery")}
+            </Button>
             <Button
               onClick={() => setShowSmsDialog(true)}
               disabled={!(customerQuery.data?.phone || chat.phone)}

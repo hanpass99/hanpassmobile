@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isTelegramBotBlocked } from "@/lib/telegram-delivery";
 
 // 1분 답장 잠금 획득. 다른 담당자가 60초 이내에 답장했다면 전송을 막는다.
 async function acquireReplyLock(supabase: unknown, chatRowId: string) {
@@ -74,7 +75,7 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
         .eq("id", chatRowId);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      if (/\[403\]|bot was blocked|user is deactivated|chat not found/i.test(msg)) {
+      if (isTelegramBotBlocked(e)) {
         await supabase
           .from("telegram_chats")
           .update({ is_blocked: true, blocked_at: new Date().toISOString() })
@@ -254,7 +255,7 @@ export const sendTelegramMedia = createServerFn({ method: "POST" })
         .eq("id", data.chatRowId);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      if (/\[403\]|bot was blocked|user is deactivated|chat not found/i.test(msg)) {
+      if (isTelegramBotBlocked(e)) {
         await supabase
           .from("telegram_chats")
           .update({ is_blocked: true, blocked_at: new Date().toISOString() })

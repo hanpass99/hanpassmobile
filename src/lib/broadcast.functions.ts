@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isTelegramBotBlocked } from "@/lib/telegram-delivery";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -188,7 +189,7 @@ export const sendBroadcastBatch = createServerFn({ method: "POST" })
         throw new Error("broadcast_rate_limited");
       }
       failed = 1;
-      if (/\[403\]|chat not found/i.test(msg)) {
+      if (isTelegramBotBlocked(e)) {
         const { error } = await supabase
           .from("telegram_chats")
           .update({

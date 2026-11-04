@@ -1356,6 +1356,7 @@ export default {
     copy945211fa95:
       "Messages from this customer are not received. Click “Unblock” at the top to resume support.",
     copy1a7378ef99: "The customer has blocked the bot",
+    telegramRetryDelivery: "Retry Telegram delivery",
     copyb17a784415: "You cannot send Telegram messages. Send an SMS instead.",
     copy0e0a08f1ea: "Send SMS",
     copy64fe8ca0f0: "No phone number available. Link a customer first.",
