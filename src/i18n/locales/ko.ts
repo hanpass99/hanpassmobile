@@ -228,6 +228,7 @@ export default {
     total: "총",
     count: "건",
     people: "명",
+    today: "오늘",
   },
   dashboard: {
     title: "대시보드",

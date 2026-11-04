@@ -228,6 +228,7 @@ export default {
     total: "Total",
     count: "items",
     people: "people",
+    today: "Today",
   },
   dashboard: {
     title: "Dashboard",
