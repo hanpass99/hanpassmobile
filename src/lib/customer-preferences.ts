@@ -1,5 +1,10 @@
+import type { CustomerDateField } from "./customer-query-filters";
+
 export const CUSTOMER_PAGE_SIZES = [20, 50, 100] as const;
 export type CustomerPageSize = (typeof CUSTOMER_PAGE_SIZES)[number];
+
+/** 조회 기간 기준 기본값: 상태 변경일. */
+export const DEFAULT_CUSTOMER_DATE_FIELD: CustomerDateField = "status_changed_at";
 
 export type CustomerPreferences = {
   tab: string;
@@ -11,6 +16,7 @@ export type CustomerPreferences = {
   callRound: string;
   dateFrom?: string;
   dateTo?: string;
+  dateField: CustomerDateField;
   pageSize: CustomerPageSize;
 };
 
@@ -43,6 +49,10 @@ export function readCustomerPreferences(raw: string | null): CustomerPreferences
       callRound: text("callRound", "all"),
       dateFrom: date("dateFrom"),
       dateTo: date("dateTo"),
+      dateField:
+        value.dateField === "imported_at" || value.dateField === "both"
+          ? value.dateField
+          : DEFAULT_CUSTOMER_DATE_FIELD,
       pageSize: CUSTOMER_PAGE_SIZES.includes(value.pageSize) ? value.pageSize : 20,
     };
   } catch {
