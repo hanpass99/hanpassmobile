@@ -105,7 +105,7 @@ the operational copy of a new application.
 - [x] 전환 일정: 사용자 요청으로 즉시 전환 준비 시작 승인(최종 검증·데이터 동기화 전 운영 중지 아님)
 - [x] AWS 공개 접속 준비: 도메인·HTTPS 완료(ob.hanpassmobile.co.kr). systemd hanpass-app + docker/nginx enable 적용, 서버 reboot(09:45:20) 후 3개 서비스 active·앱 응답 200 확인
 - [x] AWS nginx configuration: user confirmed active /api/public/ → app 4173 rule; unauthenticated Slack/Telegram requests return 401. Authenticated external integration flows remain separately unverified.
-- [ ] 외부 연동 전환 검증: 텔레그램 수신·발신, 구글 시트, 문자 중계, 외부 신청 API 등 사용 연동 목록과 단일 처리 전환 순서 확인 — 시험 서버에서 미검증
+- [ ] 외부 연동 전환 검증: 텔레그램 수신·발신, 구글 시트, 문자 중계, 외부 신청 API 등 사용 연동 목록과 단일 처리 전환 순서 확인 — 텔레그램·구글시트·슬랙 검증 완료, 외부 신청 API는 활성화+검증 스크립트(/mnt/documents/partner-api-setup-test.sh) 안내 완료, 사용자 실행 결과 대기
 - [ ] 최종 복구 준비: 예약 작업·권한 포함 복구 절차와 최신 파일 백업 확인 — 현재 임시 복원은 pg_cron/소유권/권한 제외 및 3개 표 건수만 확인
 - [ ] 최종 전환: 위 검증 후 쓰기·자동 유입 통제, 최신 전체 데이터/계정/파일 동기화 및 대조, AWS 단독 전환 확인 후 구 운영 중지(원본 보존, 문자 서버 유지)
 
