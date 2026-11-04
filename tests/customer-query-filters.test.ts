@@ -65,5 +65,24 @@ test("status selection narrows only the list and never the status-card distribut
     _status: undefined,
     _call_completed: true,
   });
-  expect(customerQueryFilters({ pool: "activation_request" })).not.toHaveProperty("_status"));
+  expect(customerQueryFilters({ pool: "activation_request" })).not.toHaveProperty("_status");
+});
+
+test("date basis sends 접수일 as the database default and the others as _date_field", () => {
+  expect(customerQueryFilters({ pool: "existing", dateField: "imported_at" })._date_field).toBeUndefined();
+  expect(
+    customerQueryFilters({ pool: "existing", dateField: "status_changed_at" })._date_field,
+  ).toBe("status_changed_at");
+  expect(customerQueryFilters({ pool: "existing", dateField: "both" })._date_field).toBe("both");
+  expect(customerQueryFilters({ pool: "existing" })._date_field).toBeUndefined();
+});
+
+test("each date basis invalidates the status distribution key", () => {
+  const base = { pool: "activation_request" as const };
+  const keys = [
+    customerStatusCountsKey({ ...base, dateField: "imported_at" }),
+    customerStatusCountsKey({ ...base, dateField: "status_changed_at" }),
+    customerStatusCountsKey({ ...base, dateField: "both" }),
+  ];
+  expect(new Set(keys).size).toBe(3);
 });
