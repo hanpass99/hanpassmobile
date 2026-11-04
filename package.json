@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.111",
-    "@ai-sdk/openai-compatible": "^3.0.84",
+    "@ai-sdk/openai-compatible": "3.0.12",
     "@ai-sdk/react": "^4.0.34",
     "@cloudflare/vite-plugin": "^1.25.5",
     "@hookform/resolvers": "^5.2.2",
