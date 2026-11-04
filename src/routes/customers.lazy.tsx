@@ -2802,6 +2802,50 @@ function CustomersPage() {
                       <span className="text-xs font-medium text-muted-foreground">
                         {t("customers.periodLabel")}
                       </span>
+                      <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
+                        <span className="px-1.5 text-xs font-medium text-muted-foreground">
+                          {t("customers.dateField.label")}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={dateField === "imported_at" ? "secondary" : "ghost"}
+                          className="h-7 px-2.5 text-xs"
+                          aria-pressed={dateField === "imported_at"}
+                          onClick={() => {
+                            setDateField("imported_at");
+                            setPage(1);
+                          }}
+                        >
+                          {t("customers.dateField.importedAt")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={dateField === "status_changed_at" ? "secondary" : "ghost"}
+                          className="h-7 px-2.5 text-xs"
+                          aria-pressed={dateField === "status_changed_at"}
+                          onClick={() => {
+                            setDateField("status_changed_at");
+                            setPage(1);
+                          }}
+                        >
+                          {t("customers.dateField.statusChangedAt")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={dateField === "both" ? "secondary" : "ghost"}
+                          className="h-7 px-2.5 text-xs"
+                          aria-pressed={dateField === "both"}
+                          onClick={() => {
+                            setDateField("both");
+                            setPage(1);
+                          }}
+                        >
+                          {t("customers.dateField.both")}
+                        </Button>
+                      </div>
                       <DateRangePicker
                         label={t("customers.startLabel")}
                         value={dateFrom}
